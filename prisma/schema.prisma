@@ -1,0 +1,487 @@
+// Schéma Prisma amélioré avec optimisations et bonnes pratiques
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+//                        AUTHENTIFICATION
+// ============================================================
+
+model User {
+  id            String  @id @default(cuid())
+  name          String
+  email         String
+  emailVerified Boolean @default(false) // Valeur par défaut
+  image         String?
+  slug          String? @unique // Pour les URLs SEO-friendly
+
+  // Timestamps avec valeurs par défaut
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sessions     Session[]
+  accounts     Account[]
+  profile      Profile?
+  badges       UserBadge[]
+  consent      UserConsent?
+  gdprRequests GDPRRequest[]
+  posts        Post[] // Ajout pour le contenu utilisateur
+
+  // Modération améliorée
+  role       Role       @default(user) // Enum en majuscules
+  status     UserStatus @default(ACTIVE) // Nouveau : statut utilisateur
+  banned     Boolean?   @default(false)
+  banReason  String?
+  banExpires DateTime?
+  bannedBy   String? // ID de l'admin qui a banni
+
+  // Sécurité
+  lastLoginAt  DateTime?
+  lastLoginIp  String?
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+
+  // RGPD et confidentialité
+  dataRetention DateTime? // Date d'expiration des données
+  deletedAt     DateTime? // Soft delete
+
+  // Index pour les performances
+  @@unique([email])
+  @@index([email])
+  @@index([slug])
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now()) // Valeur par défaut
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Sécurité avancée
+  impersonatedBy String?
+  deviceInfo     Json? // Informations sur l'appareil
+  isActive       Boolean   @default(true)
+  revokedAt      DateTime?
+
+  @@unique([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([isActive])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String? // Hash du mot de passe
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Métadonnées de connexion
+  firstLoginAt DateTime?
+  lastUsedAt   DateTime?
+
+  @@unique([providerId, accountId]) // Contrainte composite
+  @@index([userId])
+  @@index([providerId])
+  @@map("account")
+}
+
+model Verification {
+  id         String           @id @default(cuid())
+  identifier String // Email ou téléphone
+  value      String // Code ou token
+  type       VerificationType @default(EMAIL) // Type de vérification
+  expiresAt  DateTime
+  used       Boolean          @default(false) // Marquer comme utilisé
+  attempts   Int              @default(0) // Nombre de tentatives
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([identifier, type])
+  @@index([expiresAt])
+  @@map("verification")
+}
+
+// ============================================================
+//                        PROFIL ET BADGES
+// ============================================================
+
+model Profile {
+  id        String  @id @default(cuid())
+  firstname String?
+  lastname  String?
+  bio       String?
+  phone     String?
+  address   String?
+  socials   Json? // Réseaux sociaux
+
+  // Préférences utilisateur
+  language String? @default("fr")
+  timezone String? @default("Europe/Paris")
+  theme    Theme?  @default(SYSTEM)
+
+  // Visibilité et confidentialité
+  isPublic  Boolean @default(true)
+  showEmail Boolean @default(false)
+  showPhone Boolean @default(false)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("profile")
+}
+
+model Badge {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  iconUrl     String?
+  color       String?       @default("#3B82F6") // Couleur du badge
+  category    BadgeCategory @default(GENERAL) // Catégorie de badge
+  rarity      BadgeRarity   @default(COMMON) // Rareté
+  isActive    Boolean       @default(true) // Peut être désactivé
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  users     UserBadge[]
+
+  @@index([category])
+  @@index([isActive])
+  @@map("badge")
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  badgeId  String
+  earnedAt DateTime @default(now())
+
+  // Métadonnées
+  reason    String? // Raison d'obtention du badge
+  isVisible Boolean @default(true) // L'utilisateur peut masquer ses badges
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+  @@index([earnedAt])
+  @@map("user_badge")
+}
+
+// ============================================================
+//                        RGPD AMÉLIORÉ
+// ============================================================
+
+model UserConsent {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Consentements détaillés
+  cookies         Boolean @default(false)
+  analytics       Boolean @default(false)
+  marketing       Boolean @default(false)
+  personalization Boolean @default(false) // Personnalisation
+  communication   Boolean @default(false) // Communications
+
+  // Métadonnées améliorées
+  consentDate    DateTime      @default(now())
+  consentVersion String        @default("1.0") // Version de la politique
+  ipAddress      String?
+  userAgent      String?
+  source         ConsentSource @default(BANNER) // Source du consentement
+
+  // Gestion des retraits
+  withdrawnAt    DateTime?
+  withdrawReason String?
+
+  // Historique enrichi (JSON pour MVP)
+  history Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([consentDate])
+  @@map("user_consents")
+}
+
+model GDPRRequest {
+  id     String  @id @default(cuid())
+  userId String? // Peut être null si utilisateur supprimé
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Informations de base enrichies
+  type      GDPRType
+  email     String
+  firstName String?
+  lastName  String?
+  phone     String?
+  status    RequestStatus   @default(PENDING)
+  priority  RequestPriority @default(NORMAL)
+
+  // Contenu détaillé
+  subject     String?
+  message     String
+  attachments String[] // URLs des pièces jointes
+  response    String?
+
+  // Traitement
+  assignedTo    String? // ID de l'admin assigné
+  processedBy   String? // ID de l'admin qui a traité
+  internalNotes String? // Notes internes
+
+  // Dates et délais
+  requestDate   DateTime  @default(now())
+  dueDate       DateTime? // Date limite légale (30 jours)
+  processedDate DateTime?
+  reminderSent  Boolean   @default(false)
+
+  // Métadonnées
+  ipAddress String?
+  userAgent String?
+  source    RequestSource @default(WEB_FORM)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([email])
+  @@index([status])
+  @@index([type])
+  @@index([requestDate])
+  @@index([dueDate])
+  @@map("gdpr_requests")
+}
+
+// ============================================================
+//                        CONTENU (NOUVEAU)
+// ============================================================
+
+model Post {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  content     String?   @db.Text // Type TEXT pour le contenu long
+  excerpt     String?
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+
+  // Relations
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags       PostTag[]
+
+  // Image de couverture
+  coverImage      String?
+  
+  // SEO amélioré
+  metaTitle       String?
+  metaDescription String? @db.VarChar(160) // Limite SEO
+  ogImage         String?
+  canonicalUrl    String?
+
+  // Statistiques
+  viewCount    Int @default(0)
+  likeCount    Int @default(0)
+  commentCount Int @default(0)
+
+  // Modération
+  status          PostStatus @default(DRAFT)
+  moderatedBy     String?
+  moderatedAt     DateTime?
+  moderationNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([authorId])
+  @@index([published])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  color       String?    @default("#6B7280")
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  posts       Post[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Tag {
+  id    String    @id @default(cuid())
+  name  String    @unique
+  slug  String    @unique
+  color String?   @default("#8B5CF6")
+  posts PostTag[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@map("tags")
+}
+
+model PostTag {
+  id     String @id @default(cuid())
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId  String
+
+  @@unique([postId, tagId])
+  @@index([postId])
+  @@index([tagId])
+  @@map("post_tags")
+}
+
+// ============================================================
+//                        ENUMS AMÉLIORÉS
+// ============================================================
+
+enum Role {
+  user
+  admin
+  moderator
+  dpo // Data Protection Officer
+  editor // Éditeur de contenu
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
+  PENDING_VERIFICATION
+  DELETED
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum VerificationType {
+  EMAIL
+  PHONE
+  PASSWORD_RESET
+  TWO_FACTOR
+}
+
+enum BadgeCategory {
+  GENERAL
+  ACHIEVEMENT
+  PARTICIPATION
+  SPECIAL
+  ANNIVERSARY
+}
+
+enum BadgeRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum ConsentSource {
+  BANNER
+  SETTINGS
+  REGISTRATION
+  API
+  MIGRATION
+}
+
+enum GDPRType {
+  DATA_EXPORT // Art. 15 - Droit d'accès
+  DATA_DELETE // Art. 17 - Droit à l'effacement
+  DATA_CORRECT // Art. 16 - Droit de rectification
+  DATA_RESTRICT // Art. 18 - Droit à la limitation
+  DATA_PORTABLE // Art. 20 - Droit à la portabilité
+  OBJECTION // Art. 21 - Droit d'opposition
+  COMPLAINT // Plainte
+  CONSENT_WITHDRAW // Retrait de consentement
+  OTHER
+}
+
+enum RequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum RequestPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum RequestSource {
+  WEB_FORM
+  EMAIL
+  PHONE
+  CHAT
+  API
+  ADMIN_PANEL
+}
+
+enum PostStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ARCHIVED
+  REJECTED
+}
