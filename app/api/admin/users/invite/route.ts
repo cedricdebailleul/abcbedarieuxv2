@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     // Créer l'URL d'invitation
     const baseUrl = process.env.NODE_ENV === "production" 
       ? process.env.NEXTAUTH_URL || `https://${request.headers.get("host")}`
-      : `http://${request.headers.get("host")}`;
+      : process.env.NEXTAUTH_URL || `http://${request.headers.get("host")}`;
     
     const inviteUrl = `${baseUrl}/auth/accept-invitation?token=${inviteToken}&email=${encodeURIComponent(email)}&role=${role}`;
 
