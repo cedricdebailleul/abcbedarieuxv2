@@ -55,16 +55,16 @@ interface BadgeCollectionProps {
 export default function BadgeCollection({ badges }: BadgeCollectionProps) {
   const [selectedBadge, setSelectedBadge] = useState<BadgeData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
-  const [rarityFilter, setRarityFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [rarityFilter, setRarityFilter] = useState<string>("all");
   const [showHidden, setShowHidden] = useState(false);
 
   // Filtrer les badges
   const filteredBadges = badges.filter((badgeData) => {
     const matchesSearch = badgeData.badge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          badgeData.badge.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !categoryFilter || badgeData.badge.category === categoryFilter;
-    const matchesRarity = !rarityFilter || badgeData.badge.rarity === rarityFilter;
+    const matchesCategory = categoryFilter === "all" || badgeData.badge.category === categoryFilter;
+    const matchesRarity = rarityFilter === "all" || badgeData.badge.rarity === rarityFilter;
     const matchesVisibility = showHidden || badgeData.isVisible;
 
     return matchesSearch && matchesCategory && matchesRarity && matchesVisibility;
@@ -215,7 +215,7 @@ export default function BadgeCollection({ badges }: BadgeCollectionProps) {
                 <SelectValue placeholder="Catégorie" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes les catégories</SelectItem>
+                <SelectItem value="all">Toutes les catégories</SelectItem>
                 {uniqueCategories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {getCategoryLabel(category)}
@@ -229,7 +229,7 @@ export default function BadgeCollection({ badges }: BadgeCollectionProps) {
                 <SelectValue placeholder="Rareté" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes les raretés</SelectItem>
+                <SelectItem value="all">Toutes les raretés</SelectItem>
                 {uniqueRarities.map((rarity) => (
                   <SelectItem key={rarity} value={rarity}>
                     {getRarityLabel(rarity)}

@@ -103,8 +103,8 @@ export default function UsersTable() {
   
   // Filtres
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   
   // État pour la suppression
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -129,10 +129,10 @@ export default function UsersTable() {
       if (params.search || search) {
         queryParams.append("search", params.search || search);
       }
-      if (params.role || roleFilter) {
+      if ((params.role || roleFilter) && (params.role || roleFilter) !== "all") {
         queryParams.append("role", params.role || roleFilter);
       }
-      if (params.status || statusFilter) {
+      if ((params.status || statusFilter) && (params.status || statusFilter) !== "all") {
         queryParams.append("status", params.status || statusFilter);
       }
 
@@ -292,7 +292,7 @@ export default function UsersTable() {
             <SelectValue placeholder="Rôle" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tous les rôles</SelectItem>
+            <SelectItem value="all">Tous les rôles</SelectItem>
             <SelectItem value="user">Utilisateur</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="moderator">Modérateur</SelectItem>
@@ -306,7 +306,7 @@ export default function UsersTable() {
             <SelectValue placeholder="Statut" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tous les statuts</SelectItem>
+            <SelectItem value="all">Tous les statuts</SelectItem>
             <SelectItem value="ACTIVE">Actif</SelectItem>
             <SelectItem value="INACTIVE">Inactif</SelectItem>
             <SelectItem value="SUSPENDED">Suspendu</SelectItem>
