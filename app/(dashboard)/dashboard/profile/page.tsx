@@ -14,34 +14,43 @@ export default async function ProfilePage() {
     redirect("/auth/signin");
   }
 
-  // Récupérer les données complètes de l'utilisateur
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      profile: true,
-      badges: {
-        include: {
-          badge: true,
+  // Récupérer les données complètes de l'utilisateur et tous les badges
+  const [user, allBadges] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        profile: true,
+        badges: {
+          include: {
+            badge: true,
+          },
+          orderBy: {
+            earnedAt: "desc",
+          },
         },
-        where: {
-          isVisible: true,
-        },
-        orderBy: {
-          earnedAt: "desc",
+        _count: {
+          select: {
+            posts: true,
+            sessions: true,
+          },
         },
       },
-      _count: {
-        select: {
-          posts: true,
-          sessions: true,
-        },
+    }),
+    prisma.badge.findMany({
+      where: {
+        isActive: true,
       },
-    },
-  });
+      orderBy: [
+        { category: "asc" },
+        { rarity: "asc" },
+        { title: "asc" },
+      ],
+    }),
+  ]);
 
   if (!user) {
     redirect("/auth/signin");
   }
 
-  return <ProfileContent user={user} />;
+  return <ProfileContent user={user} allBadges={allBadges} />;
 }

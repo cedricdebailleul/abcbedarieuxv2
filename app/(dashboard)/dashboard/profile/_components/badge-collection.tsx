@@ -32,7 +32,7 @@ import {
   EyeOff
 } from "lucide-react";
 
-interface BadgeData {
+interface UserBadgeData {
   id: string;
   earnedAt: string;
   reason?: string;
@@ -48,47 +48,70 @@ interface BadgeData {
   };
 }
 
-interface BadgeCollectionProps {
-  badges: BadgeData[];
+interface Badge {
+  id: string;
+  title: string;
+  description: string;
+  iconUrl?: string;
+  color?: string;
+  category: string;
+  rarity: string;
 }
 
-export default function BadgeCollection({ badges }: BadgeCollectionProps) {
-  const [selectedBadge, setSelectedBadge] = useState<BadgeData | null>(null);
+interface BadgeCollectionProps {
+  userBadges: UserBadgeData[];
+  allBadges: Badge[];
+}
+
+export default function BadgeCollection({ userBadges, allBadges }: BadgeCollectionProps) {
+  const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
+  const [selectedUserBadge, setSelectedUserBadge] = useState<UserBadgeData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [rarityFilter, setRarityFilter] = useState<string>("all");
-  const [showHidden, setShowHidden] = useState(false);
+  const [showOnlyEarned, setShowOnlyEarned] = useState(false);
 
-  // Filtrer les badges
-  const filteredBadges = badges.filter((badgeData) => {
-    const matchesSearch = badgeData.badge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         badgeData.badge.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || badgeData.badge.category === categoryFilter;
-    const matchesRarity = rarityFilter === "all" || badgeData.badge.rarity === rarityFilter;
-    const matchesVisibility = showHidden || badgeData.isVisible;
+  // Créer un map des badges utilisateur pour un accès rapide
+  const userBadgeMap = new Map(userBadges.map(ub => [ub.badge.id, ub]));
+  
+  // Filtrer et enrichir les badges
+  const enrichedBadges = allBadges.map(badge => {
+    const userBadge = userBadgeMap.get(badge.id);
+    return {
+      ...badge,
+      isEarned: !!userBadge,
+      userBadgeData: userBadge,
+    };
+  }).filter((badge) => {
+    const matchesSearch = badge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         badge.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || badge.category === categoryFilter;
+    const matchesRarity = rarityFilter === "all" || badge.rarity === rarityFilter;
+    const matchesEarnedFilter = !showOnlyEarned || badge.isEarned;
 
-    return matchesSearch && matchesCategory && matchesRarity && matchesVisibility;
+    return matchesSearch && matchesCategory && matchesRarity && matchesEarnedFilter;
   });
 
   // Grouper par catégorie
-  const badgesByCategory = filteredBadges.reduce((acc, badgeData) => {
-    const category = badgeData.badge.category;
+  const badgesByCategory = enrichedBadges.reduce((acc, badge) => {
+    const category = badge.category;
     if (!acc[category]) {
       acc[category] = [];
     }
-    acc[category].push(badgeData);
+    acc[category].push(badge);
     return acc;
-  }, {} as Record<string, BadgeData[]>);
+  }, {} as Record<string, typeof enrichedBadges>);
 
   // Statistiques des badges
   const stats = {
-    total: badges.length,
-    visible: badges.filter(b => b.isVisible).length,
-    byCategory: badges.reduce((acc, b) => {
+    total: allBadges.length,
+    earned: userBadges.length,
+    visible: userBadges.filter(b => b.isVisible).length,
+    byCategory: userBadges.reduce((acc, b) => {
       acc[b.badge.category] = (acc[b.badge.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>),
-    byRarity: badges.reduce((acc, b) => {
+    byRarity: userBadges.reduce((acc, b) => {
       acc[b.badge.rarity] = (acc[b.badge.rarity] || 0) + 1;
       return acc;
     }, {} as Record<string, number>),
@@ -157,8 +180,35 @@ export default function BadgeCollection({ badges }: BadgeCollectionProps) {
     });
   };
 
-  const uniqueCategories = Array.from(new Set(badges.map(b => b.badge.category)));
-  const uniqueRarities = Array.from(new Set(badges.map(b => b.badge.rarity)));
+  const getHowToEarnMessage = (badgeTitle: string, category: string) => {
+    const messages: Record<string, string> = {
+      "Bienvenue": "Badge automatiquement attribué lors de votre inscription sur la plateforme.",
+      "Premier pas": "Connectez-vous pour la première fois après votre inscription.",
+      "Profil complété": "Remplissez toutes les informations de votre profil (nom, prénom, bio, photo).",
+      "Premier article": "Publiez votre premier article ou contenu sur la plateforme.",
+      "Contributeur actif": "Publiez 10 articles ou contenus pour démontrer votre engagement.",
+      "Expert": "Publiez 50 articles de qualité pour être reconnu comme expert.",
+      "Légende": "Atteignez 100 publications pour rejoindre les légendes de la plateforme.",
+      "Membre fidèle": "Restez actif pendant 30 jours consécutifs.",
+      "Vétéran": "Célébrez votre première année sur la plateforme.",
+      "Fondateur": "Badge spécial réservé aux premiers membres de la communauté.",
+      "Beta testeur": "Participez aux tests de nouvelles fonctionnalités.",
+      "Aide précieuse": "Aidez d'autres membres et recevez des commentaires positifs.",
+    };
+
+    const categoryMessages: Record<string, string> = {
+      "GENERAL": "Badge général obtenu par diverses actions sur la plateforme.",
+      "ACHIEVEMENT": "Badge d'accomplissement obtenu en atteignant certains objectifs.",
+      "PARTICIPATION": "Badge de participation obtenu en étant actif dans la communauté.",
+      "SPECIAL": "Badge spécial attribué lors d'événements particuliers.",
+      "ANNIVERSARY": "Badge anniversaire célébrant votre fidélité.",
+    };
+
+    return messages[badgeTitle] || categoryMessages[category] || "Continuez à être actif sur la plateforme pour débloquer ce badge !";
+  };
+
+  const uniqueCategories = Array.from(new Set(allBadges.map(b => b.category)));
+  const uniqueRarities = Array.from(new Set(allBadges.map(b => b.rarity)));
 
   return (
     <div className="space-y-6">
@@ -174,23 +224,23 @@ export default function BadgeCollection({ badges }: BadgeCollectionProps) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-              <div className="text-sm text-gray-600">Total</div>
+              <div className="text-sm text-gray-600">Badges total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.visible}</div>
-              <div className="text-sm text-gray-600">Visibles</div>
+              <div className="text-2xl font-bold text-green-600">{stats.earned}</div>
+              <div className="text-sm text-gray-600">Obtenus</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                {Math.round((stats.earned / stats.total) * 100)}%
+              </div>
+              <div className="text-sm text-gray-600">Progression</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
                 {stats.byRarity.LEGENDARY || 0}
               </div>
               <div className="text-sm text-gray-600">Légendaires</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {Object.keys(badgesByCategory).length}
-              </div>
-              <div className="text-sm text-gray-600">Catégories</div>
             </div>
           </div>
         </CardContent>
@@ -239,19 +289,19 @@ export default function BadgeCollection({ badges }: BadgeCollectionProps) {
             </Select>
 
             <Button
-              variant="outline"
-              onClick={() => setShowHidden(!showHidden)}
+              variant={showOnlyEarned ? "default" : "outline"}
+              onClick={() => setShowOnlyEarned(!showOnlyEarned)}
               className="flex items-center gap-2"
             >
-              {showHidden ? (
+              {showOnlyEarned ? (
                 <>
-                  <EyeOff className="h-4 w-4" />
-                  Masquer cachés
+                  <Trophy className="h-4 w-4" />
+                  Obtenus seulement
                 </>
               ) : (
                 <>
-                  <Eye className="h-4 w-4" />
-                  Voir cachés
+                  <Trophy className="h-4 w-4" />
+                  Tous les badges
                 </>
               )}
             </Button>
@@ -282,37 +332,61 @@ export default function BadgeCollection({ badges }: BadgeCollectionProps) {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                  {categoryBadges.map((badgeData) => (
-                    <Dialog key={badgeData.id}>
+                  {categoryBadges.map((badge) => (
+                    <Dialog key={badge.id}>
                       <DialogTrigger asChild>
                         <div
                           className={`relative cursor-pointer p-4 rounded-lg border-2 transition-all hover:scale-105 ${
-                            badgeData.isVisible ? "opacity-100" : "opacity-50"
-                          }`}
-                          style={{ borderColor: badgeData.badge.color || "#3B82F6" }}
+                            badge.isEarned ? "opacity-100" : "opacity-60"
+                          } ${badge.isEarned ? "shadow-md" : "shadow-sm"}`}
+                          style={{ 
+                            borderColor: badge.isEarned ? (badge.color || "#3B82F6") : "#D1D5DB",
+                          }}
                         >
-                          {!badgeData.isVisible && (
+                          {badge.isEarned && badge.userBadgeData && !badge.userBadgeData.isVisible && (
                             <EyeOff className="absolute top-2 right-2 h-4 w-4 text-gray-400" />
+                          )}
+                          
+                          {badge.isEarned && (
+                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                              <Trophy className="h-3 w-3 text-white" />
+                            </div>
                           )}
                           
                           <div className="text-center">
                             <div 
-                              className="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center text-white"
-                              style={{ backgroundColor: badgeData.badge.color || "#3B82F6" }}
+                              className={`w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center ${
+                                badge.isEarned ? "text-white" : "text-gray-400"
+                              }`}
+                              style={{ 
+                                backgroundColor: badge.isEarned 
+                                  ? (badge.color || "#3B82F6") 
+                                  : "#F3F4F6",
+                                filter: badge.isEarned ? "none" : "grayscale(100%)"
+                              }}
                             >
                               <Trophy className="h-8 w-8" />
                             </div>
                             
                             <div className="space-y-1">
-                              <h3 className="font-medium text-sm truncate" title={badgeData.badge.title}>
-                                {badgeData.badge.title}
+                              <h3 className={`font-medium text-sm truncate ${
+                                badge.isEarned ? "text-gray-900" : "text-gray-500"
+                              }`} title={badge.title}>
+                                {badge.title}
                               </h3>
                               <Badge 
-                                variant={getRarityBadgeVariant(badgeData.badge.rarity)}
-                                className={`text-xs ${getRarityColor(badgeData.badge.rarity)}`}
+                                variant={getRarityBadgeVariant(badge.rarity)}
+                                className={`text-xs ${getRarityColor(badge.rarity)} ${
+                                  badge.isEarned ? "" : "opacity-60"
+                                }`}
                               >
-                                {getRarityLabel(badgeData.badge.rarity)}
+                                {getRarityLabel(badge.rarity)}
                               </Badge>
+                              {!badge.isEarned && (
+                                <div className="text-xs text-gray-400 mt-1">
+                                  Non obtenu
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -322,18 +396,33 @@ export default function BadgeCollection({ badges }: BadgeCollectionProps) {
                         <DialogHeader>
                           <div className="text-center mb-4">
                             <div 
-                              className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center text-white"
-                              style={{ backgroundColor: badgeData.badge.color || "#3B82F6" }}
+                              className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center relative ${
+                                badge.isEarned ? "text-white" : "text-gray-400"
+                              }`}
+                              style={{ 
+                                backgroundColor: badge.isEarned 
+                                  ? (badge.color || "#3B82F6") 
+                                  : "#F3F4F6",
+                                filter: badge.isEarned ? "none" : "grayscale(100%)"
+                              }}
                             >
-                              <Trophy className="h-10 w-10" />
+                              <Trophy className="h-12 w-12" />
+                              {badge.isEarned && (
+                                <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                  <Trophy className="h-4 w-4 text-white" />
+                                </div>
+                              )}
                             </div>
-                            <DialogTitle className="text-xl">{badgeData.badge.title}</DialogTitle>
+                            <DialogTitle className="text-xl">{badge.title}</DialogTitle>
                             <div className="flex items-center justify-center gap-2 mt-2">
-                              <Badge variant={getRarityBadgeVariant(badgeData.badge.rarity)}>
-                                {getRarityLabel(badgeData.badge.rarity)}
+                              <Badge variant={getRarityBadgeVariant(badge.rarity)} className={badge.isEarned ? "" : "opacity-60"}>
+                                {getRarityLabel(badge.rarity)}
                               </Badge>
-                              <Badge variant="outline">
-                                {getCategoryLabel(badgeData.badge.category)}
+                              <Badge variant="outline" className={badge.isEarned ? "" : "opacity-60"}>
+                                {getCategoryLabel(badge.category)}
+                              </Badge>
+                              <Badge variant={badge.isEarned ? "default" : "secondary"}>
+                                {badge.isEarned ? "Obtenu" : "Non obtenu"}
                               </Badge>
                             </div>
                           </div>
@@ -342,37 +431,48 @@ export default function BadgeCollection({ badges }: BadgeCollectionProps) {
                         <div className="space-y-4">
                           <div>
                             <h4 className="font-medium mb-1">Description</h4>
-                            <p className="text-gray-600">{badgeData.badge.description}</p>
+                            <p className="text-gray-600">{badge.description}</p>
                           </div>
                           
-                          <div>
-                            <h4 className="font-medium mb-1">Obtenu le</h4>
-                            <p className="text-gray-600">{formatDate(badgeData.earnedAt)}</p>
-                          </div>
-                          
-                          {badgeData.reason && (
-                            <div>
-                              <h4 className="font-medium mb-1">Raison</h4>
-                              <p className="text-gray-600">{badgeData.reason}</p>
+                          {badge.isEarned && badge.userBadgeData ? (
+                            <>
+                              <div>
+                                <h4 className="font-medium mb-1">Obtenu le</h4>
+                                <p className="text-gray-600">{formatDate(badge.userBadgeData.earnedAt)}</p>
+                              </div>
+                              
+                              {badge.userBadgeData.reason && (
+                                <div>
+                                  <h4 className="font-medium mb-1">Raison</h4>
+                                  <p className="text-gray-600">{badge.userBadgeData.reason}</p>
+                                </div>
+                              )}
+                              
+                              <div>
+                                <h4 className="font-medium mb-1">Visibilité</h4>
+                                <div className="flex items-center gap-2">
+                                  {badge.userBadgeData.isVisible ? (
+                                    <>
+                                      <Eye className="h-4 w-4 text-green-600" />
+                                      <span className="text-green-600">Visible sur le profil</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <EyeOff className="h-4 w-4 text-gray-500" />
+                                      <span className="text-gray-500">Masqué sur le profil</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <h4 className="font-medium mb-2 text-gray-700">💡 Comment l'obtenir ?</h4>
+                              <p className="text-gray-600 text-sm">
+                                {getHowToEarnMessage(badge.title, badge.category)}
+                              </p>
                             </div>
                           )}
-                          
-                          <div>
-                            <h4 className="font-medium mb-1">Statut</h4>
-                            <div className="flex items-center gap-2">
-                              {badgeData.isVisible ? (
-                                <>
-                                  <Eye className="h-4 w-4 text-green-600" />
-                                  <span className="text-green-600">Visible sur le profil</span>
-                                </>
-                              ) : (
-                                <>
-                                  <EyeOff className="h-4 w-4 text-gray-500" />
-                                  <span className="text-gray-500">Masqué sur le profil</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
                         </div>
                       </DialogContent>
                     </Dialog>

@@ -66,11 +66,22 @@ interface UserData {
   };
 }
 
-interface ProfileContentProps {
-  user: UserData;
+interface Badge {
+  id: string;
+  title: string;
+  description: string;
+  iconUrl?: string;
+  color?: string;
+  category: string;
+  rarity: string;
 }
 
-export default function ProfileContent({ user }: ProfileContentProps) {
+interface ProfileContentProps {
+  user: UserData;
+  allBadges: Badge[];
+}
+
+export default function ProfileContent({ user, allBadges }: ProfileContentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState(user);
 
@@ -346,7 +357,7 @@ export default function ProfileContent({ user }: ProfileContentProps) {
         </TabsContent>
         
         <TabsContent value="badges">
-          <BadgeCollection badges={userData.badges} />
+          <BadgeCollection userBadges={userData.badges} allBadges={allBadges} />
         </TabsContent>
         
         <TabsContent value="edit">
