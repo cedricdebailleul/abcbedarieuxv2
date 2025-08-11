@@ -53,6 +53,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import EditUserDialog from "./edit-user-dialog";
 
 interface User {
   id: string;
@@ -192,15 +193,18 @@ export default function UsersTable() {
   // Bannir/débannir un utilisateur
   const handleToggleBan = async (user: User) => {
     try {
-      const response = await fetch(`/api/admin/users/${user.id}`, {
+      console.log("Debug - user.status:", user.status, "user.banned:", user.banned);
+      const isBanned = user.status === "BANNED";
+      const newBannedState = !isBanned;
+      
+      const response = await fetch(`/api/admin/users/${user.id}/ban`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          banned: !user.banned,
-          status: user.banned ? "ACTIVE" : "BANNED",
-          banReason: user.banned ? null : "Banni par l'administrateur",
+          banned: newBannedState,
+          banReason: newBannedState ? "Banni par l'administrateur" : undefined,
         }),
       });
 
@@ -209,10 +213,11 @@ export default function UsersTable() {
         throw new Error(error.error || "Erreur lors de la modification");
       }
 
-      toast.success(user.banned ? "Utilisateur débanni" : "Utilisateur banni");
+      const result = await response.json();
+      toast.success(result.message);
       fetchUsers(); // Recharger la liste
     } catch (error) {
-      console.error("Erreur:", error);
+      console.error("Erreur lors du bannissement/débannissement:", error);
       toast.error(error instanceof Error ? error.message : "Erreur lors de la modification");
     }
   };
@@ -406,18 +411,18 @@ export default function UsersTable() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/dashboard/admin/users/${user.id}`)}
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Modifier
-                        </DropdownMenuItem>
+                        <EditUserDialog user={user} onSuccess={fetchUsers}>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Modifier
+                          </DropdownMenuItem>
+                        </EditUserDialog>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => handleToggleBan(user)}
-                          className={user.banned ? "text-green-600" : "text-orange-600"}
+                          className={user.status === "BANNED" ? "text-green-600" : "text-orange-600"}
                         >
-                          {user.banned ? (
+                          {user.status === "BANNED" ? (
                             <>
                               <UserCheck className="mr-2 h-4 w-4" />
                               Débannir

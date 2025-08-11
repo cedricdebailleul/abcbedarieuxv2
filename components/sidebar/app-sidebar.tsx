@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import Logo from "../logo";
+import { authClient } from "@/lib/auth-client";
 
 const data = {
   navMain: [
@@ -76,6 +77,21 @@ const data = {
       title: "Membres",
       url: "/dashboard/members",
       icon: IconUsers,
+    },
+    {
+      title: "Administration",
+      url: "#",
+      icon: IconSettings,
+      items: [
+        {
+          title: "Utilisateurs",
+          url: "/dashboard/admin/users",
+        },
+        {
+          title: "Invitations",
+          url: "/dashboard/admin/invitations",
+        },
+      ],
     },
   ],
   navClouds: [
@@ -163,6 +179,17 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: session } = authClient.useSession();
+  
+  // Filtrer les items de navigation selon le rôle utilisateur
+  const filteredNavMain = data.navMain.filter(item => {
+    // Si c'est le menu Administration, ne l'afficher que pour les admins, modérateurs et éditeurs
+    if (item.title === "Administration") {
+      return session?.user?.role && ["admin", "moderator", "editor"].includes(session.user.role);
+    }
+    return true;
+  });
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -181,7 +208,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavMain} />
         <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

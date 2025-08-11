@@ -1,15 +1,14 @@
 import { Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Users } from "lucide-react";
-import UsersTable from "./_components/users-table";
-import InviteUserDialog from "./_components/invite-user-dialog";
-import UsersStats from "./_components/users-stats";
+import { Plus, Mail, Clock, CheckCircle, XCircle } from "lucide-react";
+import InvitationsTable from "./_components/invitations-table";
+import InviteUserDialog from "../users/_components/invite-user-dialog";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
-export default async function AdminUsersPage() {
+export default async function AdminInvitationsPage() {
   // Vérifier les permissions d'administration - la session est garantie par le layout
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -26,16 +25,16 @@ export default async function AdminUsersPage() {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Gestion des utilisateurs
+            Gestion des invitations
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gérez les utilisateurs, invitations et permissions
+            Gérez les invitations en attente, expirées et validées
           </p>
         </div>
         <InviteUserDialog>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Inviter un utilisateur
+            Nouvelle invitation
           </Button>
         </InviteUserDialog>
       </div>
@@ -43,24 +42,24 @@ export default async function AdminUsersPage() {
       {/* Statistiques */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Suspense fallback={<StatsCardSkeleton />}>
-          <UsersStats />
+          <StatsCards />
         </Suspense>
       </div>
 
-      {/* Tableau des utilisateurs */}
+      {/* Tableau des invitations */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Utilisateurs
+            <Mail className="h-5 w-5" />
+            Invitations
           </CardTitle>
           <CardDescription>
-            Liste de tous les utilisateurs de la plateforme
+            Toutes les invitations envoyées et leur statut
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Suspense fallback={<UsersTableSkeleton />}>
-            <UsersTable />
+          <Suspense fallback={<InvitationsTableSkeleton />}>
+            <InvitationsTable />
           </Suspense>
         </CardContent>
       </Card>
@@ -68,73 +67,65 @@ export default async function AdminUsersPage() {
   );
 }
 
-async function StatsCards() {
-  // Ces requêtes pourraient être mises en cache ou optimisées
-  const stats = {
-    totalUsers: 0,
-    activeUsers: 0,
-    newUsersThisMonth: 0,
-    bannedUsers: 0,
-  };
-
+function StatsCards() {
   return (
     <>
-      <Card>
+      <Card data-stat-card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            Total utilisateurs
+            En attente
           </CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
+          <Clock className="h-4 w-4 text-orange-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.totalUsers}</div>
+          <div className="text-2xl font-bold text-orange-600">0</div>
           <p className="text-xs text-muted-foreground">
-            Tous les utilisateurs
+            Invitations actives
           </p>
         </CardContent>
       </Card>
       
-      <Card>
+      <Card data-stat-card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            Utilisateurs actifs
+            Validées
           </CardTitle>
-          <div className="h-2 w-2 bg-green-500 rounded-full" />
+          <CheckCircle className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.activeUsers}</div>
+          <div className="text-2xl font-bold text-green-600">0</div>
           <p className="text-xs text-muted-foreground">
-            Statut actif
+            Comptes créés
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-stat-card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            Nouveaux ce mois
+            Expirées
           </CardTitle>
-          <div className="h-2 w-2 bg-blue-500 rounded-full" />
+          <XCircle className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.newUsersThisMonth}</div>
+          <div className="text-2xl font-bold text-red-600">0</div>
           <p className="text-xs text-muted-foreground">
-            Inscriptions récentes
+            Non utilisées
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-stat-card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            Utilisateurs bannis
+            Total
           </CardTitle>
-          <div className="h-2 w-2 bg-red-500 rounded-full" />
+          <Mail className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.bannedUsers}</div>
+          <div className="text-2xl font-bold text-blue-600">0</div>
           <p className="text-xs text-muted-foreground">
-            Comptes suspendus
+            Toutes invitations
           </p>
         </CardContent>
       </Card>
@@ -157,7 +148,7 @@ function StatsCardSkeleton() {
   );
 }
 
-function UsersTableSkeleton() {
+function InvitationsTableSkeleton() {
   return (
     <div className="p-6">
       <div className="space-y-3">
@@ -165,8 +156,8 @@ function UsersTableSkeleton() {
           <div key={i} className="flex items-center space-x-4">
             <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse" />
             <div className="space-y-2 flex-1">
-              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
-              <div className="h-3 w-48 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+              <div className="h-3 w-32 bg-gray-200 rounded animate-pulse" />
             </div>
             <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
             <div className="h-8 w-20 bg-gray-200 rounded animate-pulse" />

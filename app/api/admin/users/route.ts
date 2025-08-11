@@ -28,13 +28,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Vérifier que l'utilisateur est admin
+    // Vérifier que l'utilisateur a les permissions d'administration
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { role: true },
     });
 
-    if (user?.role !== "admin") {
+    if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
       return NextResponse.json(
         { error: "Permissions insuffisantes" },
         { status: 403 }

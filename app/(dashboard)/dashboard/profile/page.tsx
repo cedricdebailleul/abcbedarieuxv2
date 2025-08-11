@@ -5,14 +5,10 @@ import { headers } from "next/headers";
 import ProfileContent from "./_components/profile-content";
 
 export default async function ProfilePage() {
-  // Vérifier l'authentification
+  // La session est garantie par le layout parent
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-
-  if (!session?.user) {
-    redirect("/auth/signin");
-  }
 
   // Récupérer les données complètes de l'utilisateur et tous les badges
   const [user, allBadges] = await Promise.all([
@@ -49,7 +45,7 @@ export default async function ProfilePage() {
   ]);
 
   if (!user) {
-    redirect("/auth/signin");
+    redirect("/login");
   }
 
   return <ProfileContent user={user} allBadges={allBadges} />;

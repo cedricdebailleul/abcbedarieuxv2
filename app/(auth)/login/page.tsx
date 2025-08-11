@@ -4,20 +4,36 @@ import { LoginForm } from "@/components/forms/auth-forms";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signIn } from "@/lib/auth-client";
-import { Github } from "lucide-react";
+import { Github, CheckCircle } from "lucide-react";
 import { AnimatedContainer } from "@/components/animations/animated-container";
 import { ButtonSocial } from "./_components/buttonSocial";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Connexion | MonApp",
   description: "Connectez-vous à votre compte MonApp",
 };
 
-export default function LoginPage() {
+function AccountCreatedMessage() {
+  return (
+    <Alert className="border-green-200 bg-green-50">
+      <CheckCircle className="h-4 w-4 text-green-600" />
+      <AlertDescription className="text-green-700">
+        🎉 Votre compte a été créé avec succès ! Vous pouvez maintenant vous connecter.
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+  const resolvedSearchParams = await searchParams;
   return (
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
       <AnimatedContainer className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
+        {resolvedSearchParams.message === "account-created" && <AccountCreatedMessage />}
+        
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Connexion</CardTitle>

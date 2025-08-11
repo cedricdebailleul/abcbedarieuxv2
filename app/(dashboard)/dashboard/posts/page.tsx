@@ -148,23 +148,7 @@ interface PostsPageProps {
 
 export default async function PostsPage({ searchParams: searchParamsPromise }: PostsPageProps) {
   const searchParams = await searchParamsPromise;
-  // Vérifier l'authentification
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  // Vérifier les permissions (au moins user pour voir ses propres posts)
-  const canCreatePosts =
-    !!session.user.role &&
-    ["admin", "editor", "user"].includes(session.user.role);
-  const canManageAllPosts =
-    !!session.user.role && ["admin", "editor"].includes(session.user.role);
-
-  if (!canCreatePosts) {
-    redirect("/dashboard");
-  }
+  // La session est garantie par le layout parent, pas besoin de vérifier à nouveau
 
   return (
     <div className="flex flex-col gap-6">

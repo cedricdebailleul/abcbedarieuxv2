@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import ProfileEditForm from "./profile-edit-form";
 import BadgeCollection from "./badge-collection";
+import EmailVerification from "./email-verification";
 
 interface UserData {
   id: string;
@@ -32,30 +33,30 @@ interface UserData {
   status: string;
   slug?: string | null;
   createdAt: string | Date;
-  lastLoginAt?: string;
+  lastLoginAt?: string | Date | null;
   profile?: {
-    firstname?: string;
-    lastname?: string;
-    bio?: string;
-    phone?: string;
-    address?: string;
-    language?: string;
-    timezone?: string;
+    firstname?: string | null;
+    lastname?: string | null;
+    bio?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    language?: string | null;
+    timezone?: string | null;
     isPublic: boolean;
     showEmail: boolean;
     showPhone: boolean;
-  };
+  } | null;
   badges: Array<{
     id: string;
-    earnedAt: string;
+    earnedAt: string | Date;
     reason?: string;
     isVisible: boolean;
     badge: {
       id: string;
       title: string;
       description: string;
-      iconUrl?: string;
-      color?: string;
+      iconUrl?: string | null;
+      color?: string | null;
       category: string;
       rarity: string;
     };
@@ -70,8 +71,8 @@ interface Badge {
   id: string;
   title: string;
   description: string;
-  iconUrl?: string;
-  color?: string;
+  iconUrl?: string | null;
+  color?: string | null;
   category: string;
   rarity: string;
 }
@@ -308,6 +309,16 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                     </Badge>
                   </div>
                 </div>
+              </div>
+              
+              {/* Vérification de l'email */}
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-3">Sécurité du compte</h4>
+                <EmailVerification 
+                  isEmailVerified={userData.emailVerified}
+                  email={userData.email}
+                  onEmailVerified={() => window.location.reload()}
+                />
               </div>
             </CardContent>
           </Card>

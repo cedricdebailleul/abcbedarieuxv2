@@ -4,17 +4,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp } from "@/lib/animations";
 import { CreateUserSchema, LoginSchema } from "@/types";
-import { FormFieldWrapper } from "../ui/form-field";
 import { signInAction, signUpAction } from "@/actions/auth";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -109,6 +110,7 @@ export function RegisterForm() {
 }
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
@@ -121,23 +123,28 @@ export function LoginForm() {
   async function onSubmit(data: z.infer<typeof LoginSchema>) {
     setIsLoading(true);
 
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, value as string);
-    });
-
-    const result = await signInAction(formData);
-
-    if (result?.errors) {
-      Object.entries(result.errors).forEach(([field, messages]) => {
-        if (field === "general") {
-          toast.error(messages[0]);
-        } else {
-          form.setError(field as any, {
-            message: messages[0],
-          });
-        }
+    try {
+      console.log("LoginForm - Tentative de connexion avec client Better Auth");
+      
+      // Utiliser le client Better Auth directement
+      const result = await authClient.signIn.email({
+        email: data.email,
+        password: data.password,
       });
+
+      console.log("LoginForm - Résultat connexion client:", result);
+
+      if (result.error) {
+        console.log("LoginForm - Erreur:", result.error);
+        toast.error("Email ou mot de passe incorrect");
+      } else {
+        console.log("LoginForm - Connexion réussie, redirection vers dashboard");
+        toast.success("Connexion réussie");
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error("LoginForm - Erreur lors de la connexion:", error);
+      toast.error("Erreur lors de la connexion");
     }
 
     setIsLoading(false);
@@ -147,13 +154,33 @@ export function LoginForm() {
     <motion.div variants={fadeInUp} initial="initial" animate="animate">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormFieldWrapper form={form} name="email" label="Email">
-            <Input type="email" placeholder="john@example.com" />
-          </FormFieldWrapper>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="john@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          <FormFieldWrapper form={form} name="password" label="Mot de passe">
-            <Input type="password" placeholder="••••••••" />
-          </FormFieldWrapper>
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mot de passe</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Connexion..." : "Se connecter"}

@@ -12,7 +12,7 @@ export const UserSchema = z.object({
 });
 
 export const CreateUserSchema = z.object({
-  email: z.email().min(1, "Email invalide"),
+  email: z.string().min(1, "Email requis").email("Format d'email invalide"),
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   password: z
     .string()
@@ -24,12 +24,12 @@ export const CreateUserSchema = z.object({
 
 // Auth schemas
 export const LoginSchema = z.object({
-  email: z.email().min(1, "Email invalide"),
+  email: z.string().min(1, "Email requis").email("Format d'email invalide"),
   password: z.string().min(1, "Mot de passe requis"),
 });
 
 export const MagicLinkSchema = z.object({
-  email: z.email().min(1, "Email invalide"),
+  email: z.string().min(1, "Email requis").email("Format d'email invalide"),
 });
 
 // Post schemas

@@ -11,9 +11,8 @@ import { Eye, EyeOff, CheckCircle } from "lucide-react";
 import { z } from "zod";
 
 const acceptInvitationSchema = z.object({
-  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-  firstname: z.string().optional(),
-  lastname: z.string().optional(),
+  firstname: z.string().min(1, "Le prénom est obligatoire"),
+  lastname: z.string().min(1, "Le nom est obligatoire"),
   password: z.string()
     .min(8, "Le mot de passe doit contenir au moins 8 caractères")
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre"),
@@ -32,7 +31,6 @@ export default function AcceptInvitationPage() {
   const role = searchParams.get("role") as "user" | "admin" | "moderator" | "dpo" | "editor";
 
   const [formData, setFormData] = useState({
-    name: "",
     firstname: "",
     lastname: "",
     password: "",
@@ -103,10 +101,14 @@ export default function AcceptInvitationPage() {
 
       setSuccess(true);
       
-      // Rediriger vers la page de connexion après 2 secondes
+      // Rediriger vers la page de validation avec feu d'artifice
       setTimeout(() => {
-        router.push("/auth/signin?message=account-created");
-      }, 2000);
+        const params = new URLSearchParams({
+          name: validatedData.name,
+          email: email,
+        });
+        router.push(`/account-created?${params.toString()}`);
+      }, 1000);
 
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -166,45 +168,38 @@ export default function AcceptInvitationPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nom d'utilisateur *</Label>
-              <Input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="john_doe"
-                className={errors.name ? "border-red-500" : ""}
-                disabled={loading}
-                required
-              />
-              {errors.name && (
-                <p className="text-sm text-red-500">{errors.name}</p>
-              )}
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstname">Prénom</Label>
+                <Label htmlFor="firstname">Prénom *</Label>
                 <Input
                   id="firstname"
                   type="text"
                   value={formData.firstname}
                   onChange={(e) => setFormData({ ...formData, firstname: e.target.value })}
                   placeholder="John"
+                  className={errors.firstname ? "border-red-500" : ""}
                   disabled={loading}
+                  required
                 />
+                {errors.firstname && (
+                  <p className="text-sm text-red-500">{errors.firstname}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastname">Nom</Label>
+                <Label htmlFor="lastname">Nom *</Label>
                 <Input
                   id="lastname"
                   type="text"
                   value={formData.lastname}
                   onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
                   placeholder="Doe"
+                  className={errors.lastname ? "border-red-500" : ""}
                   disabled={loading}
+                  required
                 />
+                {errors.lastname && (
+                  <p className="text-sm text-red-500">{errors.lastname}</p>
+                )}
               </div>
             </div>
 

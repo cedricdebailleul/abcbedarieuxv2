@@ -263,6 +263,19 @@ export async function getPostsAction(
   filters: PostFilters
 ): Promise<ActionResult<{ posts: any[]; total: number; pages: number }>> {
   try {
+    // Vérifier l'authentification et les permissions
+    const session = await auth.api.getSession({ headers: await headers() });
+
+    if (!session) {
+      return {
+        success: false,
+        error: "Non authentifié",
+      };
+    }
+
+    const user = session.user;
+    const canSeeAll = user.role === "admin" || user.role === "editor";
+
     // Nettoyer les filtres avant validation
     const cleanFilters = {
       ...filters,
@@ -287,8 +300,10 @@ export async function getPostsAction(
       published,
     } = validatedFilters;
 
-    // Construire les conditions de filtre
-    const whereClause: Prisma.PostWhereInput = {};
+    // Construire les conditions de filtre avec permissions
+    const whereClause: Prisma.PostWhereInput = canSeeAll
+      ? {} // Admins et éditeurs voient tout
+      : { authorId: user.id }; // Utilisateurs voient seulement leurs articles
 
     if (search) {
       whereClause.OR = [
@@ -318,7 +333,9 @@ export async function getPostsAction(
       };
     }
 
-    if (authorId && authorId !== "") {
+    // Pour les utilisateurs normaux, on garde leur filtre de sécurité
+    // Seuls les admins/éditeurs peuvent filtrer par un autre auteur
+    if (authorId && authorId !== "" && canSeeAll) {
       whereClause.authorId = authorId;
     }
 
@@ -1058,11 +1075,12 @@ export async function createCategoryAction(
 
     const user = session.user;
 
-    // Seuls les admins et éditeurs peuvent créer des catégories
-    if (!user.role || !["admin", "editor"].includes(user.role)) {
+    // Tous les utilisateurs authentifiés peuvent créer des catégories
+    // (Pour organiser leurs propres articles)
+    if (!user.role) {
       return {
         success: false,
-        error: "Permissions insuffisantes",
+        error: "Permissions insuffisantes - rôle utilisateur requis",
       };
     }
 
@@ -1144,11 +1162,12 @@ export async function createTagsAction(input: {
 
     const user = session.user;
 
-    // Seuls les admins et éditeurs peuvent créer des tags
-    if (!user.role || !["admin", "editor"].includes(user.role)) {
+    // Tous les utilisateurs authentifiés peuvent créer des tags
+    // (Pour organiser leurs propres articles)
+    if (!user.role) {
       return {
         success: false,
-        error: "Permissions insuffisantes",
+        error: "Permissions insuffisantes - rôle utilisateur requis",
       };
     }
 
