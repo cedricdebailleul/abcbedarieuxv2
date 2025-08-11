@@ -1,12 +1,10 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@/lib/generated/prisma";
+import { prisma } from "./prisma";
 import { magicLink } from "better-auth/plugins/magic-link";
 import { emailOTP } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { sendEmailOTP } from "./mailer";
-
-const prisma = new PrismaClient();
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {

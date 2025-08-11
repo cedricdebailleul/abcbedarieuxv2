@@ -52,6 +52,10 @@ model User {
   // RGPD et confidentialité
   dataRetention DateTime? // Date d'expiration des données
   deletedAt     DateTime? // Soft delete
+  places        Place[]    @relation("PlaceOwner")
+  reviews       Review[]
+  favorites     Favorite[]
+  placeClaims   PlaceClaim[]
 
   // Index pour les performances
   @@unique([email])
@@ -306,8 +310,8 @@ model Post {
   tags       PostTag[]
 
   // Image de couverture
-  coverImage      String?
-  
+  coverImage String?
+
   // SEO amélioré
   metaTitle       String?
   metaDescription String? @db.VarChar(160) // Limite SEO
@@ -381,6 +385,191 @@ model PostTag {
   @@index([postId])
   @@index([tagId])
   @@map("post_tags")
+}
+
+// ============================================================
+//                    ÉTAPE 1 : PLACES CORE (MVP)
+// ============================================================
+
+model Place {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  type        PlaceType
+  category    String? // Sous-catégorie libre pour flexibilité
+  description String?   @db.Text
+  summary     String?   @db.VarChar(280) // Pour partage Twitter
+
+  // Statut
+  status     PlaceStatus @default(DRAFT)
+  isVerified Boolean     @default(false)
+  isActive   Boolean     @default(true)
+  isFeatured Boolean     @default(false)
+
+  // Google Business Integration
+  googlePlaceId      String?   @unique // Place ID de Google
+  googleMapsUrl      String? // URL Google Maps
+  googleBusinessData Json? // Données cachées de Google My Business
+  lastGoogleSync     DateTime? // Dernière synchro
+
+  // Propriétaire
+  ownerId   String?
+  owner     User?     @relation("PlaceOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  claimedAt DateTime? // Date de revendication
+
+  // Contact principal
+  email   String?
+  phone   String?
+  website String?
+
+  // Localisation (requis pour Google Places)
+  street       String
+  streetNumber String?
+  postalCode   String
+  city         String
+  latitude     Float?
+  longitude    Float?
+
+  // Réseaux sociaux pour partage
+  facebook  String?
+  instagram String?
+  twitter   String?
+  linkedin  String?
+  tiktok    String?
+
+  // Médias
+  logo       String?
+  coverImage String?
+  images     Json? // ["url1", "url2"] pour MVP
+
+  // SEO & Partage social
+  metaTitle       String? @db.VarChar(60)
+  metaDescription String? @db.VarChar(160)
+  ogImage         String? // Image pour partage réseaux sociaux
+
+  // Statistiques
+  viewCount   Int    @default(0)
+  shareCount  Int    @default(0)
+  rating      Float? @default(0)
+  reviewCount Int    @default(0)
+
+  // Relations MVP
+  openingHours OpeningHours[]
+  reviews      Review[]
+  favorites    Favorite[]
+  claims       PlaceClaim[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([type])
+  @@index([status])
+  @@index([googlePlaceId])
+  @@index([postalCode, city])
+  @@index([latitude, longitude])
+  @@map("places")
+}
+
+// ============================================================
+//                    HORAIRES D'OUVERTURE
+// ============================================================
+
+model OpeningHours {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  dayOfWeek DayOfWeek
+  openTime  String // Format "HH:MM"
+  closeTime String // Format "HH:MM"
+  isClosed  Boolean   @default(false)
+
+  @@unique([placeId, dayOfWeek])
+  @@index([placeId])
+  @@map("opening_hours")
+}
+
+// ============================================================
+//                    AVIS GOOGLE-LIKE
+// ============================================================
+
+model Review {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating  Int // 1-5 étoiles
+  comment String? @db.Text
+
+  // Import Google Reviews
+  googleReviewId String? @unique
+  isGoogleReview Boolean @default(false)
+
+  // Réponse propriétaire
+  response    String?   @db.Text
+  respondedAt DateTime?
+
+  status ReviewStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([placeId, userId])
+  @@index([placeId])
+  @@index([userId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+// ============================================================
+//                    FAVORIS UTILISATEURS
+// ============================================================
+
+model Favorite {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, placeId])
+  @@index([userId])
+  @@index([placeId])
+  @@map("favorites")
+}
+
+// ============================================================
+//                    REVENDICATIONS DE PLACES
+// ============================================================
+
+model PlaceClaim {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  message String @db.Text // Message de revendication
+  proof   String? // URL vers une preuve (document, photo, etc.)
+  status  ClaimStatus @default(PENDING)
+
+  // Admin qui traite la demande
+  processedBy   String?
+  processedAt   DateTime?
+  adminMessage  String? // Message de l'admin lors du traitement
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([placeId])
+  @@index([userId])
+  @@index([status])
+  @@map("place_claims")
 }
 
 // ============================================================
@@ -483,5 +672,53 @@ enum PostStatus {
   PENDING_REVIEW
   PUBLISHED
   ARCHIVED
+  REJECTED
+}
+
+enum PlaceType {
+  COMMERCE
+  SERVICE
+  RESTAURANT
+  ARTISAN
+  ADMINISTRATION
+  MUSEUM
+  TOURISM
+  PARK
+  LEISURE
+  ASSOCIATION
+  HEALTH
+  EDUCATION
+  TRANSPORT
+  ACCOMMODATION
+  OTHER
+}
+
+enum PlaceStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  INACTIVE
+  CLOSED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
   REJECTED
 }
