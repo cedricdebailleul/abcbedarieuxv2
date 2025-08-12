@@ -176,6 +176,16 @@ function AdminPlacesContent() {
             Gérez et validez les places du répertoire
           </p>
         </div>
+        
+        <Link 
+          href="/dashboard/admin/places/new"
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Créer une place
+        </Link>
 
         {pendingCount > 0 && (
           <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg">
@@ -282,10 +292,14 @@ function AdminPlacesContent() {
                           {place.street}
                         </p>
 
-                        {place.owner && (
+                        {place.owner ? (
                           <p className="text-sm text-gray-500">
                             Propriétaire: {place.owner.name} (
                             {place.owner.email})
+                          </p>
+                        ) : (
+                          <p className="text-sm text-orange-600 font-medium">
+                            🔓 Sans propriétaire - Peut être revendiquée
                           </p>
                         )}
 

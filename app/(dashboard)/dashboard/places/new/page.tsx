@@ -23,12 +23,13 @@ export default function NewPlacePage() {
       }
 
       const result = await response.json();
-      
-      toast.success("Place créée avec succès! Elle sera vérifiée par un administrateur.");
-      
+
+      toast.success(
+        "Place créée avec succès! Elle sera vérifiée par un administrateur."
+      );
+
       // Rediriger vers la liste des places
       router.push("/dashboard/places");
-      
     } catch (error: any) {
       console.error("Erreur:", error);
       toast.error(error.message || "Erreur lors de la création de la place");
@@ -44,22 +45,38 @@ export default function NewPlacePage() {
           Créer une nouvelle place
         </h1>
         <p className="text-gray-600 mt-2">
-          Ajoutez votre établissement au répertoire local. Votre place sera vérifiée par un administrateur avant publication.
+          Ajoutez votre établissement au répertoire local. Votre place sera
+          vérifiée par un administrateur avant publication.
         </p>
       </div>
 
       {/* Informations importantes */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex">
-          <svg className="w-6 h-6 text-blue-600 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="w-6 h-6 text-blue-600 mr-3 mt-0.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <div>
             <h3 className="text-blue-900 font-medium">À savoir</h3>
             <ul className="text-blue-800 text-sm mt-2 space-y-1">
-              <li>• Votre place sera en attente de validation après création</li>
+              <li>
+                • Votre place sera en attente de validation après création
+              </li>
               <li>• Vous recevrez un email une fois la validation effectuée</li>
-              <li>• Utilisez la recherche Google pour importer automatiquement les informations</li>
+              <li>
+                • Utilisez la recherche Google pour importer automatiquement les
+                informations
+              </li>
               <li>• Tous les champs marqués d'un * sont obligatoires</li>
             </ul>
           </div>
@@ -68,10 +85,7 @@ export default function NewPlacePage() {
 
       {/* Formulaire */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <PlaceForm
-          mode="create"
-          onSubmit={handleSubmit}
-        />
+        <PlaceForm mode="create" onSubmit={handleSubmit} userRole="user" />
       </div>
     </div>
   );

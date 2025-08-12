@@ -92,8 +92,8 @@ export default function FooterSection() {
   ];
 
   return (
-    <footer ref={ref} className="bg-gray-900 text-white mt-16">
-      <div className="mx-auto px-8 py-12">
+    <footer ref={ref} className="bg-gray-900 text-white mt-16 px-8 mx-auto">
+      <div className="py-12">
         <motion.div
           className="grid lg:grid-cols-2 gap-12 items-start"
           variants={containerVariants}

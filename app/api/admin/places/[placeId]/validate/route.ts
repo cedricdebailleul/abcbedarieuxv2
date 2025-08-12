@@ -20,7 +20,7 @@ export async function POST(
     const session = await auth.api.getSession({
       headers: request.headers,
     });
-    const { placeId } = params;
+    const { placeId } = await params;
     
     if (!session?.user || session.user.role !== "admin") {
       return NextResponse.json(

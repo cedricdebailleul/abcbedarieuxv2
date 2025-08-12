@@ -101,13 +101,13 @@ export default function AcceptInvitationPage() {
 
       setSuccess(true);
       
-      // Rediriger vers la page de validation avec feu d'artifice
+      // Rediriger vers le dashboard si l'utilisateur a été automatiquement connecté
       setTimeout(() => {
-        const params = new URLSearchParams({
-          name: validatedData.name,
-          email: email,
-        });
-        router.push(`/account-created?${params.toString()}`);
+        if (data.autoSignedIn) {
+          router.push('/dashboard');
+        } else {
+          router.push('/login?message=Compte créé, veuillez vous connecter');
+        }
       }, 1000);
 
     } catch (error) {
@@ -135,7 +135,7 @@ export default function AcceptInvitationPage() {
               Compte créé avec succès !
             </h2>
             <p className="text-gray-600 mb-4">
-              Votre compte a été créé. Vous allez être redirigé vers la page de connexion.
+              Votre compte a été créé et vous êtes maintenant connecté(e). Redirection vers le dashboard...
             </p>
           </CardContent>
         </Card>

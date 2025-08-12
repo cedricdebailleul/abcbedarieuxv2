@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlaceForm } from "@/components/forms/place-form";
 import { toast } from "sonner";
+import { PlaceForm } from "@/components/forms/place-form";
+import { useSession } from "@/hooks/use-session";
 
 interface Place {
   id: string;
@@ -30,6 +31,9 @@ interface Place {
   googleMapsUrl?: string;
   metaTitle?: string;
   metaDescription?: string;
+  logo?: string;
+  coverImage?: string;
+  images?: any; // JSON field contenant les images sauvegardées
   googleBusinessData?: {
     openingHours?: any[];
     images?: string[];
@@ -42,17 +46,33 @@ interface Place {
   };
 }
 
-export default function EditPlacePage({ params }: { params: { placeId: string } }) {
+export default function EditPlacePage({
+  params,
+}: {
+  params: Promise<{ placeId: string }>;
+}) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [placeId, setPlaceId] = useState<string>("");
 
   useEffect(() => {
+    const resolveParams = async () => {
+      const resolvedParams = await params;
+      setPlaceId(resolvedParams.placeId);
+    };
+    resolveParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!placeId) return;
+
     const fetchPlace = async () => {
       try {
-        const response = await fetch(`/api/places/${params.placeId}`);
-        
+        const response = await fetch(`/api/places/${placeId}`);
+
         if (!response.ok) {
           if (response.status === 404) {
             setError("Place non trouvée");
@@ -76,11 +96,11 @@ export default function EditPlacePage({ params }: { params: { placeId: string } 
     };
 
     fetchPlace();
-  }, [params.placeId]);
+  }, [placeId]);
 
   const handleSubmit = async (data: any) => {
     try {
-      const response = await fetch(`/api/places/${params.placeId}`, {
+      const response = await fetch(`/api/places/${placeId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -94,20 +114,23 @@ export default function EditPlacePage({ params }: { params: { placeId: string } 
       }
 
       const result = await response.json();
-      
+
       // Si la place repasse en PENDING, informer l'utilisateur
       if (result.place.status === "PENDING" && place?.status === "ACTIVE") {
-        toast.success("Place mise à jour! Elle sera re-vérifiée par un administrateur.");
+        toast.success(
+          "Place mise à jour! Elle sera re-vérifiée par un administrateur."
+        );
       } else {
         toast.success("Place mise à jour avec succès!");
       }
-      
+
       // Rediriger vers la liste des places
       router.push("/dashboard/places");
-      
     } catch (error: any) {
       console.error("Erreur:", error);
-      toast.error(error.message || "Erreur lors de la modification de la place");
+      toast.error(
+        error.message || "Erreur lors de la modification de la place"
+      );
       throw error; // Re-lancer pour que le PlaceForm gère l'état de loading
     }
   };
@@ -123,8 +146,18 @@ export default function EditPlacePage({ params }: { params: { placeId: string } 
   if (error) {
     return (
       <div className="text-center py-12">
-        <svg className="w-16 h-16 text-red-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          className="w-16 h-16 text-red-300 mx-auto mb-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1}
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Erreur</h1>
         <p className="text-gray-600 mb-6">{error}</p>
@@ -142,8 +175,23 @@ export default function EditPlacePage({ params }: { params: { placeId: string } 
     return null;
   }
 
+  // Fonction helper pour parser les images
+  const parseImages = (images: any): string[] => {
+    if (!images) return [];
+    if (Array.isArray(images)) return images;
+    try {
+      if (typeof images === 'string') {
+        return JSON.parse(images);
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  };
+
   // Préparer les données initiales pour le formulaire
   const initialData = {
+    id: place.id, // Ajout de l'ID pour l'import des avis
     name: place.name,
     type: place.type,
     category: place.category || "",
@@ -167,28 +215,42 @@ export default function EditPlacePage({ params }: { params: { placeId: string } 
     googleMapsUrl: place.googleMapsUrl || "",
     metaTitle: place.metaTitle || "",
     metaDescription: place.metaDescription || "",
+    // Images et logo
+    logo: place.logo || "",
+    coverImage: place.coverImage || "",
+    // Images sauvegardées en base de données (priorité sur Google Business)
+    images: parseImages(place.images) || place.googleBusinessData?.images || [],
     // Données Google Business
     openingHours: place.googleBusinessData?.openingHours || [],
-    images: place.googleBusinessData?.images || [],
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "ACTIVE": return "Actif";
-      case "PENDING": return "En attente de validation";
-      case "DRAFT": return "Brouillon";
-      case "INACTIVE": return "Inactif";
-      default: return status;
+      case "ACTIVE":
+        return "Actif";
+      case "PENDING":
+        return "En attente de validation";
+      case "DRAFT":
+        return "Brouillon";
+      case "INACTIVE":
+        return "Inactif";
+      default:
+        return status;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "ACTIVE": return "text-green-700 bg-green-100";
-      case "PENDING": return "text-yellow-700 bg-yellow-100";
-      case "DRAFT": return "text-gray-700 bg-gray-100";
-      case "INACTIVE": return "text-red-700 bg-red-100";
-      default: return "text-gray-700 bg-gray-100";
+      case "ACTIVE":
+        return "text-green-700 bg-green-100";
+      case "PENDING":
+        return "text-yellow-700 bg-yellow-100";
+      case "DRAFT":
+        return "text-gray-700 bg-gray-100";
+      case "INACTIVE":
+        return "text-red-700 bg-red-100";
+      default:
+        return "text-gray-700 bg-gray-100";
     }
   };
 
@@ -205,7 +267,11 @@ export default function EditPlacePage({ params }: { params: { placeId: string } 
               Modifiez les informations de votre établissement
             </p>
           </div>
-          <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(place.status)}`}>
+          <span
+            className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
+              place.status
+            )}`}
+          >
             {getStatusText(place.status)}
           </span>
         </div>
@@ -215,14 +281,25 @@ export default function EditPlacePage({ params }: { params: { placeId: string } 
       {place.status === "ACTIVE" && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex">
-            <svg className="w-6 h-6 text-yellow-600 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-6 h-6 text-yellow-600 mr-3 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <div>
               <h3 className="text-yellow-900 font-medium">Attention</h3>
               <p className="text-yellow-800 text-sm mt-1">
-                Cette place est actuellement active. Toute modification nécessitera une nouvelle validation par un administrateur 
-                et la place repassera temporairement en attente.
+                Cette place est actuellement active. Toute modification
+                nécessitera une nouvelle validation par un administrateur et la
+                place repassera temporairement en attente.
               </p>
             </div>
           </div>
@@ -235,6 +312,7 @@ export default function EditPlacePage({ params }: { params: { placeId: string } 
           mode="edit"
           initialData={initialData}
           onSubmit={handleSubmit}
+          userRole={session?.user?.role || "user"}
         />
       </div>
     </div>

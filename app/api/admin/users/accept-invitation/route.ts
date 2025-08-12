@@ -73,21 +73,31 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Utiliser Better Auth pour créer l'utilisateur (le bon format)
-    const result = await auth.api.signUpEmail({
-      body: {
-        email,
-        password,
-        name,
-      },
-    });
+    // Créer l'utilisateur en utilisant Better Auth avec désactivation d'email
+    console.log("🔧 [INVITATION] Début création utilisateur pour invitation");
+    
+    // Temporairement désactiver l'envoi d'email en configurant un flag global
+    process.env.SKIP_VERIFICATION_EMAIL = 'true';
+    
+    try {
+      const result = await auth.api.signUpEmail({
+        body: {
+          email,
+          password,
+          name,
+        },
+      });
 
-    if ("error" in result && result.error) {
-      console.error("Erreur Better Auth signUpEmail:", result.error);
-      return NextResponse.json(
-        { error: "Erreur lors de la création du compte: " + JSON.stringify(result.error) },
-        { status: 400 }
-      );
+      if ("error" in result && result.error) {
+        console.error("Erreur Better Auth signUpEmail:", result.error);
+        return NextResponse.json(
+          { error: "Erreur lors de la création du compte: " + JSON.stringify(result.error) },
+          { status: 400 }
+        );
+      }
+    } finally {
+      // Restaurer l'état normal
+      delete process.env.SKIP_VERIFICATION_EMAIL;
     }
 
     // Récupérer l'utilisateur créé
@@ -102,16 +112,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mettre à jour l'utilisateur avec les informations supplémentaires
+    console.log("✅ [INVITATION] Utilisateur créé:", { email, id: createdUser.id });
+
+    // Ajouter les informations supplémentaires
     const user = await prisma.$transaction(async (tx) => {
-      // Mettre à jour l'utilisateur avec le rôle, slug et statut
+      // Mettre à jour l'utilisateur avec les informations supplémentaires
       const updatedUser = await tx.user.update({
         where: { id: createdUser.id },
         data: {
           role,
           slug,
           status: "ACTIVE",
-          emailVerified: true, // Important : marquer comme vérifié
+          emailVerified: true, // Marquer comme vérifié
         },
       });
 
@@ -157,7 +169,22 @@ export async function POST(request: NextRequest) {
       return updatedUser;
     });
 
-    return NextResponse.json({
+    // Connecter automatiquement l'utilisateur après création
+    console.log("🔧 [INVITATION] Tentative de connexion automatique pour:", { email });
+    
+    const signInResult = await auth.api.signInEmail({
+      body: {
+        email,
+        password,
+      },
+      headers: request.headers,
+      returnHeaders: true, // IMPORTANT: Pour récupérer les cookies de session
+    });
+
+    console.log("🔧 [INVITATION] Résultat de la connexion:", signInResult);
+
+    // Créer une réponse avec les cookies de session
+    const response = NextResponse.json({
       success: true,
       message: "Compte créé avec succès",
       user: {
@@ -166,7 +193,23 @@ export async function POST(request: NextRequest) {
         email: user.email,
         role: user.role,
       },
+      autoSignedIn: true,
     });
+
+    // Ajouter les cookies de session à la réponse
+    if (signInResult.headers) {
+      const setCookieHeader = signInResult.headers.get("Set-Cookie");
+      if (setCookieHeader) {
+        console.log("✅ [INVITATION] Cookies de session ajoutés:", setCookieHeader);
+        response.headers.set("Set-Cookie", setCookieHeader);
+      } else {
+        console.error("❌ [INVITATION] Header Set-Cookie non trouvé dans signInResult.headers");
+      }
+    } else {
+      console.error("❌ [INVITATION] Aucun headers dans signInResult");
+    }
+
+    return response;
 
   } catch (error) {
     console.error("Erreur lors de l'acceptation de l'invitation:", error);

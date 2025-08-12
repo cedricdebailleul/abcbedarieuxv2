@@ -48,18 +48,25 @@ export default function RegisterPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      await authClient.signUp.email({
+      console.log("🔧 [REGISTER] Tentative d'inscription:", { email: data.email, name: data.name });
+      
+      const result = await authClient.signUp.email({
         email: data.email,
         password: data.password,
         name: data.name,
         callbackURL: "/dashboard",
       });
+      
+      console.log("🔧 [REGISTER] Résultat de signUp.email:", result);
+      
+      console.log("✅ [REGISTER] Inscription réussie");
       toast.success(
         "Compte créé. Vérifiez votre email et vous serez redirigé également."
       );
       router.push("/dashboard");
-    } catch {
-      toast.error("Erreur lors de l’inscription.");
+    } catch (error) {
+      console.error("❌ [REGISTER] Erreur lors de l'inscription:", error);
+      toast.error(`Erreur lors de l'inscription: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setLoading(false);
     }

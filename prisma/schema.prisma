@@ -52,7 +52,7 @@ model User {
   // RGPD et confidentialité
   dataRetention DateTime? // Date d'expiration des données
   deletedAt     DateTime? // Soft delete
-  places        Place[]    @relation("PlaceOwner")
+  places        Place[]      @relation("PlaceOwner")
   reviews       Review[]
   favorites     Favorite[]
   placeClaims   PlaceClaim[]
@@ -454,10 +454,11 @@ model Place {
   reviewCount Int    @default(0)
 
   // Relations MVP
-  openingHours OpeningHours[]
-  reviews      Review[]
-  favorites    Favorite[]
-  claims       PlaceClaim[]
+  openingHours  OpeningHours[]
+  reviews       Review[]
+  googleReviews GoogleReview[]
+  favorites     Favorite[]
+  claims        PlaceClaim[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -481,12 +482,11 @@ model OpeningHours {
   place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
   dayOfWeek DayOfWeek
-  openTime  String // Format "HH:MM"
-  closeTime String // Format "HH:MM"
+  openTime  String? // Format "HH:MM"
+  closeTime String? // Format "HH:MM"
   isClosed  Boolean   @default(false)
 
-  @@unique([placeId, dayOfWeek])
-  @@index([placeId])
+  @@index([placeId, dayOfWeek])
   @@map("opening_hours")
 }
 
@@ -525,6 +525,40 @@ model Review {
 }
 
 // ============================================================
+//                    AVIS GOOGLE IMPORTÉS
+// ============================================================
+
+model GoogleReview {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  rating  Int // 1-5 étoiles
+  comment String? @db.Text
+
+  // Informations Google
+  googleReviewId String  @unique
+  authorName     String
+  authorUrl      String?
+  googleTime     Int     // Timestamp Google
+  relativeTime   String? // "il y a 2 mois"
+
+  // Réponse propriétaire
+  response    String?   @db.Text
+  respondedAt DateTime?
+
+  status ReviewStatus @default(APPROVED) // Les avis Google sont automatiquement approuvés
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([placeId])
+  @@index([rating])
+  @@index([googleReviewId])
+  @@map("google_reviews")
+}
+
+// ============================================================
 //                    FAVORIS UTILISATEURS
 // ============================================================
 
@@ -554,14 +588,14 @@ model PlaceClaim {
   userId  String
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  message String @db.Text // Message de revendication
+  message String      @db.Text // Message de revendication
   proof   String? // URL vers une preuve (document, photo, etc.)
   status  ClaimStatus @default(PENDING)
 
   // Admin qui traite la demande
-  processedBy   String?
-  processedAt   DateTime?
-  adminMessage  String? // Message de l'admin lors du traitement
+  processedBy  String?
+  processedAt  DateTime?
+  adminMessage String? // Message de l'admin lors du traitement
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

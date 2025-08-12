@@ -1,117 +1,93 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
-import { notifyAdminsPlaceClaimed } from "@/lib/place-notifications";
+import { PlaceStatus } from "@/lib/generated/prisma";
 
-const claimSchema = z.object({
-  message: z.string().min(10, "Le message doit faire au moins 10 caractères"),
-  proof: z.string().optional(), // URL vers une preuve (document, photo, etc.)
-});
-
-// POST /api/places/[placeId]/claim - Revendiquer une place
+// POST /api/places/[placeId]/claim - Revendiquer directement une place
 export async function POST(
-  request: Request,
-  { params }: { params: { placeId: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ placeId: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-    const { placeId } = params;
-    
+    const { placeId } = await params;
+
+    // Vérifier l'authentification
+    const session = await auth.api.getSession({ headers: await headers() });
+
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Authentification requise" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
-    
-    // Vérifier que la place existe
+
+    // Vérifier que la place existe et peut être revendiquée
     const place = await prisma.place.findUnique({
       where: { id: placeId },
-      include: {
-        owner: true
-      }
+      select: { 
+        id: true, 
+        name: true, 
+        ownerId: true,
+        status: true
+      },
     });
-    
+
     if (!place) {
       return NextResponse.json(
         { error: "Place non trouvée" },
         { status: 404 }
       );
     }
-    
-    // Vérifier que la place n'est pas déjà revendiquée
+
+    // Vérifier que la place n'a pas déjà un propriétaire
     if (place.ownerId) {
       return NextResponse.json(
         { error: "Cette place a déjà un propriétaire" },
         { status: 400 }
       );
     }
-    
-    // Vérifier qu'il n'y a pas déjà une demande en cours pour cette place
-    const existingClaim = await prisma.placeClaim.findFirst({
-      where: {
-        placeId,
-        status: "PENDING"
-      }
-    });
-    
-    if (existingClaim) {
+
+    // Vérifier que la place est active (seules les places actives peuvent être revendiquées)
+    if (place.status !== PlaceStatus.ACTIVE) {
       return NextResponse.json(
-        { error: "Une demande de revendication est déjà en cours pour cette place" },
+        { error: "Seules les places actives peuvent être revendiquées" },
         { status: 400 }
       );
     }
-    
-    const body = await request.json();
-    const validatedData = claimSchema.parse(body);
-    
-    // Créer la demande de revendication
-    const claim = await prisma.placeClaim.create({
+
+    // Vérifier que l'utilisateur ne possède pas déjà trop de places (limite optionnelle)
+    const userPlacesCount = await prisma.place.count({
+      where: { ownerId: session.user.id }
+    });
+
+    const maxPlacesPerUser = 10; // Limite configurable
+    if (userPlacesCount >= maxPlacesPerUser) {
+      return NextResponse.json(
+        { error: `Vous ne pouvez pas posséder plus de ${maxPlacesPerUser} places` },
+        { status: 400 }
+      );
+    }
+
+    // Attribuer la place à l'utilisateur
+    const updatedPlace = await prisma.place.update({
+      where: { id: placeId },
       data: {
-        placeId,
-        userId: session.user.id,
-        message: validatedData.message,
-        proof: validatedData.proof,
-        status: "PENDING"
+        ownerId: session.user.id,
+        // La place reste active, pas besoin de repasser en PENDING
       },
       include: {
-        user: {
-          select: { id: true, name: true, email: true }
+        owner: {
+          select: { id: true, name: true, email: true },
         },
-        place: {
-          select: { id: true, name: true, slug: true }
-        }
-      }
+      },
     });
-    
-    // Envoyer notification à l'admin (en arrière-plan)
-    notifyAdminsPlaceClaimed(
-      claim.place.name,
-      claim.user.name,
-      claim.user.email,
-      claim.message,
-      claim.id
-    ).catch(error => {
-      console.error("Erreur notification admin:", error);
+
+    return NextResponse.json({
+      success: true,
+      message: `Vous êtes maintenant propriétaire de "${place.name}"`,
+      place: updatedPlace,
     });
-    
-    return NextResponse.json({ 
-      claim,
-      message: "Votre demande de revendication a été envoyée. Un administrateur va l'examiner."
-    });
-    
+
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
-        { status: 400 }
-      );
-    }
-    
-    console.error("Erreur lors de la revendication:", error);
+    console.error("Erreur lors de la revendication de la place:", error);
     return NextResponse.json(
       { error: "Erreur interne du serveur" },
       { status: 500 }
@@ -119,55 +95,3 @@ export async function POST(
   }
 }
 
-// GET /api/places/[placeId]/claim - Vérifier le statut de revendication
-export async function GET(
-  request: Request,
-  { params }: { params: { placeId: string } }
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-    const { placeId } = params;
-    
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Authentification requise" },
-        { status: 401 }
-      );
-    }
-    
-    const place = await prisma.place.findUnique({
-      where: { id: placeId }
-    });
-    
-    if (!place) {
-      return NextResponse.json(
-        { error: "Place non trouvée" },
-        { status: 404 }
-      );
-    }
-    
-    // Chercher les demandes de revendication de l'utilisateur pour cette place
-    const userClaims = await prisma.placeClaim.findMany({
-      where: {
-        placeId,
-        userId: session.user.id
-      },
-      orderBy: { createdAt: "desc" }
-    });
-    
-    return NextResponse.json({
-      canClaim: !place.ownerId,
-      isOwner: place.ownerId === session.user.id,
-      claims: userClaims
-    });
-    
-  } catch (error) {
-    console.error("Erreur lors de la vérification de revendication:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
-  }
-}

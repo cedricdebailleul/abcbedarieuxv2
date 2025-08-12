@@ -4,7 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { useState } from "react";
@@ -16,6 +23,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { FormFieldWrapper } from "../ui/form-field";
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -125,7 +133,7 @@ export function LoginForm() {
 
     try {
       console.log("LoginForm - Tentative de connexion avec client Better Auth");
-      
+
       // Utiliser le client Better Auth directement
       const result = await authClient.signIn.email({
         email: data.email,
@@ -138,7 +146,9 @@ export function LoginForm() {
         console.log("LoginForm - Erreur:", result.error);
         toast.error("Email ou mot de passe incorrect");
       } else {
-        console.log("LoginForm - Connexion réussie, redirection vers dashboard");
+        console.log(
+          "LoginForm - Connexion réussie, redirection vers dashboard"
+        );
         toast.success("Connexion réussie");
         router.push("/dashboard");
       }
@@ -161,7 +171,11 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="john@example.com" {...field} />
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -1,23 +1,59 @@
-// components/PlaceForm.tsx
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+"use client";
+
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useForm, FormProvider } from "react-hook-form";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { ImageUpload } from "@/components/media/image-upload";
+import { generateSlug } from "@/lib/validations/post";
+
+import {
+  Settings,
+  Globe,
+  FileText,
+  MapPin,
+  Building2,
+  ImageIcon,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
+
 import {
   useGooglePlaces,
   type FormattedPlaceData,
 } from "@/hooks/use-google-places";
-import { toast } from "sonner";
 
-// Schéma de validation Zod
+// --- Schéma Zod (conserve ton modèle) ---
 const placeSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   type: z.string().min(1, "Le type est requis"),
   category: z.string().optional(),
   description: z.string().optional(),
   summary: z.string().max(280).optional(),
+  openingHours: z.array(z.any()).optional(),
 
-  // Adresse
   street: z.string().min(1, "La rue est requise"),
   streetNumber: z.string().optional(),
   postalCode: z.string().min(1, "Le code postal est requis"),
@@ -25,58 +61,132 @@ const placeSchema = z.object({
   latitude: z.number().optional(),
   longitude: z.number().optional(),
 
-  // Contact
+  logo: z.string().optional(),
+  coverImage: z.string().optional(),
+  photos: z.array(z.string()).optional(),
+
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   website: z.string().url().optional().or(z.literal("")),
 
-  // Réseaux sociaux
   facebook: z.string().optional(),
   instagram: z.string().optional(),
   twitter: z.string().optional(),
   linkedin: z.string().optional(),
   tiktok: z.string().optional(),
 
-  // Google
   googlePlaceId: z.string().optional(),
   googleMapsUrl: z.string().optional(),
 
-  // SEO
   metaTitle: z.string().max(60).optional(),
   metaDescription: z.string().max(160).optional(),
+
+  // Optionnel : statut publication si tu veux calquer PostForm
+  published: z.boolean().optional(),
 });
+type PlaceFormData = z.infer<typeof placeSchema> & {
+  openingHours?: any[];
+};
 
-type PlaceFormData = z.infer<typeof placeSchema>;
-
-interface PlaceFormProps {
-  initialData?: Partial<PlaceFormData>;
-  onSubmit: (data: PlaceFormData) => Promise<void>;
+type PlaceFormProps = {
+  initialData?: Partial<PlaceFormData & { images?: string[] }>;
+  onSubmit: (
+    data: PlaceFormData & {
+      openingHours?: any[];
+      images?: string[];
+      createForClaim?: boolean;
+    }
+  ) => Promise<void>;
   mode?: "create" | "edit";
-}
+  userRole?: string; // Pour déterminer les options disponibles
+};
 
-export const PlaceForm: React.FC<PlaceFormProps> = ({
+// Liste typée pour Select "type"
+const PLACE_TYPES = [
+  { value: "COMMERCE", label: "Commerce" },
+  { value: "SERVICE", label: "Service" },
+  { value: "RESTAURANT", label: "Restaurant" },
+  { value: "ARTISAN", label: "Artisan" },
+  { value: "ADMINISTRATION", label: "Administration" },
+  { value: "MUSEUM", label: "Musée" },
+  { value: "TOURISM", label: "Tourisme" },
+  { value: "PARK", label: "Parc" },
+  { value: "LEISURE", label: "Loisirs" },
+  { value: "ASSOCIATION", label: "Association" },
+  { value: "HEALTH", label: "Santé" },
+  { value: "EDUCATION", label: "Éducation" },
+  { value: "TRANSPORT", label: "Transport" },
+  { value: "ACCOMMODATION", label: "Hébergement" },
+  { value: "OTHER", label: "Autre" },
+];
+
+export function PlaceForm({
   initialData,
   onSubmit,
   mode = "create",
-}) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showGoogleSearch, setShowGoogleSearch] = useState(mode === "create");
+  userRole,
+}: PlaceFormProps) {
+  const [isPending, startTransition] = useTransition();
   const [openingHours, setOpeningHours] = useState<any[]>([]);
   const [images, setImages] = useState<string[]>([]);
+  const [showGoogleSearch, setShowGoogleSearch] = useState(mode === "create");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [createForClaim, setCreateForClaim] = useState(false);
+  // Générer un slug temporaire unique pour les nouvelles places
+  const [tempSlug] = useState(() =>
+    mode === "create"
+      ? `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      : ""
+  );
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-    reset,
-  } = useForm<PlaceFormData>({
+  // Initialiser les images existantes en mode édition
+  useEffect(() => {
+    if (mode === "edit" && Array.isArray(initialData?.images)) {
+      const existingImages = Array.isArray(initialData.images)
+        ? initialData.images
+        : [];
+      setImages(existingImages);
+    }
+    if (mode === "edit" && initialData?.openingHours) {
+      setOpeningHours(initialData.openingHours);
+    }
+  }, [mode, initialData]);
+
+  const form = useForm<PlaceFormData>({
     resolver: zodResolver(placeSchema),
-    defaultValues: initialData || {},
+    defaultValues: {
+      name: "",
+      type: "",
+      category: "",
+      description: "",
+      summary: "",
+      street: "",
+      streetNumber: "",
+      postalCode: "",
+      city: "",
+      latitude: undefined,
+      longitude: undefined,
+      logo: "",
+      coverImage: "",
+      photos: [],
+      email: "",
+      phone: "",
+      website: "",
+      facebook: "",
+      instagram: "",
+      twitter: "",
+      linkedin: "",
+      tiktok: "",
+      googlePlaceId: "",
+      googleMapsUrl: "",
+      metaTitle: "",
+      metaDescription: "",
+      published: false,
+      ...initialData,
+    },
   });
 
-  // Hook Google Places
+  // Google Places hook
   const {
     isLoaded,
     isSearching,
@@ -89,54 +199,14 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
   } = useGooglePlaces({
     apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
     onPlaceSelected: (place: FormattedPlaceData) => {
-      // Remplir automatiquement tous les champs
       fillFormWithGoogleData(place);
     },
   });
 
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  // Remplir le formulaire avec les données Google
-  const fillFormWithGoogleData = (place: FormattedPlaceData) => {
-    // Informations de base
-    setValue("name", place.name);
-    setValue("type", place.type);
-    setValue("category", place.category || "");
-
-    // Adresse
-    setValue("street", place.street);
-    setValue("streetNumber", place.streetNumber || "");
-    setValue("postalCode", place.postalCode);
-    setValue("city", place.city);
-    setValue("latitude", place.latitude);
-    setValue("longitude", place.longitude);
-
-    // Contact
-    setValue("phone", place.phone || "");
-    setValue("website", place.website || "");
-
-    // Google
-    setValue("googlePlaceId", place.googlePlaceId);
-    setValue("googleMapsUrl", place.googleMapsUrl || "");
-
-    // SEO
-    setValue("metaDescription", place.metaDescription || "");
-
-    // Horaires et images
-    setOpeningHours(place.openingHours || []);
-    setImages(place.photos || []);
-
-    // Masquer la recherche Google après import
-    setShowGoogleSearch(false);
-
-    toast.success("Les informations ont été importées depuis Google");
-  };
-
-  // Debounce pour la recherche
+  // Debounce recherche Google
   useEffect(() => {
     if (!showGoogleSearch) return;
-
-    const timer = setTimeout(() => {
+    const t = setTimeout(() => {
       if (inputValue && inputValue.length >= 3) {
         searchPlaces(inputValue);
         setShowDropdown(true);
@@ -145,11 +215,108 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
         setShowDropdown(false);
       }
     }, 300);
-
-    return () => clearTimeout(timer);
+    return () => clearTimeout(t);
   }, [inputValue, searchPlaces, clearPredictions, showGoogleSearch]);
 
-  // Gérer la sélection d'une prédiction
+  // Upload d'une image Google individuelle
+  const uploadGoogleImage = async (
+    imageUrl: string,
+    imageType: "logo" | "cover"
+  ): Promise<string | null> => {
+    try {
+      const response = await fetch("/api/upload-google-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          images: [imageUrl],
+          slug: uploadSlug,
+          type: "places",
+          imageType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de l'upload");
+      }
+
+      const result = await response.json();
+      return result.uploadedImages?.[0] || null;
+    } catch (error) {
+      console.error(`Erreur upload ${imageType}:`, error);
+      return null;
+    }
+  };
+
+  // Import Google → remplir form
+  const fillFormWithGoogleData = async (place: FormattedPlaceData) => {
+    // Base
+    form.setValue("name", place.name ?? "");
+    form.setValue("type", place.type ?? "");
+    form.setValue("category", place.category ?? "");
+
+    // Adresse
+    form.setValue("street", place.street ?? "");
+    form.setValue("streetNumber", place.streetNumber ?? "");
+    form.setValue("postalCode", place.postalCode ?? "");
+    form.setValue("city", place.city ?? "");
+    form.setValue("latitude", place.latitude);
+    form.setValue("longitude", place.longitude);
+
+    // Media - uploader seulement le logo automatiquement
+    if (place.logo && place.logo.startsWith("http")) {
+      const uploadedLogo = await uploadGoogleImage(place.logo, "logo");
+      form.setValue("logo", uploadedLogo || place.logo);
+    } else {
+      form.setValue("logo", place.logo ?? "");
+    }
+
+    // Ne pas importer l'image de couverture automatiquement - laisser l'utilisateur la choisir
+    form.setValue("coverImage", "");
+
+    setImages(place.photos ?? []);
+
+    // Contact
+    form.setValue("phone", place.phone ?? "");
+    form.setValue("website", place.website ?? "");
+
+    // Google
+    form.setValue("googlePlaceId", place.googlePlaceId ?? "");
+    form.setValue("googleMapsUrl", place.googleMapsUrl ?? "");
+
+    // SEO
+    form.setValue("metaDescription", place.metaDescription ?? "");
+
+    // Horaires
+    setOpeningHours(place.openingHours ?? []);
+
+    setShowGoogleSearch(false);
+    toast.success("Les informations ont été importées depuis Google");
+  };
+
+  // util pour trier HH:MM
+  function timeToMin(t: string) {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  // Dans ton composant (au lieu de .map() direct sur openingHours)
+  const grouped = (openingHours ?? []).reduce(
+    (acc: Record<string, any[]>, oh: any) => {
+      const day = String(oh.dayOfWeek).toUpperCase();
+      acc[day] ||= [];
+      // format "slots" (si jamais tu as déjà agrégé)
+      if (Array.isArray(oh.slots) && oh.slots.length) {
+        for (const s of oh.slots)
+          acc[day].push({ ...oh, ...s, isClosed: false });
+      } else {
+        acc[day].push(oh);
+      }
+      return acc;
+    },
+    {}
+  );
+
+  // Sélection d'une prédiction
   const handleSelectPrediction = (
     prediction: google.maps.places.AutocompletePrediction
   ) => {
@@ -159,567 +326,1011 @@ export const PlaceForm: React.FC<PlaceFormProps> = ({
     clearPredictions();
   };
 
-  // Soumettre le formulaire
-  const onFormSubmit = async (data: PlaceFormData) => {
-    setIsSubmitting(true);
-    try {
-      // Ajouter les horaires et images
-      const fullData = {
-        ...data,
-        openingHours,
-        images,
-      };
-
-      await onSubmit(fullData);
-      toast.success(
-        mode === "create" ? "Place créée avec succès" : "Place mise à jour"
-      );
-
-      if (mode === "create") {
-        reset();
-        setOpeningHours([]);
-        setImages([]);
+  // Soumission
+  const onSubmitForm = (data: PlaceFormData) => {
+    startTransition(async () => {
+      try {
+        await onSubmit({
+          ...data,
+          photos: (data.photos || []).filter(Boolean),
+          openingHours,
+          images,
+          createForClaim: userRole === "admin" ? createForClaim : undefined,
+        });
+        toast.success(
+          mode === "create"
+            ? "Établissement créé avec succès"
+            : "Établissement mis à jour"
+        );
+        if (mode === "create") {
+          form.reset();
+          setOpeningHours([]);
+          setImages([]);
+          setShowGoogleSearch(true);
+          setInputValue("");
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("Une erreur est survenue");
       }
-    } catch (error) {
-      toast.error("Une erreur est survenue");
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
+  const name = form.watch("name");
+  const coverImage = form.watch("coverImage");
+  const logo = form.watch("logo");
+  const metaTitle = form.watch("metaTitle") ?? "";
+  const metaDescription = form.watch("metaDescription") ?? "";
+  const lat = form.watch("latitude");
+  const lng = form.watch("longitude");
+  const googlePlaceId = form.watch("googlePlaceId");
+  const googleMapsUrl = form.watch("googleMapsUrl");
+
+  const computedSlug = useMemo(() => generateSlug(name || ""), [name]);
+  // Utiliser le slug temporaire pour les nouvelles places, le slug computed pour l'édition
+  const uploadSlug = mode === "create" ? tempSlug : computedSlug || "general";
+
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-      {/* Section Import Google */}
-      {showGoogleSearch && isLoaded && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-blue-900">
-              Importer depuis Google Business
-            </h3>
-            <button
-              type="button"
-              onClick={() => setShowGoogleSearch(false)}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              Remplir manuellement
-            </button>
-          </div>
-
-          <div className="relative">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Rechercher par nom ou adresse..."
-              className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-
-            {isSearching && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <svg
-                  className="animate-spin h-5 w-5 text-blue-600"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
-              </div>
-            )}
-
-            {/* Dropdown des résultats */}
-            {showDropdown && predictions.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-lg border max-h-60 overflow-auto">
-                {predictions.map(
-                  (prediction: google.maps.places.AutocompletePrediction) => (
-                    <button
-                      key={prediction.place_id}
-                      type="button"
-                      onClick={() => handleSelectPrediction(prediction)}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-start space-x-3"
-                    >
-                      <svg
-                        className="w-5 h-5 text-gray-400 mt-0.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                      <div>
-                        <div className="font-medium">
-                          {prediction.structured_formatting.main_text}
+    <FormProvider {...form}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmitForm)} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Colonne principale */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Import Google */}
+              {showGoogleSearch && isLoaded && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      Importer depuis Google Business
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="relative">
+                      <Input
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder="Rechercher par nom ou adresse…"
+                      />
+                      {isSearching && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 className="h-5 w-5 animate-spin" />
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {prediction.structured_formatting.secondary_text}
+                      )}
+
+                      {showDropdown && predictions.length > 0 && (
+                        <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow">
+                          {predictions.map((p) => (
+                            <Button
+                              key={p.place_id}
+                              type="button"
+                              variant="ghost"
+                              className="w-full justify-start gap-2"
+                              onClick={() => handleSelectPrediction(p)}
+                            >
+                              <MapPin className="h-4 w-4" />
+                              <div className="text-left">
+                                <div className="text-sm font-medium">
+                                  {p.structured_formatting.main_text}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {p.structured_formatting.secondary_text}
+                                </div>
+                              </div>
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Tapez au moins 3 caractères pour lancer la recherche
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowGoogleSearch(false)}
+                      >
+                        Remplir manuellement
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Informations générales */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Informations générales
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom de l’établissement *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nom commercial…" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        {name && (
+                          <p className="text-xs text-muted-foreground">
+                            Slug prévisionnel :{" "}
+                            <code className="bg-muted px-1 rounded">
+                              {computedSlug}
+                            </code>
+                          </p>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Type *</FormLabel>
+                          <FormControl>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner…" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {PLACE_TYPES.map((t) => (
+                                  <SelectItem key={t.value} value={t.value}>
+                                    {t.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Catégorie (optionnel)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Ex : Boulangerie, Assurance…"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Décrivez votre établissement…"
+                            className="min-h-[100px]"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Adresse */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Adresse
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="streetNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>N°</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="street"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-3">
+                          <FormLabel>Rue *</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="postalCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Code postal *</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ville *</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {(lat || lng) && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="latitude"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-muted-foreground">
+                              Latitude
+                            </FormLabel>
+                            <FormControl>
+                              <Input {...field} readOnly className="bg-muted" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="longitude"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-muted-foreground">
+                              Longitude
+                            </FormLabel>
+                            <FormControl>
+                              <Input {...field} readOnly className="bg-muted" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Contact */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Téléphone</FormLabel>
+                          <FormControl>
+                            <Input type="tel" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="website"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Site web</FormLabel>
+                        <FormControl>
+                          <Input type="url" placeholder="https://" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Réseaux sociaux */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Réseaux sociaux</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(
+                    [
+                      "facebook",
+                      "instagram",
+                      "twitter",
+                      "linkedin",
+                      "tiktok",
+                    ] as const
+                  ).map((fieldName) => (
+                    <FormField
+                      key={fieldName}
+                      control={form.control}
+                      name={fieldName}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="capitalize">
+                            {fieldName}
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="URL ou @handle" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Média */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5" />
+                    Média
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="coverImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Image de couverture</FormLabel>
+                        <FormControl>
+                          <ImageUpload
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            onRemove={() => field.onChange("")}
+                            type="places"
+                            slug={uploadSlug}
+                            imageType="cover"
+                            aspectRatios={[
+                              {
+                                label: "Réseaux sociaux 1.91:1 (optimal)",
+                                value: 1.91,
+                              },
+                              { label: "Paysage 16:9", value: 16 / 9 },
+                              { label: "Paysage 4:3", value: 4 / 3 },
+                              { label: "Carré 1:1", value: 1 },
+                            ]}
+                            className="max-w-md"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="logo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Image du logo</FormLabel>
+                        <FormControl>
+                          <ImageUpload
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            onRemove={() => field.onChange("")}
+                            type="places"
+                            slug={uploadSlug}
+                            imageType="logo"
+                            aspectRatios={[
+                              { label: "Carré 1:1 (recommandé)", value: 1 },
+                              { label: "Paysage 4:3", value: 4 / 3 },
+                              { label: "Paysage 16:9", value: 16 / 9 },
+                            ]}
+                            className="max-w-md"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Galerie d'images */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">Galerie d'images</h4>
+                      <span className="text-sm text-muted-foreground">
+                        {images.length} image{images.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+
+                    {/* Uploader des images Google vers la galerie */}
+                    {images.some((img) => img.startsWith("http")) && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h5 className="text-sm font-medium text-muted-foreground">
+                            Images de Google à uploader
+                          </h5>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={isPending}
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const googleImages = images.filter((img) =>
+                                img.startsWith("http")
+                              );
+                              if (googleImages.length === 0) return;
+
+                              startTransition(async () => {
+                                try {
+                                  const response = await fetch(
+                                    "/api/upload-google-images",
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        images: googleImages,
+                                        slug: uploadSlug,
+                                        type: "places",
+                                      }),
+                                    }
+                                  );
+
+                                  if (!response.ok) {
+                                    throw new Error("Erreur lors de l'upload");
+                                  }
+
+                                  const result = await response.json();
+
+                                  // Remplacer les liens Google par les URLs uploadées
+                                  setImages((prev) => [
+                                    ...prev.filter(
+                                      (img) => !img.startsWith("http")
+                                    ),
+                                    ...result.uploadedImages,
+                                  ]);
+
+                                  toast.success(
+                                    `${result.uploadedCount}/${result.totalCount} images uploadées vers la galerie`
+                                  );
+
+                                  if (result.errors.length > 0) {
+                                    console.warn(
+                                      "Erreurs upload:",
+                                      result.errors
+                                    );
+                                  }
+                                } catch (error) {
+                                  console.error(
+                                    "Erreur upload Google images:",
+                                    error
+                                  );
+                                  toast.error(
+                                    "Erreur lors de l'upload des images Google"
+                                  );
+                                }
+                              });
+                            }}
+                          >
+                            {isPending ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : null}
+                            Uploader toutes les images Google
+                          </Button>
                         </div>
                       </div>
-                    </button>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                    )}
 
-      {/* Si on a masqué la recherche, bouton pour la réafficher */}
-      {!showGoogleSearch && mode === "edit" && (
-        <button
-          type="button"
-          onClick={() => setShowGoogleSearch(true)}
-          className="text-blue-600 hover:text-blue-800 text-sm"
-        >
-          ↻ Réimporter depuis Google
-        </button>
-      )}
+                    {/* Upload d'images pour la galerie */}
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium text-muted-foreground">
+                        Ajouter une image à la galerie
+                      </h5>
+                      <ImageUpload
+                        value=""
+                        onChange={(url) => setImages((prev) => [...prev, url])}
+                        type="places"
+                        slug={uploadSlug}
+                        subFolder="gallery"
+                        imageType="gallery"
+                        showPreview={false}
+                        aspectRatios={[
+                          { label: "Paysage 16:9", value: 16 / 9 },
+                          { label: "Paysage 4:3", value: 4 / 3 },
+                          { label: "Carré 1:1", value: 1 },
+                          { label: "Portrait 3:4", value: 3 / 4 },
+                        ]}
+                        className="max-w-md"
+                      />
+                    </div>
 
-      {/* Informations de base */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Nom de l'établissement *
-          </label>
-          <input
-            {...register("name")}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.name && (
-            <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-          )}
-        </div>
+                    {/* Aperçu des images */}
+                    {images.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {images.map((src, i) => (
+                          <div key={i} className="relative aspect-square">
+                            <img
+                              src={src}
+                              alt={`Photo ${i + 1}`}
+                              className="h-full w-full rounded-lg object-cover border"
+                            />
+                            {/* Indicateur du type d'image */}
+                            <div className="absolute left-2 top-2">
+                              <span
+                                className={`px-1.5 py-0.5 text-xs rounded-full text-white font-medium ${
+                                  src.startsWith("/uploads/")
+                                    ? "bg-green-500"
+                                    : "bg-orange-500"
+                                }`}
+                              >
+                                {src.startsWith("/uploads/")
+                                  ? "Uploadé"
+                                  : "Google"}
+                              </span>
+                            </div>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              className="absolute right-2 top-2 h-6 w-6"
+                              disabled={isPending}
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const imageUrl = src;
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Type *</label>
-          <select
-            {...register("type")}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Sélectionner...</option>
-            <option value="COMMERCE">Commerce</option>
-            <option value="SERVICE">Service</option>
-            <option value="RESTAURANT">Restaurant</option>
-            <option value="ARTISAN">Artisan</option>
-            <option value="ADMINISTRATION">Administration</option>
-            <option value="MUSEUM">Musée</option>
-            <option value="TOURISM">Tourisme</option>
-            <option value="PARK">Parc</option>
-            <option value="LEISURE">Loisirs</option>
-            <option value="ASSOCIATION">Association</option>
-            <option value="HEALTH">Santé</option>
-            <option value="EDUCATION">Éducation</option>
-            <option value="TRANSPORT">Transport</option>
-            <option value="ACCOMMODATION">Hébergement</option>
-            <option value="OTHER">Autre</option>
-          </select>
-          {errors.type && (
-            <p className="text-red-500 text-sm mt-1">{errors.type.message}</p>
-          )}
-        </div>
-      </div>
+                                // Si c'est une image uploadée, la supprimer physiquement
+                                if (imageUrl.startsWith("/uploads/")) {
+                                  try {
+                                    const response = await fetch(
+                                      `/api/upload?path=${encodeURIComponent(
+                                        imageUrl
+                                      )}`,
+                                      {
+                                        method: "DELETE",
+                                      }
+                                    );
 
-      {/* Description */}
-      <div>
-        <label className="block text-sm font-medium mb-1">Description</label>
-        <textarea
-          {...register("description")}
-          rows={4}
-          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          placeholder="Décrivez votre établissement..."
-        />
-      </div>
+                                    if (!response.ok) {
+                                      toast.error(
+                                        "Erreur lors de la suppression du fichier"
+                                      );
+                                      return;
+                                    }
+                                  } catch (error) {
+                                    console.error(
+                                      "Erreur suppression fichier:",
+                                      error
+                                    );
+                                    toast.error(
+                                      "Erreur lors de la suppression du fichier"
+                                    );
+                                    return;
+                                  }
+                                }
 
-      {/* Adresse */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-lg">Adresse</h3>
+                                // Retirer de l'état local
+                                setImages((prev) =>
+                                  prev.filter((_, idx) => idx !== i)
+                                );
+                                toast.success("Image supprimée");
+                              }}
+                            >
+                              {isPending ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                "×"
+                              )}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-1">
-            <label className="block text-sm font-medium mb-1">N°</label>
-            <input
-              {...register("streetNumber")}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+              {/* SEO */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    Référencement (SEO)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="metaTitle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Titre SEO{" "}
+                          <span className="text-xs text-muted-foreground">
+                            ({metaTitle.length}/60)
+                          </span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Titre optimisé…"
+                            maxLength={60}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-          <div className="md:col-span-3">
-            <label className="block text-sm font-medium mb-1">Rue *</label>
-            <input
-              {...register("street")}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.street && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.street.message}
-              </p>
-            )}
-          </div>
-        </div>
+                  <FormField
+                    control={form.control}
+                    name="metaDescription"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Description SEO{" "}
+                          <span className="text-xs text-muted-foreground">
+                            ({metaDescription.length}/160)
+                          </span>
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Description pour moteurs et réseaux sociaux…"
+                            className="min-h-[80px]"
+                            maxLength={160}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Code postal *
-            </label>
-            <input
-              {...register("postalCode")}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.postalCode && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.postalCode.message}
-              </p>
-            )}
-          </div>
+                  <FormField
+                    control={form.control}
+                    name="summary"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Résumé pour partage{" "}
+                          <span className="text-xs text-muted-foreground">
+                            ({field.value?.length ?? 0}/280)
+                          </span>
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Résumé court pour réseaux (X, Facebook, etc.)"
+                            className="min-h-[70px]"
+                            maxLength={280}
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Ville *</label>
-            <input
-              {...register("city")}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.city && (
-              <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
-            )}
-          </div>
-        </div>
+              {/* Horaires (si disponibles) */}
+              {openingHours.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Horaires d’ouverture</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="space-y-2">
+                      {[
+                        "MONDAY",
+                        "TUESDAY",
+                        "WEDNESDAY",
+                        "THURSDAY",
+                        "FRIDAY",
+                        "SATURDAY",
+                        "SUNDAY",
+                      ].map((DAY) => {
+                        const slots = (grouped[DAY] || [])
+                          .filter((s) => !s.isClosed)
+                          .sort(
+                            (a, b) =>
+                              timeToMin(a.openTime) - timeToMin(b.openTime)
+                          );
 
-        {/* Coordonnées GPS (readonly si importé de Google) */}
-        {(watch("latitude") || watch("longitude")) && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-600">
-                Latitude
-              </label>
-              <input
-                {...register("latitude", { valueAsNumber: true })}
-                readOnly
-                className="w-full px-3 py-2 border rounded-lg bg-gray-50"
-              />
+                        const isClosed =
+                          (grouped[DAY] || []).length === 0 ||
+                          slots.length === 0;
+
+                        return (
+                          <div key={DAY} className="flex justify-between">
+                            <span className="font-medium">
+                              {DAY === "MONDAY"
+                                ? "Lundi"
+                                : DAY === "TUESDAY"
+                                ? "Mardi"
+                                : DAY === "WEDNESDAY"
+                                ? "Mercredi"
+                                : DAY === "THURSDAY"
+                                ? "Jeudi"
+                                : DAY === "FRIDAY"
+                                ? "Vendredi"
+                                : DAY === "SATURDAY"
+                                ? "Samedi"
+                                : "Dimanche"}
+                            </span>
+
+                            <span className="text-gray-600">
+                              {isClosed
+                                ? "Fermé"
+                                : slots.map((s, i) => (
+                                    <span
+                                      key={`${DAY}-${s.openTime}-${s.closeTime}`}
+                                    >
+                                      {s.openTime} – {s.closeTime}
+                                      {i < slots.length - 1 ? " • " : ""}
+                                    </span>
+                                  ))}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Connexion Google */}
+              {googlePlaceId && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Connecté à Google Business</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <div className="text-sm">ID : {googlePlaceId}</div>
+                    {googleMapsUrl && (
+                      <a
+                        href={googleMapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary underline"
+                      >
+                        Voir sur Google Maps →
+                      </a>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-600">
-                Longitude
-              </label>
-              <input
-                {...register("longitude", { valueAsNumber: true })}
-                readOnly
-                className="w-full px-3 py-2 border rounded-lg bg-gray-50"
-              />
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Contact */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-lg">Contact</h3>
+            {/* Sidebar Actions */}
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      type="submit"
+                      disabled={isPending}
+                      className="w-full"
+                    >
+                      {isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : null}
+                      {mode === "create"
+                        ? "Créer l’établissement"
+                        : "Mettre à jour"}
+                    </Button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Téléphone</label>
-            <input
-              {...register("phone")}
-              type="tel"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+                    {mode === "edit" && (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowGoogleSearch(true)}
+                          className="w-full"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Réimporter depuis Google
+                        </Button>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              {...register("email")}
-              type="email"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
-        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={isPending}
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Site web</label>
-          <input
-            {...register("website")}
-            type="url"
-            placeholder="https://"
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.website && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.website.message}
-            </p>
-          )}
-        </div>
-      </div>
+                            const placeId = (initialData as any)?.id;
+                            console.log("🔍 Import avis - placeId:", placeId);
 
-      {/* Réseaux sociaux */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-lg">Réseaux sociaux</h3>
+                            if (!placeId) {
+                              toast.error("ID de place manquant");
+                              return;
+                            }
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Facebook</label>
-            <input
-              {...register("facebook")}
-              placeholder="https://facebook.com/..."
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+                            startTransition(async () => {
+                              try {
+                                console.log("📡 Appel API import avis...");
+                                const response = await fetch(
+                                  `/api/places/${placeId}/import-reviews`,
+                                  {
+                                    method: "POST",
+                                  }
+                                );
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Instagram</label>
-            <input
-              {...register("instagram")}
-              placeholder="@username"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+                                console.log(
+                                  "📡 Réponse API:",
+                                  response.status,
+                                  response.statusText
+                                );
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Twitter</label>
-            <input
-              {...register("twitter")}
-              placeholder="@username"
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+                                if (!response.ok) {
+                                  const errorData = await response.json();
+                                  console.error("❌ Erreur API:", errorData);
+                                  throw new Error(
+                                    errorData.error || "Erreur lors de l'import"
+                                  );
+                                }
 
-          <div>
-            <label className="block text-sm font-medium mb-1">LinkedIn</label>
-            <input
-              {...register("linkedin")}
-              placeholder="https://linkedin.com/..."
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </div>
+                                const result = await response.json();
+                                console.log("✅ Résultat import:", result);
+                                toast.success(result.message);
 
-      {/* Horaires d'ouverture (si importés de Google) */}
-      {openingHours.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="font-semibold text-lg">Horaires d'ouverture</h3>
+                                if (result.errors && result.errors.length > 0) {
+                                  console.warn(
+                                    "⚠️ Erreurs import:",
+                                    result.errors
+                                  );
+                                }
+                              } catch (error) {
+                                console.error("❌ Erreur import avis:", error);
+                                toast.error(
+                                  "Erreur lors de l'import des avis: " +
+                                    (error instanceof Error
+                                      ? error.message
+                                      : "Erreur inconnue")
+                                );
+                              }
+                            });
+                          }}
+                          className="w-full"
+                        >
+                          {isPending ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                          )}
+                          Importer les avis Google
+                        </Button>
+                      </>
+                    )}
+                  </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="space-y-2">
-              {openingHours.map((day) => (
-                <div
-                  key={day.dayOfWeek}
-                  className="flex justify-between items-center py-2 border-b last:border-0"
-                >
-                  <span className="font-medium">
-                    {day.dayOfWeek === "MONDAY" && "Lundi"}
-                    {day.dayOfWeek === "TUESDAY" && "Mardi"}
-                    {day.dayOfWeek === "WEDNESDAY" && "Mercredi"}
-                    {day.dayOfWeek === "THURSDAY" && "Jeudi"}
-                    {day.dayOfWeek === "FRIDAY" && "Vendredi"}
-                    {day.dayOfWeek === "SATURDAY" && "Samedi"}
-                    {day.dayOfWeek === "SUNDAY" && "Dimanche"}
-                  </span>
-                  <span className={day.isClosed ? "text-gray-500" : ""}>
-                    {day.isClosed
-                      ? "Fermé"
-                      : `${day.openTime} - ${day.closeTime}`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+                  <Separator />
 
-      {/* Images importées */}
-      {images.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="font-semibold text-lg">Photos importées de Google</h3>
+                  {/* Option admin : créer pour revendication */}
+                  {userRole === "admin" && mode === "create" && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <FormLabel htmlFor="createForClaim">
+                          Créer pour revendication
+                        </FormLabel>
+                        <Switch
+                          id="createForClaim"
+                          checked={createForClaim}
+                          onCheckedChange={setCreateForClaim}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        La fiche ne vous sera pas attribuée et pourra être
+                        revendiquée par un utilisateur
+                      </p>
+                      <Separator />
+                    </>
+                  )}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {images.slice(0, 8).map((image, index) => (
-              <div key={index} className="relative aspect-square">
-                <img
-                  src={image}
-                  alt={`Photo ${index + 1}`}
-                  className="w-full h-full object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setImages(images.filter((_, i) => i !== index))
-                  }
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
+                  <div className="flex items-center justify-between">
+                    <FormLabel htmlFor="published">Publié</FormLabel>
+                    <FormField
+                      control={form.control}
+                      name="published"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Switch
+                              id="published"
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
                     />
-                  </svg>
-                </button>
-              </div>
-            ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => history.back()}
+                      className="w-full"
+                    >
+                      Annuler
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* SEO */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-lg">SEO & Partage social</h3>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Titre SEO
-            <span className="text-gray-500 text-xs ml-2">
-              ({watch("metaTitle")?.length || 0}/60)
-            </span>
-          </label>
-          <input
-            {...register("metaTitle")}
-            maxLength={60}
-            placeholder="Titre pour les moteurs de recherche"
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Description SEO
-            <span className="text-gray-500 text-xs ml-2">
-              ({watch("metaDescription")?.length || 0}/160)
-            </span>
-          </label>
-          <textarea
-            {...register("metaDescription")}
-            maxLength={160}
-            rows={3}
-            placeholder="Description pour les moteurs de recherche et réseaux sociaux"
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Résumé pour partage
-            <span className="text-gray-500 text-xs ml-2">
-              ({watch("summary")?.length || 0}/280)
-            </span>
-          </label>
-          <textarea
-            {...register("summary")}
-            maxLength={280}
-            rows={3}
-            placeholder="Résumé court pour Twitter et partages rapides"
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      </div>
-
-      {/* Google Place ID (readonly) */}
-      {watch("googlePlaceId") && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center space-x-2">
-            <svg
-              className="w-5 h-5 text-green-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span className="text-green-800 font-medium">
-              Connecté à Google Business
-            </span>
-          </div>
-          <div className="mt-2 text-sm text-green-700">
-            ID: {watch("googlePlaceId")}
-          </div>
-          {watch("googleMapsUrl") && (
-            <a
-              href={watch("googleMapsUrl")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-green-600 hover:text-green-800 text-sm underline mt-1 inline-block"
-            >
-              Voir sur Google Maps →
-            </a>
-          )}
-        </div>
-      )}
-
-      {/* Boutons d'action */}
-      <div className="flex justify-end space-x-4 pt-6 border-t">
-        <button
-          type="button"
-          onClick={() => window.history.back()}
-          className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          Annuler
-        </button>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-        >
-          {isSubmitting && (
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-          )}
-          <span>{mode === "create" ? "Créer la place" : "Mettre à jour"}</span>
-        </button>
-      </div>
-    </form>
+        </form>
+      </Form>
+    </FormProvider>
   );
-};
+}

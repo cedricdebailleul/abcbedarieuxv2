@@ -68,7 +68,7 @@ export default function Hero({
   };
 
   return (
-    <section className="relative">
+    <section className="relative mx-auto px-8">
       <div className="space-y-8">
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Left Section - Anniversary Content with Image */}
@@ -191,11 +191,11 @@ export default function Hero({
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
           <div className="flex items-start bg-gray-800 space-x-2  rounded-full w-full p-4">
-            <Link href="/recherche" className="flex items-center gap-2 ">
+            <Link href="/places" className="flex items-center gap-2 ">
               <span className="bg-gray-900 p-3 rounded-full text-white">
                 <Book className="size-5 text-white" />
               </span>
-              <span>Bibliothèque</span>
+              <span className="text-white">Les lieux & activités</span>
             </Link>
           </div>
           <div className="flex items-start bg-gray-800 space-x-2  rounded-full w-full p-4">

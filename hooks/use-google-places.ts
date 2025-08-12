@@ -42,7 +42,15 @@ interface PlaceResult {
   types?: string[];
   business_status?: string;
   url?: string; // URL Google Maps
+  editorial_summary?: {
+    overview?: string;
+    language?: string;
+  };
+  vicinity?: string;
+  adr_address?: string;
 }
+
+type OpeningSlot = { openTime: string; closeTime: string };
 
 // Type pour les données formatées de la Place
 export interface FormattedPlaceData {
@@ -54,6 +62,7 @@ export interface FormattedPlaceData {
   name: string;
   type: string;
   category?: string;
+  description?: string; // Description Google Business
 
   // Adresse
   street: string;
@@ -73,20 +82,27 @@ export interface FormattedPlaceData {
 
   // Horaires
   openingHours?: Array<{
-    dayOfWeek: string;
-    openTime: string;
-    closeTime: string;
+    dayOfWeek: string; // "MONDAY"..."SUNDAY"
     isClosed: boolean;
+    openTime?: string | null; // compat (non utilisé si slots[])
+    closeTime?: string | null; // compat
+    slots?: OpeningSlot[]; // ⇦ plusieurs créneaux par jour
   }>;
 
   // Médias
   photos?: string[];
   logo?: string;
-  coverImage?: string;
+  coverImage?: string; // Optionnel - à uploader manuellement
 
   // Métriques
   rating?: number;
   reviewCount?: number;
+  reviews?: Array<{
+    author_name: string;
+    rating: number;
+    text: string;
+    time: number;
+  }>;
 
   // SEO
   metaDescription?: string;
@@ -192,6 +208,18 @@ export const useGooglePlaces = ({
     return "OTHER";
   };
 
+  const DAYS = [
+    "SUNDAY",
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+  ] as const;
+  const toHHMM = (t?: string) =>
+    t && t.length === 4 ? `${t.slice(0, 2)}:${t.slice(2)}` : t ?? "";
+
   // Convertir les jours Google (0-6, dimanche=0) vers votre enum
   const mapDayToEnum = (day: number): string => {
     const days = [
@@ -206,57 +234,84 @@ export const useGooglePlaces = ({
     return days[day];
   };
 
-  // Formater les horaires Google
+  /**
+   * Construit des "slots" (matin/après-midi) par jour depuis Google periods.
+   * - Gère plusieurs créneaux le même jour
+   * - Gère les périodes qui passent minuit (split sur 2 jours)
+   */
   const formatOpeningHours = (
-    periods?: any[]
+    periods?: Array<{
+      open: { day: number; time: string };
+      close?: { day: number; time: string };
+    }>
   ): FormattedPlaceData["openingHours"] => {
-    if (!periods) return undefined;
-
-    const daysMap = new Map<string, any>();
-
-    // Initialiser tous les jours comme fermés
-    [
-      "MONDAY",
-      "TUESDAY",
-      "WEDNESDAY",
-      "THURSDAY",
-      "FRIDAY",
-      "SATURDAY",
-      "SUNDAY",
-    ].forEach((day) => {
-      daysMap.set(day, {
-        dayOfWeek: day,
-        openTime: "00:00",
-        closeTime: "00:00",
+    if (!periods || periods.length === 0) {
+      // retourne 7 jours "fermés"
+      return DAYS.map((d) => ({
+        dayOfWeek: d,
         isClosed: true,
+        openTime: null,
+        closeTime: null,
+        slots: [],
+      }));
+    }
+
+    // Accumulateur par jour
+    const byDay: Record<
+      string,
+      { slots: { openTime: string; closeTime: string }[] }
+    > = {};
+
+    const pushSlot = (dayIdx: number, open: string, close: string) => {
+      const key = DAYS[dayIdx];
+      (byDay[key] ||= { slots: [] }).slots.push({
+        openTime: open,
+        closeTime: close,
       });
-    });
+    };
 
-    // Remplir avec les vraies données
-    periods.forEach((period) => {
-      if (period.open) {
-        const dayEnum = mapDayToEnum(period.open.day);
-        const openTime = period.open.time
-          ? `${period.open.time.substring(0, 2)}:${period.open.time.substring(
-              2
-            )}`
-          : "00:00";
-        const closeTime = period.close?.time
-          ? `${period.close.time.substring(0, 2)}:${period.close.time.substring(
-              2
-            )}`
-          : "23:59";
+    for (const p of periods) {
+      const oDay = p.open?.day ?? 0;
+      const cDay = p.close?.day ?? oDay; // si close absent, on considère même jour (et on met 23:59)
+      const o = toHHMM(p.open?.time) || "00:00";
+      const c = toHHMM(p.close?.time) || "23:59";
 
-        daysMap.set(dayEnum, {
-          dayOfWeek: dayEnum,
-          openTime,
-          closeTime,
-          isClosed: false,
-        });
+      if (oDay === cDay) {
+        // Période dans la même journée (classique : 09:00–12:00, 14:00–19:00)
+        pushSlot(oDay, o, c);
+      } else {
+        // Période qui dépasse minuit (ex: 22:00–02:00)
+        pushSlot(oDay, o, "23:59");
+        pushSlot(cDay, "00:00", c);
       }
-    });
+    }
 
-    return Array.from(daysMap.values());
+    // Tri des créneaux par heure d’ouverture
+    for (const k of Object.keys(byDay)) {
+      byDay[k].slots.sort((a, b) => a.openTime.localeCompare(b.openTime));
+    }
+
+    // Construire les 7 jours, fermés si aucun slot
+    return DAYS.map((d) => {
+      const slots = byDay[d]?.slots ?? [];
+      if (slots.length === 0) {
+        return {
+          dayOfWeek: d,
+          isClosed: true,
+          openTime: null,
+          closeTime: null,
+          slots: [],
+        };
+      }
+      // Compat : on renseigne aussi openTime/closeTime sur le 1er slot
+      return {
+        dayOfWeek: d,
+        isClosed: false,
+        openTime: slots[0].openTime,
+        closeTime: slots[slots.length - 1].closeTime,
+        slots,
+      };
+    });
   };
 
   // Extraire les composants d'adresse
@@ -348,6 +403,10 @@ export const useGooglePlaces = ({
           "types",
           "business_status",
           "url",
+          "editorial_summary",
+          "vicinity",
+          "adr_address",
+          "business_status",
         ],
         language,
       };
@@ -365,8 +424,22 @@ export const useGooglePlaces = ({
             ?.slice(0, 10)
             .map((photo) => photo.getUrl({ maxWidth: 1200, maxHeight: 800 }));
 
-          // Créer la description meta à partir des avis ou types
+          // Récupérer la description Google Business si disponible
+          const googleDescription = (place as any).editorial_summary?.overview;
+          
+          // Alternative: utiliser le premier avis comme description si pas de description officielle
+          const fallbackDescription = !googleDescription && place.reviews?.[0]?.text
+            ? place.reviews[0].text.length > 50 
+              ? place.reviews[0].text 
+              : null
+            : null;
+          
+          // Note: L'API Google Places standard ne fournit pas de description détaillée
+          // La description doit être saisie manuellement dans le formulaire
+          
+          // Créer la description meta à partir de la description Google ou des avis
           const metaDescription =
+            googleDescription?.substring(0, 160) ||
             place.reviews?.[0]?.text?.substring(0, 160) ||
             `${place.name} à ${addressComponents.city}. ${place.types
               ?.slice(0, 3)
@@ -381,6 +454,7 @@ export const useGooglePlaces = ({
             name: place.name || "",
             type: mapGoogleTypeToPlaceType(place.types || []),
             category: place.types?.[0],
+            description: googleDescription || fallbackDescription, // Description Google Business ou premier avis
 
             // Adresse
             street: addressComponents.street,
@@ -402,11 +476,12 @@ export const useGooglePlaces = ({
 
             // Médias
             photos,
-            coverImage: photos?.[0],
+            // coverImage: Ne pas importer automatiquement - laisser l'utilisateur choisir
 
             // Métriques
             rating: place.rating,
             reviewCount: place.user_ratings_total,
+            reviews: place.reviews, // Toutes les reviews
 
             // SEO
             metaDescription,

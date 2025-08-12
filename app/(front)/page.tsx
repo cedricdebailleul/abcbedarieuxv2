@@ -17,8 +17,8 @@ export default async function Home() {
 
       {/* Section des derniers articles */}
       {latestPosts.length > 0 && (
-        <section className="py-16">
-          <div className="mx-auto">
+        <section className="py-16 mx-auto px-8">
+          <div>
             {/* En-tête de section */}
             <div className="flex items-center justify-between mb-8">
               <div>

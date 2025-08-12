@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { LoginForm } from "@/components/forms/auth-forms";
+import { TabLoginForm } from "./_components/TabLoginForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -55,7 +55,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               </div>
             </div>
 
-            <LoginForm />
+            <TabLoginForm />
 
             <div className="text-center space-y-2">
               <Link

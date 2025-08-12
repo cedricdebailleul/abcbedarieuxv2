@@ -13,13 +13,13 @@ export const transporter = nodemailer.createTransport({
 
 export async function sendEmailOTP(email: string, otp: string) {
   const mailOptions = {
-    from: `LMS Course <${env.MAIL_USER}>`,
+    from: `ABC Bédarieux <${env.MAIL_USER}>`,
     to: email,
-    subject: "MarshalLMS, verify your email",
+    subject: "ABC Bédarieux - Code de vérification",
     html: `
-      <h2>Verification Code</h2>
-      <p>Your code is: <strong>${otp}</strong></p>
-      <p>This code is valid for 15 minutes.</p>
+      <h2>Code de vérification</h2>
+      <p>Votre code de vérification est : <strong>${otp}</strong></p>
+      <p>Ce code est valide pendant 15 minutes.</p>
     `,
   };
   await transporter.sendMail(mailOptions);
@@ -34,11 +34,27 @@ export async function sendEmail({
   subject: string;
   html: string;
 }) {
+  console.log("🔧 [MAILER] Tentative d'envoi d'email:", {
+    to,
+    subject,
+    from: `ABC Bédarieux <${env.MAIL_USER}>`,
+    mailHost: env.MAIL_HOST,
+    mailPort: env.MAIL_PORT,
+  });
+
   const mailOptions = {
-    from: `LMS Course <${env.MAIL_USER}>`,
+    from: `ABC Bédarieux <${env.MAIL_USER}>`,
     to,
     subject,
     html,
   };
-  await transporter.sendMail(mailOptions);
+  
+  try {
+    const result = await transporter.sendMail(mailOptions);
+    console.log("✅ [MAILER] Email envoyé avec succès:", result.messageId);
+    return result;
+  } catch (error) {
+    console.error("❌ [MAILER] Erreur lors de l'envoi:", error);
+    throw error;
+  }
 }
