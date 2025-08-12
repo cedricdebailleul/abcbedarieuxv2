@@ -93,12 +93,9 @@ export const postSchema = z.object({
     .string()
     .optional()
     .nullable()
-    .refine(
-      (val) => !val || val === "" || z.string().url().safeParse(val).success,
-      {
-        message: "L'URL canonique doit être une URL valide ou vide",
-      }
-    ),
+    .refine((val) => !val || val === "" || z.string().url().safeParse(val).success, {
+      message: "L'URL canonique doit être une URL valide ou vide",
+    }),
 
   // Status
   status: z.nativeEnum(PostStatus).default(PostStatus.DRAFT),
@@ -225,17 +222,13 @@ export const postFiltersSchema = z.object({
 
 // Schéma pour la publication/dépublication en lot
 export const bulkPublishSchema = z.object({
-  postIds: z
-    .array(z.string().cuid())
-    .min(1, "Au moins un article doit être sélectionné"),
+  postIds: z.array(z.string().cuid()).min(1, "Au moins un article doit être sélectionné"),
   published: z.boolean(),
 });
 
 // Schéma pour la suppression en lot
 export const bulkDeleteSchema = z.object({
-  postIds: z
-    .array(z.string().cuid())
-    .min(1, "Au moins un article doit être sélectionné"),
+  postIds: z.array(z.string().cuid()).min(1, "Au moins un article doit être sélectionné"),
 });
 
 // Types TypeScript dérivés des schémas
@@ -272,21 +265,16 @@ export const categorySchema = z.object({
     .nullable(),
   color: z
     .string()
-    .regex(
-      /^#[0-9A-Fa-f]{6}$/,
-      "La couleur doit être un code hexadécimal valide"
-    )
+    .regex(/^#[0-9A-Fa-f]{6}$/, "La couleur doit être un code hexadécimal valide")
     .optional()
     .nullable(),
   parentId: z.string().cuid().optional().nullable(),
 });
 
-export const createCategorySchema = categorySchema
-  .omit({ id: true })
-  .transform((data) => ({
-    ...data,
-    slug: data.slug || generateSlug(data.name),
-  }));
+export const createCategorySchema = categorySchema.omit({ id: true }).transform((data) => ({
+  ...data,
+  slug: data.slug || generateSlug(data.name),
+}));
 
 // Tag
 export const tagSchema = z.object({
@@ -307,20 +295,15 @@ export const tagSchema = z.object({
     .optional(),
   color: z
     .string()
-    .regex(
-      /^#[0-9A-Fa-f]{6}$/,
-      "La couleur doit être un code hexadécimal valide"
-    )
+    .regex(/^#[0-9A-Fa-f]{6}$/, "La couleur doit être un code hexadécimal valide")
     .optional()
     .nullable(),
 });
 
-export const createTagSchema = tagSchema
-  .omit({ id: true })
-  .transform((data) => ({
-    ...data,
-    slug: data.slug || generateSlug(data.name),
-  }));
+export const createTagSchema = tagSchema.omit({ id: true }).transform((data) => ({
+  ...data,
+  slug: data.slug || generateSlug(data.name),
+}));
 
 export type CategoryInput = z.infer<typeof categorySchema>;
 export type TagInput = z.infer<typeof tagSchema>;

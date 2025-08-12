@@ -1,15 +1,12 @@
-import { Metadata } from "next";
+import { CheckCircle } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { TabLoginForm } from "./_components/TabLoginForm";
-import { Button } from "@/components/ui/button";
+import { AnimatedContainer } from "@/components/animations/animated-container";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { signIn } from "@/lib/auth-client";
-import { Github, CheckCircle } from "lucide-react";
-import { AnimatedContainer } from "@/components/animations/animated-container";
 import { ButtonSocial } from "./_components/buttonSocial";
-import { Suspense } from "react";
+import { TabLoginForm } from "./_components/TabLoginForm";
 
 export const metadata: Metadata = {
   title: "Connexion | MonApp",
@@ -27,13 +24,17 @@ function AccountCreatedMessage() {
   );
 }
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ message?: string }>;
+}) {
   const resolvedSearchParams = await searchParams;
   return (
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
       <AnimatedContainer className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
         {resolvedSearchParams.message === "account-created" && <AccountCreatedMessage />}
-        
+
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Connexion</CardTitle>
@@ -49,9 +50,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
                 <Separator />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Ou continuez avec
-                </span>
+                <span className="bg-background px-2 text-muted-foreground">Ou continuez avec</span>
               </div>
             </div>
 
@@ -67,10 +66,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
               <p className="text-sm text-muted-foreground">
                 Pas encore de compte ?{" "}
-                <Link
-                  href="/register"
-                  className="underline underline-offset-4 hover:text-primary"
-                >
+                <Link href="/register" className="underline underline-offset-4 hover:text-primary">
                   S'inscrire
                 </Link>
               </p>

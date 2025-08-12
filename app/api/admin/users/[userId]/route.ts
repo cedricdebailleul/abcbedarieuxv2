@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
-import { headers } from "next/headers";
-import bcrypt from "bcryptjs";
 
 const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
@@ -13,21 +12,23 @@ const updateUserSchema = z.object({
   banned: z.boolean().optional(),
   banReason: z.string().optional(),
   banExpires: z.string().datetime().optional(),
-  profile: z.object({
-    firstname: z.string().optional(),
-    lastname: z.string().optional(),
-    bio: z.string().optional(),
-    phone: z.string().optional(),
-    language: z.string().optional(),
-    timezone: z.string().optional(),
-    isPublic: z.boolean().optional(),
-    showEmail: z.boolean().optional(),
-    showPhone: z.boolean().optional(),
-  }).optional(),
+  profile: z
+    .object({
+      firstname: z.string().optional(),
+      lastname: z.string().optional(),
+      bio: z.string().optional(),
+      phone: z.string().optional(),
+      language: z.string().optional(),
+      timezone: z.string().optional(),
+      isPublic: z.boolean().optional(),
+      showEmail: z.boolean().optional(),
+      showPhone: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
@@ -37,10 +38,7 @@ export async function GET(
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Vérifier que l'utilisateur est admin ou consulte son propre profil
@@ -54,15 +52,12 @@ export async function GET(
     const isOwnProfile = session.user.id === resolvedParams.userId;
 
     if (!isAdmin && !isOwnProfile) {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     // Récupérer l'utilisateur avec toutes ses relations
     const user = await prisma.user.findUnique({
-      where: { 
+      where: {
         id: resolvedParams.userId,
         deletedAt: null, // Exclure les utilisateurs supprimés
       },
@@ -99,10 +94,7 @@ export async function GET(
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Utilisateur non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
     }
 
     // Masquer certaines informations sensibles si ce n'est pas l'admin
@@ -127,7 +119,7 @@ export async function GET(
         bannedBy: user.bannedBy,
       }),
       profile: user.profile,
-      badges: user.badges.map(userBadge => ({
+      badges: user.badges.map((userBadge) => ({
         id: userBadge.id,
         earnedAt: userBadge.earnedAt,
         reason: userBadge.reason,
@@ -143,7 +135,7 @@ export async function GET(
         },
       })),
       ...(isAdmin && {
-        sessions: user.sessions.map(session => ({
+        sessions: user.sessions.map((session) => ({
           id: session.id,
           createdAt: session.createdAt,
           expiresAt: session.expiresAt,
@@ -156,13 +148,9 @@ export async function GET(
     };
 
     return NextResponse.json(userData);
-
   } catch (error) {
     console.error("Erreur lors de la récupération de l'utilisateur:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }
 
@@ -177,10 +165,7 @@ export async function PUT(
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Vérifier que l'utilisateur est admin ou modifie son propre profil
@@ -194,10 +179,7 @@ export async function PUT(
     const isOwnProfile = session.user.id === resolvedParams.userId;
 
     if (!isAdmin && !isOwnProfile) {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     // Parser les données
@@ -217,7 +199,7 @@ export async function PUT(
 
     // Vérifier que l'utilisateur existe
     const existingUser = await prisma.user.findUnique({
-      where: { 
+      where: {
         id: resolvedParams.userId,
         deletedAt: null,
       },
@@ -227,10 +209,7 @@ export async function PUT(
     });
 
     if (!existingUser) {
-      return NextResponse.json(
-        { error: "Utilisateur non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
     }
 
     // Vérifier l'unicité de l'email si modifié
@@ -244,10 +223,7 @@ export async function PUT(
       });
 
       if (emailExists) {
-        return NextResponse.json(
-          { error: "Cet email est déjà utilisé" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 400 });
       }
     }
 
@@ -302,10 +278,9 @@ export async function PUT(
         profile: updatedUser.profile,
       },
     });
-
   } catch (error) {
     console.error("Erreur lors de la mise à jour de l'utilisateur:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Données invalides", details: error.issues },
@@ -313,10 +288,7 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }
 
@@ -331,10 +303,7 @@ export async function DELETE(
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Seuls les admins peuvent supprimer des utilisateurs
@@ -344,10 +313,7 @@ export async function DELETE(
     });
 
     if (currentUser?.role !== "admin") {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     // Empêcher l'auto-suppression
@@ -361,17 +327,14 @@ export async function DELETE(
 
     // Vérifier que l'utilisateur existe
     const existingUser = await prisma.user.findUnique({
-      where: { 
+      where: {
         id: resolvedParams.userId,
         deletedAt: null,
       },
     });
 
     if (!existingUser) {
-      return NextResponse.json(
-        { error: "Utilisateur non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
     }
 
     // Parser les paramètres de requête pour déterminer le type de suppression
@@ -399,16 +362,10 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: hardDelete 
-        ? "Utilisateur supprimé définitivement"
-        : "Utilisateur supprimé",
+      message: hardDelete ? "Utilisateur supprimé définitivement" : "Utilisateur supprimé",
     });
-
   } catch (error) {
     console.error("Erreur lors de la suppression de l'utilisateur:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

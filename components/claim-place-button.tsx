@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { useSession } from "@/hooks/use-session";
-import { User, UserPlus, FileText } from "lucide-react";
+import { FileText, User, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { useSession } from "@/hooks/use-session";
 
 interface ClaimPlaceButtonProps {
   placeId: string;
@@ -15,12 +15,17 @@ interface ClaimPlaceButtonProps {
   className?: string;
 }
 
-export function ClaimPlaceButton({ placeId, placeName, placeSlug, className }: ClaimPlaceButtonProps) {
+export function ClaimPlaceButton({
+  placeId,
+  placeName,
+  placeSlug,
+  className,
+}: ClaimPlaceButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
-  const handleClaim = async () => {
+  const _handleClaim = async () => {
     if (isLoading) return;
 
     if (!confirm(`Voulez-vous revendiquer "${placeName}" ? Cette action est irréversible.`)) {
@@ -44,10 +49,9 @@ export function ClaimPlaceButton({ placeId, placeName, placeSlug, className }: C
       }
 
       toast.success(result.message);
-      
+
       // Rediriger vers la page d'édition de la place
       router.push(`/dashboard/places/${placeId}/edit`);
-      
     } catch (error: any) {
       console.error("Erreur revendication:", error);
       toast.error(error.message || "Erreur lors de la revendication");
@@ -66,7 +70,7 @@ export function ClaimPlaceButton({ placeId, placeName, placeSlug, className }: C
             Revendiquer cette place
           </Button>
         </Link>
-        
+
         <p className="text-xs text-muted-foreground">
           Soumettez une demande avec justificatifs pour validation par un administrateur
         </p>
@@ -80,7 +84,7 @@ export function ClaimPlaceButton({ placeId, placeName, placeSlug, className }: C
       <p className="text-sm text-muted-foreground">
         Vous devez être connecté pour revendiquer cette place.
       </p>
-      
+
       <div className="space-y-2">
         <Link href={`/login?callbackUrl=/places/${placeSlug}/claim`} className="block">
           <Button className={`w-full ${className}`} variant="default">
@@ -88,7 +92,7 @@ export function ClaimPlaceButton({ placeId, placeName, placeSlug, className }: C
             Se connecter et revendiquer
           </Button>
         </Link>
-        
+
         <Link href={`/register?callbackUrl=/places/${placeSlug}/claim`} className="block">
           <Button className={`w-full ${className}`} variant="outline">
             <UserPlus className="w-4 h-4 mr-2" />
@@ -96,7 +100,7 @@ export function ClaimPlaceButton({ placeId, placeName, placeSlug, className }: C
           </Button>
         </Link>
       </div>
-      
+
       <p className="text-xs text-muted-foreground">
         Après inscription, vous pourrez fournir des preuves de propriété.
       </p>

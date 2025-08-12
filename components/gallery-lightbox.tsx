@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
+import { useState } from "react";
 import { Lightbox } from "@/components/ui/lightbox";
 
 interface GalleryLightboxProps {
@@ -27,7 +27,8 @@ export function GalleryLightbox({ images, placeName }: GalleryLightboxProps) {
       <div className="grid grid-cols-3 gap-2">
         {images.slice(0, 9).map((src, i) => (
           <button
-            key={i}
+            key={`img-${src.split('/').pop()}-${i}`}
+            type="button"
             onClick={() => openLightbox(i)}
             className="group relative block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md"
           >

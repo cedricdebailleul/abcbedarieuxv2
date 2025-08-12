@@ -1,18 +1,42 @@
 "use client";
 
-import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Eye,
+  FileText,
+  Folder,
+  Globe,
+  Image as ImageIcon,
+  Loader2,
+  Save,
+  Settings,
+  Tag as TagIcon,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-
+import {
+  createPostAction,
+  getCategoriesAction,
+  getTagsAction,
+  updatePostAction,
+} from "@/actions/post";
+import { TipTapEditor } from "@/components/editors/tiptap-editor";
+import { ImageUpload } from "@/components/media/image-upload";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -21,41 +45,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { PostStatus } from "@/lib/generated/prisma";
 import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  Form,
-} from "@/components/ui/form";
-
-import { createPostAction, updatePostAction, getCategoriesAction, getTagsAction } from "@/actions/post";
+  type CreatePostInput,
+  createPostSchema,
+  generateSlug,
+  type UpdatePostInput,
+  updatePostSchema,
+} from "@/lib/validations/post";
 import { CreateCategoryDialog } from "./create-category-dialog";
 import { CreateTagsDialog } from "./create-tags-dialog";
-import { TipTapEditor } from "@/components/editors/tiptap-editor";
-import { ImageUpload } from "@/components/media/image-upload";
-import { 
-  createPostSchema, 
-  updatePostSchema, 
-  generateSlug,
-  type CreatePostInput, 
-  type UpdatePostInput 
-} from "@/lib/validations/post";
-import { PostStatus } from "@/lib/generated/prisma";
-
-import { 
-  Save, 
-  Eye, 
-  FileText, 
-  Tag as TagIcon, 
-  Folder, 
-  Globe, 
-  Settings,
-  Loader2,
-  X,
-  Image as ImageIcon
-} from "lucide-react";
 
 // Types pour les données
 interface Category {
@@ -85,7 +87,7 @@ function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Charger les tags disponibles
-  const loadTags = async () => {
+  const loadTags = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await getTagsAction();
@@ -97,11 +99,18 @@ function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []); // Pas de dépendances car getTagsAction est stable
 
   useEffect(() => {
     loadTags();
-  }, [refreshTrigger]);
+  }, [loadTags]);
+
+  // Recharger les tags quand refreshTrigger change (après création de nouveaux tags)
+  useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0) {
+      loadTags();
+    }
+  }, [refreshTrigger, loadTags]);
 
   // Initialiser les tags sélectionnés
   useEffect(() => {
@@ -111,15 +120,15 @@ function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
 
   const toggleTag = (tagId: string) => {
     const newSelection = selectedTags.includes(tagId)
-      ? selectedTags.filter(id => id !== tagId)
+      ? selectedTags.filter((id) => id !== tagId)
       : [...selectedTags, tagId];
-    
+
     setSelectedTags(newSelection);
     form.setValue("tagIds", newSelection);
   };
 
   const removeTag = (tagId: string) => {
-    const newSelection = selectedTags.filter(id => id !== tagId);
+    const newSelection = selectedTags.filter((id) => id !== tagId);
     setSelectedTags(newSelection);
     form.setValue("tagIds", newSelection);
   };
@@ -133,19 +142,19 @@ function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
     );
   }
 
-  const selectedTagsData = tags.filter(tag => selectedTags.includes(tag.id));
+  const selectedTagsData = tags.filter((tag) => selectedTags.includes(tag.id));
 
   return (
     <div className="space-y-4">
       {/* Tags sélectionnés */}
       {selectedTagsData.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedTagsData.map(tag => (
-            <Badge 
-              key={tag.id} 
-              variant="secondary" 
+          {selectedTagsData.map((tag) => (
+            <Badge
+              key={tag.id}
+              variant="secondary"
               className="flex items-center gap-1"
-              style={{ backgroundColor: tag.color + "20", color: tag.color }}
+              style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
             >
               {tag.name}
               <Button
@@ -164,7 +173,7 @@ function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
 
       {/* Sélecteur de tags */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-40 overflow-y-auto">
-        {tags.map(tag => (
+        {tags.map((tag) => (
           <Button
             key={tag.id}
             variant={selectedTags.includes(tag.id) ? "default" : "outline"}
@@ -180,9 +189,7 @@ function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
       </div>
 
       {tags.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          Aucun tag disponible
-        </p>
+        <p className="text-sm text-muted-foreground text-center py-4">Aucun tag disponible</p>
       )}
     </div>
   );
@@ -199,40 +206,39 @@ export function PostForm({ initialData, mode }: PostFormProps) {
 
   // Configuration du formulaire selon le mode
   const form = useForm<CreatePostInput | UpdatePostInput>({
-    resolver: zodResolver(
-      (mode === "create" ? createPostSchema : updatePostSchema) as any
-    ),
-    defaultValues: mode === "create" 
-      ? {
-          title: "",
-          slug: "",
-          content: "",
-          excerpt: "",
-          published: false,
-          categoryId: "none",
-          tagIds: [],
-          metaTitle: "",
-          metaDescription: "",
-          ogImage: "",
-          canonicalUrl: "",
-          status: PostStatus.DRAFT,
-        }
-      : {
-          id: initialData?.id,
-          title: initialData?.title || "",
-          slug: initialData?.slug || "",
-          content: initialData?.content || "",
-          excerpt: initialData?.excerpt || "",
-          published: initialData?.published || false,
-          categoryId: initialData?.categoryId || "none",
-          tagIds: initialData?.tags?.map((t: any) => t.tag.id) || [],
-          coverImage: initialData?.coverImage || "",
-          metaTitle: initialData?.metaTitle || "",
-          metaDescription: initialData?.metaDescription || "",
-          ogImage: initialData?.ogImage || "",
-          canonicalUrl: initialData?.canonicalUrl || "",
-          status: initialData?.status || PostStatus.DRAFT,
-        }
+    resolver: zodResolver((mode === "create" ? createPostSchema : updatePostSchema) as any),
+    defaultValues:
+      mode === "create"
+        ? {
+            title: "",
+            slug: "",
+            content: "",
+            excerpt: "",
+            published: false,
+            categoryId: "none",
+            tagIds: [],
+            metaTitle: "",
+            metaDescription: "",
+            ogImage: "",
+            canonicalUrl: "",
+            status: PostStatus.DRAFT,
+          }
+        : {
+            id: initialData?.id,
+            title: initialData?.title || "",
+            slug: initialData?.slug || "",
+            content: initialData?.content || "",
+            excerpt: initialData?.excerpt || "",
+            published: initialData?.published || false,
+            categoryId: initialData?.categoryId || "none",
+            tagIds: initialData?.tags?.map((t: any) => t.tag.id) || [],
+            coverImage: initialData?.coverImage || "",
+            metaTitle: initialData?.metaTitle || "",
+            metaDescription: initialData?.metaDescription || "",
+            ogImage: initialData?.ogImage || "",
+            canonicalUrl: initialData?.canonicalUrl || "",
+            status: initialData?.status || PostStatus.DRAFT,
+          },
   });
 
   // Charger les catégories
@@ -259,7 +265,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
     if (watchTitle && mode === "create") {
       const newSlug = generateSlug(watchTitle);
       setPreviewSlug(newSlug);
-      
+
       // Mettre à jour le slug seulement si l'utilisateur n'a pas manually modifié
       const currentSlug = form.getValues("slug");
       if (!currentSlug || currentSlug === generateSlug(watchTitle.slice(0, -1))) {
@@ -272,9 +278,10 @@ export function PostForm({ initialData, mode }: PostFormProps) {
   const onSubmit = async (data: CreatePostInput | UpdatePostInput) => {
     startTransition(async () => {
       try {
-        const result = mode === "create" 
-          ? await createPostAction(data as CreatePostInput)
-          : await updatePostAction(data as UpdatePostInput);
+        const result =
+          mode === "create"
+            ? await createPostAction(data as CreatePostInput)
+            : await updatePostAction(data as UpdatePostInput);
 
         if (result.success) {
           toast.success(`Article ${mode === "create" ? "créé" : "mis à jour"} avec succès`);
@@ -342,10 +349,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                       <FormItem>
                         <FormLabel>Titre *</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Titre de votre article..."
-                            {...field}
-                          />
+                          <Input placeholder="Titre de votre article..." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -361,10 +365,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                         <FormLabel>Slug</FormLabel>
                         <FormControl>
                           <div className="space-y-2">
-                            <Input
-                              placeholder="slug-de-votre-article"
-                              {...field}
-                            />
+                            <Input placeholder="slug-de-votre-article" {...field} />
                             {previewSlug && mode === "create" && (
                               <p className="text-sm text-muted-foreground">
                                 Aperçu: <code className="bg-muted px-1 rounded">{previewSlug}</code>
@@ -416,8 +417,8 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                             slug={form.getValues("slug") || "general"}
                             aspectRatios={[
                               { label: "Réseaux sociaux 1.91:1 (optimal)", value: 1.91 },
-                              { label: "Paysage 16:9", value: 16/9 },
-                              { label: "Paysage 4:3", value: 4/3 },
+                              { label: "Paysage 16:9", value: 16 / 9 },
+                              { label: "Paysage 4:3", value: 4 / 3 },
                               { label: "Carré 1:1", value: 1 },
                             ]}
                             className="max-w-md"
@@ -631,9 +632,9 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                       <Folder className="h-5 w-5" />
                       Catégorie
                     </CardTitle>
-                    <CreateCategoryDialog 
+                    <CreateCategoryDialog
                       onCategoryCreated={(newCategory) => {
-                        setCategories(prev => [...prev, newCategory]);
+                        setCategories((prev) => [...prev, newCategory]);
                         form.setValue("categoryId", newCategory.id);
                       }}
                     />
@@ -659,7 +660,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                               {categories.map((category) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   <div className="flex items-center gap-2">
-                                    <div 
+                                    <div
                                       className="w-3 h-3 rounded-full"
                                       style={{ backgroundColor: category.color }}
                                     />
@@ -685,12 +686,12 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                       <TagIcon className="h-5 w-5" />
                       Tags
                     </CardTitle>
-                    <CreateTagsDialog 
+                    <CreateTagsDialog
                       onTagsCreated={(newTags) => {
                         // Déclencher le refresh du TagSelector
-                        setTagRefreshTrigger(prev => prev + 1);
+                        setTagRefreshTrigger((prev) => prev + 1);
                         // Optionnel : sélectionner automatiquement les nouveaux tags créés
-                        const newTagIds = newTags.map(tag => tag.id);
+                        const newTagIds = newTags.map((tag) => tag.id);
                         const currentTagIds = form.getValues("tagIds") || [];
                         const uniqueTagIds = [...new Set([...currentTagIds, ...newTagIds])];
                         form.setValue("tagIds", uniqueTagIds);

@@ -1,8 +1,4 @@
-import {
-  BadgeCategory,
-  BadgeRarity,
-  PrismaClient,
-} from "@/lib/generated/prisma";
+import { type BadgeCategory, type BadgeRarity, PrismaClient } from "@/lib/generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -169,10 +165,13 @@ async function awardBasicBadges() {
   });
 
   const badges = await prisma.badge.findMany();
-  const badgeMap = badges.reduce((map, badge) => {
-    map[badge.title] = badge;
-    return map;
-  }, {} as Record<string, (typeof badges)[0]>);
+  const badgeMap = badges.reduce(
+    (map, badge) => {
+      map[badge.title] = badge;
+      return map;
+    },
+    {} as Record<string, (typeof badges)[0]>
+  );
 
   for (const user of users) {
     const userBadgeIds = user.badges.map((ub) => ub.badgeId);
@@ -189,11 +188,7 @@ async function awardBasicBadges() {
     }
 
     // Badge Profil complété
-    if (
-      user.profile?.bio &&
-      user.profile?.firstname &&
-      user.profile?.lastname
-    ) {
+    if (user.profile?.bio && user.profile?.firstname && user.profile?.lastname) {
       const profileBadge = badgeMap["Profil complété"];
       if (profileBadge && !userBadgeIds.includes(profileBadge.id)) {
         badgesToAward.push({
@@ -217,7 +212,7 @@ async function awardBasicBadges() {
       }
     }
     if (placeCount >= 3) {
-      const explorerBadge = badgeMap["Explorateur"];
+      const explorerBadge = badgeMap.Explorateur;
       if (explorerBadge && !userBadgeIds.includes(explorerBadge.id)) {
         badgesToAward.push({
           userId: user.id,
@@ -267,11 +262,10 @@ async function awardBasicBadges() {
           typeof user.profile.socials === "string"
             ? JSON.parse(user.profile.socials)
             : user.profile.socials;
-        const hasSocials =
-          socials && Object.keys(socials).some((key) => socials[key]);
+        const hasSocials = socials && Object.keys(socials).some((key) => socials[key]);
 
         if (hasSocials) {
-          const ambassadorBadge = badgeMap["Ambassadeur"];
+          const ambassadorBadge = badgeMap.Ambassadeur;
           if (ambassadorBadge && !userBadgeIds.includes(ambassadorBadge.id)) {
             badgesToAward.push({
               userId: user.id,
@@ -280,7 +274,7 @@ async function awardBasicBadges() {
             });
           }
         }
-      } catch (e) {
+      } catch (_e) {
         // Ignore JSON parse errors
       }
     }
@@ -303,7 +297,7 @@ async function awardBasicBadges() {
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     if (user.createdAt <= oneYearAgo) {
-      const veteranBadge = badgeMap["Vétéran"];
+      const veteranBadge = badgeMap.Vétéran;
       if (veteranBadge && !userBadgeIds.includes(veteranBadge.id)) {
         badgesToAward.push({
           userId: user.id,
@@ -320,9 +314,7 @@ async function awardBasicBadges() {
         skipDuplicates: true,
       });
 
-      console.log(
-        `🎖️  ${user.name}: ${badgesToAward.length} badge(s) attribué(s)`
-      );
+      console.log(`🎖️  ${user.name}: ${badgesToAward.length} badge(s) attribué(s)`);
       badgesToAward.forEach((badge) => {
         const badgeInfo = badges.find((b) => b.id === badge.badgeId);
         console.log(`   → ${badgeInfo?.title} (${badge.reason})`);

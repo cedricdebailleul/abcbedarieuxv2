@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Vérifier l'authentification et les permissions
     const session = await auth.api.getSession({
@@ -11,10 +11,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Vérifier que l'utilisateur est admin
@@ -24,39 +21,28 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     // Calculer les statistiques
-    const [
-      totalUsers,
-      activeUsers,
-      bannedUsers,
-      newUsersThisMonth,
-    ] = await Promise.all([
+    const [totalUsers, activeUsers, bannedUsers, newUsersThisMonth] = await Promise.all([
       // Total des utilisateurs
       prisma.user.count(),
-      
+
       // Utilisateurs actifs (non supprimés, non bannis)
       prisma.user.count({
         where: {
           status: "ACTIVE",
         },
       }),
-      
+
       // Utilisateurs bannis
       prisma.user.count({
         where: {
-          OR: [
-            { status: "BANNED" },
-            { status: "SUSPENDED" },
-          ],
+          OR: [{ status: "BANNED" }, { status: "SUSPENDED" }],
         },
       }),
-      
+
       // Nouveaux utilisateurs ce mois
       prisma.user.count({
         where: {
@@ -79,13 +65,9 @@ export async function GET(request: NextRequest) {
       success: true,
       stats,
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération des statistiques:", error);
-    
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

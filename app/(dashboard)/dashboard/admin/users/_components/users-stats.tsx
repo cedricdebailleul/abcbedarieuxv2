@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { TrendingUp, UserCheck, Users, UserX } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, UserX, TrendingUp } from "lucide-react";
 
 interface UserStats {
   totalUsers: number;
@@ -22,11 +22,7 @@ export default function UsersStats() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await fetch("/api/admin/users/stats");
       if (response.ok) {
@@ -38,14 +34,18 @@ export default function UsersStats() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const StatCard = ({ 
-    title, 
-    value, 
-    description, 
-    icon: Icon, 
-    color = "text-blue-600" 
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  const StatCard = ({
+    title,
+    value,
+    description,
+    icon: Icon,
+    color = "text-blue-600",
   }: {
     title: string;
     value: number;
@@ -76,7 +76,7 @@ export default function UsersStats() {
         icon={Users}
         color="text-blue-600"
       />
-      
+
       <StatCard
         title="Utilisateurs actifs"
         value={stats.activeUsers}

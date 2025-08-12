@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { PlaceForm } from "@/components/forms/place-form";
 import { toast } from "sonner";
+import { PlaceForm } from "@/components/forms/place-form";
 
 export default function NewPlacePage() {
   const router = useRouter();
@@ -22,11 +22,9 @@ export default function NewPlacePage() {
         throw new Error(error.error || "Erreur lors de la création");
       }
 
-      const result = await response.json();
+      const _result = await response.json();
 
-      toast.success(
-        "Place créée avec succès! Elle sera vérifiée par un administrateur."
-      );
+      toast.success("Place créée avec succès! Elle sera vérifiée par un administrateur.");
 
       // Rediriger vers la liste des places
       router.push("/dashboard/places");
@@ -41,12 +39,10 @@ export default function NewPlacePage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* En-tête */}
       <div className="border-b border-gray-200 pb-6">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Créer une nouvelle place
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900">Créer une nouvelle place</h1>
         <p className="text-gray-600 mt-2">
-          Ajoutez votre établissement au répertoire local. Votre place sera
-          vérifiée par un administrateur avant publication.
+          Ajoutez votre établissement au répertoire local. Votre place sera vérifiée par un
+          administrateur avant publication.
         </p>
       </div>
 
@@ -58,6 +54,8 @@ export default function NewPlacePage() {
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            role="img"
+            aria-label="Lieu / Adresse"
           >
             <path
               strokeLinecap="round"
@@ -69,14 +67,9 @@ export default function NewPlacePage() {
           <div>
             <h3 className="text-blue-900 font-medium">À savoir</h3>
             <ul className="text-blue-800 text-sm mt-2 space-y-1">
-              <li>
-                • Votre place sera en attente de validation après création
-              </li>
+              <li>• Votre place sera en attente de validation après création</li>
               <li>• Vous recevrez un email une fois la validation effectuée</li>
-              <li>
-                • Utilisez la recherche Google pour importer automatiquement les
-                informations
-              </li>
+              <li>• Utilisez la recherche Google pour importer automatiquement les informations</li>
               <li>• Tous les champs marqués d'un * sont obligatoires</li>
             </ul>
           </div>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Check, Copy, Share2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Share2, Copy, Check } from "lucide-react";
 
 interface ShareButtonProps {
   title: string;
@@ -16,14 +16,14 @@ export function ShareButton({ title, excerpt }: ShareButtonProps) {
 
   useEffect(() => {
     setMounted(true);
-    setHasWebShare(typeof navigator !== 'undefined' && 'share' in navigator);
+    setHasWebShare(typeof navigator !== "undefined" && "share" in navigator);
   }, []);
 
   const handleShare = async () => {
     if (!mounted) return;
-    
+
     const url = window.location.href;
-    
+
     // Vérifier si l'API Web Share est disponible (mobile principalement)
     if (hasWebShare) {
       try {
@@ -33,11 +33,11 @@ export function ShareButton({ title, excerpt }: ShareButtonProps) {
           url: url,
         });
         return;
-      } catch (error) {
+      } catch (_error) {
         // Fallback vers la copie si l'utilisateur annule le partage
       }
     }
-    
+
     // Fallback : copier l'URL dans le presse-papiers
     try {
       await navigator.clipboard.writeText(url);
@@ -50,12 +50,7 @@ export function ShareButton({ title, excerpt }: ShareButtonProps) {
 
   if (!mounted) {
     return (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        disabled
-        className="w-full"
-      >
+      <Button variant="outline" size="sm" disabled className="w-full">
         <Copy className="h-4 w-4 mr-2" />
         Partager l'article
       </Button>
@@ -63,12 +58,7 @@ export function ShareButton({ title, excerpt }: ShareButtonProps) {
   }
 
   return (
-    <Button 
-      variant="outline" 
-      size="sm" 
-      onClick={handleShare}
-      className="w-full"
-    >
+    <Button variant="outline" size="sm" onClick={handleShare} className="w-full">
       {copied ? (
         <>
           <Check className="h-4 w-4 mr-2" />
@@ -76,11 +66,7 @@ export function ShareButton({ title, excerpt }: ShareButtonProps) {
         </>
       ) : (
         <>
-          {hasWebShare ? (
-            <Share2 className="h-4 w-4 mr-2" />
-          ) : (
-            <Copy className="h-4 w-4 mr-2" />
-          )}
+          {hasWebShare ? <Share2 className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
           {hasWebShare ? "Partager l'article" : "Copier le lien"}
         </>
       )}

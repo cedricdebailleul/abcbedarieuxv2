@@ -1,23 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { AlertCircle, CheckCircle2, Crop, Eye, Image as ImageIcon, Upload, X } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { PixelCrop } from "react-image-crop";
-import { ImageCropper } from "./image-cropper";
+import type { PixelCrop } from "react-image-crop";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import {
-  Upload,
-  Image as ImageIcon,
-  X,
-  Crop,
-  Eye,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ImageCropper } from "./image-cropper";
 
 interface ImageUploadProps {
   value?: string;
@@ -124,12 +116,11 @@ export function ImageUpload({
           ...prev,
           isUploading: false,
           progress: 0,
-          error:
-            error instanceof Error ? error.message : "Erreur lors de l'upload",
+          error: error instanceof Error ? error.message : "Erreur lors de l'upload",
         }));
       }
     },
-    [onChange, type, slug]
+    [onChange, type, slug, imageType, subFolder, value]
   );
 
   const onDrop = useCallback(
@@ -178,7 +169,7 @@ export function ImageUpload({
   });
 
   const handleCropComplete = useCallback(
-    (cropData: PixelCrop, croppedImageUrl: string) => {
+    (cropData: PixelCrop, _croppedImageUrl: string) => {
       if (originalFile) {
         setState((prev) => ({ ...prev, cropData }));
         uploadImage(originalFile, cropData);
@@ -190,26 +181,34 @@ export function ImageUpload({
 
   const handleRemove = useCallback(async () => {
     // Si c'est une image uploadée, la supprimer physiquement
-    if (value && value.startsWith('/uploads/')) {
-      setState(prev => ({ ...prev, isUploading: true }));
-      
+    if (value?.startsWith("/uploads/")) {
+      setState((prev) => ({ ...prev, isUploading: true }));
+
       try {
         const response = await fetch(`/api/upload?path=${encodeURIComponent(value)}`, {
-          method: 'DELETE'
+          method: "DELETE",
         });
-        
+
         if (!response.ok) {
-          console.error('Erreur lors de la suppression du fichier');
-          setState(prev => ({ ...prev, isUploading: false, error: 'Erreur lors de la suppression du fichier' }));
+          console.error("Erreur lors de la suppression du fichier");
+          setState((prev) => ({
+            ...prev,
+            isUploading: false,
+            error: "Erreur lors de la suppression du fichier",
+          }));
           return;
         }
       } catch (error) {
-        console.error('Erreur suppression fichier:', error);
-        setState(prev => ({ ...prev, isUploading: false, error: 'Erreur lors de la suppression du fichier' }));
+        console.error("Erreur suppression fichier:", error);
+        setState((prev) => ({
+          ...prev,
+          isUploading: false,
+          error: "Erreur lors de la suppression du fichier",
+        }));
         return;
       }
     }
-    
+
     setState({
       isUploading: false,
       progress: 0,
@@ -245,9 +244,7 @@ export function ImageUpload({
 
                 <div className="space-y-2">
                   <h3 className="text-lg font-medium">
-                    {isDragActive
-                      ? "Déposez l'image ici"
-                      : "Télécharger une image"}
+                    {isDragActive ? "Déposez l'image ici" : "Télécharger une image"}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Glissez-déposez une image ou cliquez pour sélectionner
@@ -273,9 +270,7 @@ export function ImageUpload({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Upload en cours...</span>
-                <span className="text-sm text-muted-foreground">
-                  {state.progress}%
-                </span>
+                <span className="text-sm text-muted-foreground">{state.progress}%</span>
               </div>
               <Progress value={state.progress} />
             </div>
@@ -319,10 +314,10 @@ export function ImageUpload({
                     <ImageIcon className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Image uploadée</span>
                   </div>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();

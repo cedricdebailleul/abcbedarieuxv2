@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/lib/generated/prisma';
+import { PrismaClient } from "@/lib/generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -6,12 +6,12 @@ function generateSlug(name: string, id: string): string {
   // Nettoyer le nom pour créer un slug SEO-friendly
   let baseSlug = name
     .toLowerCase()
-    .normalize('NFD') // Décompose les caractères accentués
-    .replace(/[\u0300-\u036f]/g, '') // Supprime les accents
-    .replace(/[^a-z0-9\s-]/g, '') // Garde seulement lettres, chiffres, espaces et tirets
-    .replace(/\s+/g, '-') // Remplace les espaces par des tirets
-    .replace(/-+/g, '-') // Évite les tirets multiples
-    .replace(/^-|-$/g, ''); // Supprime les tirets en début/fin
+    .normalize("NFD") // Décompose les caractères accentués
+    .replace(/[\u0300-\u036f]/g, "") // Supprime les accents
+    .replace(/[^a-z0-9\s-]/g, "") // Garde seulement lettres, chiffres, espaces et tirets
+    .replace(/\s+/g, "-") // Remplace les espaces par des tirets
+    .replace(/-+/g, "-") // Évite les tirets multiples
+    .replace(/^-|-$/g, ""); // Supprime les tirets en début/fin
 
   // Si le slug est vide ou trop court, utiliser l'ID
   if (!baseSlug || baseSlug.length < 2) {
@@ -22,7 +22,7 @@ function generateSlug(name: string, id: string): string {
 }
 
 async function generateUserSlugs() {
-  console.log('🔍 Recherche des utilisateurs sans slug...');
+  console.log("🔍 Recherche des utilisateurs sans slug...");
 
   // Trouver tous les utilisateurs sans slug
   const usersWithoutSlug = await prisma.user.findMany({
@@ -39,7 +39,7 @@ async function generateUserSlugs() {
   console.log(`📊 Trouvé ${usersWithoutSlug.length} utilisateurs sans slug`);
 
   if (usersWithoutSlug.length === 0) {
-    console.log('✅ Tous les utilisateurs ont déjà un slug !');
+    console.log("✅ Tous les utilisateurs ont déjà un slug !");
     return;
   }
 
@@ -80,14 +80,13 @@ async function generateUserSlugs() {
 
       console.log(`✅ ${user.name} (${user.email}) → /profil/${slug}`);
       successCount++;
-
     } catch (error) {
       console.error(`❌ Erreur pour ${user.name}:`, error);
       errorCount++;
     }
   }
 
-  console.log('\n📈 Résumé:');
+  console.log("\n📈 Résumé:");
   console.log(`✅ Slugs créés: ${successCount}`);
   console.log(`❌ Erreurs: ${errorCount}`);
   console.log(`📊 Total traité: ${usersWithoutSlug.length}`);
@@ -95,11 +94,11 @@ async function generateUserSlugs() {
 
 async function main() {
   try {
-    console.log('🚀 Génération des slugs utilisateurs...\n');
+    console.log("🚀 Génération des slugs utilisateurs...\n");
     await generateUserSlugs();
-    console.log('\n🎉 Script terminé avec succès !');
+    console.log("\n🎉 Script terminé avec succès !");
   } catch (error) {
-    console.error('💥 Erreur fatale:', error);
+    console.error("💥 Erreur fatale:", error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

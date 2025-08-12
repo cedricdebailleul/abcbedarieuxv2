@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { type NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { PlaceStatus } from "@/lib/generated/prisma";
+import { prisma } from "@/lib/prisma";
 
 // POST /api/places/[placeId]/claim - Revendiquer directement une place
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ placeId: string }> }
 ) {
   try {
@@ -22,27 +22,21 @@ export async function POST(
     // Vérifier que la place existe et peut être revendiquée
     const place = await prisma.place.findUnique({
       where: { id: placeId },
-      select: { 
-        id: true, 
-        name: true, 
+      select: {
+        id: true,
+        name: true,
         ownerId: true,
-        status: true
+        status: true,
       },
     });
 
     if (!place) {
-      return NextResponse.json(
-        { error: "Place non trouvée" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Place non trouvée" }, { status: 404 });
     }
 
     // Vérifier que la place n'a pas déjà un propriétaire
     if (place.ownerId) {
-      return NextResponse.json(
-        { error: "Cette place a déjà un propriétaire" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Cette place a déjà un propriétaire" }, { status: 400 });
     }
 
     // Vérifier que la place est active (seules les places actives peuvent être revendiquées)
@@ -55,7 +49,7 @@ export async function POST(
 
     // Vérifier que l'utilisateur ne possède pas déjà trop de places (limite optionnelle)
     const userPlacesCount = await prisma.place.count({
-      where: { ownerId: session.user.id }
+      where: { ownerId: session.user.id },
     });
 
     const maxPlacesPerUser = 10; // Limite configurable
@@ -85,13 +79,8 @@ export async function POST(
       message: `Vous êtes maintenant propriétaire de "${place.name}"`,
       place: updatedPlace,
     });
-
   } catch (error) {
     console.error("Erreur lors de la revendication de la place:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }
-

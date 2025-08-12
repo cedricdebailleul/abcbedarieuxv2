@@ -1,5 +1,5 @@
+import crypto from "node:crypto";
 import { PrismaClient } from "@/lib/generated/prisma";
-import crypto from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -21,7 +21,7 @@ async function createTestInvitation() {
     });
 
     // Créer la nouvelle invitation
-    const invitation = await prisma.verification.create({
+    const _invitation = await prisma.verification.create({
       data: {
         identifier: email,
         value: inviteToken,
@@ -39,7 +39,6 @@ async function createTestInvitation() {
     console.log("⏰ Expire le:", expiresAt.toLocaleString("fr-FR"));
     console.log("🔗 URL de test:");
     console.log(inviteUrl);
-
   } catch (error) {
     console.error("❌ Erreur lors de la création de l'invitation:", error);
     throw error;

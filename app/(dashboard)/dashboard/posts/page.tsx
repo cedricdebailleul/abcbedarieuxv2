@@ -1,16 +1,11 @@
+import { Eye, FileText, Plus, TrendingUp, Users } from "lucide-react";
+import Link from "next/link";
 import { Suspense } from "react";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-
+import { getPostsStatsAction } from "@/actions/post";
 import { PostsListServer } from "@/components/posts/posts-list-server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPostsStatsAction } from "@/actions/post";
-
-import { Plus, FileText, Users, Eye, TrendingUp } from "lucide-react";
-import Link from "next/link";
 
 // Composant de chargement pour les statistiques
 function StatsLoading() {
@@ -37,13 +32,15 @@ function StatsLoading() {
 async function PostsStats() {
   // Récupérer les vraies statistiques
   const result = await getPostsStatsAction();
-  
-  const stats = result.success ? result.data! : {
-    total: 0,
-    published: 0,
-    drafts: 0,
-    totalViews: 0,
-  };
+
+  const stats = result.success
+    ? result.data!
+    : {
+        total: 0,
+        published: 0,
+        drafts: 0,
+        totalViews: 0,
+      };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -64,9 +61,7 @@ async function PostsStats() {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">
-            {stats.published}
-          </div>
+          <div className="text-2xl font-bold text-green-600">{stats.published}</div>
           <p className="text-xs text-muted-foreground">Articles en ligne</p>
         </CardContent>
       </Card>
@@ -77,9 +72,7 @@ async function PostsStats() {
           <FileText className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-orange-600">
-            {stats.drafts}
-          </div>
+          <div className="text-2xl font-bold text-orange-600">{stats.drafts}</div>
           <p className="text-xs text-muted-foreground">En cours de rédaction</p>
         </CardContent>
       </Card>
@@ -90,9 +83,7 @@ async function PostsStats() {
           <Eye className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {stats.totalViews.toLocaleString()}
-          </div>
+          <div className="text-2xl font-bold">{stats.totalViews.toLocaleString()}</div>
           <p className="text-xs text-muted-foreground">
             <TrendingUp className="inline h-3 w-3 mr-1" />
             Toutes plateformes
@@ -156,9 +147,7 @@ export default async function PostsPage({ searchParams: searchParamsPromise }: P
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Articles</h1>
-          <p className="text-muted-foreground">
-            Gérez vos articles et publications
-          </p>
+          <p className="text-muted-foreground">Gérez vos articles et publications</p>
         </div>
         <Button asChild>
           <Link href="/dashboard/posts/new">

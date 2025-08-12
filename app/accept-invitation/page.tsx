@@ -1,31 +1,37 @@
 "use client";
 
+import { CheckCircle, Eye, EyeOff } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { z } from "zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, CheckCircle } from "lucide-react";
-import { z } from "zod";
 
-const acceptInvitationSchema = z.object({
-  firstname: z.string().min(1, "Le prénom est obligatoire"),
-  lastname: z.string().min(1, "Le nom est obligatoire"),
-  password: z.string()
-    .min(8, "Le mot de passe doit contenir au moins 8 caractères")
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Les mots de passe ne correspondent pas",
-  path: ["confirmPassword"],
-});
+const acceptInvitationSchema = z
+  .object({
+    firstname: z.string().min(1, "Le prénom est obligatoire"),
+    lastname: z.string().min(1, "Le nom est obligatoire"),
+    password: z
+      .string()
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre"
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Les mots de passe ne correspondent pas",
+    path: ["confirmPassword"],
+  });
 
 export default function AcceptInvitationPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   const token = searchParams.get("token");
   const email = searchParams.get("email");
   const role = searchParams.get("role") as "user" | "admin" | "moderator" | "dpo" | "editor";
@@ -36,7 +42,7 @@ export default function AcceptInvitationPage() {
     password: "",
     confirmPassword: "",
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,7 +57,8 @@ export default function AcceptInvitationPage() {
           <CardContent className="pt-6">
             <Alert variant="destructive">
               <AlertDescription>
-                Lien d'invitation invalide. Veuillez vérifier votre email ou contactez un administrateur.
+                Lien d'invitation invalide. Veuillez vérifier votre email ou contactez un
+                administrateur.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -100,16 +107,15 @@ export default function AcceptInvitationPage() {
       }
 
       setSuccess(true);
-      
+
       // Rediriger vers le dashboard si l'utilisateur a été automatiquement connecté
       setTimeout(() => {
         if (data.autoSignedIn) {
-          router.push('/dashboard');
+          router.push("/dashboard");
         } else {
-          router.push('/login?message=Compte créé, veuillez vous connecter');
+          router.push("/login?message=Compte créé, veuillez vous connecter");
         }
       }, 1000);
-
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
@@ -131,11 +137,10 @@ export default function AcceptInvitationPage() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
             <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Compte créé avec succès !
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Compte créé avec succès !</h2>
             <p className="text-gray-600 mb-4">
-              Votre compte a été créé et vous êtes maintenant connecté(e). Redirection vers le dashboard...
+              Votre compte a été créé et vous êtes maintenant connecté(e). Redirection vers le
+              dashboard...
             </p>
           </CardContent>
         </Card>
@@ -149,7 +154,7 @@ export default function AcceptInvitationPage() {
       admin: "Administrateur",
       moderator: "Modérateur",
       dpo: "Délégué à la protection des données",
-      editor: "Éditeur"
+      editor: "Éditeur",
     };
     return labels[role as keyof typeof labels] || role;
   };
@@ -181,9 +186,7 @@ export default function AcceptInvitationPage() {
                   disabled={loading}
                   required
                 />
-                {errors.firstname && (
-                  <p className="text-sm text-red-500">{errors.firstname}</p>
-                )}
+                {errors.firstname && <p className="text-sm text-red-500">{errors.firstname}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastname">Nom *</Label>
@@ -197,9 +200,7 @@ export default function AcceptInvitationPage() {
                   disabled={loading}
                   required
                 />
-                {errors.lastname && (
-                  <p className="text-sm text-red-500">{errors.lastname}</p>
-                )}
+                {errors.lastname && <p className="text-sm text-red-500">{errors.lastname}</p>}
               </div>
             </div>
 
@@ -228,9 +229,7 @@ export default function AcceptInvitationPage() {
                   )}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-sm text-red-500">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
             </div>
 
             <div className="space-y-2">
@@ -269,22 +268,16 @@ export default function AcceptInvitationPage() {
               </Alert>
             )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Création du compte..." : "Créer mon compte"}
             </Button>
           </form>
 
           <div className="mt-4 text-xs text-gray-500">
-            <p>
-              * Champs obligatoires
-            </p>
+            <p>* Champs obligatoires</p>
             <p className="mt-1">
-              Le mot de passe doit contenir au moins 8 caractères avec une minuscule,
-              une majuscule et un chiffre.
+              Le mot de passe doit contenir au moins 8 caractères avec une minuscule, une majuscule
+              et un chiffre.
             </p>
           </div>
         </CardContent>

@@ -17,14 +17,12 @@ function absoluteUrl(path = "") {
 }
 
 export function buildMetadata(input: SeoInput = {}): Metadata {
-  const title = input.title
-    ? `${input.title} | ${siteConfig.name}`
-    : siteConfig.defaultTitle;
+  const title = input.title ? `${input.title} | ${siteConfig.name}` : siteConfig.defaultTitle;
   const description = input.description ?? siteConfig.defaultDescription;
   const url = input.path ? absoluteUrl(input.path) : siteConfig.baseUrl;
-  const images = (
-    input.images?.length ? input.images : [siteConfig.ogImage]
-  ).map((img) => (img.startsWith("http") ? img : absoluteUrl(img)));
+  const images = (input.images?.length ? input.images : [siteConfig.ogImage]).map((img) =>
+    img.startsWith("http") ? img : absoluteUrl(img)
+  );
 
   const robots = input.noIndex ? { index: false, follow: false } : input.robots;
 

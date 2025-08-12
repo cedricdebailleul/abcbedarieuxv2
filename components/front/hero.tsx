@@ -1,17 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  LucideLightbulb,
-  Book,
-} from "lucide-react";
+import { Book, ChevronLeft, ChevronRight, LucideLightbulb, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface HeroProps {
   title?: string;
@@ -32,8 +26,7 @@ const helpCards = [
   },
   {
     title: "Fête des commerçants",
-    description:
-      "Les commerces de Bédarieux exposent | le 20 septembre rue de la république",
+    description: "Les commerces de Bédarieux exposent | le 20 septembre rue de la république",
     subtitle: "En savoir plus",
     link: "/calendrier-des-evenements",
     bgColor: "bg-gray-800",
@@ -74,9 +67,7 @@ export default function Hero({
           {/* Left Section - Anniversary Content with Image */}
           <div className="relative flex flex-col justify-between h-full">
             <div className="space-y-8 mb-8 lg:mb-8">
-              <h1 className="text-4xl font-bold leading-tight text-primary">
-                {title}
-              </h1>
+              <h1 className="text-4xl font-bold leading-tight text-primary">{title}</h1>
               <p className="text-xl text-gray-600 font-medium">{subtitle}</p>
               <Button
                 asChild
@@ -89,12 +80,8 @@ export default function Hero({
             {/* Image 275 avec carrousel */}
             <div className="relative bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 rounded-3xl p-8 h-80 overflow-hidden">
               <div className="relative z-10">
-                <div className="text-white text-5xl font-bold mb-2">
-                  Fête des commerçants
-                </div>
-                <div className="text-white text-2xl font-semibold">
-                  Bédarieux
-                </div>
+                <div className="text-white text-5xl font-bold mb-2">Fête des commerçants</div>
+                <div className="text-white text-2xl font-semibold">Bédarieux</div>
                 <div className="text-white/80 text-sm mt-2">
                   Le 20 septembre 2025
                   <br />
@@ -105,6 +92,7 @@ export default function Hero({
               {/* Navigation du carrousel */}
               <div className="absolute bottom-4 left-4 flex items-center space-x-4">
                 <button
+                  type="button"
                   onClick={prevSlide}
                   className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
                 >
@@ -123,6 +111,7 @@ export default function Hero({
                   ></div>
                 </div>
                 <button
+                  type="button"
                   onClick={nextSlide}
                   className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
                 >
@@ -140,18 +129,13 @@ export default function Hero({
           <div className="flex flex-col h-full">
             <div className="bg-gray-900 text-white rounded-3xl px-6 py-14 space-y-8 h-full">
               <div className="flex mb-4 gap-2 pb-4">
-                <h2 className="text-white text-2xl font-semibold">
-                  {helpTitle}
-                </h2>
+                <h2 className="text-white text-2xl font-semibold">{helpTitle}</h2>
                 <div className="border-b border-gray-700 border-dashed pb-6">
                   <div className="text-sm flex items-center gap-2 text-white/80 mb-2">
                     <LucideLightbulb className="size-6" />
                     <span className="uppercase">Suggestions d&apos;aide</span>
                   </div>
-                  <p>
-                    Essayez des mots-clés tels que anniversaire, cadeau,
-                    surprise
-                  </p>
+                  <p>Essayez des mots-clés tels que anniversaire, cadeau, surprise</p>
                 </div>
               </div>
               {/* Search Form */}
@@ -179,9 +163,7 @@ export default function Hero({
                         {card.title}
                       </Badge>
                     </div>
-                    <div className="text-white text-sm font-semibold mb-2">
-                      {card.description}
-                    </div>
+                    <div className="text-white text-sm font-semibold mb-2">{card.description}</div>
                     <div className="text-white/50 text-xs">{card.subtitle}</div>
                   </Link>
                 ))}

@@ -1,32 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Calendar,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Copy,
+  Mail,
+  MoreHorizontal,
+  RefreshCw,
+  Search,
+  Trash2,
+  User,
+  XCircle,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,24 +29,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  Search, 
-  MoreHorizontal, 
-  RefreshCw, 
-  Trash2, 
-  Copy,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  CheckCircle,
-  XCircle,
-  User,
-  Calendar,
-  Mail
-} from "lucide-react";
-import { toast } from "sonner";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Invitation {
   id: string;
@@ -105,35 +105,33 @@ export default function InvitationsTable() {
     hasNextPage: false,
     hasPrevPage: false,
   });
-  
+
   // Filtres
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  
+
   // États pour les actions
   const [resendDialog, setResendDialog] = useState<{
     open: boolean;
     invitation?: Invitation;
   }>({ open: false });
-  
+
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     invitation?: Invitation;
   }>({ open: false });
 
   // Charger les invitations
-  const fetchInvitations = async (params: {
-    page?: number;
-    search?: string;
-    status?: string;
-  } = {}) => {
+  const fetchInvitations = useCallback(async (
+    params: { page?: number; search?: string; status?: string } = {}
+  ) => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
-      
+
       queryParams.append("page", (params.page || pagination.page).toString());
       queryParams.append("limit", pagination.limit.toString());
-      
+
       if (params.search || search) {
         queryParams.append("search", params.search || search);
       }
@@ -142,7 +140,7 @@ export default function InvitationsTable() {
       }
 
       const response = await fetch(`/api/admin/invitations?${queryParams}`);
-      
+
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des invitations");
       }
@@ -157,12 +155,12 @@ export default function InvitationsTable() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, search, statusFilter]);
 
   // Effet pour le chargement initial
   useEffect(() => {
     fetchInvitations();
-  }, []);
+  }, [fetchInvitations]);
 
   // Effet pour les filtres avec debounce
   useEffect(() => {
@@ -171,7 +169,7 @@ export default function InvitationsTable() {
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [search, statusFilter]);
+  }, [fetchInvitations]);
 
   // Renvoyer une invitation
   const handleResendInvitation = async (invitation: Invitation) => {
@@ -207,12 +205,15 @@ export default function InvitationsTable() {
   const handleCopyInviteLink = (invitation: Invitation) => {
     const baseUrl = window.location.origin;
     const inviteUrl = `${baseUrl}/accept-invitation?token=${invitation.token}&email=${encodeURIComponent(invitation.email)}&role=user`;
-    
-    navigator.clipboard.writeText(inviteUrl).then(() => {
-      toast.success("Lien d'invitation copié dans le presse-papiers");
-    }).catch(() => {
-      toast.error("Impossible de copier le lien");
-    });
+
+    navigator.clipboard
+      .writeText(inviteUrl)
+      .then(() => {
+        toast.success("Lien d'invitation copié dans le presse-papiers");
+      })
+      .catch(() => {
+        toast.error("Impossible de copier le lien");
+      });
   };
 
   // Supprimer une invitation
@@ -245,7 +246,11 @@ export default function InvitationsTable() {
 
   const getStatusBadge = (status: string, user?: any) => {
     if (user) {
-      return <Badge variant="default" className="bg-green-600">Compte créé</Badge>;
+      return (
+        <Badge variant="default" className="bg-green-600">
+          Compte créé
+        </Badge>
+      );
     }
 
     const variants = {
@@ -273,7 +278,7 @@ export default function InvitationsTable() {
 
   const getStatusIcon = (status: string, user?: any) => {
     if (user) return <CheckCircle className="h-4 w-4 text-green-600" />;
-    
+
     const icons = {
       pending: <Clock className="h-4 w-4 text-orange-500" />,
       expired: <XCircle className="h-4 w-4 text-red-500" />,
@@ -286,9 +291,9 @@ export default function InvitationsTable() {
   useEffect(() => {
     const updateParentStats = () => {
       // Mettre à jour les cartes statistiques dans le parent
-      const statsCards = document.querySelectorAll('[data-stat-card]');
+      const statsCards = document.querySelectorAll("[data-stat-card]");
       statsCards.forEach((card, index) => {
-        const valueElement = card.querySelector('.text-2xl');
+        const valueElement = card.querySelector(".text-2xl");
         if (valueElement) {
           const values = [stats.pending, stats.used, stats.expired, stats.total];
           if (values[index] !== undefined) {
@@ -305,7 +310,6 @@ export default function InvitationsTable() {
 
   return (
     <div className="space-y-4 p-6">
-
       {/* Filtres */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -317,7 +321,7 @@ export default function InvitationsTable() {
             className="pl-10"
           />
         </div>
-        
+
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Statut" />
@@ -346,19 +350,29 @@ export default function InvitationsTable() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
+              Array.from({ length: 5 }, (_, i) => i).map((index) => (
+                <TableRow key={`loading-row-${index}`}>
                   <TableCell>
                     <div className="flex items-center space-x-3">
                       <Mail className="h-4 w-4 text-gray-400" />
                       <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
                     </div>
                   </TableCell>
-                  <TableCell><div className="h-6 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-                  <TableCell><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-                  <TableCell><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-                  <TableCell><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
-                  <TableCell><div className="h-8 w-8 bg-gray-200 rounded animate-pulse" /></TableCell>
+                  <TableCell>
+                    <div className="h-6 w-16 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
                 </TableRow>
               ))
             ) : invitations.length === 0 ? (
@@ -394,9 +408,13 @@ export default function InvitationsTable() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className={`flex items-center gap-1 text-sm ${
-                      new Date(invitation.expiresAt) < new Date() ? 'text-red-600' : 'text-gray-600'
-                    }`}>
+                    <div
+                      className={`flex items-center gap-1 text-sm ${
+                        new Date(invitation.expiresAt) < new Date()
+                          ? "text-red-600"
+                          : "text-gray-600"
+                      }`}
+                    >
                       <Clock className="h-4 w-4" />
                       {formatDate(invitation.expiresAt)}
                     </div>
@@ -489,7 +507,8 @@ export default function InvitationsTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Renvoyer l'invitation</AlertDialogTitle>
             <AlertDialogDescription>
-              Voulez-vous renvoyer une invitation à <strong>{resendDialog.invitation?.email}</strong> ?
+              Voulez-vous renvoyer une invitation à{" "}
+              <strong>{resendDialog.invitation?.email}</strong> ?
               <br />
               Cela créera une nouvelle invitation et invalidera la précédente.
             </AlertDialogDescription>
@@ -497,7 +516,9 @@ export default function InvitationsTable() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => resendDialog.invitation && handleResendInvitation(resendDialog.invitation)}
+              onClick={() =>
+                resendDialog.invitation && handleResendInvitation(resendDialog.invitation)
+              }
               className="bg-orange-600 hover:bg-orange-700"
             >
               Renvoyer
@@ -512,7 +533,8 @@ export default function InvitationsTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer l'invitation</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer l'invitation de <strong>{deleteDialog.invitation?.email}</strong> ?
+              Êtes-vous sûr de vouloir supprimer l'invitation de{" "}
+              <strong>{deleteDialog.invitation?.email}</strong> ?
               <br />
               Cette action est irréversible.
             </AlertDialogDescription>
@@ -520,7 +542,9 @@ export default function InvitationsTable() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteDialog.invitation && handleDeleteInvitation(deleteDialog.invitation)}
+              onClick={() =>
+                deleteDialog.invitation && handleDeleteInvitation(deleteDialog.invitation)
+              }
               className="bg-red-600 hover:bg-red-700"
             >
               Supprimer

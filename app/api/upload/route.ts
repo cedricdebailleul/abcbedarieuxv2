@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
+import { existsSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,30 +18,23 @@ export async function POST(request: NextRequest) {
     // Vérifier les permissions
     const userRole = session.user.role;
     if (!userRole || !["admin", "editor", "user"].includes(userRole)) {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     const data = await request.formData();
     const file: File | null = data.get("file") as unknown as File;
-    const sanitize = (s: string) =>
-      s.replace(/[^a-z0-9-_]/gi, "").toLowerCase();
+    const sanitize = (s: string) => s.replace(/[^a-z0-9-_]/gi, "").toLowerCase();
     const type = sanitize((data.get("type") as string) || "posts");
     const slug = sanitize(data.get("slug") as string);
     const cropData = data.get("cropData") as string;
     const subfolderRaw: string | null =
       (data.get("subfolder") as string) || (data.get("subFolder") as string) || null;
     const oldImagePath: string = data.get("oldImagePath") as string;
-    const imageType: string = data.get("imageType") as string || ""; // logo, cover, gallery, etc.
+    const imageType: string = (data.get("imageType") as string) || ""; // logo, cover, gallery, etc.
     const subfolder = subfolderRaw ? sanitize(subfolderRaw) : "";
 
     if (!file) {
-      return NextResponse.json(
-        { error: "Aucun fichier fourni" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Aucun fichier fourni" }, { status: 400 });
     }
 
     // Valider le type de fichier
@@ -63,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     const bytes: ArrayBuffer = await file.arrayBuffer();
-    const buffer: Buffer = Buffer.from(bytes);
+    const _buffer: Buffer = Buffer.from(bytes);
     const bytesLike: ArrayBuffer = await file.arrayBuffer();
     const bufferSafe: Buffer = Buffer.from(new Uint8Array(bytesLike));
 
@@ -72,7 +65,7 @@ export async function POST(request: NextRequest) {
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const fileExtension = path.extname(originalName);
     const baseName = path.basename(originalName, fileExtension);
-    
+
     // Nom spécifique selon le type d'image
     let fileName: string;
     if (imageType === "logo") {
@@ -126,10 +119,7 @@ export async function POST(request: NextRequest) {
             left: Math.max(0, Math.round(x)),
             top: Math.max(0, Math.round(y)),
             width: Math.min(originalWidth - Math.round(x), Math.round(width)),
-            height: Math.min(
-              originalHeight - Math.round(y),
-              Math.round(height)
-            ),
+            height: Math.min(originalHeight - Math.round(y), Math.round(height)),
           })
           .toBuffer();
       } catch (error) {
@@ -151,9 +141,9 @@ export async function POST(request: NextRequest) {
       .toBuffer();
 
     // Supprimer l'ancienne image si fournie
-    if (oldImagePath && oldImagePath.startsWith("/uploads/")) {
+    if (oldImagePath?.startsWith("/uploads/")) {
       try {
-        const { unlink } = await import("fs/promises");
+        const { unlink } = await import("node:fs/promises");
         const oldFullPath = path.join(process.cwd(), "public", oldImagePath);
         const oldThumbnailPath = path.join(
           path.dirname(oldFullPath),
@@ -174,10 +164,7 @@ export async function POST(request: NextRequest) {
           await unlink(oldSocialPath);
         }
       } catch (error) {
-        console.error(
-          "Erreur lors de la suppression de l'ancienne image:",
-          error
-        );
+        console.error("Erreur lors de la suppression de l'ancienne image:", error);
         // Continuer même si la suppression échoue
       }
     }
@@ -193,7 +180,7 @@ export async function POST(request: NextRequest) {
     const isGallery = subfolder === "gallery";
     const isLogo = imageType === "logo";
     const isCover = imageType === "cover";
-    
+
     const thumbW = isLogo ? 400 : isCover ? 1200 : isGallery ? 600 : 1080;
     const thumbH = isLogo ? 400 : isCover ? 630 : isGallery ? 600 : 600;
 
@@ -225,9 +212,7 @@ export async function POST(request: NextRequest) {
     await writeFile(socialPath, socialBuffer);
 
     // Retourner les URLs
-    const baseUrl = `/uploads/${type}/${slug || "general"}${
-      subfolder ? `/${subfolder}` : ""
-    }`;
+    const baseUrl = `/uploads/${type}/${slug || "general"}${subfolder ? `/${subfolder}` : ""}`;
     const fileUrl = `${baseUrl}/${fileName}`;
     const thumbnailUrl = `${baseUrl}/${thumbnailName}`;
     const socialUrl = `${baseUrl}/${socialName}`;
@@ -248,10 +233,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Erreur lors de l'upload:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de l'upload du fichier" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de l'upload du fichier" }, { status: 500 });
   }
 }
 
@@ -268,45 +250,30 @@ export async function DELETE(request: NextRequest) {
     // Vérifier les permissions
     const userRole = session.user.role;
     if (!userRole || !["admin", "editor"].includes(userRole)) {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const filePath = searchParams.get("path");
 
     if (!filePath) {
-      return NextResponse.json(
-        { error: "Chemin du fichier requis" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Chemin du fichier requis" }, { status: 400 });
     }
 
     // Sécurité: vérifier que le chemin est dans public/uploads/
     if (!filePath.startsWith("/uploads/")) {
-      return NextResponse.json(
-        { error: "Chemin non autorisé" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Chemin non autorisé" }, { status: 403 });
     }
 
     const fullPath = path.join(process.cwd(), "public", filePath);
-    const thumbnailPath = path.join(
-      path.dirname(fullPath),
-      `thumb_${path.basename(fullPath)}`
-    );
-    const socialPath = path.join(
-      path.dirname(fullPath),
-      `social_${path.basename(fullPath)}`
-    );
+    const thumbnailPath = path.join(path.dirname(fullPath), `thumb_${path.basename(fullPath)}`);
+    const socialPath = path.join(path.dirname(fullPath), `social_${path.basename(fullPath)}`);
 
     // Supprimer les fichiers s'ils existent
     try {
-      const { unlink } = await import("fs/promises");
+      const { unlink } = await import("node:fs/promises");
       let deletedCount = 0;
-      
+
       if (existsSync(fullPath)) {
         await unlink(fullPath);
         deletedCount++;
@@ -322,7 +289,7 @@ export async function DELETE(request: NextRequest) {
         deletedCount++;
         console.log(`Social supprimé: ${socialPath}`);
       }
-      
+
       console.log(`Total fichiers supprimés: ${deletedCount}`);
     } catch (error) {
       console.error("Erreur lors de la suppression:", error);

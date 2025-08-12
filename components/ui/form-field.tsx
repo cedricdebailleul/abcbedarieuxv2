@@ -1,14 +1,8 @@
 "use client";
 
-import { ReactNode } from "react";
-import { UseFormReturn, FieldPath } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import type { ReactNode } from "react";
+import type { FieldPath, UseFormReturn } from "react-hook-form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 interface FormFieldWrapperProps<T extends Record<string, any>> {
   form: UseFormReturn<T>;
@@ -33,9 +27,7 @@ export function FormFieldWrapper<T extends Record<string, any>>({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>{children}</FormControl>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          )}
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
           <FormMessage />
         </FormItem>
       )}

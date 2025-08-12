@@ -12,10 +12,7 @@ export function AccessibleLink({
     <Link
       href={href}
       aria-current={isActive ? "page" : undefined}
-      className={cn(
-        "underline-offset-4 hover:underline focus-visible:outline-2",
-        className
-      )}
+      className={cn("underline-offset-4 hover:underline focus-visible:outline-2", className)}
       {...props}
     >
       {children}

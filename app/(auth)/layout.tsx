@@ -1,12 +1,8 @@
-import { buttonVariants } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center">
       <Link
@@ -20,19 +16,13 @@ export default function AuthLayout({
         Retour à l&apos;accueil
       </Link>
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2 self-center font-medium"
-        >
+        <Link href="/" className="flex items-center gap-2 self-center font-medium">
           ABC Bédarieux
         </Link>
         {children}
         <div className="text-balance text-center text-xs text-muted-foreground">
           En cliquant sur continuer, vous acceptez nos{" "}
-          <span className="hover:text-primary hover:underline">
-            Termes et conditions
-          </span>
-          , et{" "}
+          <span className="hover:text-primary hover:underline">Termes et conditions</span>, et{" "}
           <span className="hover:text-primary hover:underline">
             la politique de confidentialité
           </span>

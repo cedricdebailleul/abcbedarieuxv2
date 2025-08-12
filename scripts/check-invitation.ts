@@ -38,7 +38,6 @@ async function checkInvitation(token: string, email: string) {
     } else {
       console.log("🎉 L'invitation est VALIDE et peut être utilisée !");
     }
-
   } catch (error) {
     console.error("❌ Erreur lors de la vérification:", error);
     throw error;

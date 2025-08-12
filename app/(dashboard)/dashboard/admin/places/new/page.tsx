@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useSession } from "@/hooks/use-session";
+import { toast } from "sonner";
 import { AdminGuard } from "@/components/auth/admin-guard";
 import { PlaceForm } from "@/components/forms/place-form";
-import { toast } from "sonner";
+import { useSession } from "@/hooks/use-session";
 
 export default function AdminNewPlacePage() {
   const router = useRouter();
@@ -25,10 +25,12 @@ export default function AdminNewPlacePage() {
         throw new Error(error.error || "Erreur lors de la création");
       }
 
-      const result = await response.json();
+      const _result = await response.json();
 
       if (data.createForClaim) {
-        toast.success("Place créée avec succès ! Elle peut maintenant être revendiquée par un utilisateur.");
+        toast.success(
+          "Place créée avec succès ! Elle peut maintenant être revendiquée par un utilisateur."
+        );
       } else {
         toast.success("Place créée avec succès et vous a été attribuée.");
       }
@@ -47,12 +49,10 @@ export default function AdminNewPlacePage() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* En-tête */}
         <div className="border-b border-gray-200 pb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Créer une nouvelle place (Admin)
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">Créer une nouvelle place (Admin)</h1>
           <p className="text-gray-600 mt-2">
-            En tant qu'administrateur, vous pouvez créer des places qui vous sont attribuées 
-            ou des places "libres" que les utilisateurs pourront revendiquer.
+            En tant qu'administrateur, vous pouvez créer des places qui vous sont attribuées ou des
+            places "libres" que les utilisateurs pourront revendiquer.
           </p>
         </div>
 
@@ -64,7 +64,9 @@ export default function AdminNewPlacePage() {
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              aria-labelledby="place-icon"
             >
+              <title id="place-icon">Icône d'information</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -76,9 +78,14 @@ export default function AdminNewPlacePage() {
               <h3 className="text-blue-900 font-medium">Options administrateur</h3>
               <ul className="text-blue-800 text-sm mt-2 space-y-1">
                 <li>• Les places que vous créez sont directement actives (pas de validation)</li>
-                <li>• Vous pouvez créer des places "pour revendication" qui n'auront pas de propriétaire</li>
+                <li>
+                  • Vous pouvez créer des places "pour revendication" qui n'auront pas de
+                  propriétaire
+                </li>
                 <li>• Les utilisateurs pourront ensuite revendiquer ces places libres</li>
-                <li>• Utilisez la recherche Google pour importer automatiquement les informations</li>
+                <li>
+                  • Utilisez la recherche Google pour importer automatiquement les informations
+                </li>
               </ul>
             </div>
           </div>
@@ -86,9 +93,9 @@ export default function AdminNewPlacePage() {
 
         {/* Formulaire */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <PlaceForm 
-            mode="create" 
-            onSubmit={handleSubmit} 
+          <PlaceForm
+            mode="create"
+            onSubmit={handleSubmit}
             userRole={session?.user?.role || "user"}
           />
         </div>

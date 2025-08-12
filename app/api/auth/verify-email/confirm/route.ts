@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
-import { headers } from "next/headers";
 
 const verifyEmailSchema = z.object({
   code: z.string().length(6, "Le code doit contenir 6 chiffres"),
@@ -16,10 +16,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Valider les données
@@ -33,17 +30,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Utilisateur introuvable" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
     }
 
     if (user.emailVerified) {
-      return NextResponse.json(
-        { error: "Email déjà vérifié" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email déjà vérifié" }, { status: 400 });
     }
 
     // Vérifier le code OTP
@@ -59,16 +50,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!verification) {
-      return NextResponse.json(
-        { error: "Code invalide ou expiré" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Code invalide ou expiré" }, { status: 400 });
     }
 
     // Marquer l'email comme vérifié
     await prisma.user.update({
       where: { id: user.id },
-      data: { 
+      data: {
         emailVerified: true,
         status: "ACTIVE",
       },
@@ -112,20 +100,13 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Email vérifié avec succès",
     });
-
   } catch (error) {
     console.error("Erreur lors de la vérification de l'email:", error);
-    
+
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Code invalide", details: error.issues },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Code invalide", details: error.issues }, { status: 400 });
     }
 
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

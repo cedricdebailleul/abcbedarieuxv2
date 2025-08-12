@@ -1,10 +1,10 @@
 "use client";
 
+import { Check, Loader2, Mail, Shield } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { Mail, Check, Loader2, Shield } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface EmailVerificationProps {
   isEmailVerified: boolean;
@@ -23,10 +23,10 @@ interface EmailVerificationProps {
   onEmailVerified?: () => void;
 }
 
-export default function EmailVerification({ 
-  isEmailVerified, 
+export default function EmailVerification({
+  isEmailVerified,
   email,
-  onEmailVerified 
+  onEmailVerified,
 }: EmailVerificationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<"send" | "verify">("send");
@@ -37,7 +37,7 @@ export default function EmailVerification({
   const handleSendCode = async () => {
     try {
       setLoading(true);
-      
+
       const response = await fetch("/api/auth/verify-email/send", {
         method: "POST",
         headers: {
@@ -63,7 +63,7 @@ export default function EmailVerification({
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (otpCode.length !== 6) {
       toast.error("Le code doit contenir 6 chiffres");
       return;
@@ -71,7 +71,7 @@ export default function EmailVerification({
 
     try {
       setLoading(true);
-      
+
       const response = await fetch("/api/auth/verify-email/confirm", {
         method: "POST",
         headers: {
@@ -148,18 +148,25 @@ export default function EmailVerification({
         <p className="text-sm text-orange-600">
           Votre adresse email <strong>{email}</strong> n'est pas encore vérifiée.
         </p>
-        
-        <Dialog open={isOpen} onOpenChange={(open) => {
-          setIsOpen(open);
-          if (!open) resetDialog();
-        }}>
+
+        <Dialog
+          open={isOpen}
+          onOpenChange={(open) => {
+            setIsOpen(open);
+            if (!open) resetDialog();
+          }}
+        >
           <DialogTrigger asChild>
-            <Button size="sm" variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-100">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-orange-300 text-orange-700 hover:bg-orange-100"
+            >
               <Mail className="mr-2 h-4 w-4" />
               Vérifier mon email
             </Button>
           </DialogTrigger>
-          
+
           <DialogContent className="sm:max-w-md">
             {step === "send" ? (
               <>
@@ -169,7 +176,7 @@ export default function EmailVerification({
                     Nous allons vous envoyer un code de vérification à votre adresse email.
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <div className="py-4">
                   <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
                     <Mail className="h-5 w-5 text-blue-600" />
@@ -181,13 +188,9 @@ export default function EmailVerification({
                     </div>
                   </div>
                 </div>
-                
+
                 <DialogFooter>
-                  <Button 
-                    onClick={handleSendCode} 
-                    disabled={loading}
-                    className="w-full"
-                  >
+                  <Button onClick={handleSendCode} disabled={loading} className="w-full">
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {loading ? "Envoi..." : "Envoyer le code"}
                   </Button>
@@ -201,7 +204,7 @@ export default function EmailVerification({
                     Entrez le code à 6 chiffres que nous avons envoyé à {email}
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <div className="py-4 space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="otpCode">Code de vérification</Label>
@@ -216,7 +219,7 @@ export default function EmailVerification({
                       disabled={loading}
                     />
                   </div>
-                  
+
                   <div className="text-center">
                     {countdown > 0 ? (
                       <p className="text-sm text-muted-foreground">
@@ -235,20 +238,17 @@ export default function EmailVerification({
                     )}
                   </div>
                 </div>
-                
+
                 <DialogFooter className="gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => setStep("send")}
                     disabled={loading}
                   >
                     Retour
                   </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={loading || otpCode.length !== 6}
-                  >
+                  <Button type="submit" disabled={loading || otpCode.length !== 6}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {loading ? "Vérification..." : "Vérifier"}
                   </Button>

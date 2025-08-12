@@ -1,13 +1,12 @@
+import { Clock, Database, Eye, FileText, Lock, Mail, Shield, Users } from "lucide-react";
+import { headers } from "next/headers";
+import { PrivacyActions } from "@/components/rgpd/privacy-action";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Shield, Clock, FileText, Users, Lock, Eye, Database, Mail } from "lucide-react";
-import { PrivacyActions } from "@/components/rgpd/privacy-action";
 import { siteConfig } from "@/lib/site.config";
-
-import { headers } from "next/headers";
 
 export default async function PrivacyPage() {
   const session = await auth.api.getSession({
@@ -27,7 +26,9 @@ export default async function PrivacyPage() {
         <Shield className="h-8 w-8 text-primary" />
         <div>
           <h1 className="text-3xl font-bold">Confidentialité et données</h1>
-          <p className="text-muted-foreground mt-1">Gérez vos données personnelles et vos préférences de confidentialité</p>
+          <p className="text-muted-foreground mt-1">
+            Gérez vos données personnelles et vos préférences de confidentialité
+          </p>
         </div>
       </div>
 
@@ -114,17 +115,21 @@ export default async function PrivacyPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground pt-4 border-t">
                       <Clock className="h-4 w-4" />
-                      Dernière mise à jour : {new Date(userConsent.consentDate).toLocaleDateString("fr-FR")} à {new Date(userConsent.consentDate).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
+                      Dernière mise à jour :{" "}
+                      {new Date(userConsent.consentDate).toLocaleDateString("fr-FR")} à{" "}
+                      {new Date(userConsent.consentDate).toLocaleTimeString("fr-FR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </div>
                   </div>
                 ) : (
                   <div className="text-center py-6">
                     <Eye className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground mb-2">
-                      Aucun consentement enregistré
-                    </p>
+                    <p className="text-muted-foreground mb-2">Aucun consentement enregistré</p>
                     <p className="text-sm text-muted-foreground">
-                      Le banner de cookies apparaîtra lors de votre prochaine visite pour définir vos préférences.
+                      Le banner de cookies apparaîtra lors de votre prochaine visite pour définir
+                      vos préférences.
                     </p>
                   </div>
                 )}
@@ -141,10 +146,11 @@ export default async function PrivacyPage() {
                 <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Accès restreint</h3>
                 <p className="text-muted-foreground mb-4">
-                  Pour gérer vos données personnelles et vos préférences de confidentialité, vous devez être connecté.
+                  Pour gérer vos données personnelles et vos préférences de confidentialité, vous
+                  devez être connecté.
                 </p>
-                <a 
-                  href="/login" 
+                <a
+                  href="/login"
                   className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 transition-colors"
                 >
                   Se connecter
@@ -173,21 +179,27 @@ export default async function PrivacyPage() {
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <h5 className="font-medium text-sm mb-1">Données de navigation</h5>
-                    <p className="text-xs text-muted-foreground">Pages visitées, temps de session</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pages visitées, temps de session
+                    </p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <h5 className="font-medium text-sm mb-1">Données techniques</h5>
-                    <p className="text-xs text-muted-foreground">Adresse IP, navigateur, appareil</p>
+                    <p className="text-xs text-muted-foreground">
+                      Adresse IP, navigateur, appareil
+                    </p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <h5 className="font-medium text-sm mb-1">Préférences</h5>
-                    <p className="text-xs text-muted-foreground">Consentements, paramètres d'affichage</p>
+                    <p className="text-xs text-muted-foreground">
+                      Consentements, paramètres d'affichage
+                    </p>
                   </div>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div>
                 <h4 className="font-medium mb-3">Finalités du traitement :</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
@@ -261,16 +273,17 @@ export default async function PrivacyPage() {
                   </p>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div className="bg-muted/50 p-4 rounded-lg">
                 <div className="flex items-start gap-3">
                   <Mail className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <h4 className="font-medium mb-1">Contact pour vos droits</h4>
                     <p className="text-sm text-muted-foreground mb-2">
-                      Pour exercer vos droits ou pour toute question relative à vos données personnelles :
+                      Pour exercer vos droits ou pour toute question relative à vos données
+                      personnelles :
                     </p>
                     <a
                       href="mailto:privacy@abcbedarieux.com"
@@ -301,10 +314,12 @@ export default async function PrivacyPage() {
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div>
                   <h4 className="font-medium">Politique de confidentialité complète</h4>
-                  <p className="text-sm text-muted-foreground">Version détaillée de notre politique de protection des données</p>
+                  <p className="text-sm text-muted-foreground">
+                    Version détaillée de notre politique de protection des données
+                  </p>
                 </div>
-                <a 
-                  href="/documents/privacy-policy.pdf" 
+                <a
+                  href="/documents/privacy-policy.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary hover:underline font-medium"
@@ -315,12 +330,11 @@ export default async function PrivacyPage() {
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div>
                   <h4 className="font-medium">Conditions générales d'utilisation</h4>
-                  <p className="text-sm text-muted-foreground">Termes et conditions d'utilisation du service</p>
+                  <p className="text-sm text-muted-foreground">
+                    Termes et conditions d'utilisation du service
+                  </p>
                 </div>
-                <a 
-                  href="/terms" 
-                  className="text-primary hover:underline font-medium"
-                >
+                <a href="/terms" className="text-primary hover:underline font-medium">
                   Consulter
                 </a>
               </div>

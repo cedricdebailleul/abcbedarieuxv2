@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Cookie, Settings, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { updateConsentAction } from "@/actions/gdpr-simple";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { motion, AnimatePresence } from "framer-motion";
-import { updateConsentAction } from "@/actions/gdpr-simple";
-import { Cookie, Settings, X } from "lucide-react";
-import { toast } from "sonner";
 
 interface ConsentState {
   cookies: boolean;
@@ -90,19 +90,10 @@ export function SimpleCookieBanner() {
 
                   <div className="flex flex-col gap-2">
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={acceptAll}
-                        disabled={isLoading}
-                      >
+                      <Button size="sm" onClick={acceptAll} disabled={isLoading}>
                         Accepter
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={rejectAll}
-                        disabled={isLoading}
-                      >
+                      <Button size="sm" variant="outline" onClick={rejectAll} disabled={isLoading}>
                         Refuser
                       </Button>
                     </div>
@@ -121,11 +112,7 @@ export function SimpleCookieBanner() {
                 <>
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-medium">Préférences</h4>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setShowDetails(false)}
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => setShowDetails(false)}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -134,9 +121,7 @@ export function SimpleCookieBanner() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Fonctionnels</p>
-                        <p className="text-xs text-muted-foreground">
-                          Nécessaires
-                        </p>
+                        <p className="text-xs text-muted-foreground">Nécessaires</p>
                       </div>
                       <Switch checked={true} disabled />
                     </div>
@@ -144,9 +129,7 @@ export function SimpleCookieBanner() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Préférences</p>
-                        <p className="text-xs text-muted-foreground">
-                          Mémorisation
-                        </p>
+                        <p className="text-xs text-muted-foreground">Mémorisation</p>
                       </div>
                       <Switch
                         checked={consent.cookies}
@@ -159,9 +142,7 @@ export function SimpleCookieBanner() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Analytics</p>
-                        <p className="text-xs text-muted-foreground">
-                          Statistiques
-                        </p>
+                        <p className="text-xs text-muted-foreground">Statistiques</p>
                       </div>
                       <Switch
                         checked={consent.analytics}
@@ -177,9 +158,7 @@ export function SimpleCookieBanner() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Marketing</p>
-                        <p className="text-xs text-muted-foreground">
-                          Publicités
-                        </p>
+                        <p className="text-xs text-muted-foreground">Publicités</p>
                       </div>
                       <Switch
                         checked={consent.marketing}

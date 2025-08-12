@@ -1,10 +1,10 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { prisma } from "./prisma";
-import { magicLink } from "better-auth/plugins/magic-link";
 import { emailOTP } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
-import { sendEmailOTP, sendEmail } from "./mailer";
+import { magicLink } from "better-auth/plugins/magic-link";
+import { sendEmail, sendEmailOTP } from "./mailer";
+import { prisma } from "./prisma";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -17,15 +17,23 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url, token }: { user: any; url: string; token: string }, request?: Request) => {
+    sendVerificationEmail: async (
+      { user, url, token }: { user: any; url: string; token: string },
+      _request?: Request
+    ) => {
       // Vérifier si on doit ignorer l'envoi d'email (pour les invitations)
-      if (process.env.SKIP_VERIFICATION_EMAIL === 'true') {
-        console.log("🔧 [BETTER AUTH] Envoi d'email ignoré pour invitation:", { email: user.email });
+      if (process.env.SKIP_VERIFICATION_EMAIL === "true") {
+        console.log("🔧 [BETTER AUTH] Envoi d'email ignoré pour invitation:", {
+          email: user.email,
+        });
         return;
       }
 
-      console.log("🔧 [BETTER AUTH] Tentative d'envoi d'email de vérification:", { email: user.email, url });
-      
+      console.log("🔧 [BETTER AUTH] Tentative d'envoi d'email de vérification:", {
+        email: user.email,
+        url,
+      });
+
       try {
         await sendEmail({
           to: user.email,

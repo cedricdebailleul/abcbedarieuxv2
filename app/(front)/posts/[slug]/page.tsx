@@ -1,24 +1,15 @@
+import { ArrowLeft, Calendar, Clock, Eye, Folder, Tag, User } from "lucide-react";
+import { headers } from "next/headers";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ShareButton } from "@/components/posts/share-button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
-
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Calendar,
-  Eye,
-  User,
-  Tag,
-  Folder,
-  Clock,
-  ArrowLeft,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { ShareButton } from "@/components/posts/share-button";
-import Image from "next/image";
 
 interface PostPageProps {
   params: Promise<{
@@ -123,9 +114,7 @@ export default async function PostPage({
   });
 
   // Estimation du temps de lecture (environ 200 mots par minute)
-  const wordCount = post.content
-    ? post.content.replace(/<[^>]*>/g, "").split(/\s+/).length
-    : 0;
+  const wordCount = post.content ? post.content.replace(/<[^>]*>/g, "").split(/\s+/).length : 0;
   const readingTime = Math.max(1, Math.round(wordCount / 200));
 
   return (
@@ -137,9 +126,7 @@ export default async function PostPage({
             <div className="flex items-center space-x-2 text-orange-800 dark:text-orange-200">
               <Eye className="h-4 w-4" />
               <span className="font-medium">Mode aperçu</span>
-              <span className="text-sm">
-                - Cet article n'est peut-être pas encore publié
-              </span>
+              <span className="text-sm">- Cet article n'est peut-être pas encore publié</span>
             </div>
           </div>
         </div>
@@ -239,9 +226,7 @@ export default async function PostPage({
                   />
                 ) : (
                   <div className="text-center py-16 text-muted-foreground">
-                    <p className="text-lg">
-                      Aucun contenu disponible pour cet article.
-                    </p>
+                    <p className="text-lg">Aucun contenu disponible pour cet article.</p>
                   </div>
                 )}
               </div>
@@ -319,21 +304,15 @@ export default async function PostPage({
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Vues</span>
-                    <Badge variant="secondary">
-                      {(post.viewCount || 0).toLocaleString()}
-                    </Badge>
+                    <Badge variant="secondary">{(post.viewCount || 0).toLocaleString()}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Temps de lecture
-                    </span>
+                    <span className="text-sm text-muted-foreground">Temps de lecture</span>
                     <Badge variant="secondary">{readingTime} min</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Mots</span>
-                    <Badge variant="secondary">
-                      ~{wordCount.toLocaleString()}
-                    </Badge>
+                    <Badge variant="secondary">~{wordCount.toLocaleString()}</Badge>
                   </div>
                 </CardContent>
               </Card>
@@ -355,54 +334,51 @@ export default async function PostPage({
       </div>
 
       {/* SEO Debug (only in development) */}
-      {process.env.NODE_ENV === "development" &&
-        (post.canonicalUrl || post.ogImage) && (
-          <div className="border-t bg-muted/30">
-            <div className="container mx-auto px-4 py-6">
-              <details className="text-xs">
-                <summary className="font-medium text-muted-foreground cursor-pointer">
-                  Informations SEO (développement uniquement)
-                </summary>
-                <div className="mt-2 space-y-1 text-muted-foreground">
-                  {post.canonicalUrl && (
-                    <div>
-                      <span className="font-medium">URL canonique:</span>{" "}
-                      <a
-                        href={post.canonicalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        {post.canonicalUrl}
-                      </a>
-                    </div>
-                  )}
-                  {post.ogImage && (
-                    <div>
-                      <span className="font-medium">Image OG:</span>{" "}
-                      <a
-                        href={post.ogImage}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        Voir l'image
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </details>
-            </div>
+      {process.env.NODE_ENV === "development" && (post.canonicalUrl || post.ogImage) && (
+        <div className="border-t bg-muted/30">
+          <div className="container mx-auto px-4 py-6">
+            <details className="text-xs">
+              <summary className="font-medium text-muted-foreground cursor-pointer">
+                Informations SEO (développement uniquement)
+              </summary>
+              <div className="mt-2 space-y-1 text-muted-foreground">
+                {post.canonicalUrl && (
+                  <div>
+                    <span className="font-medium">URL canonique:</span>{" "}
+                    <a
+                      href={post.canonicalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      {post.canonicalUrl}
+                    </a>
+                  </div>
+                )}
+                {post.ogImage && (
+                  <div>
+                    <span className="font-medium">Image OG:</span>{" "}
+                    <a
+                      href={post.ogImage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Voir l'image
+                    </a>
+                  </div>
+                )}
+              </div>
+            </details>
           </div>
-        )}
+        </div>
+      )}
     </>
   );
 }
 
 // Métadonnées dynamiques
-export async function generateMetadata({
-  params: paramsPromise,
-}: PostPageProps) {
+export async function generateMetadata({ params: paramsPromise }: PostPageProps) {
   const params = await paramsPromise;
   const post = await prisma.post.findUnique({
     where: { slug: params.slug },
@@ -429,26 +405,17 @@ export async function generateMetadata({
 
   return {
     title: post.metaTitle || post.title,
-    description:
-      post.metaDescription ||
-      post.excerpt ||
-      "Lisez cet article sur ABC Bédarieux",
+    description: post.metaDescription || post.excerpt || "Lisez cet article sur ABC Bédarieux",
     openGraph: {
       title: post.metaTitle || post.title,
-      description:
-        post.metaDescription ||
-        post.excerpt ||
-        "Lisez cet article sur ABC Bédarieux",
+      description: post.metaDescription || post.excerpt || "Lisez cet article sur ABC Bédarieux",
       images: ogImageUrl ? [ogImageUrl] : undefined,
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
       title: post.metaTitle || post.title,
-      description:
-        post.metaDescription ||
-        post.excerpt ||
-        "Lisez cet article sur ABC Bédarieux",
+      description: post.metaDescription || post.excerpt || "Lisez cet article sur ABC Bédarieux",
       images: ogImageUrl ? [ogImageUrl] : undefined,
     },
     alternates: post.canonicalUrl

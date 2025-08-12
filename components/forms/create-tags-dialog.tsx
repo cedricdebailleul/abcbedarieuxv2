@@ -1,11 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Palette, Plus, Tag as TagIcon, X } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
-
+import { createTagsAction } from "@/actions/post";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,22 +18,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
-
-import { createTagsAction } from "@/actions/post";
-
-import { Plus, Tag as TagIcon, Loader2, Palette, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 // Schéma de validation pour le formulaire de création de tags
 const createTagsFormSchema = z.object({
@@ -47,10 +44,7 @@ const createTagsFormSchema = z.object({
     }, "Au moins un nom de tag valide est requis"),
   color: z
     .string()
-    .regex(
-      /^#[0-9A-Fa-f]{6}$/,
-      "La couleur doit être un code hexadécimal valide"
-    )
+    .regex(/^#[0-9A-Fa-f]{6}$/, "La couleur doit être un code hexadécimal valide")
     .optional(),
 });
 
@@ -61,10 +55,7 @@ interface CreateTagsDialogProps {
   trigger?: React.ReactNode;
 }
 
-export function CreateTagsDialog({
-  onTagsCreated,
-  trigger,
-}: CreateTagsDialogProps) {
+export function CreateTagsDialog({ onTagsCreated, trigger }: CreateTagsDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [previewTags, setPreviewTags] = useState<string[]>([]);
@@ -80,7 +71,8 @@ export function CreateTagsDialog({
   // Prévisualiser les tags basés sur l'input
   const watchNames = form.watch("names");
 
-  const updatePreview = (names: string) => {
+  // Fonction pour mettre à jour la prévisualisation
+  const updatePreview = React.useCallback((names: string) => {
     const tagNames = names
       .split(",")
       .map((name) => name.trim())
@@ -88,12 +80,12 @@ export function CreateTagsDialog({
       .filter((name, index, arr) => arr.indexOf(name) === index); // Supprimer doublons
 
     setPreviewTags(tagNames);
-  };
+  }, []);
 
   // Mettre à jour la prévisualisation quand l'input change
   React.useEffect(() => {
     updatePreview(watchNames);
-  }, [watchNames]);
+  }, [watchNames, updatePreview]);
 
   const onSubmit = async (data: CreateTagsFormInput) => {
     startTransition(async () => {
@@ -108,9 +100,7 @@ export function CreateTagsDialog({
 
           // Afficher les résultats
           if (created.length > 0 && existing.length > 0) {
-            toast.success(
-              `${created.length} tag(s) créé(s), ${existing.length} existait(s) déjà`
-            );
+            toast.success(`${created.length} tag(s) créé(s), ${existing.length} existait(s) déjà`);
           } else if (created.length > 0) {
             toast.success(`${created.length} tag(s) créé(s) avec succès`);
           } else if (existing.length > 0) {
@@ -176,8 +166,8 @@ export function CreateTagsDialog({
             Créer de nouveaux tags
           </DialogTitle>
           <DialogDescription>
-            Ajoutez un ou plusieurs tags séparés par des virgules. Les tags
-            existants seront détectés automatiquement.
+            Ajoutez un ou plusieurs tags séparés par des virgules. Les tags existants seront
+            détectés automatiquement.
           </DialogDescription>
         </DialogHeader>
 
@@ -199,9 +189,7 @@ export function CreateTagsDialog({
                       }}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Séparez plusieurs tags par des virgules
-                  </FormDescription>
+                  <FormDescription>Séparez plusieurs tags par des virgules</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -217,12 +205,11 @@ export function CreateTagsDialog({
                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border rounded-md bg-muted/50">
                   {previewTags.map((tag, index) => (
                     <Badge
-                      key={index}
+                      key={`preview-${tag}-${index}`}
                       variant="secondary"
                       className="flex items-center gap-1"
                       style={{
-                        backgroundColor:
-                          (form.watch("color") || "#8B5CF6") + "20",
+                        backgroundColor: `${form.watch("color") || "#8B5CF6"}20`,
                         color: form.watch("color") || "#8B5CF6",
                       }}
                     >
@@ -285,10 +272,7 @@ export function CreateTagsDialog({
               >
                 Annuler
               </Button>
-              <Button
-                type="submit"
-                disabled={isPending || previewTags.length === 0}
-              >
+              <Button type="submit" disabled={isPending || previewTags.length === 0}>
                 {isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
-import { headers } from "next/headers";
 
 const banUserSchema = z.object({
   banned: z.boolean(),
@@ -10,10 +10,7 @@ const banUserSchema = z.object({
   banExpires: z.string().datetime().optional(),
 });
 
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ userId: string }> }
-) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ userId: string }> }) {
   try {
     const params = await context.params;
     const userId = params.userId;
@@ -24,10 +21,7 @@ export async function PUT(
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Vérifier que l'utilisateur est admin
@@ -37,10 +31,7 @@ export async function PUT(
     });
 
     if (currentUser?.role !== "admin") {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     // Empêcher l'auto-bannissement
@@ -62,10 +53,7 @@ export async function PUT(
     });
 
     if (!existingUser) {
-      return NextResponse.json(
-        { error: "Utilisateur introuvable" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
     }
 
     // Préparer les données de mise à jour
@@ -103,16 +91,15 @@ export async function PUT(
     });
 
     const action = banned ? "banni" : "débanni";
-    
+
     return NextResponse.json({
       success: true,
       message: `Utilisateur ${action} avec succès`,
       user: updatedUser,
     });
-
   } catch (error) {
     console.error("Erreur lors du bannissement/débannissement:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Données invalides", details: error.issues },
@@ -120,9 +107,6 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

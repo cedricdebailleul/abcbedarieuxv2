@@ -1,12 +1,14 @@
 "use client";
 
+import { Globe, Mail, MapPin, Phone, Save, Settings, User, X } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { z } from "zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -14,10 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Save, X, User, Mail, Phone, MapPin, Settings, Globe } from "lucide-react";
-import { toast } from "sonner";
-import { z } from "zod";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -69,7 +69,7 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   const [formData, setFormData] = useState({
     name: user.name,
     email: user.email,
@@ -123,15 +123,14 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
       }
 
       toast.success("Profil mis à jour avec succès");
-      
+
       // Mettre à jour les données locales
       const updatedUser = {
         ...user,
         ...validatedData,
       };
-      
-      onUpdate(updatedUser);
 
+      onUpdate(updatedUser);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
@@ -173,9 +172,7 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             <User className="h-5 w-5" />
             Informations de base
           </CardTitle>
-          <CardDescription>
-            Modifiez vos informations personnelles de base
-          </CardDescription>
+          <CardDescription>Modifiez vos informations personnelles de base</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -189,9 +186,7 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
                 disabled={loading}
                 required
               />
-              {errors.name && (
-                <p className="text-sm text-red-500">{errors.name}</p>
-              )}
+              {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
             </div>
 
             <div className="space-y-2">
@@ -208,9 +203,7 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
                   required
                 />
               </div>
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
               {formData.email !== user.email && (
                 <p className="text-sm text-orange-600">
                   ⚠️ Modifier l'email nécessitera une nouvelle vérification
@@ -225,10 +218,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
               <Input
                 id="firstname"
                 value={formData.profile.firstname}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  profile: { ...formData.profile, firstname: e.target.value }
-                })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    profile: { ...formData.profile, firstname: e.target.value },
+                  })
+                }
                 disabled={loading}
               />
             </div>
@@ -238,10 +233,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
               <Input
                 id="lastname"
                 value={formData.profile.lastname}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  profile: { ...formData.profile, lastname: e.target.value }
-                })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    profile: { ...formData.profile, lastname: e.target.value },
+                  })
+                }
                 disabled={loading}
               />
             </div>
@@ -252,10 +249,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             <Textarea
               id="bio"
               value={formData.profile.bio}
-              onChange={(e) => setFormData({ 
-                ...formData, 
-                profile: { ...formData.profile, bio: e.target.value }
-              })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  profile: { ...formData.profile, bio: e.target.value },
+                })
+              }
               placeholder="Parlez-nous de vous..."
               rows={4}
               className={errors["profile.bio"] ? "border-red-500" : ""}
@@ -264,9 +263,7 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             {errors["profile.bio"] && (
               <p className="text-sm text-red-500">{errors["profile.bio"]}</p>
             )}
-            <p className="text-sm text-gray-500">
-              {formData.profile.bio.length}/500 caractères
-            </p>
+            <p className="text-sm text-gray-500">{formData.profile.bio.length}/500 caractères</p>
           </div>
         </CardContent>
       </Card>
@@ -289,10 +286,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
                   id="phone"
                   type="tel"
                   value={formData.profile.phone}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    profile: { ...formData.profile, phone: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      profile: { ...formData.profile, phone: e.target.value },
+                    })
+                  }
                   placeholder="06 12 34 56 78"
                   className="pl-10"
                   disabled={loading}
@@ -307,10 +306,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
                 <Input
                   id="address"
                   value={formData.profile.address}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    profile: { ...formData.profile, address: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      profile: { ...formData.profile, address: e.target.value },
+                    })
+                  }
                   placeholder="Ville, Pays"
                   className="pl-10"
                   disabled={loading}
@@ -335,10 +336,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
               <Label htmlFor="language">Langue</Label>
               <Select
                 value={formData.profile.language}
-                onValueChange={(value) => setFormData({ 
-                  ...formData, 
-                  profile: { ...formData.profile, language: value }
-                })}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    profile: { ...formData.profile, language: value },
+                  })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -357,10 +360,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
               <Label htmlFor="timezone">Fuseau horaire</Label>
               <Select
                 value={formData.profile.timezone}
-                onValueChange={(value) => setFormData({ 
-                  ...formData, 
-                  profile: { ...formData.profile, timezone: value }
-                })}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    profile: { ...formData.profile, timezone: value },
+                  })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -385,9 +390,7 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             <Globe className="h-5 w-5" />
             Confidentialité
           </CardTitle>
-          <CardDescription>
-            Contrôlez la visibilité de vos informations
-          </CardDescription>
+          <CardDescription>Contrôlez la visibilité de vos informations</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
@@ -399,10 +402,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             </div>
             <Switch
               checked={formData.profile.isPublic}
-              onCheckedChange={(checked) => setFormData({ 
-                ...formData, 
-                profile: { ...formData.profile, isPublic: checked }
-              })}
+              onCheckedChange={(checked) =>
+                setFormData({
+                  ...formData,
+                  profile: { ...formData.profile, isPublic: checked },
+                })
+              }
               disabled={loading}
             />
           </div>
@@ -416,10 +421,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             </div>
             <Switch
               checked={formData.profile.showEmail}
-              onCheckedChange={(checked) => setFormData({ 
-                ...formData, 
-                profile: { ...formData.profile, showEmail: checked }
-              })}
+              onCheckedChange={(checked) =>
+                setFormData({
+                  ...formData,
+                  profile: { ...formData.profile, showEmail: checked },
+                })
+              }
               disabled={loading}
             />
           </div>
@@ -433,10 +440,12 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             </div>
             <Switch
               checked={formData.profile.showPhone}
-              onCheckedChange={(checked) => setFormData({ 
-                ...formData, 
-                profile: { ...formData.profile, showPhone: checked }
-              })}
+              onCheckedChange={(checked) =>
+                setFormData({
+                  ...formData,
+                  profile: { ...formData.profile, showPhone: checked },
+                })
+              }
               disabled={loading}
             />
           </div>
@@ -462,11 +471,7 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
           <X className="h-4 w-4" />
           Annuler
         </Button>
-        <Button
-          type="submit"
-          disabled={loading}
-          className="flex items-center gap-2"
-        >
+        <Button type="submit" disabled={loading} className="flex items-center gap-2">
           <Save className="h-4 w-4" />
           {loading ? "Enregistrement..." : "Enregistrer les modifications"}
         </Button>

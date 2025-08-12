@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -19,11 +18,9 @@ interface ThemeToggleProps {
 
 const variantStyles = {
   default: "text-foreground",
-  navbar:
-    "text-gray-800 hover:text-primary dark:text-dark dark:hover:text-primary",
+  navbar: "text-gray-800 hover:text-primary dark:text-dark dark:hover:text-primary",
   sidebar: "text-muted-foreground hover:text-foreground",
-  footer:
-    "text-muted-foreground hover:text-white dark:text-gray-400 dark:hover:text-white",
+  footer: "text-muted-foreground hover:text-white dark:text-gray-400 dark:hover:text-white",
   hero: "text-white hover:text-primary-foreground",
 };
 
@@ -33,10 +30,7 @@ const sizeStyles = {
   lg: "h-6 w-6",
 };
 
-export function ThemeToggle({
-  variant = "default",
-  size = "md",
-}: ThemeToggleProps) {
+export function ThemeToggle({ variant = "default", size = "md" }: ThemeToggleProps) {
   const { setTheme } = useTheme();
 
   return (
@@ -57,15 +51,9 @@ export function ThemeToggle({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
+import { existsSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,24 +18,17 @@ export async function POST(request: NextRequest) {
     // Vérifier les permissions
     const userRole = session.user.role;
     if (!userRole || !["admin", "editor", "user"].includes(userRole)) {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     const body = await request.json();
     const { images, slug, type = "places", imageType } = body;
 
     if (!Array.isArray(images) || images.length === 0) {
-      return NextResponse.json(
-        { error: "Aucune image fournie" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Aucune image fournie" }, { status: 400 });
     }
 
-    const sanitize = (s: string) =>
-      s.replace(/[^a-z0-9-_]/gi, "").toLowerCase();
+    const sanitize = (s: string) => s.replace(/[^a-z0-9-_]/gi, "").toLowerCase();
     const cleanSlug = sanitize(slug);
     const cleanType = sanitize(type);
 
@@ -59,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < images.length; i++) {
       const imageUrl = images[i];
-      
+
       try {
         // Télécharger l'image
         const response = await fetch(imageUrl);
@@ -69,7 +62,7 @@ export async function POST(request: NextRequest) {
         }
 
         const buffer = Buffer.from(await response.arrayBuffer());
-        
+
         // Vérifier que c'est une image
         const metadata = await sharp(buffer).metadata();
         if (!metadata.format) {
@@ -80,7 +73,7 @@ export async function POST(request: NextRequest) {
         // Générer un nom de fichier unique selon le type
         const timestamp = Date.now();
         let fileName: string;
-        
+
         if (imageType === "logo") {
           fileName = `logo_${timestamp}.jpg`;
         } else if (imageType === "cover") {
@@ -88,7 +81,7 @@ export async function POST(request: NextRequest) {
         } else {
           fileName = `google_${timestamp}_${i}.jpg`;
         }
-        
+
         const filePath = path.join(uploadDir, fileName);
 
         // Traitement de l'image avec Sharp
@@ -109,13 +102,13 @@ export async function POST(request: NextRequest) {
         // Créer une version thumbnail avec dimensions adaptées
         const thumbnailName = `thumb_${fileName}`;
         const thumbnailPath = path.join(uploadDir, thumbnailName);
-        
+
         // Dimensions selon le type
         const isLogo = imageType === "logo";
         const isCover = imageType === "cover";
         const thumbW = isLogo ? 400 : isCover ? 1200 : 600;
         const thumbH = isLogo ? 400 : isCover ? 630 : 600;
-        
+
         const thumbnailBuffer = await sharp(optimizedBuffer)
           .resize(thumbW, thumbH, {
             fit: "cover",
@@ -129,7 +122,7 @@ export async function POST(request: NextRequest) {
         // Créer une version social
         const socialName = `social_${fileName}`;
         const socialPath = path.join(uploadDir, socialName);
-        
+
         const socialBuffer = await sharp(optimizedBuffer)
           .resize(1200, 630, {
             fit: "cover",
@@ -147,10 +140,11 @@ export async function POST(request: NextRequest) {
         const galleryPath = isGalleryImage ? "/gallery" : "";
         const relativeUrl = `/uploads/${cleanType}/${cleanSlug}${galleryPath}/${fileName}`;
         uploadedImages.push(relativeUrl);
-
       } catch (error) {
         console.error(`Erreur traitement image ${imageUrl}:`, error);
-        errors.push(`Erreur traitement ${imageUrl}: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+        errors.push(
+          `Erreur traitement ${imageUrl}: ${error instanceof Error ? error.message : "Erreur inconnue"}`
+        );
       }
     }
 
@@ -161,12 +155,8 @@ export async function POST(request: NextRequest) {
       totalCount: images.length,
       errors,
     });
-
   } catch (error) {
     console.error("Erreur lors de l'upload des images Google:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

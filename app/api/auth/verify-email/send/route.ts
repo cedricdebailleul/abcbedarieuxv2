@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/mailer";
 import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { sendEmail } from "@/lib/mailer";
+import { prisma } from "@/lib/prisma";
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Vérifier l'authentification
     const session = await auth.api.getSession({
@@ -12,10 +12,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Récupérer l'utilisateur
@@ -25,17 +22,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Utilisateur introuvable" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
     }
 
     if (user.emailVerified) {
-      return NextResponse.json(
-        { error: "Email déjà vérifié" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email déjà vérifié" }, { status: 400 });
     }
 
     // Supprimer les anciens tokens de vérification
@@ -97,13 +88,9 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Code de vérification envoyé par email",
     });
-
   } catch (error) {
     console.error("Erreur lors de l'envoi du code de vérification:", error);
-    
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

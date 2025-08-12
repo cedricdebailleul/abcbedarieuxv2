@@ -1,9 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { useForm, FormProvider } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Building2,
+  FileText,
+  Globe,
+  ImageIcon,
+  Loader2,
+  MapPin,
+  RefreshCw,
+  Settings,
+} from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { ImageUpload } from "@/components/media/image-upload";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -13,7 +27,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -21,29 +34,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { ImageUpload } from "@/components/media/image-upload";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { type FormattedPlaceData, useGooglePlaces } from "@/hooks/use-google-places";
 import { generateSlug } from "@/lib/validations/post";
-
-import {
-  Settings,
-  Globe,
-  FileText,
-  MapPin,
-  Building2,
-  ImageIcon,
-  Loader2,
-  RefreshCw,
-} from "lucide-react";
-
-import {
-  useGooglePlaces,
-  type FormattedPlaceData,
-} from "@/hooks/use-google-places";
 
 // --- Schéma Zod (conserve ton modèle) ---
 const placeSchema = z.object({
@@ -120,12 +115,7 @@ const PLACE_TYPES = [
   { value: "OTHER", label: "Autre" },
 ];
 
-export function PlaceForm({
-  initialData,
-  onSubmit,
-  mode = "create",
-  userRole,
-}: PlaceFormProps) {
+export function PlaceForm({ initialData, onSubmit, mode = "create", userRole }: PlaceFormProps) {
   const [isPending, startTransition] = useTransition();
   const [openingHours, setOpeningHours] = useState<any[]>([]);
   const [images, setImages] = useState<string[]>([]);
@@ -134,17 +124,13 @@ export function PlaceForm({
   const [createForClaim, setCreateForClaim] = useState(false);
   // Générer un slug temporaire unique pour les nouvelles places
   const [tempSlug] = useState(() =>
-    mode === "create"
-      ? `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      : ""
+    mode === "create" ? `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : ""
   );
 
   // Initialiser les images existantes en mode édition
   useEffect(() => {
     if (mode === "edit" && Array.isArray(initialData?.images)) {
-      const existingImages = Array.isArray(initialData.images)
-        ? initialData.images
-        : [];
+      const existingImages = Array.isArray(initialData.images) ? initialData.images : [];
       setImages(existingImages);
     }
     if (mode === "edit" && initialData?.openingHours) {
@@ -263,7 +249,7 @@ export function PlaceForm({
     form.setValue("longitude", place.longitude);
 
     // Media - uploader seulement le logo automatiquement
-    if (place.logo && place.logo.startsWith("http")) {
+    if (place.logo?.startsWith("http")) {
       const uploadedLogo = await uploadGoogleImage(place.logo, "logo");
       form.setValue("logo", uploadedLogo || place.logo);
     } else {
@@ -300,26 +286,20 @@ export function PlaceForm({
   }
 
   // Dans ton composant (au lieu de .map() direct sur openingHours)
-  const grouped = (openingHours ?? []).reduce(
-    (acc: Record<string, any[]>, oh: any) => {
-      const day = String(oh.dayOfWeek).toUpperCase();
-      acc[day] ||= [];
-      // format "slots" (si jamais tu as déjà agrégé)
-      if (Array.isArray(oh.slots) && oh.slots.length) {
-        for (const s of oh.slots)
-          acc[day].push({ ...oh, ...s, isClosed: false });
-      } else {
-        acc[day].push(oh);
-      }
-      return acc;
-    },
-    {}
-  );
+  const grouped = (openingHours ?? []).reduce((acc: Record<string, any[]>, oh: any) => {
+    const day = String(oh.dayOfWeek).toUpperCase();
+    acc[day] ||= [];
+    // format "slots" (si jamais tu as déjà agrégé)
+    if (Array.isArray(oh.slots) && oh.slots.length) {
+      for (const s of oh.slots) acc[day].push({ ...oh, ...s, isClosed: false });
+    } else {
+      acc[day].push(oh);
+    }
+    return acc;
+  }, {});
 
   // Sélection d'une prédiction
-  const handleSelectPrediction = (
-    prediction: google.maps.places.AutocompletePrediction
-  ) => {
+  const handleSelectPrediction = (prediction: google.maps.places.AutocompletePrediction) => {
     setInputValue(prediction.description);
     getPlaceDetails(prediction.place_id);
     setShowDropdown(false);
@@ -338,9 +318,7 @@ export function PlaceForm({
           createForClaim: userRole === "admin" ? createForClaim : undefined,
         });
         toast.success(
-          mode === "create"
-            ? "Établissement créé avec succès"
-            : "Établissement mis à jour"
+          mode === "create" ? "Établissement créé avec succès" : "Établissement mis à jour"
         );
         if (mode === "create") {
           form.reset();
@@ -357,8 +335,8 @@ export function PlaceForm({
   };
 
   const name = form.watch("name");
-  const coverImage = form.watch("coverImage");
-  const logo = form.watch("logo");
+  const _coverImage = form.watch("coverImage");
+  const _logo = form.watch("logo");
   const metaTitle = form.watch("metaTitle") ?? "";
   const metaDescription = form.watch("metaDescription") ?? "";
   const lat = form.watch("latitude");
@@ -463,9 +441,7 @@ export function PlaceForm({
                         {name && (
                           <p className="text-xs text-muted-foreground">
                             Slug prévisionnel :{" "}
-                            <code className="bg-muted px-1 rounded">
-                              {computedSlug}
-                            </code>
+                            <code className="bg-muted px-1 rounded">{computedSlug}</code>
                           </p>
                         )}
                       </FormItem>
@@ -480,10 +456,7 @@ export function PlaceForm({
                         <FormItem>
                           <FormLabel>Type *</FormLabel>
                           <FormControl>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Sélectionner…" />
                               </SelectTrigger>
@@ -508,10 +481,7 @@ export function PlaceForm({
                         <FormItem>
                           <FormLabel>Catégorie (optionnel)</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Ex : Boulangerie, Assurance…"
-                              {...field}
-                            />
+                            <Input placeholder="Ex : Boulangerie, Assurance…" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -614,9 +584,7 @@ export function PlaceForm({
                         name="latitude"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-muted-foreground">
-                              Latitude
-                            </FormLabel>
+                            <FormLabel className="text-muted-foreground">Latitude</FormLabel>
                             <FormControl>
                               <Input {...field} readOnly className="bg-muted" />
                             </FormControl>
@@ -628,9 +596,7 @@ export function PlaceForm({
                         name="longitude"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-muted-foreground">
-                              Longitude
-                            </FormLabel>
+                            <FormLabel className="text-muted-foreground">Longitude</FormLabel>
                             <FormControl>
                               <Input {...field} readOnly className="bg-muted" />
                             </FormControl>
@@ -697,31 +663,23 @@ export function PlaceForm({
                   <CardTitle>Réseaux sociaux</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(
-                    [
-                      "facebook",
-                      "instagram",
-                      "twitter",
-                      "linkedin",
-                      "tiktok",
-                    ] as const
-                  ).map((fieldName) => (
-                    <FormField
-                      key={fieldName}
-                      control={form.control}
-                      name={fieldName}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="capitalize">
-                            {fieldName}
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="URL ou @handle" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
+                  {(["facebook", "instagram", "twitter", "linkedin", "tiktok"] as const).map(
+                    (fieldName) => (
+                      <FormField
+                        key={fieldName}
+                        control={form.control}
+                        name={fieldName}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="capitalize">{fieldName}</FormLabel>
+                            <FormControl>
+                              <Input placeholder="URL ou @handle" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )
+                  )}
                 </CardContent>
               </Card>
 
@@ -815,27 +773,22 @@ export function PlaceForm({
                             onClick={async (e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              const googleImages = images.filter((img) =>
-                                img.startsWith("http")
-                              );
+                              const googleImages = images.filter((img) => img.startsWith("http"));
                               if (googleImages.length === 0) return;
 
                               startTransition(async () => {
                                 try {
-                                  const response = await fetch(
-                                    "/api/upload-google-images",
-                                    {
-                                      method: "POST",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({
-                                        images: googleImages,
-                                        slug: uploadSlug,
-                                        type: "places",
-                                      }),
-                                    }
-                                  );
+                                  const response = await fetch("/api/upload-google-images", {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      images: googleImages,
+                                      slug: uploadSlug,
+                                      type: "places",
+                                    }),
+                                  });
 
                                   if (!response.ok) {
                                     throw new Error("Erreur lors de l'upload");
@@ -845,9 +798,7 @@ export function PlaceForm({
 
                                   // Remplacer les liens Google par les URLs uploadées
                                   setImages((prev) => [
-                                    ...prev.filter(
-                                      (img) => !img.startsWith("http")
-                                    ),
+                                    ...prev.filter((img) => !img.startsWith("http")),
                                     ...result.uploadedImages,
                                   ]);
 
@@ -856,26 +807,16 @@ export function PlaceForm({
                                   );
 
                                   if (result.errors.length > 0) {
-                                    console.warn(
-                                      "Erreurs upload:",
-                                      result.errors
-                                    );
+                                    console.warn("Erreurs upload:", result.errors);
                                   }
                                 } catch (error) {
-                                  console.error(
-                                    "Erreur upload Google images:",
-                                    error
-                                  );
-                                  toast.error(
-                                    "Erreur lors de l'upload des images Google"
-                                  );
+                                  console.error("Erreur upload Google images:", error);
+                                  toast.error("Erreur lors de l'upload des images Google");
                                 }
                               });
                             }}
                           >
-                            {isPending ? (
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : null}
+                            {isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                             Uploader toutes les images Google
                           </Button>
                         </div>
@@ -919,14 +860,10 @@ export function PlaceForm({
                             <div className="absolute left-2 top-2">
                               <span
                                 className={`px-1.5 py-0.5 text-xs rounded-full text-white font-medium ${
-                                  src.startsWith("/uploads/")
-                                    ? "bg-green-500"
-                                    : "bg-orange-500"
+                                  src.startsWith("/uploads/") ? "bg-green-500" : "bg-orange-500"
                                 }`}
                               >
-                                {src.startsWith("/uploads/")
-                                  ? "Uploadé"
-                                  : "Google"}
+                                {src.startsWith("/uploads/") ? "Uploadé" : "Google"}
                               </span>
                             </div>
                             <Button
@@ -944,44 +881,29 @@ export function PlaceForm({
                                 if (imageUrl.startsWith("/uploads/")) {
                                   try {
                                     const response = await fetch(
-                                      `/api/upload?path=${encodeURIComponent(
-                                        imageUrl
-                                      )}`,
+                                      `/api/upload?path=${encodeURIComponent(imageUrl)}`,
                                       {
                                         method: "DELETE",
                                       }
                                     );
 
                                     if (!response.ok) {
-                                      toast.error(
-                                        "Erreur lors de la suppression du fichier"
-                                      );
+                                      toast.error("Erreur lors de la suppression du fichier");
                                       return;
                                     }
                                   } catch (error) {
-                                    console.error(
-                                      "Erreur suppression fichier:",
-                                      error
-                                    );
-                                    toast.error(
-                                      "Erreur lors de la suppression du fichier"
-                                    );
+                                    console.error("Erreur suppression fichier:", error);
+                                    toast.error("Erreur lors de la suppression du fichier");
                                     return;
                                   }
                                 }
 
                                 // Retirer de l'état local
-                                setImages((prev) =>
-                                  prev.filter((_, idx) => idx !== i)
-                                );
+                                setImages((prev) => prev.filter((_, idx) => idx !== i));
                                 toast.success("Image supprimée");
                               }}
                             >
-                              {isPending ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                "×"
-                              )}
+                              {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "×"}
                             </Button>
                           </div>
                         ))}
@@ -1012,11 +934,7 @@ export function PlaceForm({
                           </span>
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Titre optimisé…"
-                            maxLength={60}
-                            {...field}
-                          />
+                          <Input placeholder="Titre optimisé…" maxLength={60} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1093,14 +1011,9 @@ export function PlaceForm({
                       ].map((DAY) => {
                         const slots = (grouped[DAY] || [])
                           .filter((s) => !s.isClosed)
-                          .sort(
-                            (a, b) =>
-                              timeToMin(a.openTime) - timeToMin(b.openTime)
-                          );
+                          .sort((a, b) => timeToMin(a.openTime) - timeToMin(b.openTime));
 
-                        const isClosed =
-                          (grouped[DAY] || []).length === 0 ||
-                          slots.length === 0;
+                        const isClosed = (grouped[DAY] || []).length === 0 || slots.length === 0;
 
                         return (
                           <div key={DAY} className="flex justify-between">
@@ -1108,25 +1021,23 @@ export function PlaceForm({
                               {DAY === "MONDAY"
                                 ? "Lundi"
                                 : DAY === "TUESDAY"
-                                ? "Mardi"
-                                : DAY === "WEDNESDAY"
-                                ? "Mercredi"
-                                : DAY === "THURSDAY"
-                                ? "Jeudi"
-                                : DAY === "FRIDAY"
-                                ? "Vendredi"
-                                : DAY === "SATURDAY"
-                                ? "Samedi"
-                                : "Dimanche"}
+                                  ? "Mardi"
+                                  : DAY === "WEDNESDAY"
+                                    ? "Mercredi"
+                                    : DAY === "THURSDAY"
+                                      ? "Jeudi"
+                                      : DAY === "FRIDAY"
+                                        ? "Vendredi"
+                                        : DAY === "SATURDAY"
+                                          ? "Samedi"
+                                          : "Dimanche"}
                             </span>
 
                             <span className="text-gray-600">
                               {isClosed
                                 ? "Fermé"
                                 : slots.map((s, i) => (
-                                    <span
-                                      key={`${DAY}-${s.openTime}-${s.closeTime}`}
-                                    >
+                                    <span key={`${DAY}-${s.openTime}-${s.closeTime}`}>
                                       {s.openTime} – {s.closeTime}
                                       {i < slots.length - 1 ? " • " : ""}
                                     </span>
@@ -1174,17 +1085,9 @@ export function PlaceForm({
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-col gap-2">
-                    <Button
-                      type="submit"
-                      disabled={isPending}
-                      className="w-full"
-                    >
-                      {isPending ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : null}
-                      {mode === "create"
-                        ? "Créer l’établissement"
-                        : "Mettre à jour"}
+                    <Button type="submit" disabled={isPending} className="w-full">
+                      {isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                      {mode === "create" ? "Créer l’établissement" : "Mettre à jour"}
                     </Button>
 
                     {mode === "edit" && (
@@ -1234,9 +1137,7 @@ export function PlaceForm({
                                 if (!response.ok) {
                                   const errorData = await response.json();
                                   console.error("❌ Erreur API:", errorData);
-                                  throw new Error(
-                                    errorData.error || "Erreur lors de l'import"
-                                  );
+                                  throw new Error(errorData.error || "Erreur lors de l'import");
                                 }
 
                                 const result = await response.json();
@@ -1244,18 +1145,13 @@ export function PlaceForm({
                                 toast.success(result.message);
 
                                 if (result.errors && result.errors.length > 0) {
-                                  console.warn(
-                                    "⚠️ Erreurs import:",
-                                    result.errors
-                                  );
+                                  console.warn("⚠️ Erreurs import:", result.errors);
                                 }
                               } catch (error) {
                                 console.error("❌ Erreur import avis:", error);
                                 toast.error(
                                   "Erreur lors de l'import des avis: " +
-                                    (error instanceof Error
-                                      ? error.message
-                                      : "Erreur inconnue")
+                                    (error instanceof Error ? error.message : "Erreur inconnue")
                                 );
                               }
                             });
@@ -1279,9 +1175,7 @@ export function PlaceForm({
                   {userRole === "admin" && mode === "create" && (
                     <>
                       <div className="flex items-center justify-between">
-                        <FormLabel htmlFor="createForClaim">
-                          Créer pour revendication
-                        </FormLabel>
+                        <FormLabel htmlFor="createForClaim">Créer pour revendication</FormLabel>
                         <Switch
                           id="createForClaim"
                           checked={createForClaim}
@@ -1289,8 +1183,8 @@ export function PlaceForm({
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        La fiche ne vous sera pas attribuée et pourra être
-                        revendiquée par un utilisateur
+                        La fiche ne vous sera pas attribuée et pourra être revendiquée par un
+                        utilisateur
                       </p>
                       <Separator />
                     </>

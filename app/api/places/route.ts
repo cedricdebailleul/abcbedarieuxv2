@@ -1,30 +1,30 @@
+import { existsSync, mkdirSync, rename } from "node:fs";
+import { join } from "node:path";
+import { promisify } from "node:util";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { PlaceType, PlaceStatus } from "@/lib/generated/prisma";
-import { notifyAdminsNewPlace } from "@/lib/place-notifications";
+import { auth } from "@/lib/auth";
 import { BadgeSystem } from "@/lib/badge-system";
-import { rename, existsSync, mkdirSync } from "fs";
-import { dirname, join } from "path";
-import { promisify } from "util";
+import { PlaceStatus, PlaceType } from "@/lib/generated/prisma";
+import { notifyAdminsNewPlace } from "@/lib/place-notifications";
+import { prisma } from "@/lib/prisma";
 
 const renameAsync = promisify(rename);
 
 // Fonction pour déplacer les fichiers temporaires vers le dossier final
 async function moveTemporaryFiles(dataToCreate: any, finalSlug: string) {
   const baseUploadPath = join(process.cwd(), "public", "uploads", "places");
-  
+
   // Chercher tous les dossiers temporaires qui pourraient correspondre
-  const { readdir } = await import("fs/promises");
+  const { readdir } = await import("node:fs/promises");
   try {
     const placesDir = await readdir(baseUploadPath);
-    const tempDirs = placesDir.filter(dir => dir.startsWith('temp-'));
-    
+    const tempDirs = placesDir.filter((dir) => dir.startsWith("temp-"));
+
     for (const tempDir of tempDirs) {
       const tempPath = join(baseUploadPath, tempDir);
       const finalPath = join(baseUploadPath, finalSlug);
-      
+
       // Vérifier si le dossier temporaire contient des fichiers
       try {
         const tempFiles = await readdir(tempPath);
@@ -33,12 +33,12 @@ async function moveTemporaryFiles(dataToCreate: any, finalSlug: string) {
           if (!existsSync(finalPath)) {
             mkdirSync(finalPath, { recursive: true });
           }
-          
+
           // Déplacer tous les fichiers du dossier temporaire vers le dossier final
           for (const file of tempFiles) {
             const tempFilePath = join(tempPath, file);
             const finalFilePath = join(finalPath, file);
-            
+
             try {
               await renameAsync(tempFilePath, finalFilePath);
               console.log(`Fichier déplacé: ${tempFilePath} -> ${finalFilePath}`);
@@ -46,16 +46,16 @@ async function moveTemporaryFiles(dataToCreate: any, finalSlug: string) {
               console.error(`Erreur déplacement fichier ${file}:`, error);
             }
           }
-          
+
           // Supprimer le dossier temporaire vide
           try {
-            const { rmdir } = await import("fs/promises");
+            const { rmdir } = await import("node:fs/promises");
             await rmdir(tempPath);
             console.log(`Dossier temporaire supprimé: ${tempPath}`);
           } catch (error) {
             console.error(`Erreur suppression dossier temporaire ${tempPath}:`, error);
           }
-          
+
           // Mettre à jour les URLs dans les données si elles pointent vers le dossier temporaire
           updateFileUrls(dataToCreate, tempDir, finalSlug);
         }
@@ -71,12 +71,12 @@ async function moveTemporaryFiles(dataToCreate: any, finalSlug: string) {
 // Fonction pour mettre à jour les URLs des fichiers
 function updateFileUrls(dataToCreate: any, tempSlug: string, finalSlug: string) {
   const updateUrl = (url: string) => {
-    if (url && url.includes(`/uploads/places/${tempSlug}/`)) {
+    if (url?.includes(`/uploads/places/${tempSlug}/`)) {
       return url.replace(`/uploads/places/${tempSlug}/`, `/uploads/places/${finalSlug}/`);
     }
     return url;
   };
-  
+
   if (dataToCreate.logo) {
     dataToCreate.logo = updateUrl(dataToCreate.logo);
   }
@@ -132,7 +132,7 @@ const placeSchema = z.object({
 
   // Données supplémentaires du formulaire
   openingHours: z.array(z.any()).optional(),
-  
+
   // Option admin : créer pour revendication
   createForClaim: z.boolean().optional(),
 });
@@ -147,7 +147,7 @@ type RawHour =
     }
   | any;
 
-function toOpeningRows(placeId: string, openingHours?: RawHour[]) {
+function _toOpeningRows(placeId: string, openingHours?: RawHour[]) {
   if (!openingHours?.length) return [];
 
   const rows: {
@@ -237,10 +237,7 @@ export async function GET(request: Request) {
         where.status = status;
         where.ownerId = session.user.id;
       } else {
-        where.OR = [
-          { status: PlaceStatus.ACTIVE, isActive: true },
-          { ownerId: session.user.id },
-        ];
+        where.OR = [{ status: PlaceStatus.ACTIVE, isActive: true }, { ownerId: session.user.id }];
       }
     }
 
@@ -273,10 +270,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des places:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }
 
@@ -288,10 +282,7 @@ export async function POST(request: Request) {
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Authentification requise" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -301,8 +292,8 @@ export async function POST(request: Request) {
       validatedData.photos && validatedData.photos.length > 0
         ? validatedData.photos
         : validatedData.images && validatedData.images.length > 0
-        ? validatedData.images
-        : [];
+          ? validatedData.images
+          : [];
 
     // Générer un slug unique
     const baseSlug = validatedData.name
@@ -359,7 +350,7 @@ export async function POST(request: Request) {
     // Détermine si c'est une création d'admin pour revendication
     const isAdminCreating = session.user.role === "admin";
     const createForClaimFlag = isAdminCreating && validatedData.createForClaim; // Nouveau paramètre optionnel
-    
+
     const dataToCreate: any = {
       ...placeData,
       slug,
@@ -392,8 +383,7 @@ export async function POST(request: Request) {
     }
 
     const googleBusinessData =
-      (Array.isArray(openingHours) && openingHours.length > 0) ||
-      normalizedPhotos.length > 0
+      (Array.isArray(openingHours) && openingHours.length > 0) || normalizedPhotos.length > 0
         ? { openingHours: openingHours || [], images: normalizedPhotos }
         : null;
 
@@ -414,18 +404,18 @@ export async function POST(request: Request) {
     // Déplacer les fichiers du dossier temporaire vers le dossier final
     try {
       await moveTemporaryFiles(dataToCreate, slug);
-      
+
       // Mettre à jour la place avec les URLs corrigées si nécessaire
       await prisma.place.update({
         where: { id: place.id },
         data: {
           logo: dataToCreate.logo,
           coverImage: dataToCreate.coverImage,
-          images: dataToCreate.images
-        }
+          images: dataToCreate.images,
+        },
       });
     } catch (error) {
-      console.error('Erreur lors du déplacement des fichiers temporaires:', error);
+      console.error("Erreur lors du déplacement des fichiers temporaires:", error);
       // Continuer même si le déplacement échoue
     }
 
@@ -435,19 +425,16 @@ export async function POST(request: Request) {
     try {
       await BadgeSystem.onPlaceCreated(session.user.id);
     } catch (error) {
-      console.error('Erreur attribution badges:', error);
+      console.error("Erreur attribution badges:", error);
     }
 
     // Envoyer notification à l'admin (en arrière-plan)
     if (place.owner) {
-      notifyAdminsNewPlace(
-        place.name,
-        place.owner.name,
-        place.owner.email,
-        place.id
-      ).catch((error) => {
-        console.error("Erreur notification admin:", error);
-      });
+      notifyAdminsNewPlace(place.name, place.owner.name, place.owner.email, place.id).catch(
+        (error) => {
+          console.error("Erreur notification admin:", error);
+        }
+      );
     }
 
     return NextResponse.json({ place }, { status: 201 });
@@ -460,9 +447,6 @@ export async function POST(request: Request) {
     }
 
     console.error("Erreur lors de la création de la place:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }
