@@ -1,9 +1,9 @@
 "use client";
 
-import Logo from "@/components/logo";
-import Link from "next/link";
 import { motion, useInView } from "framer-motion";
+import Link from "next/link";
 import { useRef } from "react";
+import Logo from "@/components/logo";
 
 import { Button } from "@/components/ui/button";
 
@@ -103,10 +103,7 @@ export default function FooterSection() {
           {/* Left Section */}
           <div className="space-y-8">
             {/* Logo */}
-            <motion.div
-              className="flex items-center gap-3"
-              variants={itemVariants}
-            >
+            <motion.div className="flex items-center gap-3" variants={itemVariants}>
               <Logo width={50} height={50} />
               <span className="text-md text-primary font-bold">
                 Association Bédaricienne <br />
@@ -116,9 +113,7 @@ export default function FooterSection() {
 
             {/* Social Media */}
             <motion.div variants={itemVariants}>
-              <h3 className="text-sm font-semibold mb-4 tracking-wide">
-                SUIVEZ-NOUS
-              </h3>
+              <h3 className="text-sm font-semibold mb-4 tracking-wide">SUIVEZ-NOUS</h3>
               <div className="flex gap-3">
                 {socialButtons.map((social, index) => (
                   <motion.div
@@ -148,10 +143,7 @@ export default function FooterSection() {
                 whileHover={{ y: -2 }}
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
-                <Link
-                  href="#"
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
+                <Link href="#" className="text-gray-300 hover:text-white transition-colors">
                   Foire aux questions
                 </Link>
               </motion.div>
@@ -159,17 +151,12 @@ export default function FooterSection() {
           </div>
 
           {/* Right Section - Newsletter */}
-          <motion.div
-            className="flex justify-end h-full"
-            variants={itemVariants}
-          >
+          <motion.div className="flex justify-end h-full" variants={itemVariants}>
             <div className="bg-blue-100 text-gray-900 p-6 rounded-2xl max-w-md w-full">
               <div className="text-xs text-gray-600 mb-2 tracking-wide">
                 POUR PLUS D&apos;INFORMATION
               </div>
-              <h3 className="text-xl font-bold mb-6">
-                Abonnez-vous à l&apos;essentiel
-              </h3>
+              <h3 className="text-xl font-bold mb-6">Abonnez-vous à l&apos;essentiel</h3>
               <div className="flex gap-3">
                 <motion.div
                   whileHover={{ scale: 1.02 }}
@@ -210,18 +197,14 @@ export default function FooterSection() {
             variants={itemVariants}
           >
             <p className="text-sm text-gray-400">
-              © ABC - Association Bédaricienne des Commerçants,{" "}
-              {new Date().getFullYear()}
+              © ABC - Association Bédaricienne des Commerçants, {new Date().getFullYear()}
             </p>
             <div className="flex gap-6 text-sm">
               <motion.div
                 whileHover={{ y: -1 }}
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
-                <Link
-                  href="/privacy"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
+                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
                   Politique d&apos;utilisation
                 </Link>
               </motion.div>
@@ -229,10 +212,7 @@ export default function FooterSection() {
                 whileHover={{ y: -1 }}
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
-                <Link
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
                   Politique de confidentialité
                 </Link>
               </motion.div>

@@ -1,10 +1,9 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 
 import { z } from "zod";
-
-import { headers } from "next/headers";
 import { updateProfile } from "@/actions/profile";
+import { auth } from "@/lib/auth";
 
 const schema = z.object({
   firstname: z
@@ -42,9 +41,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, profile: updated });
   } catch (error) {
     console.error("Erreur update profile:", error);
-    return NextResponse.json(
-      { error: "Erreur interne serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne serveur" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 // hooks/useGooglePlaces.ts
-import { useState, useCallback, useRef, useEffect } from "react";
+
 import { useLoadScript } from "@react-google-maps/api";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner"; // ou votre système de toast
 
 // Types pour Google Places
@@ -129,17 +130,12 @@ export const useGooglePlaces = ({
   onPlaceSelected,
   types = ["establishment"], // Tous les établissements par défaut
 }: UseGooglePlacesOptions) => {
-  const [selectedPlace, setSelectedPlace] = useState<FormattedPlaceData | null>(
-    null
-  );
+  const [selectedPlace, setSelectedPlace] = useState<FormattedPlaceData | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [predictions, setPredictions] = useState<
-    google.maps.places.AutocompletePrediction[]
-  >([]);
+  const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [inputValue, setInputValue] = useState("");
 
-  const autocompleteService =
-    useRef<google.maps.places.AutocompleteService | null>(null);
+  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
 
@@ -153,8 +149,7 @@ export const useGooglePlaces = ({
   // Initialiser les services Google
   useEffect(() => {
     if (isLoaded && window.google) {
-      autocompleteService.current =
-        new google.maps.places.AutocompleteService();
+      autocompleteService.current = new google.maps.places.AutocompleteService();
 
       // Créer un élément div caché pour PlacesService
       if (!mapRef.current) {
@@ -171,7 +166,7 @@ export const useGooglePlaces = ({
     }
 
     return () => {
-      if (mapRef.current && mapRef.current.parentNode) {
+      if (mapRef.current?.parentNode) {
         mapRef.current.parentNode.removeChild(mapRef.current);
       }
     };
@@ -218,19 +213,11 @@ export const useGooglePlaces = ({
     "SATURDAY",
   ] as const;
   const toHHMM = (t?: string) =>
-    t && t.length === 4 ? `${t.slice(0, 2)}:${t.slice(2)}` : t ?? "";
+    t && t.length === 4 ? `${t.slice(0, 2)}:${t.slice(2)}` : (t ?? "");
 
   // Convertir les jours Google (0-6, dimanche=0) vers votre enum
-  const mapDayToEnum = (day: number): string => {
-    const days = [
-      "SUNDAY",
-      "MONDAY",
-      "TUESDAY",
-      "WEDNESDAY",
-      "THURSDAY",
-      "FRIDAY",
-      "SATURDAY",
-    ];
+  const _mapDayToEnum = (day: number): string => {
+    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
     return days[day];
   };
 
@@ -257,10 +244,7 @@ export const useGooglePlaces = ({
     }
 
     // Accumulateur par jour
-    const byDay: Record<
-      string,
-      { slots: { openTime: string; closeTime: string }[] }
-    > = {};
+    const byDay: Record<string, { slots: { openTime: string; closeTime: string }[] }> = {};
 
     const pushSlot = (dayIdx: number, open: string, close: string) => {
       const key = DAYS[dayIdx];
@@ -317,9 +301,7 @@ export const useGooglePlaces = ({
   // Extraire les composants d'adresse
   const extractAddressComponents = (components: any[]) => {
     const getComponent = (types: string[]): string | undefined => {
-      const component = components.find((c) =>
-        types.some((type) => c.types.includes(type))
-      );
+      const component = components.find((c) => types.some((type) => c.types.includes(type)));
       return component?.long_name;
     };
 
@@ -351,26 +333,18 @@ export const useGooglePlaces = ({
         radius: 50000, // 50km autour de Bédarieux
       };
 
-      autocompleteService.current.getPlacePredictions(
-        request,
-        (predictions, status) => {
-          setIsSearching(false);
+      autocompleteService.current.getPlacePredictions(request, (predictions, status) => {
+        setIsSearching(false);
 
-          if (
-            status === google.maps.places.PlacesServiceStatus.OK &&
-            predictions
-          ) {
-            setPredictions(predictions);
-          } else {
-            setPredictions([]);
-            if (
-              status !== google.maps.places.PlacesServiceStatus.ZERO_RESULTS
-            ) {
-              console.error("Erreur recherche Google Places:", status);
-            }
+        if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+          setPredictions(predictions);
+        } else {
+          setPredictions([]);
+          if (status !== google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+            console.error("Erreur recherche Google Places:", status);
           }
         }
-      );
+      });
     },
     [defaultCountry, language, types]
   );
@@ -415,9 +389,7 @@ export const useGooglePlaces = ({
         setIsSearching(false);
 
         if (status === google.maps.places.PlacesServiceStatus.OK && place) {
-          const addressComponents = extractAddressComponents(
-            place.address_components || []
-          );
+          const addressComponents = extractAddressComponents(place.address_components || []);
 
           // Formater les photos
           const photos = place.photos
@@ -426,24 +398,23 @@ export const useGooglePlaces = ({
 
           // Récupérer la description Google Business si disponible
           const googleDescription = (place as any).editorial_summary?.overview;
-          
+
           // Alternative: utiliser le premier avis comme description si pas de description officielle
-          const fallbackDescription = !googleDescription && place.reviews?.[0]?.text
-            ? place.reviews[0].text.length > 50 
-              ? place.reviews[0].text 
-              : null
-            : null;
-          
+          const fallbackDescription =
+            !googleDescription && place.reviews?.[0]?.text
+              ? place.reviews[0].text.length > 50
+                ? place.reviews[0].text
+                : null
+              : null;
+
           // Note: L'API Google Places standard ne fournit pas de description détaillée
           // La description doit être saisie manuellement dans le formulaire
-          
+
           // Créer la description meta à partir de la description Google ou des avis
           const metaDescription =
             googleDescription?.substring(0, 160) ||
             place.reviews?.[0]?.text?.substring(0, 160) ||
-            `${place.name} à ${addressComponents.city}. ${place.types
-              ?.slice(0, 3)
-              .join(", ")}`;
+            `${place.name} à ${addressComponents.city}. ${place.types?.slice(0, 3).join(", ")}`;
 
           const formattedData: FormattedPlaceData = {
             // Identifiants
@@ -500,7 +471,13 @@ export const useGooglePlaces = ({
         }
       });
     },
-    [language, onPlaceSelected]
+    [
+      language,
+      onPlaceSelected,
+      extractAddressComponents,
+      formatOpeningHours,
+      mapGoogleTypeToPlaceType,
+    ]
   );
 
   // Nettoyer les prédictions

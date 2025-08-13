@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "@/hooks/use-session";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useSession } from "@/hooks/use-session";
 
 interface ClaimPlaceButtonProps {
   placeId: string;
@@ -34,7 +34,7 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
     if (status === "authenticated") {
       fetchClaimStatus();
     }
-  }, [status, placeId]);
+  }, [status, fetchClaimStatus]);
 
   const fetchClaimStatus = async () => {
     try {
@@ -56,7 +56,7 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
 
     try {
       setLoading(true);
-      
+
       const response = await fetch(`/api/places/${placeId}/claim`, {
         method: "POST",
         headers: {
@@ -102,10 +102,14 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "APPROVED": return "Approuvée";
-      case "PENDING": return "En attente";
-      case "REJECTED": return "Rejetée";
-      default: return status;
+      case "APPROVED":
+        return "Approuvée";
+      case "PENDING":
+        return "En attente";
+      case "REJECTED":
+        return "Rejetée";
+      default:
+        return status;
     }
   };
 
@@ -119,8 +123,8 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
         <p className="text-blue-800 text-sm">
           <a href="/login" className="font-medium underline">
             Connectez-vous
-          </a>
-          {" "}pour revendiquer cette place si elle vous appartient.
+          </a>{" "}
+          pour revendiquer cette place si elle vous appartient.
         </p>
       </div>
     );
@@ -135,8 +139,18 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
     return (
       <div className="bg-green-50 border border-green-200 rounded-lg p-4">
         <div className="flex items-center">
-          <svg className="w-5 h-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="w-5 h-5 text-green-600 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span className="text-green-800 font-medium">
             Vous êtes le propriétaire de cette place
@@ -149,24 +163,24 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
   // Si l'utilisateur a déjà fait une demande
   if (claimStatus.claims.length > 0) {
     const latestClaim = claimStatus.claims[0];
-    
+
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
         <h3 className="font-medium text-gray-900 mb-2">Votre demande de revendication</h3>
-        
+
         <div className="mb-3">
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(latestClaim.status)}`}>
+          <span
+            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(latestClaim.status)}`}
+          >
             {getStatusText(latestClaim.status)}
           </span>
           <span className="text-sm text-gray-500 ml-2">
-            {new Date(latestClaim.createdAt).toLocaleDateString('fr-FR')}
+            {new Date(latestClaim.createdAt).toLocaleDateString("fr-FR")}
           </span>
         </div>
-        
-        <p className="text-sm text-gray-700 mb-3">
-          "{latestClaim.message}"
-        </p>
-        
+
+        <p className="text-sm text-gray-700 mb-3">"{latestClaim.message}"</p>
+
         {latestClaim.adminMessage && (
           <div className="bg-blue-50 border border-blue-200 rounded p-3">
             <p className="text-sm text-blue-800">
@@ -174,7 +188,7 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
             </p>
           </div>
         )}
-        
+
         {latestClaim.status === "REJECTED" && (
           <button
             onClick={() => setShowClaimForm(true)}
@@ -191,9 +205,7 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
   if (hasOwner && !claimStatus.canClaim) {
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <p className="text-gray-700 text-sm">
-          Cette place a déjà un propriétaire vérifié.
-        </p>
+        <p className="text-gray-700 text-sm">Cette place a déjà un propriétaire vérifié.</p>
       </div>
     );
   }
@@ -202,10 +214,8 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
   if (showClaimForm) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="font-medium text-gray-900 mb-4">
-          Revendiquer "{placeName}"
-        </h3>
-        
+        <h3 className="font-medium text-gray-900 mb-4">Revendiquer "{placeName}"</h3>
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -219,7 +229,7 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
               placeholder="Expliquez pourquoi vous êtes le propriétaire légitime de cette place. Soyez précis et détaillé."
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Preuve (optionnel)
@@ -235,21 +245,31 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
               Vous pouvez fournir un lien vers un document prouvant votre propriété
             </p>
           </div>
-          
+
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <div className="flex">
-              <svg className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5 text-yellow-600 mr-2 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <div>
                 <p className="text-sm text-yellow-800">
-                  Votre demande sera examinée par un administrateur. 
-                  Vous recevrez un email avec la décision.
+                  Votre demande sera examinée par un administrateur. Vous recevrez un email avec la
+                  décision.
                 </p>
               </div>
             </div>
           </div>
-          
+
           <div className="flex space-x-3">
             <button
               onClick={handleClaim}
@@ -258,9 +278,24 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    ></path>
                   </svg>
                   Envoi en cours...
                 </>
@@ -290,9 +325,7 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="font-medium text-blue-900 mb-1">
-              Cette place vous appartient ?
-            </h3>
+            <h3 className="font-medium text-blue-900 mb-1">Cette place vous appartient ?</h3>
             <p className="text-sm text-blue-800">
               Revendiquez-la pour la gérer et recevoir les avis clients.
             </p>

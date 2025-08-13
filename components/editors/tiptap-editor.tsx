@@ -1,48 +1,46 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
-import TextAlign from "@tiptap/extension-text-align";
-import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
-import Underline from "@tiptap/extension-underline";
+import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import { Table } from "@tiptap/extension-table";
-import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
-
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import TableRow from "@tiptap/extension-table-row";
+import TextAlign from "@tiptap/extension-text-align";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Underline from "@tiptap/extension-underline";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
   Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Strikethrough,
   Code,
-  Heading1,
+  Hash,
   Heading2,
   Heading3,
-  Hash,
+  Highlighter,
+  Image as ImageIcon,
+  Italic,
+  Link as LinkIcon,
   List,
   ListOrdered,
-  Quote,
-  Undo,
-  Redo,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Image as ImageIcon,
-  Link as LinkIcon,
-  Table as TableIcon,
   Palette,
-  Highlighter,
+  Quote,
+  Redo,
+  Strikethrough,
+  Table as TableIcon,
+  Underline as UnderlineIcon,
+  Undo,
 } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useCallback, useState, useRef } from "react";
 
 interface TipTapEditorProps {
   content: string;
@@ -63,7 +61,7 @@ export function TipTapEditor({
 }: TipTapEditorProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const _timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastContentRef = useRef<string>(content);
 
   const editor = useEditor({
@@ -101,7 +99,7 @@ export function TipTapEditor({
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const newContent = editor.getHTML();
-      
+
       // Mettre à jour le formulaire sans déclencher de soumission automatique
       if (newContent !== lastContentRef.current) {
         lastContentRef.current = newContent;
@@ -146,20 +144,11 @@ export function TipTapEditor({
       return;
     }
 
-    editor
-      ?.chain()
-      .focus()
-      .extendMarkRange("link")
-      .setLink({ href: url })
-      .run();
+    editor?.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   }, [editor]);
 
   const addTable = useCallback(() => {
-    editor
-      ?.chain()
-      .focus()
-      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-      .run();
+    editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }, [editor]);
 
   if (!editor) {
@@ -262,37 +251,25 @@ export function TipTapEditor({
           {/* Titres */}
           <div className="flex gap-1">
             <Button
-              variant={
-                editor.isActive("heading", { level: 2 }) ? "default" : "ghost"
-              }
+              variant={editor.isActive("heading", { level: 2 }) ? "default" : "ghost"}
               size="sm"
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 2 }).run()
-              }
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
               title="Titre 2 (Sous-titre principal)"
             >
               <Heading2 className="h-4 w-4" />
             </Button>
             <Button
-              variant={
-                editor.isActive("heading", { level: 3 }) ? "default" : "ghost"
-              }
+              variant={editor.isActive("heading", { level: 3 }) ? "default" : "ghost"}
               size="sm"
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 3 }).run()
-              }
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
               title="Titre 3 (Sous-titre secondaire)"
             >
               <Heading3 className="h-4 w-4" />
             </Button>
             <Button
-              variant={
-                editor.isActive("heading", { level: 4 }) ? "default" : "ghost"
-              }
+              variant={editor.isActive("heading", { level: 4 }) ? "default" : "ghost"}
               size="sm"
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 4 }).run()
-              }
+              onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
               title="Titre 4 (Sous-titre tertiaire)"
             >
               <Hash className="h-4 w-4" />
@@ -334,9 +311,7 @@ export function TipTapEditor({
           {/* Alignement */}
           <div className="flex gap-1">
             <Button
-              variant={
-                editor.isActive({ textAlign: "left" }) ? "default" : "ghost"
-              }
+              variant={editor.isActive({ textAlign: "left" }) ? "default" : "ghost"}
               size="sm"
               onClick={() => editor.chain().focus().setTextAlign("left").run()}
               title="Aligner à gauche"
@@ -344,21 +319,15 @@ export function TipTapEditor({
               <AlignLeft className="h-4 w-4" />
             </Button>
             <Button
-              variant={
-                editor.isActive({ textAlign: "center" }) ? "default" : "ghost"
-              }
+              variant={editor.isActive({ textAlign: "center" }) ? "default" : "ghost"}
               size="sm"
-              onClick={() =>
-                editor.chain().focus().setTextAlign("center").run()
-              }
+              onClick={() => editor.chain().focus().setTextAlign("center").run()}
               title="Centrer"
             >
               <AlignCenter className="h-4 w-4" />
             </Button>
             <Button
-              variant={
-                editor.isActive({ textAlign: "right" }) ? "default" : "ghost"
-              }
+              variant={editor.isActive({ textAlign: "right" }) ? "default" : "ghost"}
               size="sm"
               onClick={() => editor.chain().focus().setTextAlign("right").run()}
               title="Aligner à droite"
@@ -366,13 +335,9 @@ export function TipTapEditor({
               <AlignRight className="h-4 w-4" />
             </Button>
             <Button
-              variant={
-                editor.isActive({ textAlign: "justify" }) ? "default" : "ghost"
-              }
+              variant={editor.isActive({ textAlign: "justify" }) ? "default" : "ghost"}
               size="sm"
-              onClick={() =>
-                editor.chain().focus().setTextAlign("justify").run()
-              }
+              onClick={() => editor.chain().focus().setTextAlign("justify").run()}
               title="Justifier"
             >
               <AlignJustify className="h-4 w-4" />
@@ -405,28 +370,13 @@ export function TipTapEditor({
 
           {/* Média et liens */}
           <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={addImage}
-              title="Insérer une image"
-            >
+            <Button variant="ghost" size="sm" onClick={addImage} title="Insérer une image">
               <ImageIcon className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={setLink}
-              title="Insérer un lien"
-            >
+            <Button variant="ghost" size="sm" onClick={setLink} title="Insérer un lien">
               <LinkIcon className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={addTable}
-              title="Insérer un tableau"
-            >
+            <Button variant="ghost" size="sm" onClick={addTable} title="Insérer un tableau">
               <TableIcon className="h-4 w-4" />
             </Button>
           </div>

@@ -1,12 +1,9 @@
 "use client";
 
+import { Download, Trash2 } from "lucide-react";
+import { deleteUserDataAction, exportUserDataAction } from "@/actions/gdpr-simple";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  exportUserDataAction,
-  deleteUserDataAction,
-} from "@/actions/gdpr-simple";
-import { Download, Trash2 } from "lucide-react";
 
 export function PrivacyForms() {
   return (
@@ -43,8 +40,7 @@ export function PrivacyForms() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Supprimez définitivement votre compte et toutes vos données
-            associées.
+            Supprimez définitivement votre compte et toutes vos données associées.
           </p>
           <form
             action={async () => {

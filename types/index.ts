@@ -1,5 +1,5 @@
-import { Session } from "@/lib/generated/prisma";
 import { z } from "zod";
+import type { Session } from "@/lib/generated/prisma";
 
 // User schemas
 export const UserSchema = z.object({
@@ -14,9 +14,7 @@ export const UserSchema = z.object({
 export const CreateUserSchema = z.object({
   email: z.string().min(1, "Email requis").email("Format d'email invalide"),
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-  password: z
-    .string()
-    .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
   consentGiven: z.boolean().refine((val) => val === true, {
     message: "Vous devez accepter les conditions d'utilisation",
   }),

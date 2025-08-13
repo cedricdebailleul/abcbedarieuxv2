@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,8 +16,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
-import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   firstname: z
@@ -80,9 +80,7 @@ export default function OnboardingPage() {
         throw new Error("Échec de la mise à jour du profil");
       }
     } catch {
-      toast.error(
-        "Erreur lors de la mise à jour du profil. Veuillez réessayer."
-      );
+      toast.error("Erreur lors de la mise à jour du profil. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -101,8 +99,7 @@ export default function OnboardingPage() {
     <div className="max-w-md mx-auto py-12 px-4">
       <h1 className="text-2xl font-bold mb-4">Complétons votre profil</h1>
       <p className="text-sm text-gray-500 mb-6">
-        Pour finaliser votre inscription, merci d’indiquer votre prénom et nom
-        de famille.
+        Pour finaliser votre inscription, merci d’indiquer votre prénom et nom de famille.
       </p>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -113,11 +110,7 @@ export default function OnboardingPage() {
               <FormItem>
                 <FormLabel>Prénom</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Jean"
-                    {...field}
-                    autoComplete="given-name"
-                  />
+                  <Input placeholder="Jean" {...field} autoComplete="given-name" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -130,11 +123,7 @@ export default function OnboardingPage() {
               <FormItem>
                 <FormLabel>Nom de famille</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Dupont"
-                    {...field}
-                    autoComplete="family-name"
-                  />
+                  <Input placeholder="Dupont" {...field} autoComplete="family-name" />
                 </FormControl>
                 <FormMessage />
               </FormItem>

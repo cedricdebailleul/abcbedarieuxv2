@@ -1,15 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
-import { headers } from "next/headers";
 
 const getUsersSchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(10),
   search: z.string().optional(),
   role: z.enum(["user", "admin", "moderator", "dpo", "editor"]).optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "BANNED", "PENDING_VERIFICATION", "DELETED"]).optional(),
+  status: z
+    .enum(["ACTIVE", "INACTIVE", "SUSPENDED", "BANNED", "PENDING_VERIFICATION", "DELETED"])
+    .optional(),
   sortBy: z.enum(["createdAt", "name", "email", "lastLoginAt"]).default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
@@ -22,10 +24,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Vérifier que l'utilisateur a les permissions d'administration
@@ -35,10 +34,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     // Parser les paramètres de requête
@@ -105,7 +101,7 @@ export async function GET(request: NextRequest) {
     const hasPrevPage = page > 1;
 
     return NextResponse.json({
-      users: users.map(user => ({
+      users: users.map((user) => ({
         id: user.id,
         name: user.name,
         email: user.email,
@@ -120,13 +116,15 @@ export async function GET(request: NextRequest) {
         banned: user.banned,
         banReason: user.banReason,
         banExpires: user.banExpires,
-        profile: user.profile ? {
-          firstname: user.profile.firstname,
-          lastname: user.profile.lastname,
-          bio: user.profile.bio,
-          phone: user.profile.phone,
-          isPublic: user.profile.isPublic,
-        } : null,
+        profile: user.profile
+          ? {
+              firstname: user.profile.firstname,
+              lastname: user.profile.lastname,
+              bio: user.profile.bio,
+              phone: user.profile.phone,
+              isPublic: user.profile.isPublic,
+            }
+          : null,
         badgeCount: user.badges.length,
         sessionCount: user._count.sessions,
         postCount: user._count.posts,
@@ -147,10 +145,9 @@ export async function GET(request: NextRequest) {
         sortOrder,
       },
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération des utilisateurs:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Paramètres invalides", details: error.issues },
@@ -158,9 +155,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

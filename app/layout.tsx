@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Toaster } from "sonner";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { BadgeProvider } from "@/components/providers/badge-provider";
+import { env } from "@/lib/env";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(env.NEXT_PUBLIC_URL || "http://localhost:3000"),
   title: "ABC Bédarieux",
   description: "Site de la ville de Bédarieux",
   icons: {
@@ -24,17 +27,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        id="top"
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} id="top">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -43,6 +39,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster closeButton position="bottom-center" />
+          <BadgeProvider />
         </ThemeProvider>
       </body>
     </html>

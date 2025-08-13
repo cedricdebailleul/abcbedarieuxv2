@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 const acceptInvitationSchema = z.object({
   token: z.string(),
@@ -15,10 +15,11 @@ const acceptInvitationSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, email, role, password, firstname, lastname } = acceptInvitationSchema.parse(body);
-    
+    const { token, email, role, password, firstname, lastname } =
+      acceptInvitationSchema.parse(body);
+
     // Créer un nom d'utilisateur à partir de l'email
-    const name = email.split('@')[0];
+    const name = email.split("@")[0];
 
     // Vérifier le token d'invitation
     const verification = await prisma.verification.findFirst({
@@ -34,10 +35,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!verification) {
-      return NextResponse.json(
-        { error: "Token d'invitation invalide ou expiré" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Token d'invitation invalide ou expiré" }, { status: 400 });
     }
 
     // Générer un slug unique pour l'utilisateur
@@ -75,10 +73,10 @@ export async function POST(request: NextRequest) {
 
     // Créer l'utilisateur en utilisant Better Auth avec désactivation d'email
     console.log("🔧 [INVITATION] Début création utilisateur pour invitation");
-    
+
     // Temporairement désactiver l'envoi d'email en configurant un flag global
-    process.env.SKIP_VERIFICATION_EMAIL = 'true';
-    
+    process.env.SKIP_VERIFICATION_EMAIL = "true";
+
     try {
       const result = await auth.api.signUpEmail({
         body: {
@@ -91,7 +89,7 @@ export async function POST(request: NextRequest) {
       if ("error" in result && result.error) {
         console.error("Erreur Better Auth signUpEmail:", result.error);
         return NextResponse.json(
-          { error: "Erreur lors de la création du compte: " + JSON.stringify(result.error) },
+          { error: `Erreur lors de la création du compte: ${JSON.stringify(result.error)}` },
           { status: 400 }
         );
       }
@@ -106,10 +104,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!createdUser) {
-      return NextResponse.json(
-        { error: "Utilisateur non trouvé après création" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Utilisateur non trouvé après création" }, { status: 500 });
     }
 
     console.log("✅ [INVITATION] Utilisateur créé:", { email, id: createdUser.id });
@@ -171,7 +166,7 @@ export async function POST(request: NextRequest) {
 
     // Connecter automatiquement l'utilisateur après création
     console.log("🔧 [INVITATION] Tentative de connexion automatique pour:", { email });
-    
+
     const signInResult = await auth.api.signInEmail({
       body: {
         email,
@@ -210,10 +205,9 @@ export async function POST(request: NextRequest) {
     }
 
     return response;
-
   } catch (error) {
     console.error("Erreur lors de l'acceptation de l'invitation:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Données invalides", details: error.issues },
@@ -221,9 +215,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

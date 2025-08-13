@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { BadgeSystem } from "@/lib/badge-system";
 import {
   createPostSchema,
   updatePostSchema,
@@ -78,7 +79,20 @@ async function checkPostPermissions(postId?: string, requireAdmin = false) {
 // CREATE - Créer un nouveau post
 export async function createPostAction(
   input: CreatePostInput
-): Promise<ActionResult<{ id: string; slug: string }>> {
+): Promise<ActionResult<{ 
+  id: string; 
+  slug: string; 
+  newBadges?: Array<{
+    badge: {
+      title: string;
+      description: string;
+      iconUrl?: string | null;
+      color?: string | null;
+      rarity: string;
+    };
+    reason: string;
+  }>;
+}>> {
   try {
     const { user } = await checkPostPermissions();
 
@@ -150,6 +164,9 @@ export async function createPostAction(
       });
     }
 
+    // Attribution automatique des badges pour les articles
+    const newBadges = await BadgeSystem.onPostCreated(user.id);
+
     revalidatePath("/dashboard/posts");
     revalidatePath("/posts");
 
@@ -158,6 +175,7 @@ export async function createPostAction(
       data: {
         id: post.id,
         slug: post.slug,
+        newBadges, // Ajouter les nouveaux badges dans la réponse
       },
     };
   } catch (error) {

@@ -19,25 +19,21 @@ function isExternal(url: string) {
   return /^https?:\/\//i.test(url);
 }
 
-export function SafeImage({ 
-  src, 
-  alt, 
-  fill, 
-  className, 
-  unoptimized, 
-  sizes, 
-  width, 
+export function SafeImage({
+  src,
+  alt,
+  fill,
+  className,
+  unoptimized,
+  sizes,
+  width,
   height,
-  fallbackClassName = "w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-xs"
+  fallbackClassName = "w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-xs",
 }: SafeImageProps) {
   const [hasError, setHasError] = useState(false);
 
   if (hasError) {
-    return (
-      <div className={fallbackClassName}>
-        Image non disponible
-      </div>
-    );
+    return <div className={fallbackClassName}>Image non disponible</div>;
   }
 
   return (
@@ -51,7 +47,7 @@ export function SafeImage({
       unoptimized={unoptimized ?? isExternal(src)}
       sizes={sizes}
       onError={(e) => {
-        console.error('Erreur chargement image:', src, e);
+        console.error("Erreur chargement image:", src, e);
         setHasError(true);
       }}
     />

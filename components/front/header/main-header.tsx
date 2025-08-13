@@ -1,8 +1,9 @@
 // components/Header/MainHeader.jsx
+
+import { ChevronDown, Search } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Search, ChevronDown } from "lucide-react";
 import Logo from "@/components/logo";
+import { Button } from "@/components/ui/button";
 
 const NAV = [
   { label: "Ville", items: ["Conseil", "Histoire", "Stats", "Règlements"] },
@@ -26,7 +27,7 @@ export function MainHeader() {
         <nav className="hidden lg:flex items-center gap-12">
           {NAV.map(({ label, items }) => (
             <div key={label} className="relative group">
-              <button className="flex items-center gap-1 text-gray-700 font-medium hover:text-gray-900">
+              <button type="button" className="flex items-center gap-1 text-gray-700 font-medium hover:text-gray-900">
                 {label} <ChevronDown className="w-4 h-4" />
               </button>
               <div className="absolute left-0 mt-2 w-48 bg-white shadow-lg rounded-md opacity-0 group-hover:opacity-100 transition-opacity">

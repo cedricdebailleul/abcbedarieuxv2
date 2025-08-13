@@ -1,9 +1,12 @@
 "use client";
 
+import { Filter, Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -12,9 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Search, X, Filter } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
 
 interface PublicPostsFiltersProps {
   categories: Array<{
@@ -31,25 +31,16 @@ interface PublicPostsFiltersProps {
   }>;
 }
 
-export function PublicPostsFilters({
-  categories,
-  tags,
-}: PublicPostsFiltersProps) {
+export function PublicPostsFilters({ categories, tags }: PublicPostsFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // État local pour les filtres
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [categoryId, setCategoryId] = useState(
-    searchParams.get("categoryId") || ""
-  );
+  const [categoryId, setCategoryId] = useState(searchParams.get("categoryId") || "");
   const [tagId, setTagId] = useState(searchParams.get("tagId") || "");
-  const [sortBy, setSortBy] = useState(
-    searchParams.get("sortBy") || "publishedAt"
-  );
-  const [sortOrder, setSortOrder] = useState(
-    searchParams.get("sortOrder") || "desc"
-  );
+  const [sortBy, setSortBy] = useState(searchParams.get("sortBy") || "publishedAt");
+  const [sortOrder, setSortOrder] = useState(searchParams.get("sortOrder") || "desc");
 
   // Fonction pour créer l'URL avec les paramètres
   const createQueryString = useCallback(
@@ -97,11 +88,7 @@ export function PublicPostsFilters({
 
   // Vérifier s'il y a des filtres actifs
   const hasActiveFilters =
-    search ||
-    categoryId ||
-    tagId ||
-    sortBy !== "publishedAt" ||
-    sortOrder !== "desc";
+    search || categoryId || tagId || sortBy !== "publishedAt" || sortOrder !== "desc";
 
   // Appliquer automatiquement les filtres de tri
   useEffect(() => {
@@ -220,9 +207,7 @@ export function PublicPostsFilters({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="publishedAt">
-                    Date de publication
-                  </SelectItem>
+                  <SelectItem value="publishedAt">Date de publication</SelectItem>
                   <SelectItem value="createdAt">Date de création</SelectItem>
                   <SelectItem value="title">Titre</SelectItem>
                   <SelectItem value="viewCount">Nombre de vues</SelectItem>
@@ -247,36 +232,24 @@ export function PublicPostsFilters({
           {/* Filtres actifs */}
           {hasActiveFilters && (
             <div className="space-y-3">
-              <Label className="text-xs text-muted-foreground">
-                Filtres actifs
-              </Label>
+              <Label className="text-xs text-muted-foreground">Filtres actifs</Label>
               <div className="flex flex-wrap gap-2">
                 {search && (
                   <Badge variant="secondary" className="text-xs">
                     Recherche: "{search}"
-                    <X
-                      className="h-3 w-3 ml-1 cursor-pointer"
-                      onClick={() => setSearch("")}
-                    />
+                    <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setSearch("")} />
                   </Badge>
                 )}
                 {categoryId && (
                   <Badge variant="secondary" className="text-xs">
-                    Catégorie:{" "}
-                    {categories.find((c) => c.id === categoryId)?.name}
-                    <X
-                      className="h-3 w-3 ml-1 cursor-pointer"
-                      onClick={() => setCategoryId("")}
-                    />
+                    Catégorie: {categories.find((c) => c.id === categoryId)?.name}
+                    <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setCategoryId("")} />
                   </Badge>
                 )}
                 {tagId && (
                   <Badge variant="secondary" className="text-xs">
                     Tag: {tags.find((t) => t.id === tagId)?.name}
-                    <X
-                      className="h-3 w-3 ml-1 cursor-pointer"
-                      onClick={() => setTagId("")}
-                    />
+                    <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setTagId("")} />
                   </Badge>
                 )}
               </div>

@@ -1,8 +1,8 @@
 "use client";
 
-import { fadeInUp, stagger } from "@/lib/animations";
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
+import { fadeInUp, stagger } from "@/lib/animations";
 
 interface AnimatedContainerProps {
   children: ReactNode;
@@ -30,13 +30,7 @@ export function AnimatedContainer({
   );
 }
 
-export function AnimatedItem({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function AnimatedItem({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <motion.div className={className} variants={fadeInUp}>
       {children}

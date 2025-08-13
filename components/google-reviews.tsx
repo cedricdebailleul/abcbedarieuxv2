@@ -1,7 +1,7 @@
 "use client";
 
+import { ChevronDown, ChevronUp, Star, User } from "lucide-react";
 import { useState } from "react";
-import { Star, User, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -29,9 +29,7 @@ function StarRating({ rating }: { rating: number }) {
         <Star
           key={star}
           className={`h-4 w-4 ${
-            star <= rating
-              ? "fill-yellow-400 text-yellow-400"
-              : "text-gray-300"
+            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
           }`}
         />
       ))}
@@ -42,11 +40,10 @@ function StarRating({ rating }: { rating: number }) {
 // Composant avis individuel
 function ReviewItem({ review }: { review: GoogleReview }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   const shouldTruncate = review.comment && review.comment.length > 200;
-  const displayText = shouldTruncate && !isExpanded 
-    ? review.comment.substring(0, 200) + "..."
-    : review.comment;
+  const displayText =
+    shouldTruncate && !isExpanded ? `${review.comment.substring(0, 200)}...` : review.comment;
 
   return (
     <Card className="mb-4">
@@ -57,7 +54,7 @@ function ReviewItem({ review }: { review: GoogleReview }) {
               <User className="h-5 w-5 text-blue-600" />
             </div>
           </div>
-          
+
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2">
               <div>
@@ -65,18 +62,16 @@ function ReviewItem({ review }: { review: GoogleReview }) {
                 <div className="flex items-center gap-2 mt-1">
                   <StarRating rating={review.rating} />
                   {review.relativeTime && (
-                    <span className="text-sm text-gray-500">
-                      {review.relativeTime}
-                    </span>
+                    <span className="text-sm text-gray-500">{review.relativeTime}</span>
                   )}
                 </div>
               </div>
             </div>
-            
+
             {review.comment && (
               <div className="text-gray-700 text-sm leading-relaxed">
                 <p>{displayText}</p>
-                
+
                 {shouldTruncate && (
                   <Button
                     variant="link"
@@ -106,14 +101,14 @@ function ReviewItem({ review }: { review: GoogleReview }) {
 
 export default function GoogleReviews({ reviews, className = "" }: GoogleReviewsProps) {
   const [showAll, setShowAll] = useState(false);
-  
+
   if (!reviews || reviews.length === 0) {
     return null;
   }
 
   // Trier par date (plus récent en premier)
-  const sortedReviews = reviews.sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  const sortedReviews = reviews.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   // Afficher seulement les 3 premiers par défaut
@@ -132,14 +127,10 @@ export default function GoogleReviews({ reviews, className = "" }: GoogleReviews
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="flex items-center gap-1">
-                  <span className="text-2xl font-bold">
-                    {averageRating.toFixed(1)}
-                  </span>
+                  <span className="text-2xl font-bold">{averageRating.toFixed(1)}</span>
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                 </div>
-                <div className="text-sm text-gray-500">
-                  {reviews.length} avis
-                </div>
+                <div className="text-sm text-gray-500">{reviews.length} avis</div>
               </div>
             </div>
           </div>
@@ -156,10 +147,7 @@ export default function GoogleReviews({ reviews, className = "" }: GoogleReviews
       {/* Bouton "Voir plus" */}
       {reviews.length > 3 && (
         <div className="text-center">
-          <Button
-            variant="outline"
-            onClick={() => setShowAll(!showAll)}
-          >
+          <Button variant="outline" onClick={() => setShowAll(!showAll)}>
             {showAll ? "Voir moins" : `Voir les ${reviews.length - 3} autres avis`}
           </Button>
         </div>

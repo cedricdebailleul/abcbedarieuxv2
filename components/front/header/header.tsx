@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Menu, Search, User, X } from "lucide-react";
 import Link from "next/link";
-import { Menu, X, ChevronDown, Search, User } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { NavUser } from "@/components/layout/nav_user";
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { NavUser } from "@/components/layout/nav_user";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { getDefaultClassNames } from "react-day-picker";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   label: string;
@@ -57,9 +56,10 @@ const navItems: NavItem[] = [
 
 const topBarLinks = [
   { label: "Nous joindre", href: "/nous-joindre" },
-  { label: "Actualités", href: "/actualites" },
-  { label: "Calendrier des événements", href: "/calendrier-des-evenements" },
+  { label: "Actualités", href: "/posts" },
+  { label: "Calendrier des événements", href: "/events" },
   { label: "Carte Intéractive", href: "/carte-interactive" },
+  { label: "Catégories d'établissements", href: "/categories" },
 ];
 
 export default function Header({ className }: HeaderProps) {

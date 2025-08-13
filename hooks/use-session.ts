@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface User {
   id: string;
@@ -30,7 +30,7 @@ export function useSession(): UseSessionReturn {
 
         if (response.ok) {
           const sessionData = await response.json();
-          if (sessionData && sessionData.user) {
+          if (sessionData?.user) {
             setSession(sessionData);
             setStatus("authenticated");
           } else {

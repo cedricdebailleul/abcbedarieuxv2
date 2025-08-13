@@ -1,21 +1,31 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import {
+  Archive,
+  Calendar,
+  Clock,
+  Edit,
+  Eye,
+  Folder,
+  Globe,
+  Loader2,
+  Lock,
+  MoreHorizontal,
+  Tag as TagIcon,
+  Trash2,
+  User,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  bulkDeletePostsAction,
+  bulkPublishPostsAction,
+  deletePostAction,
+  getPostsAction,
+} from "@/actions/post";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,32 +36,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-import { 
-  getPostsAction, 
-  deletePostAction, 
-  bulkPublishPostsAction, 
-  bulkDeletePostsAction 
-} from "@/actions/post";
-import { PostStatus } from "@/lib/generated/prisma";
-
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Eye,
-  Calendar,
-  User,
-  Tag as TagIcon,
-  Folder,
-  Globe,
-  Lock,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Archive,
-  Loader2,
-} from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PostsListClientProps {
   initialData: {
@@ -96,7 +91,7 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
         };
 
         const result = await getPostsAction(filters);
-        
+
         if (result.success && result.data) {
           setPosts(result.data.posts);
           setTotal(result.data.total);
@@ -117,10 +112,13 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
 
   // Fonctions utilitaires
   const getStatusColor = (status: string, published: boolean) => {
-    if (published && status === "PUBLISHED") return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-    if (status === "PENDING_REVIEW") return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+    if (published && status === "PUBLISHED")
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+    if (status === "PENDING_REVIEW")
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
     if (status === "REJECTED") return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-    if (status === "ARCHIVED") return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    if (status === "ARCHIVED")
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
   };
 
@@ -143,7 +141,7 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
   // Gestion de la sélection
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedPosts(posts.map(post => post.id));
+      setSelectedPosts(posts.map((post) => post.id));
     } else {
       setSelectedPosts([]);
     }
@@ -151,9 +149,9 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
 
   const handleSelectPost = (postId: string, checked: boolean) => {
     if (checked) {
-      setSelectedPosts(prev => [...prev, postId]);
+      setSelectedPosts((prev) => [...prev, postId]);
     } else {
-      setSelectedPosts(prev => prev.filter(id => id !== postId));
+      setSelectedPosts((prev) => prev.filter((id) => id !== postId));
     }
   };
 
@@ -161,11 +159,11 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
   const handleDelete = async (postId: string) => {
     startTransition(async () => {
       const result = await deletePostAction(postId);
-      
+
       if (result.success) {
         toast.success("Article supprimé avec succès");
-        setPosts(prev => prev.filter(post => post.id !== postId));
-        setTotal(prev => prev - 1);
+        setPosts((prev) => prev.filter((post) => post.id !== postId));
+        setTotal((prev) => prev - 1);
       } else {
         toast.error(result.error || "Erreur lors de la suppression");
       }
@@ -202,8 +200,8 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
 
       if (result.success) {
         toast.success("Articles supprimés avec succès");
-        setPosts(prev => prev.filter(post => !selectedPosts.includes(post.id)));
-        setTotal(prev => prev - selectedPosts.length);
+        setPosts((prev) => prev.filter((post) => !selectedPosts.includes(post.id)));
+        setTotal((prev) => prev - selectedPosts.length);
         setSelectedPosts([]);
       } else {
         toast.error(result.error || "Erreur lors de la suppression");
@@ -248,15 +246,12 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
           <Edit className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Aucun article trouvé</h3>
           <p className="text-muted-foreground text-center mb-4">
-            {Object.keys(searchParams).length > 0 
+            {Object.keys(searchParams).length > 0
               ? "Aucun article ne correspond à vos critères de recherche."
-              : "Vous n'avez pas encore créé d'article."
-            }
+              : "Vous n'avez pas encore créé d'article."}
           </p>
           <Button asChild>
-            <Link href="/dashboard/posts/new">
-              Créer votre premier article
-            </Link>
+            <Link href="/dashboard/posts/new">Créer votre premier article</Link>
           </Button>
         </CardContent>
       </Card>
@@ -272,13 +267,10 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <span className="text-sm font-medium">
-                  {selectedPosts.length} article{selectedPosts.length > 1 ? "s" : ""} sélectionné{selectedPosts.length > 1 ? "s" : ""}
+                  {selectedPosts.length} article{selectedPosts.length > 1 ? "s" : ""} sélectionné
+                  {selectedPosts.length > 1 ? "s" : ""}
                 </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedPosts([])}
-                >
+                <Button variant="outline" size="sm" onClick={() => setSelectedPosts([])}>
                   Désélectionner
                 </Button>
               </div>
@@ -327,7 +319,9 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
           <span>Tout sélectionner</span>
         </div>
         <span>•</span>
-        <span>{total} article{total > 1 ? "s" : ""} au total</span>
+        <span>
+          {total} article{total > 1 ? "s" : ""} au total
+        </span>
       </div>
 
       {/* Liste des posts */}
@@ -348,7 +342,7 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                     <div className="flex-1">
                       {/* Titre et statut */}
                       <div className="flex items-center space-x-3 mb-2">
-                        <Link 
+                        <Link
                           href={`/dashboard/posts/${post.id}/edit`}
                           className="text-lg font-semibold hover:text-primary transition-colors line-clamp-1"
                         >
@@ -385,7 +379,7 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                           <div className="flex items-center space-x-1">
                             <Folder className="h-3 w-3" />
                             <div className="flex items-center space-x-1">
-                              <div 
+                              <div
                                 className="w-2 h-2 rounded-full"
                                 style={{ backgroundColor: post.category.color }}
                               />
@@ -402,7 +396,9 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                         {post.tags.length > 0 && (
                           <div className="flex items-center space-x-1">
                             <TagIcon className="h-3 w-3" />
-                            <span>{post.tags.length} tag{post.tags.length > 1 ? "s" : ""}</span>
+                            <span>
+                              {post.tags.length} tag{post.tags.length > 1 ? "s" : ""}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -411,13 +407,13 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                       {post.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {post.tags.slice(0, 3).map((postTag: any) => (
-                            <Badge 
-                              key={postTag.tag.id} 
-                              variant="outline" 
+                            <Badge
+                              key={postTag.tag.id}
+                              variant="outline"
                               className="text-xs"
-                              style={{ 
+                              style={{
                                 borderColor: postTag.tag.color || "#6B7280",
-                                color: postTag.tag.color || "#6B7280"
+                                color: postTag.tag.color || "#6B7280",
                               }}
                             >
                               {postTag.tag.name}
@@ -446,7 +442,7 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                             Modifier
                           </Link>
                         </DropdownMenuItem>
-                        
+
                         <DropdownMenuItem asChild>
                           <Link href={`/posts/${post.slug}`} target="_blank">
                             <Eye className="h-4 w-4 mr-2" />
@@ -455,8 +451,8 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                         </DropdownMenuItem>
 
                         <DropdownMenuSeparator />
-                        
-                        <DropdownMenuItem 
+
+                        <DropdownMenuItem
                           className="text-red-600"
                           onClick={() => setPostToDelete(post.id)}
                         >
@@ -489,16 +485,13 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer les articles sélectionnés</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer {selectedPosts.length} article{selectedPosts.length > 1 ? "s" : ""} ?
-              Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer {selectedPosts.length} article
+              {selectedPosts.length > 1 ? "s" : ""} ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleBulkDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
               {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Supprimer
             </AlertDialogAction>
@@ -517,7 +510,7 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => {
                 if (postToDelete) {
                   handleDelete(postToDelete);

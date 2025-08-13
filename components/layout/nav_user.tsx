@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { signOut, useSession } from "@/lib/auth-client";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,10 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import Link from "next/link";
-import { Button } from "../ui/button";
-import { ThemeToggle } from "../ui/theme-toggle";
 
 export function NavUser() {
   const { data: session } = useSession();
@@ -19,13 +18,8 @@ export function NavUser() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="size-10 cursor-pointer">
-              <AvatarImage
-                src={session.user.image ?? undefined}
-                alt={session.user.name ?? ""}
-              />
-              <AvatarFallback>
-                {session.user.name?.charAt(0).toUpperCase()}
-              </AvatarFallback>
+              <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? ""} />
+              <AvatarFallback>{session.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -42,9 +36,7 @@ export function NavUser() {
             )}
 
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
-              Se déconnecter
-            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => signOut()}>Se déconnecter</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
