@@ -92,7 +92,8 @@ function updateFileUrls(dataToCreate: any, tempSlug: string, finalSlug: string) 
 const placeSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   type: z.nativeEnum(PlaceType),
-  category: z.string().optional(),
+  category: z.string().optional(), // Legacy field
+  categories: z.array(z.string()).optional(), // New multiple categories
   description: z.string().optional(),
   summary: z.string().max(280).optional(),
 
@@ -250,6 +251,13 @@ export async function GET(request: Request) {
           owner: {
             select: { id: true, name: true, email: true },
           },
+          categories: {
+            include: {
+              category: {
+                select: { id: true, name: true, slug: true, icon: true, color: true },
+              },
+            },
+          },
           _count: {
             select: { reviews: true, favorites: true },
           },
@@ -311,7 +319,7 @@ export async function POST(request: Request) {
 
     // Préparer les données additionnelles
     // Exclure les champs qui ne sont pas dans le modèle Prisma
-    const { openingHours, photos, images, createForClaim, ...placeData } = validatedData;
+    const { openingHours, photos, images, createForClaim, categories, ...placeData } = validatedData;
 
     const openingHoursCreate =
       Array.isArray(openingHours) && openingHours.length > 0
@@ -400,6 +408,17 @@ export async function POST(request: Request) {
         },
       },
     });
+
+    // Créer les relations avec les catégories si elles sont spécifiées
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      await prisma.placeToCategory.createMany({
+        data: categories.map(categoryId => ({
+          placeId: place.id,
+          categoryId: categoryId,
+        })),
+        skipDuplicates: true,
+      });
+    }
 
     // Déplacer les fichiers du dossier temporaire vers le dossier final
     try {

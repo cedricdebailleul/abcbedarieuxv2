@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { PlaceCategoriesBadges } from "@/components/places/place-categories-badges";
+import { FavoriteButton } from "@/components/places/favorite-button";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
@@ -246,6 +248,13 @@ export default async function PlacePage({ params }: PageProps) {
         orderBy: { createdAt: "desc" },
       },
       openingHours: { orderBy: { dayOfWeek: "asc" } },
+      categories: {
+        include: {
+          category: {
+            select: { id: true, name: true, slug: true, icon: true, color: true },
+          },
+        },
+      },
       _count: {
         select: { reviews: true, favorites: true, googleReviews: true },
       },
@@ -314,7 +323,19 @@ export default async function PlacePage({ params }: PageProps) {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{place.name}</h1>
+              <div className="flex items-start justify-between">
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">{place.name}</h1>
+                {/* Bouton favori mobile */}
+                <div className="md:hidden">
+                  <FavoriteButton
+                    placeId={place.id}
+                    placeName={place.name}
+                    variant="ghost"
+                    size="icon"
+                    showText={false}
+                  />
+                </div>
+              </div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
                 <Badge variant="outline">{place.type}</Badge>
                 {place.isFeatured && <Badge variant="secondary">À la une</Badge>}
@@ -323,10 +344,26 @@ export default async function PlacePage({ params }: PageProps) {
                   <span className="leading-none">{fullAddress}</span>
                 </span>
               </div>
+              
+              {/* Catégories de la place */}
+              {place.categories && place.categories.length > 0 && (
+                <div className="mt-3">
+                  <PlaceCategoriesBadges categories={place.categories} maxDisplay={5} size="default" />
+                </div>
+              )}
             </div>
 
-            {/* Statut ouverture */}
-            <div className="hidden md:flex flex-col items-end">
+            {/* Statut ouverture et actions */}
+            <div className="hidden md:flex flex-col items-end gap-2">
+              {/* Bouton favori */}
+              <FavoriteButton
+                placeId={place.id}
+                placeName={place.name}
+                variant="outline"
+                size="sm"
+                className="self-end"
+              />
+              
               <div
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
                   open ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"

@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
+import { useBadgeCelebration } from "@/hooks/use-badge-celebration";
 import {
   createPostAction,
   getCategoriesAction,
@@ -203,6 +204,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [previewSlug, setPreviewSlug] = useState("");
   const [tagRefreshTrigger, setTagRefreshTrigger] = useState(0);
+  const { showBadge } = useBadgeCelebration();
 
   // Configuration du formulaire selon le mode
   const form = useForm<CreatePostInput | UpdatePostInput>({
@@ -285,6 +287,17 @@ export function PostForm({ initialData, mode }: PostFormProps) {
 
         if (result.success) {
           toast.success(`Article ${mode === "create" ? "créé" : "mis à jour"} avec succès`);
+          
+          // Afficher les badges nouvellement obtenus
+          if (mode === "create" && result.data?.newBadges && result.data.newBadges.length > 0) {
+            // Délai pour que le toast s'affiche d'abord
+            setTimeout(() => {
+              result.data.newBadges.forEach((badgeData: any) => {
+                showBadge(badgeData.badge, badgeData.reason);
+              });
+            }, 1000);
+          }
+          
           router.push("/dashboard/posts");
           router.refresh();
         } else {

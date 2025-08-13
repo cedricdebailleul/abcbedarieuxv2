@@ -3,6 +3,7 @@ import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { BadgeProvider } from "@/components/providers/badge-provider";
 import { env } from "@/lib/env";
 
 const geistSans = Geist({
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           {children}
           <Toaster closeButton position="bottom-center" />
+          <BadgeProvider />
         </ThemeProvider>
       </body>
     </html>

@@ -52,10 +52,13 @@ model User {
   // RGPD et confidentialité
   dataRetention DateTime? // Date d'expiration des données
   deletedAt     DateTime? // Soft delete
-  places        Place[]      @relation("PlaceOwner")
-  reviews       Review[]
-  favorites     Favorite[]
-  placeClaims   PlaceClaim[]
+  places         Place[]            @relation("PlaceOwner")
+  reviews        Review[]
+  favorites      Favorite[]
+  placeClaims    PlaceClaim[]
+  events         Event[]            @relation("EventOrganizer")
+  eventParticipations EventParticipant[]
+  eventReminders EventReminder[]
 
   // Index pour les performances
   @@unique([email])
@@ -396,7 +399,7 @@ model Place {
   name        String
   slug        String    @unique
   type        PlaceType
-  category    String? // Sous-catégorie libre pour flexibilité
+  category    String? // Sous-catégorie libre pour flexibilité (deprecated, use categories relation)
   description String?   @db.Text
   summary     String?   @db.VarChar(280) // Pour partage Twitter
 
@@ -459,6 +462,8 @@ model Place {
   googleReviews GoogleReview[]
   favorites     Favorite[]
   claims        PlaceClaim[]
+  categories    PlaceToCategory[] // Many-to-many avec PlaceCategory
+  events        Event[] // Événements organisés dans cette place
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -470,6 +475,66 @@ model Place {
   @@index([postalCode, city])
   @@index([latitude, longitude])
   @@map("places")
+}
+
+// ============================================================
+//                    CATÉGORIES DE PLACES
+// ============================================================
+
+model PlaceCategory {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String? @db.Text
+  
+  // Apparence visuelle
+  icon        String? // Nom de l'icône Lucide ou emoji
+  color       String? @default("#6B7280") // Couleur hexadécimale
+  bgColor     String? @default("bg-gray-100") // Classe Tailwind background
+  textColor   String? @default("text-gray-700") // Classe Tailwind texte
+  borderColor String? @default("border-gray-200") // Classe Tailwind bordure
+  
+  // Configuration
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0) // Pour l'ordre d'affichage
+  
+  // Métadonnées
+  placeCount  Int     @default(0) // Cache du nombre de places
+  
+  // Relations hiérarchiques
+  parentId    String?
+  parent      PlaceCategory? @relation("PlaceCategoryHierarchy", fields: [parentId], references: [id])
+  children    PlaceCategory[] @relation("PlaceCategoryHierarchy")
+  
+  // Relations avec places
+  places      PlaceToCategory[] // Many-to-many avec Place
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([slug])
+  @@index([parentId])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("place_categories")
+}
+
+// Table de liaison pour la relation many-to-many Place <-> PlaceCategory
+model PlaceToCategory {
+  id         String        @id @default(cuid())
+  placeId    String
+  categoryId String
+  
+  place      Place         @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  category   PlaceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime      @default(now())
+  
+  @@unique([placeId, categoryId])
+  @@index([placeId])
+  @@index([categoryId])
+  @@map("place_to_categories")
 }
 
 // ============================================================
@@ -755,4 +820,262 @@ enum ClaimStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+// ============================================================
+//                    ÉVÉNEMENTS ET AGENDA
+// ============================================================
+
+model Event {
+  id          String @id @default(cuid())
+  title       String
+  slug        String @unique
+  description String? @db.Text
+  summary     String? @db.VarChar(280) // Résumé court pour partage social
+
+  // Statut et visibilité
+  status      EventStatus @default(DRAFT)
+  isPublished Boolean     @default(false)
+  isFeatured  Boolean     @default(false)
+  isActive    Boolean     @default(true)
+
+  // Organisateur
+  organizerId String?
+  organizer   User?  @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: SetNull)
+  
+  // Place associée (optionnel)
+  placeId     String?
+  place       Place?  @relation(fields: [placeId], references: [id], onDelete: SetNull)
+
+  // Contact événement
+  email       String?
+  phone       String?
+  website     String?
+  ticketUrl   String? // URL de billetterie
+
+  // Dates et récurrence
+  startDate   DateTime
+  endDate     DateTime
+  isAllDay    Boolean @default(false)
+  timezone    String  @default("Europe/Paris")
+  
+  // Récurrence
+  isRecurring     Boolean           @default(false)
+  recurrenceRule  RecurrenceRule?   @relation(fields: [recurrenceRuleId], references: [id])
+  recurrenceRuleId String?          @unique
+  parentEventId   String?          // Pour les instances d'événements récurrents
+  parentEvent     Event?           @relation("EventRecurrence", fields: [parentEventId], references: [id])
+  instances       Event[]          @relation("EventRecurrence")
+
+  // Localisation (si différent de la place)
+  locationName     String?
+  locationAddress  String?
+  locationCity     String?
+  locationLatitude Float?
+  locationLongitude Float?
+
+  // Capacité et participants
+  maxParticipants  Int?
+  currentParticipants Int @default(0)
+  waitingList      Boolean @default(false)
+
+  // Tarification
+  isFree           Boolean @default(true)
+  price            Float?
+  priceDetails     String? // "Adulte: 15€, Enfant: 8€"
+  currency         String  @default("EUR")
+
+  // Médias
+  logo             String?
+  coverImage       String?
+  images           Json?   // ["url1", "url2"] pour galerie
+  videos           Json?   // URLs de vidéos
+
+  // SEO et partage social
+  metaTitle        String? @db.VarChar(60)
+  metaDescription  String? @db.VarChar(160)
+  ogImage          String?
+
+  // Réseaux sociaux
+  facebook         String?
+  instagram        String?
+  twitter          String?
+  linkedin         String?
+  tiktok           String?
+  
+  // Tags et catégories
+  tags             Json?   // ["musique", "concert"] pour MVP
+  category         EventCategory?
+
+  // Statistiques
+  viewCount        Int     @default(0)
+  shareCount       Int     @default(0)
+  participantCount Int     @default(0)
+
+  // Relations
+  participants     EventParticipant[]
+  reminders        EventReminder[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([isPublished])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([organizerId])
+  @@index([placeId])
+  @@index([category])
+  @@index([locationCity])
+  @@map("events")
+}
+
+// Règles de récurrence pour les événements
+model RecurrenceRule {
+  id       String @id @default(cuid())
+  
+  // Type de récurrence
+  frequency    RecurrenceFrequency // DAILY, WEEKLY, MONTHLY, YEARLY
+  interval     Int                 @default(1) // Tous les X jours/semaines/mois
+  count        Int?                // Nombre d'occurrences (optionnel)
+  until        DateTime?           // Date de fin (optionnel)
+  
+  // Jours de la semaine (pour récurrence hebdomadaire)
+  byWeekDay    Json?              // [1,3,5] pour lundi, mercredi, vendredi
+  
+  // Jours du mois (pour récurrence mensuelle)
+  byMonthDay   Json?              // [1,15] pour le 1er et 15 du mois
+  
+  // Mois de l'année (pour récurrence annuelle)  
+  byMonth      Json?              // [6,12] pour juin et décembre
+  
+  // Exceptions (dates à exclure)
+  exceptions   Json?              // ["2024-12-25", "2024-01-01"]
+
+  // Configuration avancée
+  workdaysOnly Boolean @default(false) // Exclure weekends
+  
+  event        Event?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("recurrence_rules")
+}
+
+// Participants aux événements
+model EventParticipant {
+  id          String @id @default(cuid())
+  eventId     String
+  event       Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  status      ParticipationStatus @default(INTERESTED)
+  registeredAt DateTime           @default(now())
+  
+  // Informations supplémentaires
+  guestCount   Int     @default(0) // Nombre d'accompagnants
+  specialNeeds String? // Besoins spéciaux, allergies, etc.
+  notes        String? // Notes personnelles
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@index([status])
+  @@map("event_participants")
+}
+
+// Rappels d'événements
+model EventReminder {
+  id       String @id @default(cuid())
+  eventId  String
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  reminderTime DateTime // Quand envoyer le rappel
+  type         ReminderType
+  sent         Boolean   @default(false)
+  sentAt       DateTime?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([eventId, userId, reminderTime])
+  @@index([eventId])
+  @@index([userId])
+  @@index([reminderTime])
+  @@index([sent])
+  @@map("event_reminders")
+}
+
+// ============================================================
+//                    NOUVEAUX ENUMS POUR ÉVÉNEMENTS
+// ============================================================
+
+enum EventStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  CANCELLED
+  POSTPONED
+  COMPLETED
+  ARCHIVED
+}
+
+enum EventCategory {
+  CONFERENCE
+  CONCERT
+  FESTIVAL
+  WORKSHOP
+  SEMINAR
+  EXHIBITION
+  SPORT
+  CULTURAL
+  SOCIAL
+  BUSINESS
+  EDUCATIONAL
+  ENTERTAINMENT
+  CHARITY
+  RELIGIOUS
+  POLITICAL
+  FAMILY
+  FOOD
+  HEALTH
+  TECHNOLOGY
+  ART
+  MUSIC
+  THEATER
+  CINEMA
+  BOOK
+  NATURE
+  TOURISM
+  OTHER
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum ParticipationStatus {
+  INTERESTED
+  GOING
+  MAYBE
+  NOT_GOING
+  CANCELLED
+  WAITLISTED
+}
+
+enum ReminderType {
+  EMAIL
+  PUSH
+  SMS
 }

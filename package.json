@@ -17,6 +17,10 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:seed": "tsx scripts/seed-badges.ts",
+    "db:seed-place-categories": "tsx scripts/seed-place-categories.ts",
+    "db:seed-events": "tsx scripts/seed-events.ts",
+    "test:categories-system": "tsx scripts/test-full-categories-flow.ts",
+    "test:categories-pages": "tsx scripts/test-categories-pages.ts",
     "db:reset": "prisma migrate reset",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -88,6 +92,7 @@
     "nodemailer": "^7.0.5",
     "prisma": "^6.13.0",
     "react": "19.1.0",
+    "react-colorful": "^5.6.1",
     "react-day-picker": "^9.8.1",
     "react-dom": "19.1.0",
     "react-dropzone": "^14.3.8",
@@ -99,7 +104,8 @@
     "tailwind-merge": "^3.3.1",
     "tsx": "^4.20.3",
     "vaul": "^1.1.2",
-    "zod": "^4.0.16"
+    "zod": "^4.0.16",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.1.4",

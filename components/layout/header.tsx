@@ -18,6 +18,12 @@ export function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+          <Link href="/categories" className="transition-colors hover:text-foreground/80">
+            Places
+          </Link>
+          <Link href="/events" className="transition-colors hover:text-foreground/80">
+            Événements
+          </Link>
           <Link href="/about" className="transition-colors hover:text-foreground/80">
             À propos
           </Link>

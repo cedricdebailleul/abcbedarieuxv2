@@ -10,7 +10,9 @@ import {
   IconFileWord,
   IconFolder,
   IconHelp,
+  IconHeart,
   IconListDetails,
+  IconMapPin,
   IconReport,
   IconSearch,
   IconSettings,
@@ -56,7 +58,16 @@ const data = {
       ],
       icon: IconListDetails,
     },
-
+    {
+      title: "Places",
+      url: "/dashboard/places",
+      icon: IconMapPin,
+    },
+    {
+      title: "Favoris",
+      url: "/dashboard/favorites",
+      icon: IconHeart,
+    },
     {
       title: "Evénements",
       url: "/dashboard/events",
@@ -89,6 +100,14 @@ const data = {
         {
           title: "Invitations",
           url: "/dashboard/admin/invitations",
+        },
+        {
+          title: "Badges",
+          url: "/dashboard/admin/badges",
+        },
+        {
+          title: "Catégories des places",
+          url: "/dashboard/admin/place-categories",
         },
       ],
     },

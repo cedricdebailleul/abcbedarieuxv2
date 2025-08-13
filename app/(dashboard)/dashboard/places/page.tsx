@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
+import { PlaceCategoriesBadges } from "@/components/places/place-categories-badges";
+import { FavoriteButton } from "@/components/places/favorite-button";
 
 interface Place {
   id: string;
@@ -21,6 +23,15 @@ interface Place {
     name: string;
     email: string;
   };
+  categories?: {
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+      icon: string | null;
+      color: string | null;
+    };
+  }[];
   _count: {
     reviews: number;
     favorites: number;
@@ -44,8 +55,15 @@ export default function MyPlacesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
-  const fetchPlaces = async () => {
+  const fetchPlaces = useCallback(async () => {
+    // Éviter les appels trop fréquents (debounce de 500ms)
+    const now = Date.now();
+    if (now - lastFetchTime < 500) {
+      return;
+    }
+    
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -63,13 +81,14 @@ export default function MyPlacesPage() {
       const data: ApiResponse = await response.json();
       setPlaces(data.places);
       setTotalPages(data.pagination.pages);
+      setLastFetchTime(now);
     } catch (error) {
       console.error("Erreur:", error);
       toast.error("Erreur lors du chargement des places");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, statusFilter, lastFetchTime]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -253,7 +272,14 @@ export default function MyPlacesPage() {
                   {place.type} • {place.city}
                 </p>
 
-                <p className="text-sm text-gray-500 mb-4">{place.street}</p>
+                <p className="text-sm text-gray-500 mb-2">{place.street}</p>
+
+                {/* Badges des catégories */}
+                {place.categories && place.categories.length > 0 && (
+                  <div className="mb-3">
+                    <PlaceCategoriesBadges categories={place.categories} maxDisplay={2} />
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                   <span>{place._count.reviews} avis</span>
@@ -276,12 +302,21 @@ export default function MyPlacesPage() {
                     </Link>
                   </div>
 
-                  <button
-                    onClick={() => handleDelete(place.id, place.name)}
-                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
-                  >
-                    Supprimer
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <FavoriteButton
+                      placeId={place.id}
+                      placeName={place.name}
+                      variant="ghost"
+                      size="icon"
+                      showText={false}
+                    />
+                    <button
+                      onClick={() => handleDelete(place.id, place.name)}
+                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

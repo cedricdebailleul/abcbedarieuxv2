@@ -30,12 +30,12 @@ export class BadgeSystem {
     const badge = await BadgeSystem.getBadge(badgeTitle);
     if (!badge) {
       console.warn(`Badge "${badgeTitle}" non trouvé`);
-      return false;
+      return null;
     }
 
     const hasAlready = await BadgeSystem.hasUserBadge(userId, badge.id);
     if (hasAlready) {
-      return false; // Déjà attribué
+      return null; // Déjà attribué
     }
 
     try {
@@ -49,10 +49,16 @@ export class BadgeSystem {
       });
 
       console.log(`🎖️ Badge "${badgeTitle}" attribué à l'utilisateur ${userId} (${reason})`);
-      return true;
+      return {
+        title: badge.title,
+        description: badge.description,
+        iconUrl: badge.iconUrl,
+        color: badge.color,
+        rarity: badge.rarity,
+      };
     } catch (error) {
       console.error(`Erreur lors de l'attribution du badge "${badgeTitle}":`, error);
-      return false;
+      return null;
     }
   }
 
@@ -129,6 +135,48 @@ export class BadgeSystem {
     } else if (reviewCount === 10) {
       await BadgeSystem.awardBadge(userId, "Critique constructif", "10 avis laissés");
     }
+  }
+
+  // Attribution lors de la création d'un article
+  static async onPostCreated(userId: string) {
+    const postCount = await prisma.post.count({
+      where: { authorId: userId },
+    });
+
+    const newBadges: Array<{
+      badge: {
+        title: string;
+        description: string;
+        iconUrl?: string | null;
+        color?: string | null;
+        rarity: string;
+      };
+      reason: string;
+    }> = [];
+
+    if (postCount === 1) {
+      const awarded = await BadgeSystem.awardBadge(userId, "Premier article", "Premier article publié");
+      if (awarded) {
+        newBadges.push({ badge: awarded, reason: "Premier article publié" });
+      }
+    } else if (postCount === 5) {
+      const awarded = await BadgeSystem.awardBadge(userId, "Auteur régulier", "5 articles publiés");
+      if (awarded) {
+        newBadges.push({ badge: awarded, reason: "5 articles publiés" });
+      }
+    } else if (postCount === 10) {
+      const awarded = await BadgeSystem.awardBadge(userId, "Rédacteur prolifique", "10 articles publiés");
+      if (awarded) {
+        newBadges.push({ badge: awarded, reason: "10 articles publiés" });
+      }
+    } else if (postCount === 25) {
+      const awarded = await BadgeSystem.awardBadge(userId, "Maître écrivain", "25 articles publiés");
+      if (awarded) {
+        newBadges.push({ badge: awarded, reason: "25 articles publiés" });
+      }
+    }
+
+    return newBadges;
   }
 
   // Attribution périodique (à exécuter régulièrement)

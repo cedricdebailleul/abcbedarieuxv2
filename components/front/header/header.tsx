@@ -56,9 +56,10 @@ const navItems: NavItem[] = [
 
 const topBarLinks = [
   { label: "Nous joindre", href: "/nous-joindre" },
-  { label: "Actualités", href: "/actualites" },
-  { label: "Calendrier des événements", href: "/calendrier-des-evenements" },
+  { label: "Actualités", href: "/posts" },
+  { label: "Calendrier des événements", href: "/events" },
   { label: "Carte Intéractive", href: "/carte-interactive" },
+  { label: "Catégories d'établissements", href: "/categories" },
 ];
 
 export default function Header({ className }: HeaderProps) {
@@ -83,8 +84,12 @@ export default function Header({ className }: HeaderProps) {
       // Fermer le mega menu principal si on clique à l'extérieur
       if (isMegaMenuOpen) {
         const target = event.target as Element;
-        const megaMenuButton = document.querySelector("[data-mega-menu-button]");
-        const megaMenuContent = document.querySelector("[data-mega-menu-content]");
+        const megaMenuButton = document.querySelector(
+          "[data-mega-menu-button]"
+        );
+        const megaMenuContent = document.querySelector(
+          "[data-mega-menu-content]"
+        );
 
         if (
           megaMenuButton &&
@@ -270,7 +275,9 @@ export default function Header({ className }: HeaderProps) {
                                         <Link
                                           href={subItem.href}
                                           className="block px-6 py-4 text-gray-800 hover:bg-primary/10 hover:text-primary transition-colors rounded-xl font-medium text-center"
-                                          onClick={() => setActiveDropdown(null)}
+                                          onClick={() =>
+                                            setActiveDropdown(null)
+                                          }
                                         >
                                           {subItem.label}
                                         </Link>
@@ -325,7 +332,11 @@ export default function Header({ className }: HeaderProps) {
                 className="lg:hidden p-2 text-gray-900 bg-transparent hover:bg-transparent rounded-full transition-colors size-10"
                 onClick={toggleMobileMenu}
               >
-                {isMobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+                {isMobileMenuOpen ? (
+                  <X className="size-6" />
+                ) : (
+                  <Menu className="size-6" />
+                )}
               </Button>
             </div>
           </div>
@@ -579,8 +590,12 @@ export default function Header({ className }: HeaderProps) {
 
                           <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl p-6 relative overflow-hidden">
                             <div className="relative z-10">
-                              <div className="text-red-600 font-bold text-2xl mb-2">M LOISIRS</div>
-                              <div className="text-xs text-gray-800">Magazine municipal</div>
+                              <div className="text-red-600 font-bold text-2xl mb-2">
+                                M LOISIRS
+                              </div>
+                              <div className="text-xs text-gray-800">
+                                Magazine municipal
+                              </div>
                             </div>
                             <div className="absolute inset-0 opacity-20">
                               <div className="w-full h-full bg-gradient-to-br from-transparent to-red-500/20"></div>

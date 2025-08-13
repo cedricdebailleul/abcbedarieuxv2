@@ -37,14 +37,17 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { type FormattedPlaceData, useGooglePlaces } from "@/hooks/use-google-places";
 import { generateSlug } from "@/lib/validations/post";
+import { getPlaceCategoriesAction } from "@/actions/place-category";
 
 // --- Schéma Zod (conserve ton modèle) ---
 const placeSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   type: z.string().min(1, "Le type est requis"),
-  category: z.string().optional(),
+  category: z.string().optional(), // Legacy field (deprecated)
+  categories: z.array(z.string()).optional(), // New multiple categories
   description: z.string().optional(),
   summary: z.string().max(280).optional(),
   openingHours: z.array(z.any()).optional(),
@@ -122,6 +125,7 @@ export function PlaceForm({ initialData, onSubmit, mode = "create", userRole }: 
   const [showGoogleSearch, setShowGoogleSearch] = useState(mode === "create");
   const [showDropdown, setShowDropdown] = useState(false);
   const [createForClaim, setCreateForClaim] = useState(false);
+  const [placeCategories, setPlaceCategories] = useState<any[]>([]);
   // Générer un slug temporaire unique pour les nouvelles places
   const [tempSlug] = useState(() =>
     mode === "create" ? `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : ""
@@ -138,12 +142,58 @@ export function PlaceForm({ initialData, onSubmit, mode = "create", userRole }: 
     }
   }, [mode, initialData]);
 
+  // Charger les catégories de places
+  useEffect(() => {
+    const loadPlaceCategories = async () => {
+      try {
+        const result = await getPlaceCategoriesAction({
+          page: 1,
+          limit: 100,
+          sortBy: "sortOrder",
+          sortOrder: "asc",
+        });
+        
+        if (result.success && result.data) {
+          // Aplatir la hiérarchie pour avoir toutes les catégories dans une seule liste
+          const allCategories: any[] = [];
+          
+          result.data.categories.forEach((category: any) => {
+            // Ajouter la catégorie principale
+            allCategories.push({
+              value: category.id,
+              label: category.name,
+              level: 0
+            });
+            
+            // Ajouter les sous-catégories avec indentation
+            if (category.children && category.children.length > 0) {
+              category.children.forEach((child: any) => {
+                allCategories.push({
+                  value: child.id,
+                  label: `└ ${child.name}`,
+                  level: 1
+                });
+              });
+            }
+          });
+          
+          setPlaceCategories(allCategories);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des catégories:", error);
+      }
+    };
+
+    loadPlaceCategories();
+  }, []);
+
   const form = useForm<PlaceFormData>({
     resolver: zodResolver(placeSchema),
     defaultValues: {
       name: "",
       type: "",
       category: "",
+      categories: [],
       description: "",
       summary: "",
       street: "",
@@ -476,12 +526,17 @@ export function PlaceForm({ initialData, onSubmit, mode = "create", userRole }: 
 
                     <FormField
                       control={form.control}
-                      name="category"
+                      name="categories"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Catégorie (optionnel)</FormLabel>
+                          <FormLabel>Catégories (optionnel)</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex : Boulangerie, Assurance…" {...field} />
+                            <MultiSelect
+                              options={placeCategories}
+                              value={field.value || []}
+                              onValueChange={field.onChange}
+                              placeholder="Sélectionnez des catégories"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
