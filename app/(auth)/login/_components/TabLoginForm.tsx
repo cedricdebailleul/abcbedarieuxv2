@@ -1,22 +1,16 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { authClient } from "@/lib/auth-client";
-import { Loader2, Send, Mail, Link as LinkIcon, CheckCircle } from "lucide-react";
+import { CheckCircle, Link as LinkIcon, Loader2, Mail, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { authClient } from "@/lib/auth-client";
 
 export function TabLoginForm() {
   const router = useRouter();
@@ -39,10 +33,8 @@ export function TabLoginForm() {
         type: "sign-in",
         fetchOptions: {
           onSuccess: () => {
-            toast.success(
-              "Code de vérification envoyé ! Vérifiez votre boîte email."
-            );
-            router.push("/verify-email?email=" + encodeURIComponent(otpEmail));
+            toast.success("Code de vérification envoyé ! Vérifiez votre boîte email.");
+            router.push(`/verify-email?email=${encodeURIComponent(otpEmail)}`);
           },
           onError: (context) => {
             toast.error(`Erreur lors de l'envoi du code : ${context.error.message}`);
@@ -65,9 +57,7 @@ export function TabLoginForm() {
         callbackURL: "/dashboard",
         fetchOptions: {
           onSuccess: () => {
-            toast.success(
-              "Lien de connexion envoyé ! Vérifiez votre boîte email."
-            );
+            toast.success("Lien de connexion envoyé ! Vérifiez votre boîte email.");
             setMagicLinkSent(true);
           },
           onError: (context: any) => {
@@ -82,9 +72,7 @@ export function TabLoginForm() {
     <Card>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl">Connexion par email</CardTitle>
-        <CardDescription>
-          Choisissez votre méthode de connexion préférée
-        </CardDescription>
+        <CardDescription>Choisissez votre méthode de connexion préférée</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="otp" className="w-full">
@@ -144,7 +132,8 @@ export function TabLoginForm() {
               <Alert className="border-green-200 bg-green-50">
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-700">
-                  <strong>Email envoyé !</strong> Vérifiez votre boîte email et cliquez sur le lien pour vous connecter automatiquement.
+                  <strong>Email envoyé !</strong> Vérifiez votre boîte email et cliquez sur le lien
+                  pour vous connecter automatiquement.
                 </AlertDescription>
               </Alert>
             ) : (
@@ -187,7 +176,7 @@ export function TabLoginForm() {
                 </p>
               </>
             )}
-            
+
             {magicLinkSent && (
               <div className="text-center">
                 <Button

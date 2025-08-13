@@ -1,9 +1,15 @@
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import type { z } from "zod";
+import { signUpAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -12,17 +18,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
-
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
 import { fadeInUp } from "@/lib/animations";
-import { CreateUserSchema, LoginSchema } from "@/types";
-import { signInAction, signUpAction } from "@/actions/auth";
-import { toast } from "sonner";
-import { z } from "zod";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { CreateUserSchema, LoginSchema } from "@/types";
 import { FormFieldWrapper } from "../ui/form-field";
 
 export function RegisterForm() {
@@ -59,9 +58,7 @@ export function RegisterForm() {
         }
       });
     } else {
-      toast.success(
-        "Compte créé. Vérifiez votre email pour activer votre compte."
-      );
+      toast.success("Compte créé. Vérifiez votre email pour activer votre compte.");
     }
 
     setIsLoading(false);
@@ -83,17 +80,11 @@ export function RegisterForm() {
             <Input type="password" placeholder="••••••••" />
           </FormFieldWrapper>
 
-          <FormFieldWrapper
-            form={form}
-            name="consentGiven"
-            label="Accepter les conditions"
-          >
+          <FormFieldWrapper form={form} name="consentGiven" label="Accepter les conditions">
             <div className="flex items-center space-x-2">
               <Checkbox
                 checked={form.watch("consentGiven")}
-                onCheckedChange={(checked) =>
-                  form.setValue("consentGiven", checked as boolean)
-                }
+                onCheckedChange={(checked) => form.setValue("consentGiven", checked as boolean)}
               />
               <label className="text-sm">
                 J'accepte les{" "}
@@ -146,9 +137,7 @@ export function LoginForm() {
         console.log("LoginForm - Erreur:", result.error);
         toast.error("Email ou mot de passe incorrect");
       } else {
-        console.log(
-          "LoginForm - Connexion réussie, redirection vers dashboard"
-        );
+        console.log("LoginForm - Connexion réussie, redirection vers dashboard");
         toast.success("Connexion réussie");
         router.push("/dashboard");
       }
@@ -171,11 +160,7 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="john@example.com"
-                    {...field}
-                  />
+                  <Input type="email" placeholder="john@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

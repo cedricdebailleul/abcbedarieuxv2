@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import Logo from "../logo";
 import { NavUser } from "./nav_user";
 
@@ -18,22 +18,19 @@ export function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          <Link
-            href="/about"
-            className="transition-colors hover:text-foreground/80"
-          >
+          <Link href="/categories" className="transition-colors hover:text-foreground/80">
+            Places
+          </Link>
+          <Link href="/events" className="transition-colors hover:text-foreground/80">
+            Événements
+          </Link>
+          <Link href="/about" className="transition-colors hover:text-foreground/80">
             À propos
           </Link>
-          <Link
-            href="/blog"
-            className="transition-colors hover:text-foreground/80"
-          >
+          <Link href="/blog" className="transition-colors hover:text-foreground/80">
             Blog
           </Link>
-          <Link
-            href="/contact"
-            className="transition-colors hover:text-foreground/80"
-          >
+          <Link href="/contact" className="transition-colors hover:text-foreground/80">
             Contact
           </Link>
         </nav>

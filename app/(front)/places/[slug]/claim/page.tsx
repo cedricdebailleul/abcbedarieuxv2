@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { useSession } from "@/hooks/use-session";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { FileText, Upload, ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useSession } from "@/hooks/use-session";
 
 interface Place {
   id: string;
@@ -34,12 +34,12 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
 
   const [formData, setFormData] = useState({
     firstName: "",
-    lastName: "", 
+    lastName: "",
     email: "",
     phone: "",
     relationship: "owner" as "owner" | "manager" | "employee" | "family" | "other",
     message: "",
-    proof: ""
+    proof: "",
   });
 
   // Résoudre les paramètres
@@ -47,10 +47,10 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
     const resolveParams = async () => {
       try {
         const resolvedParams = await paramsPromise;
-        console.log('🔍 Slug résolu:', resolvedParams.slug);
+        console.log("🔍 Slug résolu:", resolvedParams.slug);
         setSlug(resolvedParams.slug);
       } catch (error) {
-        console.error('❌ Erreur résolution params:', error);
+        console.error("❌ Erreur résolution params:", error);
       }
     };
     resolveParams();
@@ -137,7 +137,6 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
 
       toast.success(result.message);
       router.push(`/places/${place.slug}`);
-
     } catch (error: any) {
       console.error("Erreur soumission:", error);
       toast.error(error.message || "Erreur lors de la soumission de la demande");
@@ -194,8 +193,8 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
             {place.street}, {place.city}
           </p>
           <p className="text-sm text-muted-foreground mb-6">
-            Pour revendiquer cette place, veuillez fournir des informations détaillées 
-            prouvant votre lien avec cet établissement.
+            Pour revendiquer cette place, veuillez fournir des informations détaillées prouvant
+            votre lien avec cet établissement.
           </p>
         </CardContent>
       </Card>
@@ -213,9 +212,7 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
             {/* Informations personnelles */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName">
-                  Prénom *
-                </Label>
+                <Label htmlFor="firstName">Prénom *</Label>
                 <Input
                   id="firstName"
                   value={formData.firstName}
@@ -225,11 +222,9 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
                   required
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="lastName">
-                  Nom *
-                </Label>
+                <Label htmlFor="lastName">Nom *</Label>
                 <Input
                   id="lastName"
                   value={formData.lastName}
@@ -243,9 +238,7 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="email">
-                  Email *
-                </Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -256,11 +249,9 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
                   required
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="phone">
-                  Téléphone *
-                </Label>
+                <Label htmlFor="phone">Téléphone *</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -274,9 +265,7 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
             </div>
 
             <div>
-              <Label htmlFor="relationship">
-                Votre relation avec l'établissement *
-              </Label>
+              <Label htmlFor="relationship">Votre relation avec l'établissement *</Label>
               <select
                 id="relationship"
                 value={formData.relationship}
@@ -293,9 +282,7 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
             </div>
 
             <div>
-              <Label htmlFor="message">
-                Message de justification *
-              </Label>
+              <Label htmlFor="message">Message de justification *</Label>
               <Textarea
                 id="message"
                 value={formData.message}
@@ -310,9 +297,7 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
             </div>
 
             <div>
-              <Label htmlFor="proof">
-                Preuve (optionnel)
-              </Label>
+              <Label htmlFor="proof">Preuve (optionnel)</Label>
               <Input
                 id="proof"
                 type="url"
@@ -327,9 +312,7 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">
-                Types de preuves acceptées :
-              </h4>
+              <h4 className="font-medium text-blue-900 mb-2">Types de preuves acceptées :</h4>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• Kbis ou documents officiels de l'entreprise</li>
                 <li>• Factures ou contrats au nom de l'établissement</li>
@@ -343,7 +326,7 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
               <Button
                 type="submit"
                 disabled={
-                  submitting || 
+                  submitting ||
                   formData.message.length < 20 ||
                   formData.firstName.length < 2 ||
                   formData.lastName.length < 2 ||

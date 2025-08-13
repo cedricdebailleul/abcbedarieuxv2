@@ -1,4 +1,4 @@
-import { PrismaClient, BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
+import { BadgeCategory, BadgeRarity, PrismaClient } from "@/lib/generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -106,18 +106,17 @@ async function seedBadges() {
     }
 
     console.log("🎉 Tous les badges ont été créés avec succès!");
-    
+
     // Afficher un résumé
     const counts = await prisma.badge.groupBy({
-      by: ['category', 'rarity'],
+      by: ["category", "rarity"],
       _count: true,
     });
-    
+
     console.log("\n📊 Résumé:");
     counts.forEach(({ category, rarity, _count }) => {
       console.log(`  ${category} - ${rarity}: ${_count}`);
     });
-
   } catch (error) {
     console.error("❌ Erreur lors de la création des badges:", error);
     throw error;

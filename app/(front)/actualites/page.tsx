@@ -1,24 +1,17 @@
+import { ChevronLeft, ChevronRight, FileText, Filter, Search } from "lucide-react";
+import Link from "next/link";
 import { Suspense } from "react";
 import {
-  getPublicPostsAction,
   getPublicCategoriesAction,
+  getPublicPostsAction,
   getPublicTagsAction,
 } from "@/actions/post";
-
 import { PostCard } from "@/components/posts/post-card";
 import { PublicPostsFilters } from "@/components/posts/public-posts-filters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Filter,
-  Search,
-} from "lucide-react";
-import Link from "next/link";
-import { PostFilters, postFiltersSchema } from "@/lib/validations/post";
+import { type PostFilters, postFiltersSchema } from "@/lib/validations/post";
 
 // Composant de chargement pour les articles
 function PostsLoading() {
@@ -123,14 +116,8 @@ function Pagination({
 
             return (
               <div key={page} className="flex items-center">
-                {showEllipsis && (
-                  <span className="px-2 text-muted-foreground">...</span>
-                )}
-                <Button
-                  variant={page === currentPage ? "default" : "outline"}
-                  size="sm"
-                  asChild
-                >
+                {showEllipsis && <span className="px-2 text-muted-foreground">...</span>}
+                <Button variant={page === currentPage ? "default" : "outline"} size="sm" asChild>
                   <Link href={createPageUrl(page)}>{page}</Link>
                 </Button>
               </div>
@@ -195,8 +182,8 @@ export default async function ArticlesPage({
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4">Tous les articles</h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Découvrez tous nos articles sur ABC Bédarieux. Utilisez les filtres
-          pour trouver exactement ce que vous cherchez.
+          Découvrez tous nos articles sur ABC Bédarieux. Utilisez les filtres pour trouver
+          exactement ce que vous cherchez.
         </p>
       </div>
 
@@ -233,9 +220,7 @@ export default async function ArticlesPage({
             </div>
 
             {/* Indicateur de filtre actif */}
-            {(searchParams.search ||
-              searchParams.categoryId ||
-              searchParams.tagId) && (
+            {(searchParams.search || searchParams.categoryId || searchParams.tagId) && (
               <div className="flex items-center space-x-1 text-xs">
                 <Filter className="h-3 w-3" />
                 <span className="text-muted-foreground">Filtres actifs</span>
@@ -264,19 +249,13 @@ export default async function ArticlesPage({
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                   <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">
-                    Aucun article trouvé
-                  </h3>
+                  <h3 className="text-xl font-semibold mb-2">Aucun article trouvé</h3>
                   <p className="text-muted-foreground mb-6 max-w-md">
-                    {searchParams.search ||
-                    searchParams.categoryId ||
-                    searchParams.tagId
+                    {searchParams.search || searchParams.categoryId || searchParams.tagId
                       ? "Aucun article ne correspond à vos critères de recherche. Essayez de modifier vos filtres."
                       : "Aucun article n'a encore été publié. Revenez bientôt pour découvrir nos contenus !"}
                   </p>
-                  {(searchParams.search ||
-                    searchParams.categoryId ||
-                    searchParams.tagId) && (
+                  {(searchParams.search || searchParams.categoryId || searchParams.tagId) && (
                     <Button variant="outline" asChild>
                       <Link href="/articles">Voir tous les articles</Link>
                     </Button>

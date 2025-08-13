@@ -1,3 +1,5 @@
+import { ChevronDown, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import {
   SidebarGroup,
@@ -6,8 +8,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import Link from "next/link";
 
 type NavItem = {
   title: string;
@@ -28,9 +28,7 @@ export function NavMain({ items }: NavMainProps) {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
   const toggleMenu = (url: string) => {
-    setOpenMenus((prev) =>
-      prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
-    );
+    setOpenMenus((prev) => (prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]));
   };
 
   return (

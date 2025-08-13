@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ placeId: string }> }
 ) {
   try {
@@ -20,19 +20,16 @@ export async function POST(
     // Vérifier que la place existe
     const place = await prisma.place.findUnique({
       where: { id: placeId },
-      select: { 
-        id: true, 
-        name: true, 
+      select: {
+        id: true,
+        name: true,
         googleBusinessData: true,
-        ownerId: true 
+        ownerId: true,
       },
     });
 
     if (!place) {
-      return NextResponse.json(
-        { error: "Place non trouvée" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Place non trouvée" }, { status: 404 });
     }
 
     // Vérifier les permissions (propriétaire ou admin)
@@ -40,30 +37,27 @@ export async function POST(
     const isAdmin = session.user.role === "admin";
 
     if (!isOwner && !isAdmin) {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     // Récupérer les avis Google depuis googleBusinessData
     const googleReviews = place.googleBusinessData?.reviews || [];
-    
+
     // Debug: voir ce qui est disponible
-    console.log('🔍 googleBusinessData keys:', Object.keys(place.googleBusinessData || {}));
-    console.log('🔍 reviews found:', googleReviews.length);
-    console.log('🔍 rating info:', {
+    console.log("🔍 googleBusinessData keys:", Object.keys(place.googleBusinessData || {}));
+    console.log("🔍 reviews found:", googleReviews.length);
+    console.log("🔍 rating info:", {
       rating: place.googleBusinessData?.rating,
-      user_ratings_total: place.googleBusinessData?.user_ratings_total
+      user_ratings_total: place.googleBusinessData?.user_ratings_total,
     });
 
     if (!Array.isArray(googleReviews) || googleReviews.length === 0) {
       return NextResponse.json({
         success: true,
-        message: `Aucun avis Google trouvé dans googleBusinessData. Champs disponibles: ${Object.keys(place.googleBusinessData || {}).join(', ')}`,
+        message: `Aucun avis Google trouvé dans googleBusinessData. Champs disponibles: ${Object.keys(place.googleBusinessData || {}).join(", ")}`,
         imported: 0,
         skipped: 0,
-        errors: []
+        errors: [],
       });
     }
 
@@ -103,14 +97,16 @@ export async function POST(
         imported++;
       } catch (error) {
         console.error(`Erreur import avis ${review.author_name}:`, error);
-        errors.push(`Erreur pour ${review.author_name}: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+        errors.push(
+          `Erreur pour ${review.author_name}: ${error instanceof Error ? error.message : "Erreur inconnue"}`
+        );
       }
     }
 
     // Mettre à jour les statistiques de la place
     if (imported > 0) {
       const stats = await prisma.googleReview.aggregate({
-        where: { placeId, status: 'APPROVED' },
+        where: { placeId, status: "APPROVED" },
         _avg: { rating: true },
         _count: { id: true },
       });
@@ -131,12 +127,8 @@ export async function POST(
       skipped,
       errors,
     });
-
   } catch (error) {
     console.error("Erreur lors de l'import des avis:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { PlaceType, PlaceStatus, DayOfWeek } from "@/lib/generated/prisma";
+import { auth } from "@/lib/auth";
+import { type DayOfWeek, PlaceStatus, PlaceType } from "@/lib/generated/prisma";
+import { prisma } from "@/lib/prisma";
 
 const placeSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -107,10 +107,7 @@ function toOpeningRows(placeId: string, openingHours?: RawHour[]) {
 }
 
 // GET /api/places/[placeId] - Récupérer une place
-export async function GET(
-  request: Request,
-  { params }: { params: { placeId: string } }
-) {
+export async function GET(request: Request, { params }: { params: { placeId: string } }) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -150,27 +147,18 @@ export async function GET(
       place.ownerId === session?.user?.id;
 
     if (!canView) {
-      return NextResponse.json(
-        { error: "Accès non autorisé" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
     }
 
     return NextResponse.json({ place });
   } catch (error) {
     console.error("Erreur lors de la récupération de la place:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }
 
 // PUT /api/places/[placeId] - Modifier une place
-export async function PUT(
-  request: Request,
-  { params }: { params: { placeId: string } }
-) {
+export async function PUT(request: Request, { params }: { params: { placeId: string } }) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -178,10 +166,7 @@ export async function PUT(
     const { placeId } = await params;
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Authentification requise" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
     }
 
     // Vérifier que la place existe et les permissions
@@ -193,15 +178,10 @@ export async function PUT(
       return NextResponse.json({ error: "Place non trouvée" }, { status: 404 });
     }
 
-    const canEdit =
-      session.user.role === "admin" ||
-      existingPlace.ownerId === session.user.id;
+    const canEdit = session.user.role === "admin" || existingPlace.ownerId === session.user.id;
 
     if (!canEdit) {
-      return NextResponse.json(
-        { error: "Accès non autorisé" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -209,8 +189,7 @@ export async function PUT(
 
     // Si l'utilisateur modifie et n'est pas admin, repasser en PENDING
     const shouldBePending =
-      session.user.role !== "admin" &&
-      existingPlace.status === PlaceStatus.ACTIVE;
+      session.user.role !== "admin" && existingPlace.status === PlaceStatus.ACTIVE;
 
     // Normaliser les photos (comme dans l'API de création)
     const photos = (validatedData as any).photos || (validatedData as any).images || [];
@@ -226,7 +205,7 @@ export async function PUT(
           }
         : existingPlace.googleBusinessData;
 
-    // Exclure les champs qui ne sont pas dans le modèle Prisma  
+    // Exclure les champs qui ne sont pas dans le modèle Prisma
     const { openingHours, photos: _, ...placeData } = validatedData as any;
 
     // Préparer les données à mettre à jour
@@ -236,39 +215,39 @@ export async function PUT(
       // Mettre à jour les images (même si array vide pour permettre la suppression)
       images: normalizedPhotos,
     };
-    
+
     // Préserver logo et coverImage existants si pas fournis ou vides
-    console.log('🔍 Debug logo/cover:', {
+    console.log("🔍 Debug logo/cover:", {
       logoFromForm: dataToUpdate.logo,
       existingLogo: existingPlace.logo,
       coverFromForm: dataToUpdate.coverImage,
-      existingCover: existingPlace.coverImage
+      existingCover: existingPlace.coverImage,
     });
 
-    if (!dataToUpdate.logo || dataToUpdate.logo.trim() === '') {
+    if (!dataToUpdate.logo || dataToUpdate.logo.trim() === "") {
       if (normalizedPhotos.length > 0 && normalizedPhotos[0]) {
         dataToUpdate.logo = normalizedPhotos[0];
-        console.log('✅ Logo mis à jour depuis photos:', normalizedPhotos[0]);
+        console.log("✅ Logo mis à jour depuis photos:", normalizedPhotos[0]);
       } else {
         // Préserver le logo existant
         dataToUpdate.logo = existingPlace.logo;
-        console.log('✅ Logo préservé:', existingPlace.logo);
+        console.log("✅ Logo préservé:", existingPlace.logo);
       }
     } else {
-      console.log('✅ Logo fourni par le formulaire:', dataToUpdate.logo);
+      console.log("✅ Logo fourni par le formulaire:", dataToUpdate.logo);
     }
-    
-    if (!dataToUpdate.coverImage || dataToUpdate.coverImage.trim() === '') {
+
+    if (!dataToUpdate.coverImage || dataToUpdate.coverImage.trim() === "") {
       if (normalizedPhotos.length > 0 && normalizedPhotos[0]) {
         dataToUpdate.coverImage = normalizedPhotos[0];
-        console.log('✅ Cover mise à jour depuis photos:', normalizedPhotos[0]);
+        console.log("✅ Cover mise à jour depuis photos:", normalizedPhotos[0]);
       } else {
         // Préserver la coverImage existante
         dataToUpdate.coverImage = existingPlace.coverImage;
-        console.log('✅ Cover préservée:', existingPlace.coverImage);
+        console.log("✅ Cover préservée:", existingPlace.coverImage);
       }
     } else {
-      console.log('✅ Cover fournie par le formulaire:', dataToUpdate.coverImage);
+      console.log("✅ Cover fournie par le formulaire:", dataToUpdate.coverImage);
     }
 
     // Ajouter les données Google Business
@@ -295,11 +274,12 @@ export async function PUT(
       await prisma.openingHours.deleteMany({ where: { placeId } });
       const openingRows = toOpeningRows(
         placeId,
-        validatedData.openingHours ??
-          (existingPlace.googleBusinessData as any)?.openingHours
+        validatedData.openingHours ?? (existingPlace.googleBusinessData as any)?.openingHours
       );
       if (openingRows.length) {
-        await prisma.openingHours.createMany({ data: openingRows.map(row => ({ ...row, dayOfWeek: row.dayOfWeek as DayOfWeek })) });
+        await prisma.openingHours.createMany({
+          data: openingRows.map((row) => ({ ...row, dayOfWeek: row.dayOfWeek as DayOfWeek })),
+        });
       }
     }
 
@@ -313,18 +293,12 @@ export async function PUT(
     }
 
     console.error("Erreur lors de la modification de la place:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }
 
 // DELETE /api/places/[placeId] - Supprimer une place
-export async function DELETE(
-  request: Request,
-  { params }: { params: { placeId: string } }
-) {
+export async function DELETE(request: Request, { params }: { params: { placeId: string } }) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -332,10 +306,7 @@ export async function DELETE(
     const { placeId } = await params;
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Authentification requise" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
     }
 
     const existingPlace = await prisma.place.findUnique({
@@ -346,23 +317,18 @@ export async function DELETE(
       return NextResponse.json({ error: "Place non trouvée" }, { status: 404 });
     }
 
-    const canDelete =
-      session.user.role === "admin" ||
-      existingPlace.ownerId === session.user.id;
+    const canDelete = session.user.role === "admin" || existingPlace.ownerId === session.user.id;
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: "Accès non autorisé" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
     }
 
     // Supprimer le dossier d'uploads de la place avant de supprimer en BDD
     try {
-      const { rm } = await import("fs/promises");
-      const { existsSync } = await import("fs");
-      const path = await import("path");
-      
+      const { rm } = await import("node:fs/promises");
+      const { existsSync } = await import("node:fs");
+      const path = await import("node:path");
+
       const uploadDir = path.join(
         process.cwd(),
         "public",
@@ -370,7 +336,7 @@ export async function DELETE(
         "places",
         existingPlace.slug || existingPlace.id
       );
-      
+
       if (existsSync(uploadDir)) {
         await rm(uploadDir, { recursive: true, force: true });
         console.log(`Dossier supprimé: ${uploadDir}`);
@@ -387,9 +353,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Erreur lors de la suppression de la place:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

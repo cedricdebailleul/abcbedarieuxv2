@@ -1,30 +1,29 @@
+import {
+  Award,
+  CalendarDays,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Mail,
+  MapPin,
+  Phone,
+  Trophy,
+  Twitter,
+  User,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Facebook,
-  Instagram,
-  Twitter,
-  Linkedin,
-  Award,
-  CalendarDays,
-  Trophy,
-} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { prisma } from "@/lib/prisma";
 
 // Helper functions
 function parseSocials(socialsJson: any): Record<string, string> {
   if (!socialsJson) return {};
   try {
-    if (typeof socialsJson === 'string') {
+    if (typeof socialsJson === "string") {
       return JSON.parse(socialsJson);
     }
     return socialsJson || {};
@@ -34,17 +33,15 @@ function parseSocials(socialsJson: any): Record<string, string> {
 }
 
 function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('fr-FR', {
-    year: 'numeric',
-    month: 'long'
+  return new Intl.DateTimeFormat("fr-FR", {
+    year: "numeric",
+    month: "long",
   }).format(date);
 }
 
 type PageProps = { params: { slug: string } };
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const user = await prisma.user.findFirst({
     where: { slug, profile: { isPublic: true } },
@@ -55,8 +52,8 @@ export async function generateMetadata({
           firstname: true,
           lastname: true,
           bio: true,
-        }
-      }
+        },
+      },
     },
   });
 
@@ -66,9 +63,10 @@ export async function generateMetadata({
     };
   }
 
-  const displayName = user.profile?.firstname && user.profile?.lastname
-    ? `${user.profile.firstname} ${user.profile.lastname}`
-    : user.name;
+  const displayName =
+    user.profile?.firstname && user.profile?.lastname
+      ? `${user.profile.firstname} ${user.profile.lastname}`
+      : user.name;
 
   return {
     title: `Profil de ${displayName}`,
@@ -78,12 +76,12 @@ export async function generateMetadata({
 
 export default async function ProfilePage({ params }: PageProps) {
   const { slug } = await params;
-  
+
   const user = await prisma.user.findFirst({
-    where: { 
-      slug, 
+    where: {
+      slug,
       profile: { isPublic: true },
-      status: "ACTIVE" 
+      status: "ACTIVE",
     },
     select: {
       id: true,
@@ -101,7 +99,7 @@ export default async function ProfilePage({ params }: PageProps) {
           socials: true,
           showEmail: true,
           showPhone: true,
-        }
+        },
       },
       badges: {
         select: {
@@ -118,11 +116,11 @@ export default async function ProfilePage({ params }: PageProps) {
               color: true,
               category: true,
               rarity: true,
-            }
-          }
+            },
+          },
         },
         where: { isVisible: true },
-        orderBy: { earnedAt: "desc" }
+        orderBy: { earnedAt: "desc" },
       },
       places: {
         select: {
@@ -134,17 +132,17 @@ export default async function ProfilePage({ params }: PageProps) {
           status: true,
           isActive: true,
         },
-        where: { 
-          status: "ACTIVE", 
-          isActive: true 
-        }
+        where: {
+          status: "ACTIVE",
+          isActive: true,
+        },
       },
       _count: {
         select: {
           places: { where: { status: "ACTIVE", isActive: true } },
           reviews: true,
-        }
-      }
+        },
+      },
     },
   });
 
@@ -152,43 +150,47 @@ export default async function ProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  const displayName = user.profile?.firstname && user.profile?.lastname
-    ? `${user.profile.firstname} ${user.profile.lastname}`
-    : user.name;
+  const displayName =
+    user.profile?.firstname && user.profile?.lastname
+      ? `${user.profile.firstname} ${user.profile.lastname}`
+      : user.name;
 
   const socials = parseSocials(user.profile?.socials);
-  const hasSocials = Object.keys(socials).some(key => socials[key]);
+  const hasSocials = Object.keys(socials).some((key) => socials[key]);
 
-  const badgesByCategory = user.badges.reduce((acc, userBadge) => {
-    const category = userBadge.badge.category;
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(userBadge);
-    return acc;
-  }, {} as Record<string, typeof user.badges>);
+  const badgesByCategory = user.badges.reduce(
+    (acc, userBadge) => {
+      const category = userBadge.badge.category;
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(userBadge);
+      return acc;
+    },
+    {} as Record<string, typeof user.badges>
+  );
 
-  const rarityOrder = ['LEGENDARY', 'EPIC', 'RARE', 'UNCOMMON', 'COMMON'];
+  const rarityOrder = ["LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"];
   const rarityColors = {
-    LEGENDARY: 'bg-gradient-to-r from-yellow-400 to-orange-500',
-    EPIC: 'bg-gradient-to-r from-purple-500 to-pink-500',
-    RARE: 'bg-gradient-to-r from-blue-500 to-cyan-500',
-    UNCOMMON: 'bg-gradient-to-r from-green-500 to-emerald-500',
-    COMMON: 'bg-gradient-to-r from-gray-400 to-gray-500',
+    LEGENDARY: "bg-gradient-to-r from-yellow-400 to-orange-500",
+    EPIC: "bg-gradient-to-r from-purple-500 to-pink-500",
+    RARE: "bg-gradient-to-r from-blue-500 to-cyan-500",
+    UNCOMMON: "bg-gradient-to-r from-green-500 to-emerald-500",
+    COMMON: "bg-gradient-to-r from-gray-400 to-gray-500",
   };
-  
+
   const rarityLabels = {
-    LEGENDARY: 'Légendaire',
-    EPIC: 'Épique',
-    RARE: 'Rare',
-    UNCOMMON: 'Peu commune',
-    COMMON: 'Commune',
+    LEGENDARY: "Légendaire",
+    EPIC: "Épique",
+    RARE: "Rare",
+    UNCOMMON: "Peu commune",
+    COMMON: "Commune",
   };
-  
+
   const categoryLabels = {
-    GENERAL: 'Général',
-    ACHIEVEMENT: 'Accomplissement',
-    PARTICIPATION: 'Participation',
-    SPECIAL: 'Spécial',
-    ANNIVERSARY: 'Anniversaire',
+    GENERAL: "Général",
+    ACHIEVEMENT: "Accomplissement",
+    PARTICIPATION: "Participation",
+    SPECIAL: "Spécial",
+    ANNIVERSARY: "Anniversaire",
   };
 
   return (
@@ -215,14 +217,10 @@ export default async function ProfilePage({ params }: PageProps) {
               </div>
 
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-foreground mb-2">
-                  {displayName}
-                </h1>
-                
+                <h1 className="text-3xl font-bold text-foreground mb-2">{displayName}</h1>
+
                 {user.profile?.bio && (
-                  <p className="text-muted-foreground mb-4 leading-relaxed">
-                    {user.profile.bio}
-                  </p>
+                  <p className="text-muted-foreground mb-4 leading-relaxed">{user.profile.bio}</p>
                 )}
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -230,18 +228,18 @@ export default async function ProfilePage({ params }: PageProps) {
                     <CalendarDays className="w-4 h-4" />
                     Membre depuis {formatDate(user.createdAt)}
                   </div>
-                  
+
                   {user._count.places > 0 && (
                     <div className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
-                      {user._count.places} lieu{user._count.places > 1 ? 'x' : ''}
+                      {user._count.places} lieu{user._count.places > 1 ? "x" : ""}
                     </div>
                   )}
 
                   {user.badges.length > 0 && (
                     <div className="flex items-center gap-1">
                       <Award className="w-4 h-4" />
-                      {user.badges.length} badge{user.badges.length > 1 ? 's' : ''}
+                      {user.badges.length} badge{user.badges.length > 1 ? "s" : ""}
                     </div>
                   )}
                 </div>
@@ -271,48 +269,58 @@ export default async function ProfilePage({ params }: PageProps) {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {badges
-                        .sort((a, b) => rarityOrder.indexOf(a.badge.rarity) - rarityOrder.indexOf(b.badge.rarity))
+                        .sort(
+                          (a, b) =>
+                            rarityOrder.indexOf(a.badge.rarity) -
+                            rarityOrder.indexOf(b.badge.rarity)
+                        )
                         .map((userBadge) => (
-                        <div
-                          key={userBadge.id}
-                          className="relative p-4 rounded-lg border bg-card"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white ${rarityColors[userBadge.badge.rarity]} shadow-lg`}>
-                              <Trophy className="w-7 h-7" />
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-foreground">
-                                {userBadge.badge.title}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                {userBadge.badge.description}
-                              </p>
-                              <div className="mt-2 flex items-center gap-2">
-                                <Badge 
-                                  variant="outline" 
-                                  className="text-xs"
-                                  style={{ 
-                                    borderColor: userBadge.badge.color,
-                                    color: userBadge.badge.color 
-                                  }}
-                                >
-                                  {rarityLabels[userBadge.badge.rarity as keyof typeof rarityLabels]}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDate(userBadge.earnedAt)}
-                                </span>
+                          <div
+                            key={userBadge.id}
+                            className="relative p-4 rounded-lg border bg-card"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={`w-12 h-12 rounded-full flex items-center justify-center text-white ${rarityColors[userBadge.badge.rarity]} shadow-lg`}
+                              >
+                                <Trophy className="w-7 h-7" />
                               </div>
-                              {userBadge.reason && (
-                                <p className="text-xs text-muted-foreground mt-1 italic">
-                                  {userBadge.reason}
+
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-foreground">
+                                  {userBadge.badge.title}
+                                </h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {userBadge.badge.description}
                                 </p>
-                              )}
+                                <div className="mt-2 flex items-center gap-2">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs"
+                                    style={{
+                                      borderColor: userBadge.badge.color,
+                                      color: userBadge.badge.color,
+                                    }}
+                                  >
+                                    {
+                                      rarityLabels[
+                                        userBadge.badge.rarity as keyof typeof rarityLabels
+                                      ]
+                                    }
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDate(userBadge.earnedAt)}
+                                  </span>
+                                </div>
+                                {userBadge.reason && (
+                                  <p className="text-xs text-muted-foreground mt-1 italic">
+                                    {userBadge.reason}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   </div>
                 ))}
@@ -337,20 +345,14 @@ export default async function ProfilePage({ params }: PageProps) {
                       className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
                     >
                       <div>
-                        <h4 className="font-medium text-foreground">
-                          {place.name}
-                        </h4>
+                        <h4 className="font-medium text-foreground">{place.name}</h4>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline">{place.type}</Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {place.city}
-                          </span>
+                          <span className="text-sm text-muted-foreground">{place.city}</span>
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" asChild>
-                        <a href={`/places/${place.slug}`}>
-                          Voir
-                        </a>
+                        <a href={`/places/${place.slug}`}>Voir</a>
                       </Button>
                     </div>
                   ))}
@@ -370,24 +372,16 @@ export default async function ProfilePage({ params }: PageProps) {
               </CardHeader>
               <CardContent className="space-y-3">
                 {user.profile.showEmail && user.email && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    asChild
-                  >
+                  <Button variant="outline" className="w-full justify-start" asChild>
                     <a href={`mailto:${user.email}`}>
                       <Mail className="w-4 h-4 mr-2" />
                       Envoyer un email
                     </a>
                   </Button>
                 )}
-                
+
                 {user.profile.showPhone && user.profile.phone && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    asChild
-                  >
+                  <Button variant="outline" className="w-full justify-start" asChild>
                     <a href={`tel:${user.profile.phone}`}>
                       <Phone className="w-4 h-4 mr-2" />
                       Appeler
@@ -418,7 +412,7 @@ export default async function ProfilePage({ params }: PageProps) {
                       </a>
                     </Button>
                   )}
-                  
+
                   {socials.instagram && (
                     <Button variant="outline" size="sm" asChild>
                       <a
@@ -431,7 +425,7 @@ export default async function ProfilePage({ params }: PageProps) {
                       </a>
                     </Button>
                   )}
-                  
+
                   {socials.twitter && (
                     <Button variant="outline" size="sm" asChild>
                       <a
@@ -444,7 +438,7 @@ export default async function ProfilePage({ params }: PageProps) {
                       </a>
                     </Button>
                   )}
-                  
+
                   {socials.linkedin && (
                     <Button variant="outline" size="sm" asChild>
                       <a

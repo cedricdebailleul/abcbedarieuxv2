@@ -48,7 +48,7 @@ export async function sendEmail({
     subject,
     html,
   };
-  
+
   try {
     const result = await transporter.sendMail(mailOptions);
     console.log("✅ [MAILER] Email envoyé avec succès:", result.messageId);

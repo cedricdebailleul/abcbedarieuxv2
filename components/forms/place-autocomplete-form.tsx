@@ -1,5 +1,5 @@
-import { FormattedPlaceData, useGooglePlaces } from "@/hooks/use-google-places";
 import { useEffect, useState } from "react";
+import { type FormattedPlaceData, useGooglePlaces } from "@/hooks/use-google-places";
 
 export const PlaceAutocompleteInput: React.FC<{
   onPlaceSelected: (place: FormattedPlaceData) => void;
@@ -32,9 +32,7 @@ export const PlaceAutocompleteInput: React.FC<{
     return () => clearTimeout(timer);
   }, [inputValue, searchPlaces]);
 
-  const handleSelectPrediction = (
-    prediction: google.maps.places.AutocompletePrediction
-  ) => {
+  const handleSelectPrediction = (prediction: google.maps.places.AutocompletePrediction) => {
     setInputValue(prediction.description);
     getPlaceDetails(prediction.place_id);
     setShowDropdown(false);
@@ -47,9 +45,7 @@ export const PlaceAutocompleteInput: React.FC<{
 
   return (
     <div className="relative">
-      <label className="block text-sm font-medium mb-2">
-        Rechercher un établissement
-      </label>
+      <label className="block text-sm font-medium mb-2">Rechercher un établissement</label>
 
       <div className="relative">
         <input
@@ -89,6 +85,7 @@ export const PlaceAutocompleteInput: React.FC<{
           {predictions.map((prediction) => (
             <button
               key={prediction.place_id}
+              type="button"
               onClick={() => handleSelectPrediction(prediction)}
               className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-start space-x-3"
             >
@@ -126,10 +123,7 @@ export const PlaceAutocompleteInput: React.FC<{
 
       {/* Overlay pour fermer le dropdown */}
       {showDropdown && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowDropdown(false)}
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
       )}
     </div>
   );

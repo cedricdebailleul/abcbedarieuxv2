@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import {
   IconCamera,
   IconChartBar,
@@ -11,13 +10,16 @@ import {
   IconFileWord,
   IconFolder,
   IconHelp,
+  IconHeart,
   IconListDetails,
+  IconMapPin,
   IconReport,
   IconSearch,
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react";
-
+import Link from "next/link";
+import type * as React from "react";
 import { NavDocuments } from "@/components/sidebar/nav-documents";
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavSecondary } from "@/components/sidebar/nav-secondary";
@@ -31,9 +33,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import Link from "next/link";
-import Logo from "../logo";
 import { authClient } from "@/lib/auth-client";
+import Logo from "../logo";
 
 const data = {
   navMain: [
@@ -57,7 +58,16 @@ const data = {
       ],
       icon: IconListDetails,
     },
-
+    {
+      title: "Places",
+      url: "/dashboard/places",
+      icon: IconMapPin,
+    },
+    {
+      title: "Favoris",
+      url: "/dashboard/favorites",
+      icon: IconHeart,
+    },
     {
       title: "Evénements",
       url: "/dashboard/events",
@@ -90,6 +100,14 @@ const data = {
         {
           title: "Invitations",
           url: "/dashboard/admin/invitations",
+        },
+        {
+          title: "Badges",
+          url: "/dashboard/admin/badges",
+        },
+        {
+          title: "Catégories des places",
+          url: "/dashboard/admin/place-categories",
         },
       ],
     },
@@ -180,9 +198,9 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = authClient.useSession();
-  
+
   // Filtrer les items de navigation selon le rôle utilisateur
-  const filteredNavMain = data.navMain.filter(item => {
+  const filteredNavMain = data.navMain.filter((item) => {
     // Si c'est le menu Administration, ne l'afficher que pour les admins, modérateurs et éditeurs
     if (item.title === "Administration") {
       return session?.user?.role && ["admin", "moderator", "editor"].includes(session.user.role);
@@ -195,10 +213,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
+            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <Link href="/">
                 <Logo width={50} height={50} />
                 <span>ABC</span>

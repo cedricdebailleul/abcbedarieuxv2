@@ -1,6 +1,8 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,8 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 interface User {
   id: string;
@@ -49,7 +49,7 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim() || !formData.email.trim()) {
       toast.error("Le nom et l'email sont obligatoires");
       return;
@@ -57,7 +57,7 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
 
     try {
       setLoading(true);
-      
+
       const response = await fetch(`/api/admin/users/${user.id}`, {
         method: "PUT",
         headers: {
@@ -99,9 +99,7 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -123,7 +121,7 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
                 required
               />
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -138,8 +136,8 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
 
             <div className="grid gap-2">
               <Label htmlFor="role">Rôle</Label>
-              <Select 
-                value={formData.role} 
+              <Select
+                value={formData.role}
                 onValueChange={(value) => setFormData({ ...formData, role: value })}
                 disabled={loading}
               >
@@ -158,8 +156,8 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
 
             <div className="grid gap-2">
               <Label htmlFor="status">Statut</Label>
-              <Select 
-                value={formData.status} 
+              <Select
+                value={formData.status}
                 onValueChange={(value) => setFormData({ ...formData, status: value })}
                 disabled={loading}
               >
@@ -177,9 +175,9 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
           </div>
 
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setOpen(false)}
               disabled={loading}
             >

@@ -1,17 +1,17 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, CheckCircle, Sparkles, Trophy } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Trophy, Sparkles, ArrowRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 export default function AccountCreatedPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [showFireworks, setShowFireworks] = useState(false);
-  
+
   const name = searchParams.get("name") || "Nouvel utilisateur";
   const email = searchParams.get("email") || "";
 
@@ -29,40 +29,39 @@ export default function AccountCreatedPage() {
   };
 
   const fireworkVariants = {
-    hidden: { 
-      scale: 0, 
+    hidden: {
+      scale: 0,
       rotate: 0,
-      opacity: 0 
+      opacity: 0,
     },
-    visible: { 
-      scale: 1.2, 
+    visible: {
+      scale: 1.2,
       rotate: 360,
       opacity: 0.8,
       transition: {
-        duration: 1.5
-      }
-    }
+        duration: 1.5,
+      },
+    },
   } as const;
 
   const sparkleVariants = {
-    hidden: { 
+    hidden: {
       scale: 0,
       y: 0,
-      opacity: 0 
+      opacity: 0,
     },
-    visible: { 
+    visible: {
       scale: 1,
       y: -100,
       opacity: 0,
       transition: {
-        duration: 2
-      }
-    }
+        duration: 2,
+      },
+    },
   } as const;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      
       {/* Feux d'artifice */}
       <AnimatePresence>
         {showFireworks && (
@@ -80,13 +79,14 @@ export default function AccountCreatedPage() {
                 initial="hidden"
                 animate="visible"
               >
-                <div className={`w-8 h-8 rounded-full ${
-                  i % 3 === 0 ? 'bg-yellow-400' : 
-                  i % 3 === 1 ? 'bg-red-400' : 'bg-blue-400'
-                } opacity-70`} />
+                <div
+                  className={`w-8 h-8 rounded-full ${
+                    i % 3 === 0 ? "bg-yellow-400" : i % 3 === 1 ? "bg-red-400" : "bg-blue-400"
+                  } opacity-70`}
+                />
               </motion.div>
             ))}
-            
+
             {/* Étincelles */}
             {[...Array(20)].map((_, i) => (
               <motion.div
@@ -100,11 +100,17 @@ export default function AccountCreatedPage() {
                 initial="hidden"
                 animate="visible"
               >
-                <Sparkles className={`w-4 h-4 ${
-                  i % 4 === 0 ? 'text-yellow-400' : 
-                  i % 4 === 1 ? 'text-red-400' : 
-                  i % 4 === 2 ? 'text-blue-400' : 'text-green-400'
-                }`} />
+                <Sparkles
+                  className={`w-4 h-4 ${
+                    i % 4 === 0
+                      ? "text-yellow-400"
+                      : i % 4 === 1
+                        ? "text-red-400"
+                        : i % 4 === 2
+                          ? "text-blue-400"
+                          : "text-green-400"
+                  }`}
+                />
               </motion.div>
             ))}
           </>
@@ -129,14 +135,14 @@ export default function AccountCreatedPage() {
               <div className="relative">
                 <CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
                 <motion.div
-                  animate={{ 
+                  animate={{
                     rotate: 360,
-                    scale: [1, 1.1, 1]
+                    scale: [1, 1.1, 1],
                   }}
-                  transition={{ 
+                  transition={{
                     duration: 2,
                     repeat: Infinity,
-                    ease: "easeInOut"
+                    ease: "easeInOut",
                   }}
                   className="absolute -top-2 -right-2"
                 >
@@ -144,7 +150,7 @@ export default function AccountCreatedPage() {
                 </motion.div>
               </div>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -153,12 +159,10 @@ export default function AccountCreatedPage() {
               <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
                 🎉 Félicitations !
               </CardTitle>
-              <h2 className="text-xl text-gray-700 mb-4">
-                Bienvenue, {name} !
-              </h2>
+              <h2 className="text-xl text-gray-700 mb-4">Bienvenue, {name} !</h2>
             </motion.div>
           </CardHeader>
-          
+
           <CardContent className="text-center space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

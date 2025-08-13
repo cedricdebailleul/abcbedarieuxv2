@@ -1,19 +1,10 @@
+import { ArrowRight, Calendar, ChevronRight, Eye, Folder, Tag, User } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Calendar,
-  Eye,
-  User,
-  Tag,
-  Folder,
-  ArrowRight,
-  Clock,
-  ChevronRight,
-} from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface PostCardProps {
   post: {
@@ -85,8 +76,7 @@ export function PostCard({
 
   // Obtenir l'extrait à afficher
   const displayExcerpt =
-    post.excerpt ||
-    (post.content ? getPlainText(post.content).substring(0, 150) + "..." : "");
+    post.excerpt || (post.content ? `${getPlainText(post.content).substring(0, 150)}...` : "");
 
   // Date de publication ou de création
   const displayDate = post.publishedAt || post.createdAt;
@@ -120,9 +110,7 @@ export function PostCard({
               href={`/posts/${post.slug}`}
               className="block group-hover:text-primary transition-colors"
             >
-              <h3 className="font-semibold text-sm leading-tight line-clamp-2">
-                {post.title}
-              </h3>
+              <h3 className="font-semibold text-sm leading-tight line-clamp-2">{post.title}</h3>
             </Link>
 
             {/* Stats et bouton */}
@@ -147,9 +135,7 @@ export function PostCard({
 
   if (variant === "featured") {
     return (
-      <Card
-        className={`group hover:shadow-lg transition-all duration-300 ${className}`}
-      >
+      <Card className={`group hover:shadow-lg transition-all duration-300 ${className}`}>
         {/* Image de couverture */}
         {post.coverImage && (
           <div className="relative overflow-hidden">
@@ -173,7 +159,7 @@ export function PostCard({
             )}
           </div>
         )}
-        
+
         <CardHeader className="pb-3">
           {/* Catégorie (si pas d'image de couverture) */}
           {!post.coverImage && showCategory && post.category && (
@@ -194,9 +180,7 @@ export function PostCard({
             href={`/posts/${post.slug}`}
             className="block group-hover:text-primary transition-colors"
           >
-            <h2 className="text-xl font-bold leading-tight line-clamp-2 mb-2">
-              {post.title}
-            </h2>
+            <h2 className="text-xl font-bold leading-tight line-clamp-2 mb-2">{post.title}</h2>
           </Link>
 
           {/* Extrait */}
@@ -255,9 +239,7 @@ export function PostCard({
                   </div>
                 )}
 
-                {showAuthor && (
-                  <Separator orientation="vertical" className="h-3" />
-                )}
+                {showAuthor && <Separator orientation="vertical" className="h-3" />}
 
                 {/* Date */}
                 <div className="flex items-center space-x-1">
@@ -265,9 +247,7 @@ export function PostCard({
                   <span>{displayDate.toLocaleDateString("fr-FR")}</span>
                 </div>
 
-                {showViewCount && (
-                  <Separator orientation="vertical" className="h-3" />
-                )}
+                {showViewCount && <Separator orientation="vertical" className="h-3" />}
 
                 {/* Vues */}
                 {showViewCount && (
@@ -280,11 +260,7 @@ export function PostCard({
 
               {/* Bouton Lire la suite */}
               <Link href={`/posts/${post.slug}`}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-auto py-1 px-3"
-                >
+                <Button variant="outline" size="sm" className="h-auto py-1 px-3">
                   Lire la suite
                   <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
@@ -321,7 +297,7 @@ export function PostCard({
           )}
         </div>
       )}
-      
+
       <CardHeader className="pb-3">
         {/* Catégorie (si pas d'image de couverture) */}
         {!post.coverImage && showCategory && post.category && (
@@ -342,9 +318,7 @@ export function PostCard({
           href={`/posts/${post.slug}`}
           className="block group-hover:text-primary transition-colors"
         >
-          <h3 className="font-semibold leading-tight line-clamp-2">
-            {post.title}
-          </h3>
+          <h3 className="font-semibold leading-tight line-clamp-2">{post.title}</h3>
         </Link>
       </CardHeader>
 

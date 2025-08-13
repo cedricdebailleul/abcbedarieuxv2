@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/mailer";
-import { z } from "zod";
 import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { sendEmail } from "@/lib/mailer";
+import { prisma } from "@/lib/prisma";
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -19,10 +19,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     // Vérifier que l'utilisateur est admin
@@ -32,10 +29,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json(
-        { error: "Permissions insuffisantes" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
     }
 
     // Valider les données
@@ -70,10 +64,11 @@ export async function POST(request: NextRequest) {
     });
 
     // Créer l'URL d'invitation
-    const baseUrl = process.env.NODE_ENV === "production" 
-      ? process.env.NEXTAUTH_URL || `https://${request.headers.get("host")}`
-      : process.env.NEXTAUTH_URL || `http://${request.headers.get("host")}`;
-    
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? process.env.NEXTAUTH_URL || `https://${request.headers.get("host")}`
+        : process.env.NEXTAUTH_URL || `http://${request.headers.get("host")}`;
+
     const inviteUrl = `${baseUrl}/accept-invitation?token=${inviteToken}&email=${encodeURIComponent(email)}&role=${role}`;
 
     // Envoyer l'email d'invitation
@@ -111,10 +106,9 @@ export async function POST(request: NextRequest) {
       message: "Invitation envoyée avec succès",
       inviteUrl, // Pour les tests en développement
     });
-
   } catch (error) {
     console.error("Erreur lors de l'invitation:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Données invalides", details: error.issues },
@@ -122,9 +116,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

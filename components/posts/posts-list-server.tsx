@@ -1,28 +1,27 @@
-import { PostsFilters } from "./posts-filters";
+import {
+  Calendar,
+  Clock,
+  Edit,
+  Eye,
+  Folder,
+  Globe,
+  MoreHorizontal,
+  Tag as TagIcon,
+  Trash2,
+  User,
+} from "lucide-react";
+import Link from "next/link";
 import { getPostsAction } from "@/actions/post";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  Calendar,
-  User,
-  Folder,
-  Tag as TagIcon,
-  Clock,
-  Globe,
-} from "lucide-react";
-import Link from "next/link";
+import { PostsFilters } from "./posts-filters";
 
 interface PostsListServerProps {
   searchParams: {
@@ -45,11 +44,16 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
     status: searchParams.status as any,
     categoryId: searchParams.categoryId || "",
     tagId: searchParams.tagId || "",
-    published: searchParams.published === "true" ? true : searchParams.published === "false" ? false : undefined,
+    published:
+      searchParams.published === "true"
+        ? true
+        : searchParams.published === "false"
+          ? false
+          : undefined,
     page: parseInt(searchParams.page || "1"),
     limit: parseInt(searchParams.limit || "10"),
-    sortBy: searchParams.sortBy as any || "createdAt",
-    sortOrder: searchParams.sortOrder as any || "desc",
+    sortBy: (searchParams.sortBy as any) || "createdAt",
+    sortOrder: (searchParams.sortOrder as any) || "desc",
   });
 
   if (!result.success || !result.data) {
@@ -67,7 +71,7 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
       <div className="space-y-6">
         {/* Filtres */}
         <PostsFilters searchParams={searchParams} />
-        
+
         <div className="text-center py-8">
           <h3 className="text-lg font-semibold mb-2">Aucun article trouvé</h3>
           <p className="text-muted-foreground mb-4">
@@ -76,9 +80,7 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
               : "Vous n'avez pas encore d'articles. Créez votre premier article !"}
           </p>
           <Button asChild>
-            <Link href="/dashboard/posts/new">
-              Créer un article
-            </Link>
+            <Link href="/dashboard/posts/new">Créer un article</Link>
           </Button>
         </div>
       </div>
@@ -112,7 +114,7 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                     <div className="flex items-start gap-3">
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg leading-tight">
-                          <Link 
+                          <Link
                             href={`/dashboard/posts/${post.slug}/edit`}
                             className="hover:text-primary transition-colors"
                           >
@@ -126,12 +128,15 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge 
+                        <Badge
                           variant={
-                            post.status === "PUBLISHED" ? "default" :
-                            post.status === "DRAFT" ? "secondary" :
-                            post.status === "PENDING_REVIEW" ? "outline" :
-                            "destructive"
+                            post.status === "PUBLISHED"
+                              ? "default"
+                              : post.status === "DRAFT"
+                                ? "secondary"
+                                : post.status === "PENDING_REVIEW"
+                                  ? "outline"
+                                  : "destructive"
                           }
                         >
                           {post.status === "PUBLISHED" && "Publié"}
@@ -160,13 +165,13 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                       {/* Dates */}
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        Créé le {new Date(post.createdAt).toLocaleDateString('fr-FR')}
+                        Créé le {new Date(post.createdAt).toLocaleDateString("fr-FR")}
                       </div>
 
                       {post.publishedAt && (
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          Publié le {new Date(post.publishedAt).toLocaleDateString('fr-FR')}
+                          Publié le {new Date(post.publishedAt).toLocaleDateString("fr-FR")}
                         </div>
                       )}
 
@@ -182,7 +187,7 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                       {post.category && (
                         <Badge variant="outline" className="flex items-center gap-1">
                           <Folder className="h-3 w-3" />
-                          <div 
+                          <div
                             className="w-2 h-2 rounded-full"
                             style={{ backgroundColor: post.category.color || "#6B7280" }}
                           />
@@ -195,13 +200,13 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                           <TagIcon className="h-3 w-3 text-muted-foreground" />
                           <div className="flex flex-wrap gap-1">
                             {post.tags.slice(0, 3).map((postTag) => (
-                              <Badge 
-                                key={postTag.tag.id} 
-                                variant="outline" 
+                              <Badge
+                                key={postTag.tag.id}
+                                variant="outline"
                                 className="text-xs"
-                                style={{ 
-                                  backgroundColor: (postTag.tag.color || "#8B5CF6") + "20",
-                                  color: postTag.tag.color || "#8B5CF6"
+                                style={{
+                                  backgroundColor: `${postTag.tag.color || "#8B5CF6"}20`,
+                                  color: postTag.tag.color || "#8B5CF6",
                                 }}
                               >
                                 {postTag.tag.name}
@@ -255,42 +260,42 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
         {/* Pagination */}
         {pages > 1 && (
           <div className="flex items-center justify-center space-x-2 pt-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               asChild
               disabled={parseInt(searchParams.page || "1") === 1}
             >
-              <Link 
+              <Link
                 href={{
                   pathname: "/dashboard/posts",
                   query: {
                     ...searchParams,
-                    page: Math.max(1, parseInt(searchParams.page || "1") - 1).toString()
-                  }
+                    page: Math.max(1, parseInt(searchParams.page || "1") - 1).toString(),
+                  },
                 }}
               >
                 Précédent
               </Link>
             </Button>
-            
+
             <span className="text-sm text-muted-foreground px-4">
               Page {parseInt(searchParams.page || "1")} sur {pages}
             </span>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               size="sm"
               asChild
               disabled={parseInt(searchParams.page || "1") === pages}
             >
-              <Link 
+              <Link
                 href={{
                   pathname: "/dashboard/posts",
                   query: {
                     ...searchParams,
-                    page: Math.min(pages, parseInt(searchParams.page || "1") + 1).toString()
-                  }
+                    page: Math.min(pages, parseInt(searchParams.page || "1") + 1).toString(),
+                  },
                 }}
               >
                 Suivant

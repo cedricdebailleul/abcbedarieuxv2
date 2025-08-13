@@ -1,10 +1,11 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Folder, Loader2, Palette, Plus } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-
+import { createCategoryAction } from "@/actions/post";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,8 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -25,25 +24,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-import { createCategoryAction } from "@/actions/post";
-import {
-  createCategorySchema,
-  type CategoryInput,
-  generateSlug,
-} from "@/lib/validations/post";
-
-import { Plus, Folder, Loader2, Palette } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { type CategoryInput, createCategorySchema, generateSlug } from "@/lib/validations/post";
 
 interface CreateCategoryDialogProps {
   onCategoryCreated?: (category: any) => void;
   trigger?: React.ReactNode;
 }
 
-export function CreateCategoryDialog({
-  onCategoryCreated,
-  trigger,
-}: CreateCategoryDialogProps) {
+export function CreateCategoryDialog({ onCategoryCreated, trigger }: CreateCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 

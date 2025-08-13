@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 const claimRequestSchema = z.object({
   // Informations personnelles
@@ -10,7 +10,7 @@ const claimRequestSchema = z.object({
   lastName: z.string().min(2, "Le nom doit faire au moins 2 caractères"),
   email: z.string().email("Email invalide"),
   phone: z.string().min(10, "Le téléphone doit faire au moins 10 caractères"),
-  
+
   // Revendication
   message: z.string().min(20, "Le message doit faire au moins 20 caractères"),
   proof: z.string().url().optional(), // URL vers une preuve (document, photo, etc.)
@@ -34,27 +34,21 @@ export async function POST(
     // Vérifier que la place existe et peut être revendiquée
     const place = await prisma.place.findUnique({
       where: { id: placeId },
-      select: { 
-        id: true, 
-        name: true, 
+      select: {
+        id: true,
+        name: true,
         ownerId: true,
-        status: true
+        status: true,
       },
     });
 
     if (!place) {
-      return NextResponse.json(
-        { error: "Place non trouvée" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Place non trouvée" }, { status: 404 });
     }
 
     // Vérifier que la place n'a pas déjà un propriétaire
     if (place.ownerId) {
-      return NextResponse.json(
-        { error: "Cette place a déjà un propriétaire" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Cette place a déjà un propriétaire" }, { status: 400 });
     }
 
     // Vérifier qu'il n'y a pas déjà une demande en cours de cet utilisateur
@@ -62,8 +56,8 @@ export async function POST(
       where: {
         placeId,
         userId: session.user.id,
-        status: "PENDING"
-      }
+        status: "PENDING",
+      },
     });
 
     if (existingRequest) {
@@ -85,15 +79,22 @@ Prénom: ${validatedData.firstName}
 Nom: ${validatedData.lastName}
 Email: ${validatedData.email}
 Téléphone: ${validatedData.phone}
-Relation: ${validatedData.relationship === 'owner' ? 'Propriétaire' : 
-          validatedData.relationship === 'manager' ? 'Gérant' :
-          validatedData.relationship === 'employee' ? 'Employé' :
-          validatedData.relationship === 'family' ? 'Famille' : 'Autre'}
+Relation: ${
+      validatedData.relationship === "owner"
+        ? "Propriétaire"
+        : validatedData.relationship === "manager"
+          ? "Gérant"
+          : validatedData.relationship === "employee"
+            ? "Employé"
+            : validatedData.relationship === "family"
+              ? "Famille"
+              : "Autre"
+    }
 
 📝 JUSTIFICATION:
 ${validatedData.message}
 
-${validatedData.proof ? `🔗 PREUVE: ${validatedData.proof}` : ''}
+${validatedData.proof ? `🔗 PREUVE: ${validatedData.proof}` : ""}
     `.trim();
 
     // Créer la demande de revendication
@@ -103,16 +104,16 @@ ${validatedData.proof ? `🔗 PREUVE: ${validatedData.proof}` : ''}
         userId: session.user.id,
         message: enrichedMessage,
         proof: validatedData.proof,
-        status: "PENDING"
+        status: "PENDING",
       },
       include: {
         user: {
-          select: { id: true, name: true, email: true }
+          select: { id: true, name: true, email: true },
         },
         place: {
-          select: { id: true, name: true, slug: true }
-        }
-      }
+          select: { id: true, name: true, slug: true },
+        },
+      },
     });
 
     // TODO: Envoyer notification aux admins
@@ -120,10 +121,10 @@ ${validatedData.proof ? `🔗 PREUVE: ${validatedData.proof}` : ''}
 
     return NextResponse.json({
       success: true,
-      message: "Votre demande de revendication a été soumise. Un administrateur l'examinera sous peu.",
-      requestId: claimRequest.id
+      message:
+        "Votre demande de revendication a été soumise. Un administrateur l'examinera sous peu.",
+      requestId: claimRequest.id,
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -133,9 +134,6 @@ ${validatedData.proof ? `🔗 PREUVE: ${validatedData.proof}` : ''}
     }
 
     console.error("Erreur lors de la création de la demande:", error);
-    return NextResponse.json(
-      { error: "Erreur interne du serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

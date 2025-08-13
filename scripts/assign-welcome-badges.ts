@@ -14,7 +14,9 @@ async function assignWelcomeBadges() {
     });
 
     if (!welcomeBadge) {
-      console.log("❌ Badge de bienvenue non trouvé. Veuillez d'abord exécuter le script de création des badges.");
+      console.log(
+        "❌ Badge de bienvenue non trouvé. Veuillez d'abord exécuter le script de création des badges."
+      );
       return;
     }
 
@@ -59,8 +61,10 @@ async function assignWelcomeBadges() {
       console.log(`🎖️ Badge attribué à ${user.name} (${user.email})`);
     }
 
-    console.log(`🎉 Attribution terminée ! ${usersWithoutWelcomeBadge.length} badge(s) de bienvenue attribué(s).`);
-    
+    console.log(
+      `🎉 Attribution terminée ! ${usersWithoutWelcomeBadge.length} badge(s) de bienvenue attribué(s).`
+    );
+
     // Statistiques finales
     const totalUserBadges = await prisma.userBadge.count({
       where: {
@@ -69,7 +73,6 @@ async function assignWelcomeBadges() {
     });
 
     console.log(`📊 Total d'utilisateurs avec le badge de bienvenue : ${totalUserBadges}`);
-
   } catch (error) {
     console.error("❌ Erreur lors de l'attribution des badges:", error);
     throw error;

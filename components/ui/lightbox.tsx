@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -20,10 +20,19 @@ export function Lightbox({ images, isOpen, onClose, initialIndex = 0 }: Lightbox
     setCurrentIndex(initialIndex);
   }, [initialIndex]);
 
+  // Déplacer les fonctions de navigation avant leur utilisation avec useCallback
+  const goToNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  }, [images.length]);
+
+  const goToPrevious = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  }, [images.length]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
-      
+
       switch (e.key) {
         case "Escape":
           onClose();
@@ -41,7 +50,7 @@ export function Lightbox({ images, isOpen, onClose, initialIndex = 0 }: Lightbox
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, currentIndex]);
+  }, [isOpen, goToNext, goToPrevious, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -54,14 +63,6 @@ export function Lightbox({ images, isOpen, onClose, initialIndex = 0 }: Lightbox
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
-
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
 
   const isExternal = (url: string) => {
     return url.startsWith("http");
@@ -143,10 +144,11 @@ export function Lightbox({ images, isOpen, onClose, initialIndex = 0 }: Lightbox
           {images.map((src, index) => (
             <button
               key={index}
+              type="button"
               className={cn(
                 "flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-opacity",
-                index === currentIndex 
-                  ? "border-white opacity-100" 
+                index === currentIndex
+                  ? "border-white opacity-100"
                   : "border-transparent opacity-60 hover:opacity-80"
               )}
               onClick={(e) => {

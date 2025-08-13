@@ -1,12 +1,11 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-
-import { PostForm } from "@/components/forms/post-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft, PlusCircle } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { PostForm } from "@/components/forms/post-form";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
 export default async function NewPostPage() {
   // Vérifier l'authentification
@@ -18,8 +17,7 @@ export default async function NewPostPage() {
 
   // Vérifier les permissions
   const canCreatePosts =
-    session.user.role &&
-    ["admin", "editor", "user"].includes(session.user.role);
+    session.user.role && ["admin", "editor", "user"].includes(session.user.role);
 
   if (!canCreatePosts) {
     redirect("/dashboard");
@@ -41,9 +39,7 @@ export default async function NewPostPage() {
               <PlusCircle className="h-6 w-6" />
               Nouvel article
             </h1>
-            <p className="text-muted-foreground">
-              Créez un nouvel article pour votre blog
-            </p>
+            <p className="text-muted-foreground">Créez un nouvel article pour votre blog</p>
           </div>
         </div>
       </div>
@@ -66,9 +62,7 @@ export default async function NewPostPage() {
                   <li>Choisissez un titre accrocheur et descriptif</li>
                   <li>Rédigez un extrait qui donne envie de lire la suite</li>
                   <li>Organisez votre contenu avec des sous-titres</li>
-                  <li>
-                    Ajoutez des tags pertinents pour faciliter la découverte
-                  </li>
+                  <li>Ajoutez des tags pertinents pour faciliter la découverte</li>
                   <li>Optimisez le référencement avec les champs SEO</li>
                 </ul>
               </div>

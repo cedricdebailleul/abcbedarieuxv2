@@ -1,7 +1,7 @@
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import ProfileContent from "./_components/profile-content";
 
 export default async function ProfilePage() {
@@ -36,11 +36,7 @@ export default async function ProfilePage() {
       where: {
         isActive: true,
       },
-      orderBy: [
-        { category: "asc" },
-        { rarity: "asc" },
-        { title: "asc" },
-      ],
+      orderBy: [{ category: "asc" }, { rarity: "asc" }, { title: "asc" }],
     }),
   ]);
 

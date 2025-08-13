@@ -1,23 +1,23 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
 
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
-  FormControl,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 const formSchema = z.object({
   name: z.string().min(2, "Prénom requis"),
@@ -49,24 +49,24 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       console.log("🔧 [REGISTER] Tentative d'inscription:", { email: data.email, name: data.name });
-      
+
       const result = await authClient.signUp.email({
         email: data.email,
         password: data.password,
         name: data.name,
         callbackURL: "/dashboard",
       });
-      
+
       console.log("🔧 [REGISTER] Résultat de signUp.email:", result);
-      
+
       console.log("✅ [REGISTER] Inscription réussie");
-      toast.success(
-        "Compte créé. Vérifiez votre email et vous serez redirigé également."
-      );
+      toast.success("Compte créé. Vérifiez votre email et vous serez redirigé également.");
       router.push("/dashboard");
     } catch (error) {
       console.error("❌ [REGISTER] Erreur lors de l'inscription:", error);
-      toast.error(`Erreur lors de l'inscription: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      toast.error(
+        `Erreur lors de l'inscription: ${error instanceof Error ? error.message : "Erreur inconnue"}`
+      );
     } finally {
       setLoading(false);
     }
@@ -113,11 +113,7 @@ export default function RegisterPage() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="ex: jean@example.com"
-                    {...field}
-                  />
+                  <Input type="email" placeholder="ex: jean@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -154,10 +150,7 @@ export default function RegisterPage() {
                   </FormControl>
                   <FormLabel className="font-normal">
                     J’accepte la{" "}
-                    <Link
-                      href="/politique-confidentialite"
-                      className="underline"
-                    >
+                    <Link href="/politique-confidentialite" className="underline">
                       politique de confidentialité
                     </Link>{" "}
                     et les{" "}

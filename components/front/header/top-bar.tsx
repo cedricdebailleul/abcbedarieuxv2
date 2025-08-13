@@ -1,7 +1,8 @@
 // components/Header/TopBar.jsx
+
+import { User } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
 
 export function TopBar() {
   return (
@@ -18,23 +19,23 @@ export function TopBar() {
           </Button>
           {/* Contraste typo */}
           <div className="flex items-center space-x-2">
-            <button className="text-sm hover:text-gray-900">A</button>
-            <button className="text-base hover:text-gray-900">A</button>
-            <button className="text-lg font-bold">A</button>
+            <button type="button" className="text-sm hover:text-gray-900">
+              A
+            </button>
+            <button type="button" className="text-base hover:text-gray-900">
+              A
+            </button>
+            <button type="button" className="text-lg font-bold">
+              A
+            </button>
           </div>
         </div>
         <nav className="flex items-center space-x-8">
-          {["Nous joindre", "Actualités", "Événements", "Emplois"].map(
-            (item) => (
-              <Link
-                key={item}
-                href="#"
-                className="hover:text-primary transition"
-              >
-                {item}
-              </Link>
-            )
-          )}
+          {["Nous joindre", "Actualités", "Événements", "Emplois"].map((item) => (
+            <Link key={item} href="#" className="hover:text-primary transition">
+              {item}
+            </Link>
+          ))}
         </nav>
       </div>
     </div>

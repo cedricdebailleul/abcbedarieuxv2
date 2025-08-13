@@ -1,9 +1,21 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import {
+  Filter,
+  Folder,
+  Loader2,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
+  Tag as TagIcon,
+  X,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-
+import { useEffect, useState, useTransition } from "react";
+import { getCategoriesAction, getTagsAction } from "@/actions/post";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,22 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-
-import { getCategoriesAction, getTagsAction } from "@/actions/post";
 import { PostStatus } from "@/lib/generated/prisma";
-
-import { 
-  Search, 
-  Filter, 
-  X, 
-  Loader2,
-  SlidersHorizontal,
-  Folder,
-  Tag as TagIcon,
-  RotateCcw
-} from "lucide-react";
 
 interface PostsFiltersProps {
   searchParams: {
@@ -46,7 +43,7 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
   const router = useRouter();
   const currentSearchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  
+
   // États locaux pour les filtres
   const [search, setSearch] = useState(searchParams.search || "");
   const [status, setStatus] = useState(searchParams.status || "all");
@@ -55,7 +52,7 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
   const [published, setPublished] = useState(searchParams.published || "all");
   const [sortBy, setSortBy] = useState(searchParams.sortBy || "createdAt");
   const [sortOrder, setSortOrder] = useState(searchParams.sortOrder || "desc");
-  
+
   // Données pour les sélecteurs
   const [categories, setCategories] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
@@ -91,11 +88,13 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
 
   // Déterminer si des filtres avancés sont actifs
   useEffect(() => {
-    const hasAdvancedFilters = (status && status !== "all") || 
-                              (categoryId && categoryId !== "all") || 
-                              (tagId && tagId !== "all") || 
-                              (published && published !== "all") || 
-                              sortBy !== "createdAt" || sortOrder !== "desc";
+    const hasAdvancedFilters =
+      (status && status !== "all") ||
+      (categoryId && categoryId !== "all") ||
+      (tagId && tagId !== "all") ||
+      (published && published !== "all") ||
+      sortBy !== "createdAt" ||
+      sortOrder !== "desc";
     setShowAdvancedFilters(hasAdvancedFilters);
   }, [status, categoryId, tagId, published, sortBy, sortOrder]);
 
@@ -103,9 +102,9 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
   const updateFilters = (newFilters: Record<string, string>) => {
     startTransition(() => {
       const params = new URLSearchParams(currentSearchParams);
-      
+
       // Supprimer les paramètres vides ou avec valeurs par défaut
-      Object.keys(newFilters).forEach(key => {
+      Object.keys(newFilters).forEach((key) => {
         const value = newFilters[key];
         // Traiter "all" et "none" comme des valeurs vides
         if (value && value !== "all" && value !== "none") {
@@ -114,13 +113,13 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
           params.delete(key);
         }
       });
-      
+
       // Toujours revenir à la page 1 lors d'un changement de filtre
       params.delete("page");
-      
+
       const queryString = params.toString();
       const newUrl = queryString ? `?${queryString}` : "";
-      
+
       router.push(`/dashboard/posts${newUrl}`);
     });
   };
@@ -147,7 +146,7 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
     setPublished("all");
     setSortBy("createdAt");
     setSortOrder("desc");
-    
+
     startTransition(() => {
       router.push("/dashboard/posts");
     });
@@ -175,10 +174,10 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
     status && status !== "all" ? status : null,
     categoryId && categoryId !== "all" ? categoryId : null,
     tagId && tagId !== "all" ? tagId : null,
-    published && published !== "all" ? published : null
+    published && published !== "all" ? published : null,
   ].filter(Boolean).length;
-  const hasActiveFilters = activeFiltersCount > 0 || search || 
-                          sortBy !== "createdAt" || sortOrder !== "desc";
+  const hasActiveFilters =
+    activeFiltersCount > 0 || search || sortBy !== "createdAt" || sortOrder !== "desc";
 
   // Options pour les sélecteurs
   const statusOptions = [
@@ -220,7 +219,8 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
           <div className="flex items-center gap-2">
             {hasActiveFilters && (
               <Badge variant="secondary">
-                {activeFiltersCount > 0 && `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""}`}
+                {activeFiltersCount > 0 &&
+                  `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""}`}
                 {search && (activeFiltersCount > 0 ? " + recherche" : "recherche")}
               </Badge>
             )}
@@ -304,14 +304,16 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
                 </Label>
                 <Select value={categoryId} onValueChange={setCategoryId} disabled={isLoadingData}>
                   <SelectTrigger>
-                    <SelectValue placeholder={isLoadingData ? "Chargement..." : "Toutes les catégories"} />
+                    <SelectValue
+                      placeholder={isLoadingData ? "Chargement..." : "Toutes les catégories"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Toutes les catégories</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         <div className="flex items-center gap-2">
-                          <div 
+                          <div
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: category.color || "#6B7280" }}
                           />
@@ -340,7 +342,7 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
                     {tags.map((tag) => (
                       <SelectItem key={tag.id} value={tag.id}>
                         <div className="flex items-center gap-2">
-                          <div 
+                          <div
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: tag.color || "#8B5CF6" }}
                           />
@@ -402,7 +404,7 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
                 <RotateCcw className="h-4 w-4" />
                 Réinitialiser
               </Button>
-              
+
               <Button
                 onClick={handleApplyFilters}
                 disabled={isPending}
@@ -441,10 +443,10 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
                 </Button>
               </Badge>
             )}
-            
+
             {status && status !== "all" && (
               <Badge variant="secondary" className="flex items-center gap-1">
-                Statut: {statusOptions.find(s => s.value === status)?.label}
+                Statut: {statusOptions.find((s) => s.value === status)?.label}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -455,10 +457,10 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
                 </Button>
               </Badge>
             )}
-            
+
             {published && published !== "all" && (
               <Badge variant="secondary" className="flex items-center gap-1">
-                {publishedOptions.find(p => p.value === published)?.label}
+                {publishedOptions.find((p) => p.value === published)?.label}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -469,11 +471,11 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
                 </Button>
               </Badge>
             )}
-            
+
             {categoryId && categoryId !== "all" && (
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Folder className="h-3 w-3" />
-                {categories.find(c => c.id === categoryId)?.name || "Catégorie"}
+                {categories.find((c) => c.id === categoryId)?.name || "Catégorie"}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -484,11 +486,11 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
                 </Button>
               </Badge>
             )}
-            
+
             {tagId && tagId !== "all" && (
               <Badge variant="secondary" className="flex items-center gap-1">
                 <TagIcon className="h-3 w-3" />
-                {tags.find(t => t.id === tagId)?.name || "Tag"}
+                {tags.find((t) => t.id === tagId)?.name || "Tag"}
                 <Button
                   variant="ghost"
                   size="sm"

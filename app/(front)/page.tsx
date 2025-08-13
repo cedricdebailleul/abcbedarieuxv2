@@ -1,10 +1,10 @@
-import Hero from "@/components/front/hero";
-import { getLatestPostsAction } from "@/actions/post";
-import { PostCard } from "@/components/posts/post-card";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, FileText } from "lucide-react";
 import Link from "next/link";
+import { getLatestPostsAction } from "@/actions/post";
+import Hero from "@/components/front/hero";
+import { PostCard } from "@/components/posts/post-card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Home() {
   // Récupérer les derniers articles
@@ -37,11 +37,7 @@ export default async function Home() {
 
             {/* Article en vedette (le plus récent) */}
             <div className="mb-8">
-              <PostCard
-                post={latestPosts[0]}
-                variant="featured"
-                className="max-w-none"
-              />
+              <PostCard post={latestPosts[0]} variant="featured" className="max-w-none" />
             </div>
 
             {/* Autres articles */}
@@ -58,9 +54,7 @@ export default async function Home() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-8 text-center">
                   <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    Aucun article publié
-                  </h3>
+                  <h3 className="text-lg font-semibold mb-2">Aucun article publié</h3>
                   <p className="text-muted-foreground">
                     Les articles publiés apparaîtront ici prochainement.
                   </p>

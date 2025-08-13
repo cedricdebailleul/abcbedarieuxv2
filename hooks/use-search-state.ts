@@ -1,7 +1,7 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { z } from "zod";
+import type { z } from "zod";
 
 export function useSearchState<TSchema extends z.ZodTypeAny>(schema: TSchema) {
   const params = useSearchParams();

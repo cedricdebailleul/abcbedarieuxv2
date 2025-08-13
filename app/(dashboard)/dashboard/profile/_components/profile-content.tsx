@@ -1,28 +1,15 @@
 "use client";
 
+import { Calendar, Edit, EyeOff, Mail, MapPin, Phone, Trophy, User } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  User, 
-  Edit, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Shield, 
-  Star,
-  Trophy,
-  Settings,
-  Eye,
-  EyeOff
-} from "lucide-react";
-import ProfileEditForm from "./profile-edit-form";
 import BadgeCollection from "./badge-collection";
 import EmailVerification from "./email-verification";
+import ProfileEditForm from "./profile-edit-form";
 
 interface UserData {
   id: string;
@@ -97,7 +84,7 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
       moderator: "Modérateur",
       dpo: "Délégué à la protection des données",
       editor: "Éditeur",
-      user: "Utilisateur"
+      user: "Utilisateur",
     };
     return labels[role as keyof typeof labels] || role;
   };
@@ -162,7 +149,7 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                 {getDisplayName().slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                 <h1 className="text-2xl font-bold">{getDisplayName()}</h1>
@@ -175,7 +162,7 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                   </Badge>
                 )}
               </div>
-              
+
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
@@ -183,14 +170,19 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  <span>{userData.profile?.showEmail || userData.role === "admin" ? userData.email : "Email masqué"}</span>
+                  <span>
+                    {userData.profile?.showEmail || userData.role === "admin"
+                      ? userData.email
+                      : "Email masqué"}
+                  </span>
                 </div>
-                {userData.profile?.phone && (userData.profile.showPhone || userData.role === "admin") && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    <span>{userData.profile.phone}</span>
-                  </div>
-                )}
+                {userData.profile?.phone &&
+                  (userData.profile.showPhone || userData.role === "admin") && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      <span>{userData.profile.phone}</span>
+                    </div>
+                  )}
                 {userData.profile?.address && (
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
@@ -203,7 +195,7 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                 </div>
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
@@ -254,9 +246,11 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Aperçu</TabsTrigger>
           <TabsTrigger value="badges">Badges ({userData.badges.length})</TabsTrigger>
-          <TabsTrigger value="edit" disabled={!isEditing}>Modifier</TabsTrigger>
+          <TabsTrigger value="edit" disabled={!isEditing}>
+            Modifier
+          </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="space-y-4">
           {/* Informations personnelles */}
           <Card>
@@ -275,7 +269,7 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
               ) : (
                 <p className="text-gray-500 italic">Aucune biographie ajoutée</p>
               )}
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
                 <div>
                   <h4 className="font-medium mb-1">Langue</h4>
@@ -286,7 +280,7 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                   <p className="text-gray-600">{userData.profile?.timezone || "Europe/Paris"}</p>
                 </div>
               </div>
-              
+
               <div className="pt-4 border-t">
                 <h4 className="font-medium mb-2">Confidentialité</h4>
                 <div className="space-y-2 text-sm">
@@ -310,11 +304,11 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                   </div>
                 </div>
               </div>
-              
+
               {/* Vérification de l'email */}
               <div className="pt-4 border-t">
                 <h4 className="font-medium mb-3">Sécurité du compte</h4>
-                <EmailVerification 
+                <EmailVerification
                   isEmailVerified={userData.emailVerified}
                   email={userData.email}
                   onEmailVerified={() => window.location.reload()}
@@ -330,9 +324,7 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                 <Trophy className="h-5 w-5" />
                 Badges récents
               </CardTitle>
-              <CardDescription>
-                Vos derniers badges obtenus
-              </CardDescription>
+              <CardDescription>Vos derniers badges obtenus</CardDescription>
             </CardHeader>
             <CardContent>
               {userData.badges.slice(0, 6).length > 0 ? (
@@ -343,7 +335,7 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                       className="text-center p-3 rounded-lg border"
                       style={{ borderColor: userBadge.badge.color || "#3B82F6" }}
                     >
-                      <div 
+                      <div
                         className="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center text-white"
                         style={{ backgroundColor: userBadge.badge.color || "#3B82F6" }}
                       >
@@ -366,14 +358,14 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="badges">
           <BadgeCollection userBadges={userData.badges} allBadges={allBadges} />
         </TabsContent>
-        
+
         <TabsContent value="edit">
-          <ProfileEditForm 
-            user={userData} 
+          <ProfileEditForm
+            user={userData}
             onUpdate={handleProfileUpdate}
             onCancel={() => setIsEditing(false)}
           />

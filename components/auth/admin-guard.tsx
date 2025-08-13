@@ -1,7 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useSession } from "@/hooks/use-session";
-import { ReactNode } from "react";
 
 interface AdminGuardProps {
   children: ReactNode;
@@ -23,12 +23,8 @@ export function AdminGuard({ children, fallback }: AdminGuardProps) {
     return (
       fallback || (
         <div className="text-center py-12">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Accès non autorisé
-          </h1>
-          <p className="text-gray-600">
-            Vous devez être administrateur pour accéder à cette page.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Accès non autorisé</h1>
+          <p className="text-gray-600">Vous devez être administrateur pour accéder à cette page.</p>
           <div className="mt-4 text-sm text-gray-500">
             Status: {status} | Role: {session?.user?.role || "none"}
           </div>

@@ -1,6 +1,6 @@
 "use client";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 
 export function usePagination(defaultPage = 1, defaultSize = 20) {
   const params = useSearchParams();

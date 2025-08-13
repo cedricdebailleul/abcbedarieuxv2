@@ -1,12 +1,8 @@
 "use client";
 
-import {
-  IconDashboard,
-  IconDotsVertical,
-  IconLogout,
-  IconNotification,
-} from "@tabler/icons-react";
-
+import { IconDashboard, IconDotsVertical, IconLogout, IconNotification } from "@tabler/icons-react";
+import { HomeIcon } from "lucide-react";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -23,10 +19,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth-client";
-import Link from "next/link";
-import { HomeIcon } from "lucide-react";
 import { useSignOut } from "@/hooks/use-signout";
+import { authClient } from "@/lib/auth-client";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
@@ -44,10 +38,7 @@ export function NavUser() {
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage
-                  src={
-                    session?.user.image ??
-                    `https://avatar.vercel.sh/${session?.user.email}.png`
-                  }
+                  src={session?.user.image ?? `https://avatar.vercel.sh/${session?.user.email}.png`}
                   alt={session?.user.name}
                 />
                 <AvatarFallback className="rounded-lg">
@@ -80,8 +71,7 @@ export function NavUser() {
                 <Avatar className="size-8 rounded-lg">
                   <AvatarImage
                     src={
-                      session?.user.image ??
-                      `https://avatar.vercel.sh/${session?.user.email}.png`
+                      session?.user.image ?? `https://avatar.vercel.sh/${session?.user.email}.png`
                     }
                     alt={
                       session?.user.name && session?.user.name.length > 0

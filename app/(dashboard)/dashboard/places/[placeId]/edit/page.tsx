@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PlaceForm } from "@/components/forms/place-form";
 import { useSession } from "@/hooks/use-session";
@@ -46,11 +46,7 @@ interface Place {
   };
 }
 
-export default function EditPlacePage({
-  params,
-}: {
-  params: Promise<{ placeId: string }>;
-}) {
+export default function EditPlacePage({ params }: { params: Promise<{ placeId: string }> }) {
   const router = useRouter();
   const { data: session } = useSession();
   const [place, setPlace] = useState<Place | null>(null);
@@ -117,9 +113,7 @@ export default function EditPlacePage({
 
       // Si la place repasse en PENDING, informer l'utilisateur
       if (result.place.status === "PENDING" && place?.status === "ACTIVE") {
-        toast.success(
-          "Place mise à jour! Elle sera re-vérifiée par un administrateur."
-        );
+        toast.success("Place mise à jour! Elle sera re-vérifiée par un administrateur.");
       } else {
         toast.success("Place mise à jour avec succès!");
       }
@@ -128,9 +122,7 @@ export default function EditPlacePage({
       router.push("/dashboard/places");
     } catch (error: any) {
       console.error("Erreur:", error);
-      toast.error(
-        error.message || "Erreur lors de la modification de la place"
-      );
+      toast.error(error.message || "Erreur lors de la modification de la place");
       throw error; // Re-lancer pour que le PlaceForm gère l'état de loading
     }
   };
@@ -151,7 +143,10 @@ export default function EditPlacePage({
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          role="img"
+          aria-label="Icône d'erreur"
         >
+          <title>Erreur de chargement</title>
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -180,7 +175,7 @@ export default function EditPlacePage({
     if (!images) return [];
     if (Array.isArray(images)) return images;
     try {
-      if (typeof images === 'string') {
+      if (typeof images === "string") {
         return JSON.parse(images);
       }
       return [];
@@ -260,17 +255,11 @@ export default function EditPlacePage({
       <div className="border-b border-gray-200 pb-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Modifier la place
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Modifiez les informations de votre établissement
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Modifier la place</h1>
+            <p className="text-gray-600 mt-2">Modifiez les informations de votre établissement</p>
           </div>
           <span
-            className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-              place.status
-            )}`}
+            className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(place.status)}`}
           >
             {getStatusText(place.status)}
           </span>
@@ -297,9 +286,8 @@ export default function EditPlacePage({
             <div>
               <h3 className="text-yellow-900 font-medium">Attention</h3>
               <p className="text-yellow-800 text-sm mt-1">
-                Cette place est actuellement active. Toute modification
-                nécessitera une nouvelle validation par un administrateur et la
-                place repassera temporairement en attente.
+                Cette place est actuellement active. Toute modification nécessitera une nouvelle
+                validation par un administrateur et la place repassera temporairement en attente.
               </p>
             </div>
           </div>

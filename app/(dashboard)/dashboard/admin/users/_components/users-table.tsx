@@ -1,33 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Ban,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Mail,
+  MoreHorizontal,
+  Search,
+  Shield,
+  Trash2,
+  UserCheck,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,21 +26,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Ban, 
-  UserCheck,
-  ChevronLeft,
-  ChevronRight,
-  Shield,
-  Mail,
-  Calendar
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import EditUserDialog from "./edit-user-dialog";
 
 interface User {
@@ -90,7 +90,7 @@ interface UsersResponse {
 }
 
 export default function UsersTable() {
-  const router = useRouter();
+  const _router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -101,12 +101,12 @@ export default function UsersTable() {
     hasNextPage: false,
     hasPrevPage: false,
   });
-  
+
   // Filtres
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  
+
   // État pour la suppression
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
@@ -114,19 +114,16 @@ export default function UsersTable() {
   }>({ open: false });
 
   // Charger les utilisateurs
-  const fetchUsers = async (params: {
-    page?: number;
-    search?: string;
-    role?: string;
-    status?: string;
-  } = {}) => {
+  const fetchUsers = async (
+    params: { page?: number; search?: string; role?: string; status?: string } = {}
+  ) => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
-      
+
       queryParams.append("page", (params.page || pagination.page).toString());
       queryParams.append("limit", pagination.limit.toString());
-      
+
       if (params.search || search) {
         queryParams.append("search", params.search || search);
       }
@@ -138,7 +135,7 @@ export default function UsersTable() {
       }
 
       const response = await fetch(`/api/admin/users?${queryParams}`);
-      
+
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des utilisateurs");
       }
@@ -157,7 +154,7 @@ export default function UsersTable() {
   // Effet pour le chargement initial
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   // Effet pour les filtres avec debounce
   useEffect(() => {
@@ -166,7 +163,7 @@ export default function UsersTable() {
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [search, roleFilter, statusFilter]);
+  }, [fetchUsers]);
 
   // Supprimer un utilisateur
   const handleDeleteUser = async (user: User) => {
@@ -196,7 +193,7 @@ export default function UsersTable() {
       console.log("Debug - user.status:", user.status, "user.banned:", user.banned);
       const isBanned = user.status === "BANNED";
       const newBannedState = !isBanned;
-      
+
       const response = await fetch(`/api/admin/users/${user.id}/ban`, {
         method: "PUT",
         headers: {
@@ -291,7 +288,7 @@ export default function UsersTable() {
             className="pl-10"
           />
         </div>
-        
+
         <Select value={roleFilter} onValueChange={setRoleFilter}>
           <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Rôle" />
@@ -347,11 +344,21 @@ export default function UsersTable() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell><div className="h-6 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-                  <TableCell><div className="h-6 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-                  <TableCell><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-                  <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-                  <TableCell><div className="h-8 w-8 bg-gray-200 rounded animate-pulse" /></TableCell>
+                  <TableCell>
+                    <div className="h-6 w-16 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-6 w-16 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
+                  </TableCell>
                 </TableRow>
               ))
             ) : users.length === 0 ? (
@@ -367,22 +374,15 @@ export default function UsersTable() {
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={`/api/avatar/${user.id}`} />
-                        <AvatarFallback>
-                          {user.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
+                        <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-medium flex items-center gap-2">
-                          {user.profile?.firstname && user.profile?.lastname 
+                          {user.profile?.firstname && user.profile?.lastname
                             ? `${user.profile.firstname} ${user.profile.lastname}`
-                            : user.name
-                          }
-                          {!user.emailVerified && (
-                            <Mail className="h-4 w-4 text-orange-500" />
-                          )}
-                          {user.badgeCount > 0 && (
-                            <Shield className="h-4 w-4 text-blue-500" />
-                          )}
+                            : user.name}
+                          {!user.emailVerified && <Mail className="h-4 w-4 text-orange-500" />}
+                          {user.badgeCount > 0 && <Shield className="h-4 w-4 text-blue-500" />}
                         </div>
                         <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
@@ -420,7 +420,9 @@ export default function UsersTable() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => handleToggleBan(user)}
-                          className={user.status === "BANNED" ? "text-green-600" : "text-orange-600"}
+                          className={
+                            user.status === "BANNED" ? "text-green-600" : "text-orange-600"
+                          }
                         >
                           {user.status === "BANNED" ? (
                             <>
@@ -455,7 +457,8 @@ export default function UsersTable() {
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Page {pagination.page} sur {pagination.totalPages} ({pagination.totalCount} utilisateurs)
+            Page {pagination.page} sur {pagination.totalPages} ({pagination.totalCount}{" "}
+            utilisateurs)
           </div>
           <div className="flex gap-2">
             <Button
