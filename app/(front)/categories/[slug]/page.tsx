@@ -137,9 +137,11 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const renderCategoryIcon = (icon: string | null, size: string = "w-8 h-8") => {
     if (!icon) return null;
     
-    // Emoji
+    // Emoji - adapter la taille selon le contexte
     if (icon.length <= 4 && /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon)) {
-      return <span className="text-2xl">{icon}</span>;
+      // Pour les petites icônes (badges), utiliser une taille réduite
+      const textSize = size.includes("w-3") ? "text-xs" : size.includes("w-12") ? "text-2xl" : "text-base";
+      return <span className={`${textSize} inline-block text-center leading-none`}>{icon}</span>;
     }
     
     // Icône Lucide

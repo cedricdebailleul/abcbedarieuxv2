@@ -201,7 +201,7 @@ export function MapFilters({
                       >
                         <div className="flex items-center flex-1">
                           {category.icon && (
-                            <span className="mr-2 text-lg">
+                            <span className="mr-2 text-lg inline-block w-5 text-center leading-none">
                               {/^[A-Z]/.test(category.icon) ? lucideIconToEmoji(category.icon) : category.icon}
                             </span>
                           )}
@@ -261,7 +261,7 @@ export function MapFilters({
                                 onClick={() => toggleCategory(child.id)}
                               >
                                 {child.icon && (
-                                  <span className="mr-2 text-sm">
+                                  <span className="mr-2 text-sm inline-block w-4 text-center leading-none">
                                     {/^[A-Z]/.test(child.icon) ? lucideIconToEmoji(child.icon) : child.icon}
                                   </span>
                                 )}
