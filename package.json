@@ -28,7 +28,6 @@
     "test:coverage": "jest --coverage",
     "dev:setup": "./scripts/dev-setup.sh",
     "deploy:coolify": "prisma migrate deploy && prisma generate && next build",
-    "postbuild": "next-sitemap",
     "cleanup-gdpr": "tsx scripts/cleanup-gdpr.ts"
   },
   "dependencies": {

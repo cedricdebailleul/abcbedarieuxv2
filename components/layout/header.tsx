@@ -27,14 +27,8 @@ export function Header() {
           <Link href="/events" className="transition-colors hover:text-foreground/80">
             Événements
           </Link>
-          <Link href="/about" className="transition-colors hover:text-foreground/80">
-            À propos
-          </Link>
-          <Link href="/blog" className="transition-colors hover:text-foreground/80">
-            Blog
-          </Link>
-          <Link href="/contact" className="transition-colors hover:text-foreground/80">
-            Contact
+          <Link href="/articles" className="transition-colors hover:text-foreground/80">
+            Articles
           </Link>
         </nav>
         <NavUser />
