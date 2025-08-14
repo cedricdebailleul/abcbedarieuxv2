@@ -1,5 +1,12 @@
 import { Metadata } from "next";
-import { ArrowLeft, BarChart3, Award, Users, TrendingUp, Calendar } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  Award,
+  Users,
+  TrendingUp,
+  Calendar,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -17,7 +24,7 @@ export const metadata: Metadata = {
 
 export default async function BadgeStatsPage() {
   const statsResult = await getBadgeStatsAction();
-  
+
   if (!statsResult.success) {
     return (
       <div className="space-y-6">
@@ -28,8 +35,12 @@ export default async function BadgeStatsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Statistiques des badges</h1>
-            <p className="text-muted-foreground">Impossible de charger les statistiques</p>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Statistiques des badges
+            </h1>
+            <p className="text-muted-foreground">
+              Impossible de charger les statistiques
+            </p>
           </div>
         </div>
         <Card>
@@ -43,7 +54,14 @@ export default async function BadgeStatsPage() {
     );
   }
 
-  const stats = statsResult.data;
+  const stats = statsResult.data ?? {
+    total: 0,
+    active: 0,
+    inactive: 0,
+    totalAwarded: 0,
+    categoriesStats: {},
+    raritiesStats: {},
+  };
 
   return (
     <div className="space-y-6">
@@ -57,7 +75,9 @@ export default async function BadgeStatsPage() {
         <div className="flex items-center gap-2">
           <BarChart3 className="h-6 w-6 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Statistiques des badges</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Statistiques des badges
+            </h1>
             <p className="text-muted-foreground">
               Analyse détaillée de l'utilisation des badges sur la plateforme
             </p>
@@ -88,14 +108,19 @@ export default async function BadgeStatsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {stats.active}
+            </div>
             <div className="flex items-center gap-2 mt-1">
-              <Progress 
-                value={stats.total > 0 ? (stats.active / stats.total) * 100 : 0} 
-                className="flex-1" 
+              <Progress
+                value={stats.total > 0 ? (stats.active / stats.total) * 100 : 0}
+                className="flex-1"
               />
               <span className="text-xs text-muted-foreground">
-                {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
+                {stats.total > 0
+                  ? Math.round((stats.active / stats.total) * 100)
+                  : 0}
+                %
               </span>
             </div>
           </CardContent>
@@ -108,7 +133,9 @@ export default async function BadgeStatsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.totalAwarded}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {stats.totalAwarded}
+            </div>
             <p className="text-xs text-muted-foreground">
               Badges attribués aux utilisateurs
             </p>
@@ -118,12 +145,16 @@ export default async function BadgeStatsPage() {
         {/* Moyenne par badge */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Moyenne / badge</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Moyenne / badge
+            </CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              {stats.active > 0 ? Math.round(stats.totalAwarded / stats.active * 10) / 10 : 0}
+              {stats.active > 0
+                ? Math.round((stats.totalAwarded / stats.active) * 10) / 10
+                : 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Attributions par badge actif
@@ -140,19 +171,26 @@ export default async function BadgeStatsPage() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             {Object.entries(stats.categoriesStats).map(([category, count]) => {
-              const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
+              const percentage =
+                stats.total > 0 ? (count / stats.total) * 100 : 0;
               const categoryLabels = {
                 ACHIEVEMENT: "Accomplissements",
-                COMMUNITY: "Communauté", 
+                COMMUNITY: "Communauté",
                 SPECIAL: "Spéciaux",
-                TIME: "Temporels"
+                TIME: "Temporels",
               };
-              
+
               return (
                 <div key={category} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span>{categoryLabels[category as keyof typeof categoryLabels] || category}</span>
-                    <span className="font-medium">{count} badge{count > 1 ? 's' : ''}</span>
+                    <span>
+                      {categoryLabels[
+                        category as keyof typeof categoryLabels
+                      ] || category}
+                    </span>
+                    <span className="font-medium">
+                      {count} badge{count > 1 ? "s" : ""}
+                    </span>
                   </div>
                   <Progress value={percentage} className="h-2" />
                   <div className="text-xs text-muted-foreground text-right">
@@ -173,31 +211,38 @@ export default async function BadgeStatsPage() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Object.entries(stats.raritiesStats).map(([rarity, count]) => {
-              const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
+              const percentage =
+                stats.total > 0 ? (count / stats.total) * 100 : 0;
               const rarityLabels = {
                 COMMON: "Communs",
                 UNCOMMON: "Peu communs",
-                RARE: "Rares", 
+                RARE: "Rares",
                 EPIC: "Épiques",
-                LEGENDARY: "Légendaires"
+                LEGENDARY: "Légendaires",
               };
               const rarityColors = {
                 COMMON: "#6B7280",
                 UNCOMMON: "#10B981",
                 RARE: "#3B82F6",
-                EPIC: "#8B5CF6", 
-                LEGENDARY: "#F59E0B"
+                EPIC: "#8B5CF6",
+                LEGENDARY: "#F59E0B",
               };
-              
+
               return (
                 <div key={rarity} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <div 
+                      <div
                         className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: rarityColors[rarity as keyof typeof rarityColors] }}
+                        style={{
+                          backgroundColor:
+                            rarityColors[rarity as keyof typeof rarityColors],
+                        }}
                       />
-                      <span>{rarityLabels[rarity as keyof typeof rarityLabels] || rarity}</span>
+                      <span>
+                        {rarityLabels[rarity as keyof typeof rarityLabels] ||
+                          rarity}
+                      </span>
                     </div>
                     <span className="font-medium">{count}</span>
                   </div>

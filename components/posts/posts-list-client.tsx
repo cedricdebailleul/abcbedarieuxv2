@@ -69,7 +69,11 @@ interface PostsListClientProps {
   userId?: string; // Pour filtrer par utilisateur si nécessaire
 }
 
-export function PostsListClient({ initialData, searchParams, userId }: PostsListClientProps) {
+export function PostsListClient({
+  initialData,
+  searchParams,
+  userId,
+}: PostsListClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [posts, setPosts] = useState<any[]>(initialData.posts);
@@ -87,7 +91,25 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
       try {
         const filters = {
           ...searchParams,
+          page: parseInt(searchParams.page || "1", 10),
+          limit: parseInt(searchParams.limit || "10", 10),
           authorId: userId, // Filtrer par utilisateur si spécifié
+          sortBy:
+            (searchParams.sortBy as
+              | "createdAt"
+              | "updatedAt"
+              | "publishedAt"
+              | "title"
+              | "viewCount") || "createdAt",
+          sortOrder: (searchParams.sortOrder as "asc" | "desc") || "desc",
+          status: searchParams.status as
+            | "DRAFT"
+            | "PENDING_REVIEW"
+            | "PUBLISHED"
+            | "ARCHIVED"
+            | "REJECTED"
+            | undefined,
+          published: searchParams.published === "true" ? true : undefined
         };
 
         const result = await getPostsAction(filters);
@@ -116,14 +138,16 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
     if (status === "PENDING_REVIEW")
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-    if (status === "REJECTED") return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+    if (status === "REJECTED")
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
     if (status === "ARCHIVED")
       return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
   };
 
   const getStatusIcon = (status: string, published: boolean) => {
-    if (published && status === "PUBLISHED") return <Globe className="h-3 w-3" />;
+    if (published && status === "PUBLISHED")
+      return <Globe className="h-3 w-3" />;
     if (status === "PENDING_REVIEW") return <Clock className="h-3 w-3" />;
     if (status === "REJECTED") return <XCircle className="h-3 w-3" />;
     if (status === "ARCHIVED") return <Archive className="h-3 w-3" />;
@@ -180,7 +204,9 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
       });
 
       if (result.success) {
-        toast.success(`Articles ${published ? "publiés" : "dépubliés"} avec succès`);
+        toast.success(
+          `Articles ${published ? "publiés" : "dépubliés"} avec succès`
+        );
         // Recharger la liste
         router.refresh();
         setSelectedPosts([]);
@@ -200,7 +226,9 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
 
       if (result.success) {
         toast.success("Articles supprimés avec succès");
-        setPosts((prev) => prev.filter((post) => !selectedPosts.includes(post.id)));
+        setPosts((prev) =>
+          prev.filter((post) => !selectedPosts.includes(post.id))
+        );
         setTotal((prev) => prev - selectedPosts.length);
         setSelectedPosts([]);
       } else {
@@ -267,10 +295,15 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <span className="text-sm font-medium">
-                  {selectedPosts.length} article{selectedPosts.length > 1 ? "s" : ""} sélectionné
+                  {selectedPosts.length} article
+                  {selectedPosts.length > 1 ? "s" : ""} sélectionné
                   {selectedPosts.length > 1 ? "s" : ""}
                 </span>
-                <Button variant="outline" size="sm" onClick={() => setSelectedPosts([])}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedPosts([])}
+                >
                   Désélectionner
                 </Button>
               </div>
@@ -312,9 +345,15 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
         <div className="flex items-center space-x-2">
           <Checkbox
+            ref={(el: HTMLButtonElement | null) => {
+              if (el) {
+                (el as unknown as HTMLInputElement).indeterminate =
+                  selectedPosts.length > 0 &&
+                  selectedPosts.length < posts.length;
+              }
+            }}
             checked={selectedPosts.length === posts.length && posts.length > 0}
             onCheckedChange={handleSelectAll}
-            indeterminate={selectedPosts.length > 0 && selectedPosts.length < posts.length}
           />
           <span>Tout sélectionner</span>
         </div>
@@ -333,7 +372,9 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                 {/* Sélection */}
                 <Checkbox
                   checked={selectedPosts.includes(post.id)}
-                  onCheckedChange={(checked) => handleSelectPost(post.id, checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    handleSelectPost(post.id, checked as boolean)
+                  }
                 />
 
                 {/* Contenu principal */}
@@ -348,10 +389,17 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                         >
                           {post.title}
                         </Link>
-                        <Badge className={getStatusColor(post.status, post.published)}>
+                        <Badge
+                          className={getStatusColor(
+                            post.status,
+                            post.published
+                          )}
+                        >
                           <div className="flex items-center space-x-1">
                             {getStatusIcon(post.status, post.published)}
-                            <span>{getStatusText(post.status, post.published)}</span>
+                            <span>
+                              {getStatusText(post.status, post.published)}
+                            </span>
                           </div>
                         </Badge>
                       </div>
@@ -372,7 +420,11 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
 
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-3 w-3" />
-                          <span>{new Date(post.createdAt).toLocaleDateString("fr-FR")}</span>
+                          <span>
+                            {new Date(post.createdAt).toLocaleDateString(
+                              "fr-FR"
+                            )}
+                          </span>
                         </div>
 
                         {post.category && (
@@ -397,7 +449,8 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                           <div className="flex items-center space-x-1">
                             <TagIcon className="h-3 w-3" />
                             <span>
-                              {post.tags.length} tag{post.tags.length > 1 ? "s" : ""}
+                              {post.tags.length} tag
+                              {post.tags.length > 1 ? "s" : ""}
                             </span>
                           </div>
                         )}
@@ -431,7 +484,11 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
                     {/* Actions */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -483,15 +540,21 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer les articles sélectionnés</AlertDialogTitle>
+            <AlertDialogTitle>
+              Supprimer les articles sélectionnés
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Êtes-vous sûr de vouloir supprimer {selectedPosts.length} article
-              {selectedPosts.length > 1 ? "s" : ""} ? Cette action est irréversible.
+              {selectedPosts.length > 1 ? "s" : ""} ? Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
               {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Supprimer
             </AlertDialogAction>
@@ -500,12 +563,16 @@ export function PostsListClient({ initialData, searchParams, userId }: PostsList
       </AlertDialog>
 
       {/* Dialog de confirmation de suppression individuelle */}
-      <AlertDialog open={!!postToDelete} onOpenChange={() => setPostToDelete(null)}>
+      <AlertDialog
+        open={!!postToDelete}
+        onOpenChange={() => setPostToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cet article</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cet article ? Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer cet article ? Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

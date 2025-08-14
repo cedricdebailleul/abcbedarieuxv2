@@ -339,7 +339,7 @@ export default function MyEventsPage() {
               <Card key={event.id} className="hover:shadow-md transition-shadow">
                 <div className="relative h-48 w-full">
                   <SafeImage
-                    src={normalizeImagePath(event.coverImage)}
+                    src={normalizeImagePath(event.coverImage) || ""}
                     alt={`Image de ${event.title}`}
                     fill
                     className="object-cover rounded-t-lg"

@@ -41,14 +41,15 @@ export async function POST(
     }
 
     // Récupérer les avis Google depuis googleBusinessData
-    const googleReviews = place.googleBusinessData?.reviews || [];
+    const googleBusinessData = place.googleBusinessData as { reviews?: any[]; rating?: number; user_ratings_total?: number };
+    const googleReviews = googleBusinessData?.reviews || [];
 
     // Debug: voir ce qui est disponible
     console.log("🔍 googleBusinessData keys:", Object.keys(place.googleBusinessData || {}));
     console.log("🔍 reviews found:", googleReviews.length);
     console.log("🔍 rating info:", {
-      rating: place.googleBusinessData?.rating,
-      user_ratings_total: place.googleBusinessData?.user_ratings_total,
+      rating: googleBusinessData?.rating,
+      user_ratings_total: (googleBusinessData?.user_ratings_total as number) || 0,
     });
 
     if (!Array.isArray(googleReviews) || googleReviews.length === 0) {
@@ -115,7 +116,7 @@ export async function POST(
         where: { id: placeId },
         data: {
           rating: stats._avg.rating || 0,
-          reviewCount: (place.googleBusinessData?.user_ratings_total || 0) + stats._count.id,
+          reviewCount: ((place.googleBusinessData as { user_ratings_total?: number })?.user_ratings_total || 0) + stats._count.id,
         },
       });
     }

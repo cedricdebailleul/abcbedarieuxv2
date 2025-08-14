@@ -1,6 +1,15 @@
 "use client";
 
-import { Award, Calendar, Eye, EyeOff, Search, Shield, Star, Trophy } from "lucide-react";
+import {
+  Award,
+  Calendar,
+  Eye,
+  EyeOff,
+  Search,
+  Shield,
+  Star,
+  Trophy,
+} from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +33,7 @@ import {
 interface UserBadgeData {
   id: string;
   earnedAt: string;
-  reason?: string;
+  reason?: string | null;
   isVisible: boolean;
   badge: {
     id: string;
@@ -52,9 +61,13 @@ interface BadgeCollectionProps {
   allBadges: Badge[];
 }
 
-export default function BadgeCollection({ userBadges, allBadges }: BadgeCollectionProps) {
+export default function BadgeCollection({
+  userBadges,
+  allBadges,
+}: BadgeCollectionProps) {
   const [_selectedBadge, _setSelectedBadge] = useState<Badge | null>(null);
-  const [_selectedUserBadge, _setSelectedUserBadge] = useState<UserBadgeData | null>(null);
+  const [_selectedUserBadge, _setSelectedUserBadge] =
+    useState<UserBadgeData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [rarityFilter, setRarityFilter] = useState<string>("all");
@@ -77,45 +90,40 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
       const matchesSearch =
         badge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         badge.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = categoryFilter === "all" || badge.category === categoryFilter;
-      const matchesRarity = rarityFilter === "all" || badge.rarity === rarityFilter;
+      const matchesCategory =
+        categoryFilter === "all" || badge.category === categoryFilter;
+      const matchesRarity =
+        rarityFilter === "all" || badge.rarity === rarityFilter;
       const matchesEarnedFilter = !showOnlyEarned || badge.isEarned;
 
-      return matchesSearch && matchesCategory && matchesRarity && matchesEarnedFilter;
+      return (
+        matchesSearch && matchesCategory && matchesRarity && matchesEarnedFilter
+      );
     });
 
   // Grouper par catégorie
-  const badgesByCategory = enrichedBadges.reduce(
-    (acc, badge) => {
-      const category = badge.category;
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(badge);
-      return acc;
-    },
-    {} as Record<string, typeof enrichedBadges>
-  );
+  const badgesByCategory = enrichedBadges.reduce((acc, badge) => {
+    const category = badge.category;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(badge);
+    return acc;
+  }, {} as Record<string, typeof enrichedBadges>);
 
   // Statistiques des badges
   const stats = {
     total: allBadges.length,
     earned: userBadges.length,
     visible: userBadges.filter((b) => b.isVisible).length,
-    byCategory: userBadges.reduce(
-      (acc, b) => {
-        acc[b.badge.category] = (acc[b.badge.category] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    ),
-    byRarity: userBadges.reduce(
-      (acc, b) => {
-        acc[b.badge.rarity] = (acc[b.badge.rarity] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    ),
+    byCategory: userBadges.reduce((acc, b) => {
+      acc[b.badge.category] = (acc[b.badge.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>),
+    byRarity: userBadges.reduce((acc, b) => {
+      acc[b.badge.rarity] = (acc[b.badge.rarity] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>),
   };
 
   const getCategoryIcon = (category: string) => {
@@ -183,25 +191,33 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
 
   const getHowToEarnMessage = (badgeTitle: string, category: string) => {
     const messages: Record<string, string> = {
-      Bienvenue: "Badge automatiquement attribué lors de votre inscription sur la plateforme.",
-      "Premier pas": "Connectez-vous pour la première fois après votre inscription.",
+      Bienvenue:
+        "Badge automatiquement attribué lors de votre inscription sur la plateforme.",
+      "Premier pas":
+        "Connectez-vous pour la première fois après votre inscription.",
       "Profil complété":
         "Remplissez toutes les informations de votre profil (nom, prénom, bio, photo).",
-      "Premier article": "Publiez votre premier article ou contenu sur la plateforme.",
-      "Contributeur actif": "Publiez 10 articles ou contenus pour démontrer votre engagement.",
+      "Premier article":
+        "Publiez votre premier article ou contenu sur la plateforme.",
+      "Contributeur actif":
+        "Publiez 10 articles ou contenus pour démontrer votre engagement.",
       Expert: "Publiez 50 articles de qualité pour être reconnu comme expert.",
-      Légende: "Atteignez 100 publications pour rejoindre les légendes de la plateforme.",
+      Légende:
+        "Atteignez 100 publications pour rejoindre les légendes de la plateforme.",
       "Membre fidèle": "Restez actif pendant 30 jours consécutifs.",
       Vétéran: "Célébrez votre première année sur la plateforme.",
       Fondateur: "Badge spécial réservé aux premiers membres de la communauté.",
       "Beta testeur": "Participez aux tests de nouvelles fonctionnalités.",
-      "Aide précieuse": "Aidez d'autres membres et recevez des commentaires positifs.",
+      "Aide précieuse":
+        "Aidez d'autres membres et recevez des commentaires positifs.",
     };
 
     const categoryMessages: Record<string, string> = {
       GENERAL: "Badge général obtenu par diverses actions sur la plateforme.",
-      ACHIEVEMENT: "Badge d'accomplissement obtenu en atteignant certains objectifs.",
-      PARTICIPATION: "Badge de participation obtenu en étant actif dans la communauté.",
+      ACHIEVEMENT:
+        "Badge d'accomplissement obtenu en atteignant certains objectifs.",
+      PARTICIPATION:
+        "Badge de participation obtenu en étant actif dans la communauté.",
       SPECIAL: "Badge spécial attribué lors d'événements particuliers.",
       ANNIVERSARY: "Badge anniversaire célébrant votre fidélité.",
     };
@@ -213,7 +229,9 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
     );
   };
 
-  const uniqueCategories = Array.from(new Set(allBadges.map((b) => b.category)));
+  const uniqueCategories = Array.from(
+    new Set(allBadges.map((b) => b.category))
+  );
   const uniqueRarities = Array.from(new Set(allBadges.map((b) => b.rarity)));
 
   return (
@@ -229,11 +247,15 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats.total}
+              </div>
               <div className="text-sm text-gray-600">Badges total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.earned}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.earned}
+              </div>
               <div className="text-sm text-gray-600">Obtenus</div>
             </div>
             <div className="text-center">
@@ -346,7 +368,9 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                             badge.isEarned ? "opacity-100" : "opacity-60"
                           } ${badge.isEarned ? "shadow-md" : "shadow-sm"}`}
                           style={{
-                            borderColor: badge.isEarned ? badge.color || "#3B82F6" : "#D1D5DB",
+                            borderColor: badge.isEarned
+                              ? badge.color || "#3B82F6"
+                              : "#D1D5DB",
                           }}
                         >
                           {badge.isEarned &&
@@ -370,7 +394,9 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                                 backgroundColor: badge.isEarned
                                   ? badge.color || "#3B82F6"
                                   : "#F3F4F6",
-                                filter: badge.isEarned ? "none" : "grayscale(100%)",
+                                filter: badge.isEarned
+                                  ? "none"
+                                  : "grayscale(100%)",
                               }}
                             >
                               <Trophy className="h-8 w-8" />
@@ -379,7 +405,9 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                             <div className="space-y-1">
                               <h3
                                 className={`font-medium text-sm truncate ${
-                                  badge.isEarned ? "text-gray-900" : "text-gray-500"
+                                  badge.isEarned
+                                    ? "text-gray-900"
+                                    : "text-gray-500"
                                 }`}
                                 title={badge.title}
                               >
@@ -387,14 +415,16 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                               </h3>
                               <Badge
                                 variant={getRarityBadgeVariant(badge.rarity)}
-                                className={`text-xs ${getRarityColor(badge.rarity)} ${
-                                  badge.isEarned ? "" : "opacity-60"
-                                }`}
+                                className={`text-xs ${getRarityColor(
+                                  badge.rarity
+                                )} ${badge.isEarned ? "" : "opacity-60"}`}
                               >
                                 {getRarityLabel(badge.rarity)}
                               </Badge>
                               {!badge.isEarned && (
-                                <div className="text-xs text-gray-400 mt-1">Non obtenu</div>
+                                <div className="text-xs text-gray-400 mt-1">
+                                  Non obtenu
+                                </div>
                               )}
                             </div>
                           </div>
@@ -412,7 +442,9 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                                 backgroundColor: badge.isEarned
                                   ? badge.color || "#3B82F6"
                                   : "#F3F4F6",
-                                filter: badge.isEarned ? "none" : "grayscale(100%)",
+                                filter: badge.isEarned
+                                  ? "none"
+                                  : "grayscale(100%)",
                               }}
                             >
                               <Trophy className="h-12 w-12" />
@@ -422,7 +454,9 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                                 </div>
                               )}
                             </div>
-                            <DialogTitle className="text-xl">{badge.title}</DialogTitle>
+                            <DialogTitle className="text-xl">
+                              {badge.title}
+                            </DialogTitle>
                             <div className="flex items-center justify-center gap-2 mt-2">
                               <Badge
                                 variant={getRarityBadgeVariant(badge.rarity)}
@@ -436,7 +470,11 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                               >
                                 {getCategoryLabel(badge.category)}
                               </Badge>
-                              <Badge variant={badge.isEarned ? "default" : "secondary"}>
+                              <Badge
+                                variant={
+                                  badge.isEarned ? "default" : "secondary"
+                                }
+                              >
                                 {badge.isEarned ? "Obtenu" : "Non obtenu"}
                               </Badge>
                             </div>
@@ -461,7 +499,9 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                               {badge.userBadgeData.reason && (
                                 <div>
                                   <h4 className="font-medium mb-1">Raison</h4>
-                                  <p className="text-gray-600">{badge.userBadgeData.reason}</p>
+                                  <p className="text-gray-600">
+                                    {badge.userBadgeData.reason}
+                                  </p>
                                 </div>
                               )}
 
@@ -471,12 +511,16 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                                   {badge.userBadgeData.isVisible ? (
                                     <>
                                       <Eye className="h-4 w-4 text-green-600" />
-                                      <span className="text-green-600">Visible sur le profil</span>
+                                      <span className="text-green-600">
+                                        Visible sur le profil
+                                      </span>
                                     </>
                                   ) : (
                                     <>
                                       <EyeOff className="h-4 w-4 text-gray-500" />
-                                      <span className="text-gray-500">Masqué sur le profil</span>
+                                      <span className="text-gray-500">
+                                        Masqué sur le profil
+                                      </span>
                                     </>
                                   )}
                                 </div>
@@ -488,7 +532,10 @@ export default function BadgeCollection({ userBadges, allBadges }: BadgeCollecti
                                 💡 Comment l'obtenir ?
                               </h4>
                               <p className="text-gray-600 text-sm">
-                                {getHowToEarnMessage(badge.title, badge.category)}
+                                {getHowToEarnMessage(
+                                  badge.title,
+                                  badge.category
+                                )}
                               </p>
                             </div>
                           )}

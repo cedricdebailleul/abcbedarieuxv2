@@ -1,14 +1,28 @@
 "use client";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 import { Loader2, Send } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, Suspense } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { authClient } from "@/lib/auth-client";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter();
   const [otp, setOtp] = useState("");
   const [otpPending, startTransitionOtp] = useTransition();
@@ -24,7 +38,9 @@ export default function VerifyEmailPage() {
         fetchOptions: {
           onSuccess: () => {
             // Redirect to the home page or dashboard after successful verification
-            toast.success("Email verified successfully! Redirecting to your dashboard.");
+            toast.success(
+              "Email verified successfully! Redirecting to your dashboard."
+            );
             router.push("/dashboard");
           },
           onError: () => {
@@ -39,13 +55,18 @@ export default function VerifyEmailPage() {
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Please check your email</CardTitle>
         <CardDescription className="">
-          A verification code has been sent to your email. Please enter the code below to verify
-          your email address.
+          A verification code has been sent to your email. Please enter the code
+          below to verify your email address.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-6">
         <div className="flex flex-col items-center space-y-2">
-          <InputOTP className="gap-2" maxLength={6} value={otp} onChange={(value) => setOtp(value)}>
+          <InputOTP
+            className="gap-2"
+            maxLength={6}
+            value={otp}
+            onChange={(value) => setOtp(value)}
+          >
             <InputOTPGroup>
               <InputOTPSlot index={0} />
               <InputOTPSlot index={1} />
@@ -61,7 +82,11 @@ export default function VerifyEmailPage() {
             Enter the 6-digit code sent to your email.
           </p>
         </div>
-        <Button onClick={verifyOtp} disabled={otpPending || !isOtpCompleted} className="w-full">
+        <Button
+          onClick={verifyOtp}
+          disabled={otpPending || !isOtpCompleted}
+          className="w-full"
+        >
           {otpPending ? (
             <>
               <Loader2 className="size-4 animate-spin" />
@@ -76,5 +101,13 @@ export default function VerifyEmailPage() {
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

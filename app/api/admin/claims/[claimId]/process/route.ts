@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { ClaimStatus, PlaceStatus } from "@/lib/generated/prisma";
-import { notifyUserClaimApproved, notifyUserClaimRejected } from "@/lib/place-notifications";
+import {
+  notifyUserClaimApproved,
+  notifyUserClaimRejected,
+} from "@/lib/place-notifications";
 import { prisma } from "@/lib/prisma";
 
 const processSchema = z.object({
@@ -11,7 +14,10 @@ const processSchema = z.object({
 });
 
 // POST /api/admin/claims/[claimId]/process - Traiter une revendication
-export async function POST(request: Request, { params }: { params: { claimId: string } }) {
+export async function POST(
+  request: Request,
+  { params }: { params: { claimId: string } }
+) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -19,7 +25,10 @@ export async function POST(request: Request, { params }: { params: { claimId: st
     const { claimId } = params;
 
     if (!session?.user || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -43,7 +52,10 @@ export async function POST(request: Request, { params }: { params: { claimId: st
     });
 
     if (!existingClaim) {
-      return NextResponse.json({ error: "Revendication non trouvée" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Revendication non trouvée" },
+        { status: 404 }
+      );
     }
 
     if (existingClaim.status !== ClaimStatus.PENDING) {
@@ -59,7 +71,8 @@ export async function POST(request: Request, { params }: { params: { claimId: st
       const updatedClaim = await tx.placeClaim.update({
         where: { id: claimId },
         data: {
-          status: action === "approve" ? ClaimStatus.APPROVED : ClaimStatus.REJECTED,
+          status:
+            action === "approve" ? ClaimStatus.APPROVED : ClaimStatus.REJECTED,
           processedBy: session.user.id,
           processedAt: new Date(),
           adminMessage,
@@ -137,12 +150,15 @@ export async function POST(request: Request, { params }: { params: { claimId: st
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { error: "Données invalides", details: error.issues },
         { status: 400 }
       );
     }
 
     console.error("Erreur lors du traitement de la revendication:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

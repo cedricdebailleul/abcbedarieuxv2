@@ -22,19 +22,17 @@ interface ClaimStatus {
   }[];
 }
 
-export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceButtonProps) {
+export function ClaimPlaceButton({
+  placeId,
+  placeName,
+  hasOwner,
+}: ClaimPlaceButtonProps) {
   const { data: session, status } = useSession();
   const [claimStatus, setClaimStatus] = useState<ClaimStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [claimMessage, setClaimMessage] = useState("");
   const [proofUrl, setProofUrl] = useState("");
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchClaimStatus();
-    }
-  }, [status, fetchClaimStatus]);
 
   const fetchClaimStatus = async () => {
     try {
@@ -47,6 +45,12 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
       console.error("Erreur lors de la vérification du statut:", error);
     }
   };
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchClaimStatus();
+    }
+  }, [status, fetchClaimStatus]);
 
   const handleClaim = async () => {
     if (!claimMessage.trim()) {
@@ -166,11 +170,15 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
 
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h3 className="font-medium text-gray-900 mb-2">Votre demande de revendication</h3>
+        <h3 className="font-medium text-gray-900 mb-2">
+          Votre demande de revendication
+        </h3>
 
         <div className="mb-3">
           <span
-            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(latestClaim.status)}`}
+            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(
+              latestClaim.status
+            )}`}
           >
             {getStatusText(latestClaim.status)}
           </span>
@@ -184,7 +192,8 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
         {latestClaim.adminMessage && (
           <div className="bg-blue-50 border border-blue-200 rounded p-3">
             <p className="text-sm text-blue-800">
-              <span className="font-medium">Message admin:</span> {latestClaim.adminMessage}
+              <span className="font-medium">Message admin:</span>{" "}
+              {latestClaim.adminMessage}
             </p>
           </div>
         )}
@@ -205,7 +214,9 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
   if (hasOwner && !claimStatus.canClaim) {
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <p className="text-gray-700 text-sm">Cette place a déjà un propriétaire vérifié.</p>
+        <p className="text-gray-700 text-sm">
+          Cette place a déjà un propriétaire vérifié.
+        </p>
       </div>
     );
   }
@@ -214,7 +225,9 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
   if (showClaimForm) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="font-medium text-gray-900 mb-4">Revendiquer "{placeName}"</h3>
+        <h3 className="font-medium text-gray-900 mb-4">
+          Revendiquer "{placeName}"
+        </h3>
 
         <div className="space-y-4">
           <div>
@@ -242,7 +255,8 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
               placeholder="https://... (lien vers document, photo, etc.)"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Vous pouvez fournir un lien vers un document prouvant votre propriété
+              Vous pouvez fournir un lien vers un document prouvant votre
+              propriété
             </p>
           </div>
 
@@ -263,8 +277,8 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
               </svg>
               <div>
                 <p className="text-sm text-yellow-800">
-                  Votre demande sera examinée par un administrateur. Vous recevrez un email avec la
-                  décision.
+                  Votre demande sera examinée par un administrateur. Vous
+                  recevrez un email avec la décision.
                 </p>
               </div>
             </div>
@@ -325,7 +339,9 @@ export function ClaimPlaceButton({ placeId, placeName, hasOwner }: ClaimPlaceBut
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="font-medium text-blue-900 mb-1">Cette place vous appartient ?</h3>
+            <h3 className="font-medium text-blue-900 mb-1">
+              Cette place vous appartient ?
+            </h3>
             <p className="text-sm text-blue-800">
               Revendiquez-la pour la gérer et recevoir les avis clients.
             </p>

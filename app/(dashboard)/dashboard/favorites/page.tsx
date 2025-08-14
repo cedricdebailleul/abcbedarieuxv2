@@ -167,7 +167,7 @@ export default function FavoritesPage() {
                   {/* Image de couverture */}
                   <div className="relative h-48 w-full">
                     <SafeImage
-                      src={normalizeImagePath(place.coverImage || place.logo)}
+                      src={normalizeImagePath(place.coverImage || place.logo) || ""}
                       alt={`Image de ${place.name}`}
                       fill
                       className="object-cover rounded-t-lg"

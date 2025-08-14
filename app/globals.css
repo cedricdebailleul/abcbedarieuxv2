@@ -247,3 +247,370 @@
   pointer-events: all !important;
   background: #fff !important;
 }
+
+/* ===== STYLES D'IMPRESSION OPTIMISÉS ===== */
+@media print {
+  /* Reset des styles généraux */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 20pt !important;
+  }
+
+  /* Masquer les éléments non pertinents pour l'impression */
+  nav,
+  header:not(.print-keep),
+  footer:not(.print-keep),
+  .no-print,
+  [data-slot="dropdown-menu"],
+  button:not(.print-keep),
+  .sidebar,
+  .cookie-banner,
+  .floating-button,
+  .scroll-indicator,
+  .back-to-top {
+    display: none !important;
+  }
+
+  /* Layout principal pour l'impression */
+  .print-layout {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* En-tête d'impression avec logo et titre */
+  .print-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 20pt !important;
+    padding-bottom: 10pt !important;
+    border-bottom: 2pt solid #000 !important;
+  }
+
+  .print-header h1 {
+    font-size: 18pt !important;
+    font-weight: bold !important;
+    margin: 0 !important;
+  }
+
+  .print-header .print-logo {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    color: #666 !important;
+  }
+
+  /* Contenu principal */
+  .print-content {
+    margin: 20pt 0 !important;
+  }
+
+  /* Image de couverture pour l'impression */
+  .print-cover-image {
+    width: 100% !important;
+    max-height: 200pt !important;
+    object-fit: cover !important;
+    margin: 10pt 0 !important;
+    border: 1pt solid #ccc !important;
+  }
+
+  /* Titre principal */
+  .print-title {
+    font-size: 24pt !important;
+    font-weight: bold !important;
+    margin: 15pt 0 10pt 0 !important;
+    color: #000 !important;
+  }
+
+  /* Sous-titre et métadonnées */
+  .print-subtitle {
+    font-size: 14pt !important;
+    color: #666 !important;
+    margin-bottom: 15pt !important;
+  }
+
+  .print-meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 15pt !important;
+    margin: 15pt 0 !important;
+    padding: 10pt !important;
+    background: #f5f5f5 !important;
+    border-left: 4pt solid #000 !important;
+  }
+
+  .print-meta-item {
+    flex: 1 !important;
+    min-width: 150pt !important;
+  }
+
+  .print-meta-label {
+    font-weight: bold !important;
+    font-size: 11pt !important;
+    margin-bottom: 3pt !important;
+  }
+
+  .print-meta-value {
+    font-size: 12pt !important;
+    color: #333 !important;
+  }
+
+  /* Description */
+  .print-description {
+    margin: 20pt 0 !important;
+    font-size: 12pt !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Informations de contact */
+  .print-contact {
+    margin: 20pt 0 !important;
+    padding: 15pt !important;
+    border: 1pt solid #ccc !important;
+    background: #fafafa !important;
+  }
+
+  .print-contact h3 {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    margin-bottom: 10pt !important;
+    border-bottom: 1pt solid #ccc !important;
+    padding-bottom: 5pt !important;
+  }
+
+  .print-contact-item {
+    margin: 5pt 0 !important;
+    font-size: 11pt !important;
+  }
+
+  /* Liste des dates (pour les événements récurrents) */
+  .print-dates {
+    margin: 15pt 0 !important;
+  }
+
+  .print-dates h4 {
+    font-size: 13pt !important;
+    font-weight: bold !important;
+    margin-bottom: 8pt !important;
+  }
+
+  .print-date-item {
+    margin: 5pt 0 !important;
+    padding: 5pt 0 !important;
+    border-bottom: 0.5pt dotted #ccc !important;
+    font-size: 11pt !important;
+  }
+
+  /* Galerie d'images pour l'impression */
+  .print-gallery {
+    margin: 20pt 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-gallery h3 {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    margin-bottom: 10pt !important;
+  }
+
+  .print-gallery-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10pt !important;
+  }
+
+  .print-gallery-item {
+    width: 100% !important;
+    height: 80pt !important;
+    object-fit: cover !important;
+    border: 1pt solid #ddd !important;
+  }
+
+  /* Pied de page d'impression */
+  .print-footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 30pt !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10pt 20pt !important;
+    border-top: 1pt solid #ccc !important;
+    background: white !important;
+    font-size: 10pt !important;
+    color: #666 !important;
+  }
+
+  /* Gestion des sauts de page */
+  .print-section {
+    page-break-inside: avoid !important;
+    margin-bottom: 15pt !important;
+  }
+
+  .print-page-break {
+    page-break-before: always !important;
+  }
+
+  /* Styles spécifiques pour les cartes */
+  [data-slot="card"] {
+    border: 1pt solid #ddd !important;
+    margin: 10pt 0 !important;
+    padding: 10pt !important;
+    background: white !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+  }
+
+  [data-slot="card-title"] {
+    font-size: 13pt !important;
+    font-weight: bold !important;
+    margin-bottom: 8pt !important;
+    color: #000 !important;
+  }
+
+  [data-slot="card-content"] {
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Masquer les icônes et éléments décoratifs */
+  svg:not(.print-keep) {
+    display: none !important;
+  }
+
+  /* Liens en impression */
+  a:after {
+    content: " (" attr(href) ")" !important;
+    font-size: 10pt !important;
+    color: #666 !important;
+  }
+
+  a[href^="mailto:"]:after {
+    content: "" !important;
+  }
+
+  a[href^="tel:"]:after {
+    content: "" !important;
+  }
+
+  /* Badges et étiquettes */
+  [data-slot="badge"] {
+    border: 1pt solid #ccc !important;
+    padding: 2pt 6pt !important;
+    font-size: 9pt !important;
+    background: #f0f0f0 !important;
+    color: #333 !important;
+    box-shadow: none !important;
+  }
+
+  /* Layout spécifique aux événements */
+  .event-print-layout {
+    max-width: none !important;
+  }
+
+  .event-cover-container {
+    position: relative !important;
+    height: auto !important;
+    margin-bottom: 20pt !important;
+  }
+
+  .event-cover-container img {
+    width: 100% !important;
+    max-height: 300pt !important;
+    object-fit: cover !important;
+    border: 2pt solid #ddd !important;
+  }
+
+  .event-hero-content {
+    position: static !important;
+    background: white !important;
+    color: black !important;
+    padding: 15pt !important;
+    margin: 10pt 0 !important;
+    border: 1pt solid #ddd !important;
+  }
+
+  .event-hero-content h1 {
+    font-size: 20pt !important;
+    margin-bottom: 10pt !important;
+    color: #000 !important;
+  }
+
+  .event-hero-content p {
+    font-size: 12pt !important;
+    color: #333 !important;
+  }
+
+  /* Layout responsive pour l'impression */
+  .grid {
+    display: block !important;
+  }
+
+  .grid > * {
+    width: 100% !important;
+    margin-bottom: 15pt !important;
+  }
+
+  /* Cartes d'information importantes */
+  .print-info-card {
+    border: 2pt solid #000 !important;
+    background: #f9f9f9 !important;
+    padding: 15pt !important;
+    margin: 15pt 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-info-card h3 {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    margin-bottom: 10pt !important;
+    color: #000 !important;
+  }
+
+  /* Maps et iframes */
+  iframe {
+    display: none !important;
+  }
+
+  /* Remplacer les cartes par du texte */
+  iframe[title*="Carte"] {
+    display: none !important;
+  }
+
+  iframe[title*="Carte"] + * {
+    content: "Voir la carte en ligne" !important;
+    font-style: italic !important;
+    color: #666 !important;
+  }
+}
+
+/* Styles d'impression pour mobile */
+@media print and (max-width: 768px) {
+  body {
+    padding: 10pt !important;
+  }
+  
+  .print-meta {
+    flex-direction: column !important;
+  }
+  
+  .print-gallery-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .print-title {
+    font-size: 20pt !important;
+  }
+}

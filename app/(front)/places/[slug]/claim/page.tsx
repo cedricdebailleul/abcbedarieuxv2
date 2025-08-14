@@ -24,7 +24,9 @@ interface ClaimPlacePageProps {
   params: Promise<{ slug: string }>;
 }
 
-export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePageProps) {
+export default function ClaimPlacePage({
+  params: paramsPromise,
+}: ClaimPlacePageProps) {
   const router = useRouter();
   const [slug, setSlug] = useState<string>("");
   const { data: session, status } = useSession();
@@ -37,7 +39,12 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
     lastName: "",
     email: "",
     phone: "",
-    relationship: "owner" as "owner" | "manager" | "employee" | "family" | "other",
+    relationship: "owner" as
+      | "owner"
+      | "manager"
+      | "employee"
+      | "family"
+      | "other",
     message: "",
     proof: "",
   });
@@ -84,7 +91,7 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
 
   // Rediriger si pas connecté (seulement si on a un slug et que le status est chargé)
   useEffect(() => {
-    if (status === "loaded" && !session?.user && slug) {
+    if (status === "unauthenticated" && !session?.user && slug) {
       router.push(`/login?callbackUrl=/places/${slug}/claim`);
     }
   }, [session, status, router, slug]);
@@ -139,7 +146,9 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
       router.push(`/places/${place.slug}`);
     } catch (error: any) {
       console.error("Erreur soumission:", error);
-      toast.error(error.message || "Erreur lors de la soumission de la demande");
+      toast.error(
+        error.message || "Erreur lors de la soumission de la demande"
+      );
     } finally {
       setSubmitting(false);
     }
@@ -193,8 +202,8 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
             {place.street}, {place.city}
           </p>
           <p className="text-sm text-muted-foreground mb-6">
-            Pour revendiquer cette place, veuillez fournir des informations détaillées prouvant
-            votre lien avec cet établissement.
+            Pour revendiquer cette place, veuillez fournir des informations
+            détaillées prouvant votre lien avec cet établissement.
           </p>
         </CardContent>
       </Card>
@@ -216,7 +225,9 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
                 <Input
                   id="firstName"
                   value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, firstName: e.target.value })
+                  }
                   placeholder="Votre prénom"
                   className="mt-2"
                   required
@@ -228,7 +239,9 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
                 <Input
                   id="lastName"
                   value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
                   placeholder="Votre nom"
                   className="mt-2"
                   required
@@ -243,7 +256,9 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   placeholder="votre.email@exemple.com"
                   className="mt-2"
                   required
@@ -256,7 +271,9 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
                   id="phone"
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   placeholder="06 12 34 56 78"
                   className="mt-2"
                   required
@@ -265,11 +282,18 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
             </div>
 
             <div>
-              <Label htmlFor="relationship">Votre relation avec l'établissement *</Label>
+              <Label htmlFor="relationship">
+                Votre relation avec l'établissement *
+              </Label>
               <select
                 id="relationship"
                 value={formData.relationship}
-                onChange={(e) => setFormData({ ...formData, relationship: e.target.value as any })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    relationship: e.target.value as any,
+                  })
+                }
                 className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 required
               >
@@ -286,7 +310,9 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
               <Textarea
                 id="message"
                 value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, message: e.target.value })
+                }
                 placeholder="Expliquez votre relation avec cet établissement et pourquoi vous souhaitez le revendiquer. Minimum 20 caractères."
                 className="min-h-[120px] mt-2"
                 required
@@ -302,17 +328,22 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
                 id="proof"
                 type="url"
                 value={formData.proof}
-                onChange={(e) => setFormData({ ...formData, proof: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, proof: e.target.value })
+                }
                 placeholder="https://exemple.com/document-ou-photo.jpg"
                 className="mt-2"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Lien vers un document, photo ou autre preuve de votre relation avec l'établissement
+                Lien vers un document, photo ou autre preuve de votre relation
+                avec l'établissement
               </p>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">Types de preuves acceptées :</h4>
+              <h4 className="font-medium text-blue-900 mb-2">
+                Types de preuves acceptées :
+              </h4>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• Kbis ou documents officiels de l'entreprise</li>
                 <li>• Factures ou contrats au nom de l'établissement</li>
@@ -353,8 +384,13 @@ export default function ClaimPlacePage({ params: paramsPromise }: ClaimPlacePage
           <h4 className="font-medium mb-2">Que se passe-t-il ensuite ?</h4>
           <ol className="text-sm text-muted-foreground space-y-2">
             <li>1. Votre demande sera examinée par un administrateur</li>
-            <li>2. Nous pourrons vous contacter pour des informations complémentaires</li>
-            <li>3. Une fois approuvée, vous deviendrez propriétaire de la fiche</li>
+            <li>
+              2. Nous pourrons vous contacter pour des informations
+              complémentaires
+            </li>
+            <li>
+              3. Une fois approuvée, vous deviendrez propriétaire de la fiche
+            </li>
             <li>4. Vous recevrez un email de confirmation</li>
           </ol>
           <p className="text-xs text-muted-foreground mt-4">

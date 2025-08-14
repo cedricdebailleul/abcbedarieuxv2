@@ -32,7 +32,8 @@ export function SafeImage({
 }: SafeImageProps) {
   const [hasError, setHasError] = useState(false);
 
-  if (hasError) {
+  // Si src est vide ou invalide, afficher directement le fallback
+  if (!src || src.trim() === "" || hasError) {
     return <div className={fallbackClassName}>Image non disponible</div>;
   }
 

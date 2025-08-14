@@ -289,14 +289,16 @@ export function PostForm({ initialData, mode }: PostFormProps) {
           toast.success(`Article ${mode === "create" ? "créé" : "mis à jour"} avec succès`);
           
           // Afficher les badges nouvellement obtenus
-          if (mode === "create" && result.data?.newBadges && result.data.newBadges.length > 0) {
-            // Délai pour que le toast s'affiche d'abord
-            setTimeout(() => {
-              result.data.newBadges.forEach((badgeData: any) => {
-                showBadge(badgeData.badge, badgeData.reason);
-              });
-            }, 1000);
-          }
+if (mode === "create" && result.data) {
+  const createData = result.data as { slug: string; newBadges?: any[] };
+  if (createData.newBadges && createData.newBadges.length > 0) {
+    setTimeout(() => {
+      createData.newBadges!.forEach((badgeData: any) => {
+        showBadge(badgeData.badge, badgeData.reason);
+      });
+    }, 1000);
+  }
+}
           
           router.push("/dashboard/posts");
           router.refresh();

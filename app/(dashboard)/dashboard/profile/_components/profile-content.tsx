@@ -1,15 +1,52 @@
 "use client";
 
-import { Calendar, Edit, EyeOff, Mail, MapPin, Phone, Trophy, User } from "lucide-react";
+import {
+  Calendar,
+  Edit,
+  EyeOff,
+  Mail,
+  MapPin,
+  Phone,
+  Trophy,
+  User,
+} from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BadgeCollection from "./badge-collection";
 import EmailVerification from "./email-verification";
 import ProfileEditForm from "./profile-edit-form";
+
+const transformUserData = (dbUser: any): UserData => {
+  return {
+    ...dbUser,
+    badges:
+      dbUser.badges?.map((userBadge: any) => ({
+        id: userBadge.id,
+        earnedAt: userBadge.earnedAt,
+        reason: userBadge.reason ?? undefined, // Convertir null en undefined
+        isVisible: userBadge.isVisible,
+        badge: {
+          id: userBadge.badge.id,
+          title: userBadge.badge.title,
+          description: userBadge.badge.description,
+          iconUrl: userBadge.badge.iconUrl,
+          color: userBadge.badge.color,
+          category: userBadge.badge.category.toString(), // Convertir enum en string
+          rarity: userBadge.badge.rarity.toString(), // Convertir enum en string
+        },
+      })) || [],
+  };
+};
 
 interface UserData {
   id: string;
@@ -22,21 +59,21 @@ interface UserData {
   createdAt: string | Date;
   lastLoginAt?: string | Date | null;
   profile?: {
-    firstname?: string | null;
-    lastname?: string | null;
-    bio?: string | null;
-    phone?: string | null;
-    address?: string | null;
-    language?: string | null;
-    timezone?: string | null;
+    firstname?: string;
+    lastname?: string;
+    bio?: string;
+    phone?: string;
+    address?: string;
+    language?: string;
+    timezone?: string;
     isPublic: boolean;
     showEmail: boolean;
     showPhone: boolean;
-  } | null;
+  };
   badges: Array<{
     id: string;
     earnedAt: string | Date;
-    reason?: string;
+    reason?: string | null;
     isVisible: boolean;
     badge: {
       id: string;
@@ -58,8 +95,8 @@ interface Badge {
   id: string;
   title: string;
   description: string;
-  iconUrl?: string | null;
-  color?: string | null;
+  iconUrl?: string | undefined;
+  color?: string | undefined;
   category: string;
   rarity: string;
 }
@@ -69,7 +106,10 @@ interface ProfileContentProps {
   allBadges: Badge[];
 }
 
-export default function ProfileContent({ user, allBadges }: ProfileContentProps) {
+export default function ProfileContent({
+  user,
+  allBadges,
+}: ProfileContentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState(user);
 
@@ -220,19 +260,29 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
           {/* Statistiques */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{userData.badges.length}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {userData.badges.length}
+              </div>
               <div className="text-sm text-gray-600">Badges</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{userData._count.posts}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {userData._count.posts}
+              </div>
               <div className="text-sm text-gray-600">Publications</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{userData._count.sessions}</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {userData._count.sessions}
+              </div>
               <div className="text-sm text-gray-600">Connexions</div>
             </div>
             <div className="text-center">
-              <div className={`text-2xl font-bold ${getStatusColor(userData.status)}`}>
+              <div
+                className={`text-2xl font-bold ${getStatusColor(
+                  userData.status
+                )}`}
+              >
                 {userData.status === "ACTIVE" ? "Actif" : "Inactif"}
               </div>
               <div className="text-sm text-gray-600">Statut</div>
@@ -242,10 +292,15 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
       </Card>
 
       {/* Contenu en onglets */}
-      <Tabs defaultValue={isEditing ? "edit" : "overview"} value={isEditing ? "edit" : undefined}>
+      <Tabs
+        defaultValue={isEditing ? "edit" : "overview"}
+        value={isEditing ? "edit" : undefined}
+      >
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Aperçu</TabsTrigger>
-          <TabsTrigger value="badges">Badges ({userData.badges.length})</TabsTrigger>
+          <TabsTrigger value="badges">
+            Badges ({userData.badges.length})
+          </TabsTrigger>
           <TabsTrigger value="edit" disabled={!isEditing}>
             Modifier
           </TabsTrigger>
@@ -267,17 +322,23 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                   <p className="text-gray-600">{userData.profile.bio}</p>
                 </div>
               ) : (
-                <p className="text-gray-500 italic">Aucune biographie ajoutée</p>
+                <p className="text-gray-500 italic">
+                  Aucune biographie ajoutée
+                </p>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
                 <div>
                   <h4 className="font-medium mb-1">Langue</h4>
-                  <p className="text-gray-600">{userData.profile?.language || "Français"}</p>
+                  <p className="text-gray-600">
+                    {userData.profile?.language || "Français"}
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-medium mb-1">Fuseau horaire</h4>
-                  <p className="text-gray-600">{userData.profile?.timezone || "Europe/Paris"}</p>
+                  <p className="text-gray-600">
+                    {userData.profile?.timezone || "Europe/Paris"}
+                  </p>
                 </div>
               </div>
 
@@ -286,19 +347,31 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span>Profil public</span>
-                    <Badge variant={userData.profile?.isPublic ? "default" : "secondary"}>
+                    <Badge
+                      variant={
+                        userData.profile?.isPublic ? "default" : "secondary"
+                      }
+                    >
                       {userData.profile?.isPublic ? "Oui" : "Non"}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Email visible</span>
-                    <Badge variant={userData.profile?.showEmail ? "default" : "secondary"}>
+                    <Badge
+                      variant={
+                        userData.profile?.showEmail ? "default" : "secondary"
+                      }
+                    >
                       {userData.profile?.showEmail ? "Oui" : "Non"}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Téléphone visible</span>
-                    <Badge variant={userData.profile?.showPhone ? "default" : "secondary"}>
+                    <Badge
+                      variant={
+                        userData.profile?.showPhone ? "default" : "secondary"
+                      }
+                    >
                       {userData.profile?.showPhone ? "Oui" : "Non"}
                     </Badge>
                   </div>
@@ -333,18 +406,29 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
                     <div
                       key={userBadge.id}
                       className="text-center p-3 rounded-lg border"
-                      style={{ borderColor: userBadge.badge.color || "#3B82F6" }}
+                      style={{
+                        borderColor: userBadge.badge.color || "#3B82F6",
+                      }}
                     >
                       <div
                         className="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center text-white"
-                        style={{ backgroundColor: userBadge.badge.color || "#3B82F6" }}
+                        style={{
+                          backgroundColor: userBadge.badge.color || "#3B82F6",
+                        }}
                       >
                         <Trophy className="h-6 w-6" />
                       </div>
-                      <div className="text-xs font-medium truncate" title={userBadge.badge.title}>
+                      <div
+                        className="text-xs font-medium truncate"
+                        title={userBadge.badge.title}
+                      >
                         {userBadge.badge.title}
                       </div>
-                      <div className={`text-xs ${getRarityColor(userBadge.badge.rarity)}`}>
+                      <div
+                        className={`text-xs ${getRarityColor(
+                          userBadge.badge.rarity
+                        )}`}
+                      >
                         {userBadge.badge.rarity}
                       </div>
                     </div>
@@ -360,7 +444,21 @@ export default function ProfileContent({ user, allBadges }: ProfileContentProps)
         </TabsContent>
 
         <TabsContent value="badges">
-          <BadgeCollection userBadges={userData.badges} allBadges={allBadges} />
+          <BadgeCollection
+            userBadges={userData.badges.map((badge) => ({
+              ...badge,
+              earnedAt:
+                typeof badge.earnedAt === "string"
+                  ? badge.earnedAt
+                  : badge.earnedAt.toISOString(),
+              badge: {
+                ...badge.badge,
+                iconUrl: badge.badge.iconUrl ?? undefined,
+                color: badge.badge.color ?? undefined,
+              },
+            }))}
+            allBadges={allBadges}
+          />
         </TabsContent>
 
         <TabsContent value="edit">

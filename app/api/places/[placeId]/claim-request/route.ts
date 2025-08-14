@@ -14,7 +14,9 @@ const claimRequestSchema = z.object({
   // Revendication
   message: z.string().min(20, "Le message doit faire au moins 20 caractères"),
   proof: z.string().url().optional(), // URL vers une preuve (document, photo, etc.)
-  relationship: z.enum(["owner", "manager", "employee", "family", "other"]).default("owner"),
+  relationship: z
+    .enum(["owner", "manager", "employee", "family", "other"])
+    .default("owner"),
 });
 
 export async function POST(
@@ -48,7 +50,10 @@ export async function POST(
 
     // Vérifier que la place n'a pas déjà un propriétaire
     if (place.ownerId) {
-      return NextResponse.json({ error: "Cette place a déjà un propriétaire" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Cette place a déjà un propriétaire" },
+        { status: 400 }
+      );
     }
 
     // Vérifier qu'il n'y a pas déjà une demande en cours de cet utilisateur
@@ -83,12 +88,12 @@ Relation: ${
       validatedData.relationship === "owner"
         ? "Propriétaire"
         : validatedData.relationship === "manager"
-          ? "Gérant"
-          : validatedData.relationship === "employee"
-            ? "Employé"
-            : validatedData.relationship === "family"
-              ? "Famille"
-              : "Autre"
+        ? "Gérant"
+        : validatedData.relationship === "employee"
+        ? "Employé"
+        : validatedData.relationship === "family"
+        ? "Famille"
+        : "Autre"
     }
 
 📝 JUSTIFICATION:
@@ -128,12 +133,15 @@ ${validatedData.proof ? `🔗 PREUVE: ${validatedData.proof}` : ""}
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { error: "Données invalides", details: error.issues },
         { status: 400 }
       );
     }
 
     console.error("Erreur lors de la création de la demande:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

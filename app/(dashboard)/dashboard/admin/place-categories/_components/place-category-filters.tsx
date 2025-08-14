@@ -23,9 +23,11 @@ interface PlaceCategoryFiltersComponentProps {
   initialFilters: PlaceCategoryFilters;
 }
 
-export function PlaceCategoryFilters({ initialFilters }: PlaceCategoryFiltersComponentProps) {
+export function PlaceCategoryFilters({
+  initialFilters,
+}: PlaceCategoryFiltersComponentProps) {
   const router = useRouter();
-  
+
   const [filters, setFilters] = useState({
     search: initialFilters.search || "",
     isActive: initialFilters.isActive?.toString() || "all",
@@ -47,12 +49,15 @@ export function PlaceCategoryFilters({ initialFilters }: PlaceCategoryFiltersCom
           sortBy: "name",
           sortOrder: "asc",
         });
-        
+
         if (result.success) {
           setParentCategories(result.data!.categories);
         }
       } catch (error) {
-        console.error("Erreur lors du chargement des catégories parent:", error);
+        console.error(
+          "Erreur lors du chargement des catégories parent:",
+          error
+        );
       }
     };
 
@@ -62,16 +67,18 @@ export function PlaceCategoryFilters({ initialFilters }: PlaceCategoryFiltersCom
   // Appliquer les filtres
   const applyFilters = () => {
     const params = new URLSearchParams();
-    
+
     if (filters.search) params.set("search", filters.search);
-    if (filters.isActive && filters.isActive !== "all") params.set("isActive", filters.isActive);
-    if (filters.parentId && filters.parentId !== "all") params.set("parentId", filters.parentId);
+    if (filters.isActive && filters.isActive !== "all")
+      params.set("isActive", filters.isActive);
+    if (filters.parentId && filters.parentId !== "all")
+      params.set("parentId", filters.parentId);
     if (filters.sortBy !== "sortOrder") params.set("sortBy", filters.sortBy);
     if (filters.sortOrder !== "asc") params.set("sortOrder", filters.sortOrder);
-    
+
     // Réinitialiser la page à 1
     params.set("page", "1");
-    
+
     router.push(`?${params.toString()}`);
   };
 
@@ -107,7 +114,9 @@ export function PlaceCategoryFilters({ initialFilters }: PlaceCategoryFiltersCom
               id="search"
               placeholder="Nom ou description..."
               value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, search: e.target.value }))
+              }
               className="pl-10"
             />
           </div>
@@ -138,7 +147,9 @@ export function PlaceCategoryFilters({ initialFilters }: PlaceCategoryFiltersCom
           <Label htmlFor="status">Statut</Label>
           <Select
             value={filters.isActive}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, isActive: value }))}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, isActive: value }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Tous" />
@@ -156,7 +167,9 @@ export function PlaceCategoryFilters({ initialFilters }: PlaceCategoryFiltersCom
           <Label htmlFor="parent">Catégorie parent</Label>
           <Select
             value={filters.parentId}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, parentId: value }))}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, parentId: value }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Toutes" />
@@ -183,7 +196,9 @@ export function PlaceCategoryFilters({ initialFilters }: PlaceCategoryFiltersCom
           <Label htmlFor="sortBy">Trier par</Label>
           <Select
             value={filters.sortBy}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}
+            onValueChange={(
+              value: "name" | "sortOrder" | "createdAt" | "placeCount"
+            ) => setFilters((prev) => ({ ...prev, sortBy: value }))}
           >
             <SelectTrigger>
               <SelectValue />
@@ -202,7 +217,12 @@ export function PlaceCategoryFilters({ initialFilters }: PlaceCategoryFiltersCom
           <Label htmlFor="sortOrder">Ordre</Label>
           <Select
             value={filters.sortOrder}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, sortOrder: value }))}
+            onValueChange={(value) =>
+              setFilters((prev) => ({
+                ...prev,
+                sortOrder: value as "asc" | "desc",
+              }))
+            }
           >
             <SelectTrigger>
               <SelectValue />

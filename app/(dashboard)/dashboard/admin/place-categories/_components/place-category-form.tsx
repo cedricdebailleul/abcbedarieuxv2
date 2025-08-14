@@ -38,11 +38,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-import { 
-  createPlaceCategoryAction, 
-  updatePlaceCategoryAction, 
+import {
+  createPlaceCategoryAction,
+  updatePlaceCategoryAction,
   getPlaceCategoryAction,
-  getPlaceCategoriesAction 
+  getPlaceCategoriesAction,
 } from "@/actions/place-category";
 import {
   createPlaceCategorySchema,
@@ -54,6 +54,7 @@ import {
   type UpdatePlaceCategoryInput,
 } from "@/lib/validations/place-category";
 import { cn } from "@/lib/utils";
+import z from "zod";
 
 interface PlaceCategoryFormProps {
   mode: "create" | "edit";
@@ -61,7 +62,11 @@ interface PlaceCategoryFormProps {
   initialData?: any;
 }
 
-export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCategoryFormProps) {
+export function PlaceCategoryForm({
+  mode,
+  categoryId,
+  initialData,
+}: PlaceCategoryFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
@@ -69,11 +74,23 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
   const [loading, setLoading] = useState(mode === "edit" && !initialData);
   const [parentCategories, setParentCategories] = useState<any[]>([]);
 
-  const schema = mode === "create" ? createPlaceCategorySchema : updatePlaceCategorySchema;
-  
+  const schema =
+    mode === "create"
+      ? createPlaceCategorySchema.extend({
+          id: z.string().optional(),
+          isActive: z.boolean(),
+          sortOrder: z.number(),
+        })
+      : updatePlaceCategorySchema.extend({
+          id: z.string(),
+          isActive: z.boolean(),
+          sortOrder: z.number(),
+        });
+
   const form = useForm<CreatePlaceCategoryInput | UpdatePlaceCategoryInput>({
     resolver: zodResolver(schema),
     defaultValues: {
+      id: mode === "edit" && categoryId ? categoryId : "",
       name: "",
       slug: "",
       description: "",
@@ -85,7 +102,6 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
       isActive: true,
       sortOrder: 0,
       parentId: null,
-      ...(mode === "edit" && categoryId ? { id: categoryId } : {}),
       ...initialData,
     },
   });
@@ -100,20 +116,25 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
           sortBy: "name",
           sortOrder: "asc",
         });
-        
+
         if (result.success) {
           // Ne garder que les catégories principales (sans parent) pour le sélecteur
-          let filtered = result.data!.categories.filter(cat => cat.parentId === null);
-          
+          let filtered = result.data!.categories.filter(
+            (cat) => cat.parentId === null
+          );
+
           // Exclure la catégorie actuelle si on est en mode édition
           if (mode === "edit" && categoryId) {
-            filtered = filtered.filter(cat => cat.id !== categoryId);
+            filtered = filtered.filter((cat) => cat.id !== categoryId);
           }
-          
+
           setParentCategories(filtered);
         }
       } catch (error) {
-        console.error("Erreur lors du chargement des catégories parent:", error);
+        console.error(
+          "Erreur lors du chargement des catégories parent:",
+          error
+        );
       }
     };
 
@@ -168,30 +189,44 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
 
   // Aperçu de la catégorie
   const previewData = form.watch();
-  
+
   const renderCategoryIcon = () => {
     const icon = previewData.icon;
     if (!icon) return <Hash className="w-8 h-8 text-muted-foreground" />;
-    
+
     // Emoji
-    if (icon.length <= 4 && /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon)) {
+    if (
+      icon.length <= 4 &&
+      /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(
+        icon
+      )
+    ) {
       return <span className="text-2xl">{icon}</span>;
     }
-    
+
     // Icône Lucide
     const IconComponent = (LucideIcons as any)[icon];
     if (IconComponent) {
-      return <IconComponent className="w-8 h-8" style={{ color: previewData.color }} />;
+      return (
+        <IconComponent
+          className="w-8 h-8"
+          style={{ color: previewData.color }}
+        />
+      );
     }
-    
+
     return <Hash className="w-8 h-8 text-muted-foreground" />;
   };
 
   const renderCategoryPreview = () => {
     const style = {
-      backgroundColor: previewData.bgColor ? undefined : `${previewData.color}20`,
-      color: previewData.textColor ? undefined : previewData.color,
-      borderColor: previewData.borderColor ? undefined : previewData.color,
+      backgroundColor: previewData.bgColor
+        ? undefined
+        : `${previewData.color}20`,
+      color: previewData.textColor ? undefined : previewData.color || undefined,
+      borderColor: previewData.borderColor
+        ? undefined
+        : previewData.color || undefined,
     };
 
     const className = cn(
@@ -213,7 +248,11 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
           </div>
           {previewData.parentId && (
             <div className="text-xs mt-1 opacity-60">
-              Sous-catégorie de: {parentCategories.find(p => p.id === previewData.parentId)?.name}
+              Sous-catégorie de:{" "}
+              {
+                parentCategories.find((p) => p.id === previewData.parentId)
+                  ?.name
+              }
             </div>
           )}
         </div>
@@ -221,15 +260,22 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
     );
   };
 
-  const onSubmit = async (data: CreatePlaceCategoryInput | UpdatePlaceCategoryInput) => {
+  const onSubmit = async (
+    data: CreatePlaceCategoryInput | UpdatePlaceCategoryInput
+  ) => {
     startTransition(async () => {
       try {
-        const result = mode === "create" 
-          ? await createPlaceCategoryAction(data as CreatePlaceCategoryInput)
-          : await updatePlaceCategoryAction(data as UpdatePlaceCategoryInput);
+        const result =
+          mode === "create"
+            ? await createPlaceCategoryAction(data as CreatePlaceCategoryInput)
+            : await updatePlaceCategoryAction(data as UpdatePlaceCategoryInput);
 
         if (result.success) {
-          toast.success(`Catégorie ${mode === "create" ? "créée" : "mise à jour"} avec succès`);
+          toast.success(
+            `Catégorie ${
+              mode === "create" ? "créée" : "mise à jour"
+            } avec succès`
+          );
           router.push("/dashboard/admin/place-categories");
           router.refresh();
         } else {
@@ -258,9 +304,7 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
       {/* Aperçu */}
       <div>
         <Label className="text-base font-medium">Aperçu</Label>
-        <div className="mt-2">
-          {renderCategoryPreview()}
-        </div>
+        <div className="mt-2">{renderCategoryPreview()}</div>
       </div>
 
       <FormProvider {...form}>
@@ -273,7 +317,7 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                   <FolderOpen className="w-5 h-5" />
                   Informations générales
                 </h3>
-                
+
                 {/* Nom */}
                 <FormField
                   control={form.control}
@@ -282,7 +326,10 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                     <FormItem>
                       <FormLabel>Nom de la catégorie *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Restaurants, Commerces..." {...field} />
+                        <Input
+                          placeholder="Ex: Restaurants, Commerces..."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -297,7 +344,10 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                     <FormItem>
                       <FormLabel>Slug *</FormLabel>
                       <FormControl>
-                        <Input placeholder="restaurants, commerces..." {...field} />
+                        <Input
+                          placeholder="restaurants, commerces..."
+                          {...field}
+                        />
                       </FormControl>
                       <div className="text-xs text-muted-foreground">
                         URL-friendly. Généré automatiquement depuis le nom.
@@ -315,10 +365,11 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           placeholder="Description de cette catégorie..."
                           className="min-h-[100px]"
-                          {...field} 
+                          {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -333,8 +384,10 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Catégorie parent (optionnel)</FormLabel>
-                      <Select 
-                        onValueChange={(value) => field.onChange(value === "none" ? null : value)} 
+                      <Select
+                        onValueChange={(value) =>
+                          field.onChange(value === "none" ? null : value)
+                        }
                         value={field.value || "none"}
                       >
                         <FormControl>
@@ -343,7 +396,9 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="none">Aucune (catégorie racine)</SelectItem>
+                          <SelectItem value="none">
+                            Aucune (catégorie racine)
+                          </SelectItem>
                           {parentCategories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.name}
@@ -373,12 +428,16 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                       <FormLabel>Icône</FormLabel>
                       <div className="flex gap-2">
                         <FormControl>
-                          <Input 
+                          <Input
                             placeholder="Store, Restaurant, 🏪..."
                             {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
-                        <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
+                        <Popover
+                          open={iconPickerOpen}
+                          onOpenChange={setIconPickerOpen}
+                        >
                           <PopoverTrigger asChild>
                             <Button variant="outline" size="icon" type="button">
                               {renderCategoryIcon()}
@@ -386,10 +445,14 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                           </PopoverTrigger>
                           <PopoverContent className="w-80 p-4">
                             <div className="space-y-4">
-                              <h4 className="font-medium">Icônes prédéfinies</h4>
+                              <h4 className="font-medium">
+                                Icônes prédéfinies
+                              </h4>
                               <div className="grid grid-cols-8 gap-2">
                                 {PREDEFINED_ICONS.map(({ icon, name }) => {
-                                  const IconComponent = (LucideIcons as any)[icon];
+                                  const IconComponent = (LucideIcons as any)[
+                                    icon
+                                  ];
                                   return (
                                     <Button
                                       key={icon}
@@ -403,7 +466,9 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                                       type="button"
                                       title={name}
                                     >
-                                      {IconComponent && <IconComponent className="w-4 h-4" />}
+                                      {IconComponent && (
+                                        <IconComponent className="w-4 h-4" />
+                                      )}
                                     </Button>
                                   );
                                 })}
@@ -429,24 +494,30 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                       <FormLabel>Couleur</FormLabel>
                       <div className="flex gap-2">
                         <FormControl>
-                          <Input 
+                          <Input
                             placeholder="#6B7280"
                             {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
-                        <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
+                        <Popover
+                          open={colorPickerOpen}
+                          onOpenChange={setColorPickerOpen}
+                        >
                           <PopoverTrigger asChild>
                             <Button variant="outline" size="icon" type="button">
-                              <div 
+                              <div
                                 className="w-4 h-4 rounded border"
-                                style={{ backgroundColor: field.value }}
+                                style={{ backgroundColor: field.value || "" }}
                               />
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-4">
                             <div className="space-y-4">
                               <div>
-                                <h4 className="font-medium mb-2">Couleurs prédéfinies</h4>
+                                <h4 className="font-medium mb-2">
+                                  Couleurs prédéfinies
+                                </h4>
                                 <div className="grid grid-cols-5 gap-2">
                                   {PREDEFINED_COLORS.map((color) => (
                                     <Button
@@ -458,12 +529,15 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                                         field.onChange(color.hex);
                                         form.setValue("bgColor", color.bg);
                                         form.setValue("textColor", color.text);
-                                        form.setValue("borderColor", color.border);
+                                        form.setValue(
+                                          "borderColor",
+                                          color.border
+                                        );
                                       }}
                                       type="button"
                                       title={color.name}
                                     >
-                                      <div 
+                                      <div
                                         className="w-full h-full rounded"
                                         style={{ backgroundColor: color.hex }}
                                       />
@@ -473,9 +547,11 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                               </div>
                               <Separator />
                               <div>
-                                <h4 className="font-medium mb-2">Couleur personnalisée</h4>
-                                <HexColorPicker 
-                                  color={field.value} 
+                                <h4 className="font-medium mb-2">
+                                  Couleur personnalisée
+                                </h4>
+                                <HexColorPicker
+                                  color={field.value ?? undefined}
                                   onChange={field.onChange}
                                 />
                               </div>
@@ -499,15 +575,18 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                     <FormItem>
                       <FormLabel>Ordre d'affichage</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
+                        <Input
+                          type="number"
                           placeholder="0"
                           {...field}
-                          onChange={e => field.onChange(Number.parseInt(e.target.value) || 0)}
+                          onChange={(e) =>
+                            field.onChange(Number.parseInt(e.target.value) || 0)
+                          }
                         />
                       </FormControl>
                       <div className="text-xs text-muted-foreground">
-                        Plus le nombre est petit, plus la catégorie apparaît en premier
+                        Plus le nombre est petit, plus la catégorie apparaît en
+                        premier
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -521,9 +600,12 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Catégorie active</FormLabel>
+                        <FormLabel className="text-base">
+                          Catégorie active
+                        </FormLabel>
                         <div className="text-sm text-muted-foreground">
-                          Les catégories inactives ne sont pas affichées publiquement
+                          Les catégories inactives ne sont pas affichées
+                          publiquement
                         </div>
                       </div>
                       <FormControl>
@@ -540,9 +622,9 @@ export function PlaceCategoryForm({ mode, categoryId, initialData }: PlaceCatego
 
             {/* Actions */}
             <div className="flex justify-end gap-4 pt-4 border-t">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => router.back()}
               >
                 Annuler

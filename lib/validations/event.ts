@@ -234,6 +234,13 @@ export const recurrenceSchema = z.object({
   return data.count !== undefined || data.until !== undefined;
 }, {
   message: "Il faut définir soit un nombre d'occurrences, soit une date de fin"
+})
+.refine((data) => {
+  // Si count ET until sont définis, donner un avertissement
+  // (pas d'erreur, mais privilégier count)
+  return true; // Toujours valide, mais on privilégiera count dans le code
+}, {
+  message: "Si les deux sont définis, le nombre d'occurrences sera prioritaire"
 });
 
 // Schema complet avec récurrence
@@ -344,3 +351,11 @@ export const RECURRENCE_FREQUENCY_LABELS: Record<RecurrenceFrequency, string> = 
   [RecurrenceFrequency.MONTHLY]: "Mensuelle",
   [RecurrenceFrequency.YEARLY]: "Annuelle"
 };
+
+// Ordre d'affichage des fréquences (quotidien en premier)
+export const RECURRENCE_FREQUENCY_OPTIONS = [
+  { value: RecurrenceFrequency.DAILY, label: "Quotidienne" },
+  { value: RecurrenceFrequency.WEEKLY, label: "Hebdomadaire" },
+  { value: RecurrenceFrequency.MONTHLY, label: "Mensuelle" },
+  { value: RecurrenceFrequency.YEARLY, label: "Annuelle" }
+] as const;

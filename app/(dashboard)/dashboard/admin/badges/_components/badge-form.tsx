@@ -63,7 +63,7 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
   const schema = mode === "create" ? createBadgeSchema : updateBadgeSchema;
   
   const form = useForm<CreateBadgeInput | UpdateBadgeInput>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any), // Cast to any to handle conditional schema
     defaultValues: {
       title: "",
       description: "",
@@ -91,7 +91,7 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
               description: badge.description,
               category: badge.category,
               rarity: badge.rarity,
-              color: badge.color || RARITY_COLORS[badge.rarity],
+              color: badge.color || RARITY_COLORS[badge.rarity as keyof typeof RARITY_COLORS],
               iconUrl: badge.iconUrl || "",
               isActive: badge.isActive,
             });
@@ -149,11 +149,11 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
             {previewData.description || "Description du badge"}
           </div>
           <div className="flex gap-2 mt-1">
-            <Badge variant="outline" style={{ borderColor: previewData.color }}>
+            <Badge variant="outline" style={{ borderColor: previewData.color || RARITY_COLORS.COMMON }}>
               {RARITY_LABELS[previewData.rarity] || "Commun"}
             </Badge>
             <Badge variant="outline">
-              {CATEGORY_LABELS[previewData.category] || "Accomplissement"}
+              {CATEGORY_LABELS[previewData.category as keyof typeof CATEGORY_LABELS] || "Accomplissement"}
             </Badge>
           </div>
         </div>

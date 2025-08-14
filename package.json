@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "build:coolify": "prisma generate && SKIP_BUILD_STATIC_GENERATION=true next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -26,7 +27,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "dev:setup": "./scripts/dev-setup.sh",
-    "deploy": "./scripts/deploy.sh",
+    "deploy:coolify": "prisma migrate deploy && prisma generate && next build",
     "postbuild": "next-sitemap",
     "cleanup-gdpr": "tsx scripts/cleanup-gdpr.ts"
   },
@@ -35,6 +36,7 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@googlemaps/js-api-loader": "^1.16.10",
     "@hookform/resolvers": "^5.2.1",
     "@prisma/client": "^6.13.0",
     "@radix-ui/react-accordion": "^1.2.11",
