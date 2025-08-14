@@ -1,11 +1,28 @@
 "use client";
 
-import { Book, ChevronLeft, ChevronRight, LucideLightbulb, Search } from "lucide-react";
+import { Book, Calendar, MapPin, Store, Briefcase, LucideLightbulb } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DynamicSearch } from "@/components/search/dynamic-search";
+import { EventsSlider } from "@/components/events/events-slider";
+
+interface Event {
+  id: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  startDate: Date;
+  location: string | null;
+  category: string;
+  price: number | null;
+  maxParticipants: number | null;
+  place?: {
+    name: string;
+    street: string;
+    city: string;
+  } | null;
+}
 
 interface HeroProps {
   title?: string;
@@ -14,21 +31,22 @@ interface HeroProps {
   ctaLink?: string;
   helpTitle?: string;
   searchPlaceholder?: string;
+  upcomingEvents?: Event[];
 }
 
 const helpCards = [
   {
-    title: "Inscription",
-    description: "Où puis-je m'inscrire pour devenir membre?",
-    subtitle: "Consultez le calendrier",
-    link: "/calendrier-des-evenements",
+    title: "Places",
+    description: "Découvrez tous les établissements de Bédarieux",
+    subtitle: "Explorer les lieux",
+    link: "/places",
     bgColor: "bg-gray-800",
   },
   {
-    title: "Fête des commerçants",
-    description: "Les commerces de Bédarieux exposent | le 20 septembre rue de la république",
-    subtitle: "En savoir plus",
-    link: "/calendrier-des-evenements",
+    title: "Événements",
+    description: "Participez aux événements locaux et animations",
+    subtitle: "Voir le calendrier",
+    link: "/events",
     bgColor: "bg-gray-800",
   },
 ];
@@ -36,29 +54,12 @@ const helpCards = [
 export default function Hero({
   title = "Association Bédaricienne des Commerçants",
   subtitle = "Explorez nos initiatives et participez à nos événements pour soutenir le commerce local.",
-  ctaText = "Calendrier des événements",
-  ctaLink = "/calendrier-des-evenements",
+  ctaText = "Voir tous les événements",
+  ctaLink = "/events",
   helpTitle = "Comment pouvons-nous vous aider aujourd'hui?",
-  searchPlaceholder = "Lancer une recherche",
+  searchPlaceholder = "Rechercher un lieu, événement, catégorie...",
+  upcomingEvents = [],
 }: HeroProps) {
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const query = formData.get("search") as string;
-    if (query.trim()) {
-      window.location.href = `/recherche?q=${encodeURIComponent(query)}`;
-    }
-  };
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % 2);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + 2) % 2);
-  };
 
   return (
     <section className="relative mx-auto px-8">
@@ -77,52 +78,8 @@ export default function Hero({
               </Button>
             </div>
 
-            {/* Image 275 avec carrousel */}
-            <div className="relative bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 rounded-3xl p-8 h-80 overflow-hidden">
-              <div className="relative z-10">
-                <div className="text-white text-5xl font-bold mb-2">Fête des commerçants</div>
-                <div className="text-white text-2xl font-semibold">Bédarieux</div>
-                <div className="text-white/80 text-sm mt-2">
-                  Le 20 septembre 2025
-                  <br />
-                  rue de la république
-                </div>
-              </div>
-
-              {/* Navigation du carrousel */}
-              <div className="absolute bottom-4 left-4 flex items-center space-x-4">
-                <button
-                  type="button"
-                  onClick={prevSlide}
-                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <div className="flex space-x-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      currentSlide === 0 ? "bg-white" : "bg-white/50"
-                    }`}
-                  ></div>
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      currentSlide === 1 ? "bg-white" : "bg-white/50"
-                    }`}
-                  ></div>
-                </div>
-                <button
-                  type="button"
-                  onClick={nextSlide}
-                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="absolute bottom-4 right-4 text-white text-sm">
-                {currentSlide + 1} / 2
-              </div>
-            </div>
+            {/* Slider des événements */}
+            <EventsSlider events={upcomingEvents} />
           </div>
 
           {/* Right Section - Help Card */}
@@ -138,17 +95,8 @@ export default function Hero({
                   <p>Essayez des mots-clés tels que anniversaire, cadeau, surprise</p>
                 </div>
               </div>
-              {/* Search Form */}
-              <form onSubmit={handleSearch} className="relative">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    name="search"
-                    placeholder={searchPlaceholder}
-                    className="pl-12 bg-white border-0 text-gray-900 placeholder:text-gray-500 rounded-full h-12 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </form>
+              {/* Search Form Dynamic */}
+              <DynamicSearch placeholder={searchPlaceholder} />
 
               {/* Help Cards - Stacked Vertically */}
               <div className="flex lg:flex-col gap-3 justify-between">
@@ -172,36 +120,36 @@ export default function Hero({
           </div>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
-          <div className="flex items-start bg-gray-800 space-x-2  rounded-full w-full p-4">
-            <Link href="/places" className="flex items-center gap-2 ">
+          <div className="flex items-start bg-gray-800 space-x-2 rounded-full w-full p-4">
+            <Link href="/places" className="flex items-center gap-2">
               <span className="bg-gray-900 p-3 rounded-full text-white">
-                <Book className="size-5 text-white" />
+                <MapPin className="size-5 text-white" />
               </span>
               <span className="text-white">Les lieux & activités</span>
             </Link>
           </div>
-          <div className="flex items-start bg-gray-800 space-x-2  rounded-full w-full p-4">
-            <Link href="/recherche" className="flex items-center gap-2 ">
+          <div className="flex items-start bg-gray-800 space-x-2 rounded-full w-full p-4">
+            <Link href="/events" className="flex items-center gap-2">
               <span className="bg-gray-900 p-3 rounded-full text-white">
-                <Book className="size-5 text-white" />
+                <Calendar className="size-5 text-white" />
               </span>
-              <span>Bibliothèque</span>
+              <span className="text-white">Événements</span>
             </Link>
           </div>
-          <div className="flex items-start bg-gray-800 space-x-2  rounded-full w-full p-4">
-            <Link href="/recherche" className="flex items-center gap-2 ">
+          <div className="flex items-start bg-gray-800 space-x-2 rounded-full w-full p-4">
+            <Link href="/categories" className="flex items-center gap-2">
               <span className="bg-gray-900 p-3 rounded-full text-white">
-                <Book className="size-5 text-white" />
+                <Store className="size-5 text-white" />
               </span>
-              <span>Bibliothèque</span>
+              <span className="text-white">Catégories</span>
             </Link>
           </div>
-          <div className="flex items-start bg-gray-800 space-x-2  rounded-full w-full p-4">
-            <Link href="/recherche" className="flex items-center gap-2 ">
+          <div className="flex items-start bg-gray-800 space-x-2 rounded-full w-full p-4">
+            <Link href="/carte" className="flex items-center gap-2">
               <span className="bg-gray-900 p-3 rounded-full text-white">
-                <Book className="size-5 text-white" />
+                <Briefcase className="size-5 text-white" />
               </span>
-              <span>Bibliothèque</span>
+              <span className="text-white">Carte</span>
             </Link>
           </div>
         </div>

@@ -1,0 +1,17 @@
+
+> abcbedarieuxv2@0.1.0 dev C:\abcbedarieuxv2
+> next dev --turbopack
+
+[32m✔[0m [33mConsole Ninja[0m extension is connected to [33mNext.js[0m, see [36mhttps://tinyurl.com/2vt8jxzw[0m
+ ⚠ Port 3000 is in use by process 2664, using available port 3002 instead.
+   ▲ Next.js 15.4.6 (Turbopack)
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.1.110:3002
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 2.3s
+ ○ Compiling /api/search ...
+ ✓ Compiled /api/search in 1806ms
+ GET /api/search?q=restaurant&limit=5 200 in 2148ms
+[?25h

@@ -1,6 +1,7 @@
 import { ArrowRight, FileText } from "lucide-react";
 import Link from "next/link";
 import { getLatestPostsAction } from "@/actions/post";
+import { getUpcomingEventsAction } from "@/actions/event";
 import Hero from "@/components/front/hero";
 import { PostCard } from "@/components/posts/post-card";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,13 @@ export default async function Home() {
   const latestPostsResult = await getLatestPostsAction(6);
   const latestPosts = latestPostsResult.success ? latestPostsResult.data! : [];
 
+  // Récupérer les événements à venir
+  const upcomingEventsResult = await getUpcomingEventsAction(5);
+  const upcomingEvents = upcomingEventsResult.success ? upcomingEventsResult.data! : [];
+
   return (
     <>
-      <Hero />
+      <Hero upcomingEvents={upcomingEvents} />
 
       {/* Section des derniers articles */}
       {latestPosts.length > 0 && (

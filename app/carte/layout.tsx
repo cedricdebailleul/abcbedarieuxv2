@@ -1,5 +1,4 @@
-import { headers } from "next/headers";
-import { Header } from "@/components/layout/header";
+import Header from "@/components/front/header/header";
 
 export default async function MapLayout({
   children,
@@ -9,7 +8,7 @@ export default async function MapLayout({
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="pt-16"> {/* Offset for fixed header */}
+      <main className="pt-4"> {/* Reduced offset for complex header */}
         {children}
       </main>
     </div>

@@ -522,6 +522,46 @@ export async function getUserEventsAction(options?: {
 }
 
 // Récupérer les événements publics (pour agenda)
+// Récupérer les prochains événements pour le slider d'accueil
+export async function getUpcomingEventsAction(limit: number = 5): Promise<ActionResult<any[]>> {
+  try {
+    const events = await prisma.event.findMany({
+      where: {
+        status: EventStatus.PUBLISHED,
+        isActive: true,
+        startDate: {
+          gte: new Date(), // Événements futurs seulement
+        },
+      },
+      orderBy: {
+        startDate: 'asc', // Plus proches en premier
+      },
+      take: limit,
+      include: {
+        place: {
+          select: {
+            name: true,
+            street: true,
+            city: true,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: events,
+    };
+  } catch (error) {
+    console.error("Erreur lors de la récupération des événements à venir:", error);
+    return {
+      success: false,
+      error: "Erreur lors de la récupération des événements",
+      data: [],
+    };
+  }
+}
+
 export async function getPublicEventsAction(options?: {
   startDate?: string;
   endDate?: string;
