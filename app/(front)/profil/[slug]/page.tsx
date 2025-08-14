@@ -19,6 +19,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Helper functions
 function parseSocials(socialsJson: any): Record<string, string> {
   if (!socialsJson) return {};

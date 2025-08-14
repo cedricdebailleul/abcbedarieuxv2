@@ -36,6 +36,10 @@ import { PrintHeader } from "@/components/print/print-header";
 
 import { EventCategory, EventStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 import { EVENT_CATEGORIES_LABELS } from "@/lib/validations/event";
 import { getEventBySlugAction } from "@/actions/event";
 import { generateEventShareData } from "@/lib/share-utils";

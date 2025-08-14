@@ -14,6 +14,9 @@ import { SafeImage } from "@/components/safe-image";
 import { prisma } from "@/lib/prisma";
 import { PlaceStatus } from "@/lib/generated/prisma";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 interface CategoryPageProps {
   params: {
     slug: string;

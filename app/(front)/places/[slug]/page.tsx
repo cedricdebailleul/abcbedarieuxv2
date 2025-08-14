@@ -30,6 +30,9 @@ import { OpenGraphDebug } from "@/components/debug/og-debug";
 import { PrintHeader } from "@/components/print/print-header";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { generatePlaceShareData } from "@/lib/share-utils";
 
 // ---------- helpers ----------
