@@ -14,6 +14,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generatePostShareData } from "@/lib/share-utils";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 interface PostPageProps {
   params: Promise<{
     slug: string;

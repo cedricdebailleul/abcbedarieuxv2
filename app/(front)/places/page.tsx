@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default async function PublicPlacesPage() {
   const places = await prisma.place.findMany({
     where: {

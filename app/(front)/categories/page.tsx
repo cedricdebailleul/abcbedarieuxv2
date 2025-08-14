@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { prisma } from "@/lib/prisma";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Toutes les catégories - Explorez par type d'établissement",
   description: "Découvrez tous les types d'établissements disponibles : restaurants, commerces, services et bien plus encore.",

@@ -5,6 +5,9 @@ import { MapSkeleton } from "@/components/map/map-skeleton";
 import { prisma } from "@/lib/prisma";
 import { PlaceStatus } from "@/lib/generated/prisma";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Carte interactive - ABC Bédarieux",
   description: "Découvrez tous les établissements de Bédarieux sur notre carte interactive. Recherchez par catégorie, distance et mots-clés.",
