@@ -10,12 +10,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   output: 'standalone',
-  // Désactiver la génération statique pour permettre le build sans DB
-  generateStaticParams: () => [],
-  experimental: {
-    // Forcer le rendu côté serveur
-    isrMemoryCacheSize: 0,
-  },
   images: {
     remotePatterns: [
       {
