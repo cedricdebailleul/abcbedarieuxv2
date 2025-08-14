@@ -3,13 +3,16 @@ import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ShareButton } from "@/components/posts/share-button";
+import { SocialShare } from "@/components/shared/social-share";
+import { PostSchema } from "@/components/structured-data/post-schema";
+import { PrintHeader } from "@/components/print/print-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { generatePostShareData } from "@/lib/share-utils";
 
 interface PostPageProps {
   params: Promise<{
@@ -119,6 +122,16 @@ export default async function PostPage({
 
   return (
     <>
+      {/* Données structurées pour SEO et réseaux sociaux */}
+      <PostSchema post={post} />
+      
+      {/* En-tête d'impression */}
+      <PrintHeader 
+        title={post.title}
+        subtitle={`Article - ${formattedDate}`}
+        date={post.category?.name || "ABC Bédarieux"}
+      />
+      
       {/* Mode aperçu */}
       {isPreview && (
         <div className="bg-orange-100 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800">
@@ -323,15 +336,18 @@ export default async function PostPage({
                   <h3 className="text-lg font-semibold">Partager</h3>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col space-y-2">
-                    <ShareButton title={post.title} excerpt={post.excerpt} />
-                  </div>
+                  <SocialShare 
+                    data={generatePostShareData(post)}
+                    variant="outline"
+                    size="sm"
+                  />
                 </CardContent>
               </Card>
             </div>
           </aside>
         </div>
       </div>
+
 
       {/* SEO Debug (only in development) */}
       {process.env.NODE_ENV === "development" && (post.canonicalUrl || post.ogImage) && (
@@ -382,14 +398,26 @@ export async function generateMetadata({ params: paramsPromise }: PostPageProps)
   const params = await paramsPromise;
   const post = await prisma.post.findUnique({
     where: { slug: params.slug },
-    select: {
-      title: true,
-      excerpt: true,
-      metaTitle: true,
-      metaDescription: true,
-      ogImage: true,
-      coverImage: true,
-      canonicalUrl: true,
+    include: {
+      author: {
+        select: {
+          name: true,
+        },
+      },
+      category: {
+        select: {
+          name: true,
+        },
+      },
+      tags: {
+        include: {
+          tag: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -400,23 +428,42 @@ export async function generateMetadata({ params: paramsPromise }: PostPageProps)
     };
   }
 
-  // Utiliser coverImage comme fallback pour ogImage
-  const ogImageUrl = post.ogImage || post.coverImage;
+  // URL absolue pour l'image
+  const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+  const ogImg = post.ogImage || post.coverImage;
+  const absoluteImageUrl = ogImg ? 
+    (ogImg.startsWith('http') ? ogImg : `${baseUrl}${ogImg}`) : 
+    `${baseUrl}/images/og-post-default.jpg`;
 
   return {
     title: post.metaTitle || post.title,
     description: post.metaDescription || post.excerpt || "Lisez cet article sur ABC Bédarieux",
     openGraph: {
-      title: post.metaTitle || post.title,
-      description: post.metaDescription || post.excerpt || "Lisez cet article sur ABC Bédarieux",
-      images: ogImageUrl ? [ogImageUrl] : undefined,
-      type: "article",
+      title: post.title,
+      description: post.metaDescription || post.excerpt || "Article publié sur ABC Bédarieux",
+      url: `${baseUrl}/posts/${params.slug}`,
+      siteName: 'ABC Bédarieux',
+      locale: 'fr_FR',
+      type: 'article',
+      publishedTime: post.publishedAt?.toISOString(),
+      authors: [post.author?.name || 'ABC Bédarieux'],
+      section: post.category?.name,
+      tags: post.tags?.map(pt => pt.tag.name),
+      images: [
+        {
+          url: absoluteImageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
     },
     twitter: {
-      card: "summary_large_image",
-      title: post.metaTitle || post.title,
-      description: post.metaDescription || post.excerpt || "Lisez cet article sur ABC Bédarieux",
-      images: ogImageUrl ? [ogImageUrl] : undefined,
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.metaDescription || post.excerpt || "Article publié sur ABC Bédarieux",
+      images: [absoluteImageUrl],
+      creator: '@abc_bedarieux',
     },
     alternates: post.canonicalUrl
       ? {

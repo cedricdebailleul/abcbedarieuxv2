@@ -25,6 +25,29 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
     shortcut: "/favicon-32x32.png",
   },
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: env.NEXT_PUBLIC_URL || "http://localhost:3000",
+    siteName: 'ABC Bédarieux',
+    title: 'ABC Bédarieux',
+    description: 'Site de la ville de Bédarieux',
+    images: [
+      {
+        url: '/images/og-default.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'ABC Bédarieux',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ABC Bédarieux',
+    description: 'Site de la ville de Bédarieux',
+    images: ['/images/og-default.jpg'],
+    creator: '@abc_bedarieux',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

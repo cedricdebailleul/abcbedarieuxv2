@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PostsFilters } from "./posts-filters";
+import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
 
 interface PostsListServerProps {
   searchParams: {
@@ -199,7 +200,7 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                         <div className="flex items-center gap-1">
                           <TagIcon className="h-3 w-3 text-muted-foreground" />
                           <div className="flex flex-wrap gap-1">
-                            {post.tags.slice(0, 3).map((postTag) => (
+                            {post.tags.slice(0, 3).map((postTag: { tag: { id: Key | null | undefined; color: any; name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }; }) => (
                               <Badge
                                 key={postTag.tag.id}
                                 variant="outline"

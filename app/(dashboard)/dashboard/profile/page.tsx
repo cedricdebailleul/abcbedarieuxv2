@@ -11,6 +11,10 @@ export default async function ProfilePage() {
   });
 
   // Récupérer les données complètes de l'utilisateur et tous les badges
+  if (!session || !session.user) {
+    redirect("/login");
+  }
+
   const [user, allBadges] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
@@ -44,5 +48,30 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  return <ProfileContent user={user} allBadges={allBadges} />;
+  return (
+    <ProfileContent
+      user={{
+        ...user,
+        profile: user.profile
+          ? {
+              firstname: user.profile.firstname || undefined,
+              lastname: user.profile.lastname || undefined,
+              bio: user.profile.bio || undefined,
+              phone: user.profile.phone || undefined,
+              address: undefined,
+              language: undefined,
+              timezone: user.profile.timezone || undefined,
+              isPublic: false, // Default value, adjust as needed
+              showEmail: false, // Default value, adjust as needed
+              showPhone: user.profile.showPhone,
+            }
+          : undefined,
+      }}
+      allBadges={allBadges.map((badge) => ({
+        ...badge,
+        iconUrl: badge.iconUrl ?? undefined,
+        color: badge.color ?? undefined,
+      }))}
+    />
+  );
 }

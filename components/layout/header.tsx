@@ -21,6 +21,9 @@ export function Header() {
           <Link href="/categories" className="transition-colors hover:text-foreground/80">
             Places
           </Link>
+          <Link href="/carte" className="transition-colors hover:text-foreground/80">
+            🗺️ Carte
+          </Link>
           <Link href="/events" className="transition-colors hover:text-foreground/80">
             Événements
           </Link>

@@ -12,10 +12,10 @@ export const createBadgeSchema = z.object({
     .min(1, "La description est requise")
     .max(500, "La description ne peut pas dépasser 500 caractères"),
   category: z.nativeEnum(BadgeCategory, {
-    errorMap: () => ({ message: "Catégorie invalide" }),
+    error: "Catégorie invalide",
   }),
   rarity: z.nativeEnum(BadgeRarity, {
-    errorMap: () => ({ message: "Rareté invalide" }),
+    error: "Rareté invalide",
   }),
   color: z
     .string()
@@ -43,7 +43,9 @@ export const badgeFiltersSchema = z.object({
   category: z.nativeEnum(BadgeCategory).optional(),
   rarity: z.nativeEnum(BadgeRarity).optional(),
   isActive: z.boolean().optional(),
-  sortBy: z.enum(["title", "category", "rarity", "createdAt"]).default("createdAt"),
+  sortBy: z
+    .enum(["title", "category", "rarity", "createdAt"])
+    .default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
@@ -82,9 +84,9 @@ export const RARITY_COLORS = {
 // Labels d'affichage
 export const CATEGORY_LABELS = {
   [BadgeCategory.ACHIEVEMENT]: "Accomplissement",
-  [BadgeCategory.COMMUNITY]: "Communauté",
+  [BadgeCategory.PARTICIPATION]: "Communauté",
   [BadgeCategory.SPECIAL]: "Spécial",
-  [BadgeCategory.TIME]: "Temporel",
+  [BadgeCategory.ANNIVERSARY]: "Temporel",
 } as const;
 
 export const RARITY_LABELS = {

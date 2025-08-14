@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SafeImage } from "@/components/safe-image";
+import { SocialShare } from "@/components/shared/social-share";
+import { generateEventShareData } from "@/lib/share-utils";
 
 interface Event {
   id: string;
@@ -175,7 +177,7 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
         {/* Image de couverture */}
         <div className={`relative ${cardHeight} w-full`}>
           <SafeImage
-            src={normalizeImagePath(event.coverImage) ?? ""}
+            src={normalizeImagePath(event.coverImage) || ""}
             alt={`Image de ${event.title}`}
             fill
             className="object-cover rounded-t-lg"
@@ -208,8 +210,19 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
             )}
           </div>
 
-          {/* Prix */}
-          <div className="absolute top-2 right-2">
+          {/* Prix et partage */}
+          <div className="absolute top-2 right-2 flex flex-col gap-2 items-end">
+            <SocialShare
+              data={generateEventShareData({
+                ...event,
+                startDate: new Date(event.startDate),
+                endDate: new Date(event.endDate),
+              })}
+              variant="outline"
+              size="sm"
+              className="bg-white/90 backdrop-blur-sm"
+              showLabel={false}
+            />
             <Badge
               variant={event.isFree ? "outline" : "default"}
               className={

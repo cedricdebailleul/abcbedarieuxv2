@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { PlaceStatus } from "@/lib/generated/prisma";
-import { notifyUserPlaceApproved, notifyUserPlaceRejected } from "@/lib/place-notifications";
+import {
+  notifyUserPlaceApproved,
+  notifyUserPlaceRejected,
+} from "@/lib/place-notifications";
 import { prisma } from "@/lib/prisma";
 
 const validateSchema = z.object({
@@ -12,7 +15,10 @@ const validateSchema = z.object({
 });
 
 // POST /api/admin/places/[placeId]/validate - Valider ou rejeter une place
-export async function POST(request: Request, { params }: { params: { placeId: string } }) {
+export async function POST(
+  request: Request,
+  { params }: { params: { placeId: string } }
+) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -20,7 +26,10 @@ export async function POST(request: Request, { params }: { params: { placeId: st
     const { placeId } = await params;
 
     if (!session?.user || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -41,7 +50,8 @@ export async function POST(request: Request, { params }: { params: { placeId: st
     }
 
     // Déterminer le nouveau statut
-    const newStatus = action === "approve" ? PlaceStatus.ACTIVE : PlaceStatus.INACTIVE;
+    const newStatus =
+      action === "approve" ? PlaceStatus.ACTIVE : PlaceStatus.INACTIVE;
 
     // Mettre à jour la place
     const updatedPlace = await prisma.place.update({
@@ -62,17 +72,21 @@ export async function POST(request: Request, { params }: { params: { placeId: st
     // Envoyer email de notification à l'utilisateur (en arrière-plan)
     if (existingPlace.owner) {
       if (action === "approve") {
-        notifyUserPlaceApproved(existingPlace.owner.email, existingPlace.name, message).catch(
-          (error) => {
-            console.error("Erreur notification utilisateur:", error);
-          }
-        );
+        notifyUserPlaceApproved(
+          existingPlace.owner.email,
+          existingPlace.name,
+          message
+        ).catch((error) => {
+          console.error("Erreur notification utilisateur:", error);
+        });
       } else {
-        notifyUserPlaceRejected(existingPlace.owner.email, existingPlace.name, message).catch(
-          (error) => {
-            console.error("Erreur notification utilisateur:", error);
-          }
-        );
+        notifyUserPlaceRejected(
+          existingPlace.owner.email,
+          existingPlace.name,
+          message
+        ).catch((error) => {
+          console.error("Erreur notification utilisateur:", error);
+        });
       }
     }
 
@@ -86,17 +100,23 @@ export async function POST(request: Request, { params }: { params: { placeId: st
 
     return NextResponse.json({
       place: updatedPlace,
-      message: action === "approve" ? "Place approuvée avec succès" : "Place rejetée avec succès",
+      message:
+        action === "approve"
+          ? "Place approuvée avec succès"
+          : "Place rejetée avec succès",
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { error: "Données invalides", details: error.issues },
         { status: 400 }
       );
     }
 
     console.error("Erreur lors de la validation:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

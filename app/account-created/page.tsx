@@ -3,11 +3,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, CheckCircle, Sparkles, Trophy } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function AccountCreatedPage() {
+function AccountCreatedContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [showFireworks, setShowFireworks] = useState(false);
@@ -81,7 +81,11 @@ export default function AccountCreatedPage() {
               >
                 <div
                   className={`w-8 h-8 rounded-full ${
-                    i % 3 === 0 ? "bg-yellow-400" : i % 3 === 1 ? "bg-red-400" : "bg-blue-400"
+                    i % 3 === 0
+                      ? "bg-yellow-400"
+                      : i % 3 === 1
+                      ? "bg-red-400"
+                      : "bg-blue-400"
                   } opacity-70`}
                 />
               </motion.div>
@@ -105,10 +109,10 @@ export default function AccountCreatedPage() {
                     i % 4 === 0
                       ? "text-yellow-400"
                       : i % 4 === 1
-                        ? "text-red-400"
-                        : i % 4 === 2
-                          ? "text-blue-400"
-                          : "text-green-400"
+                      ? "text-red-400"
+                      : i % 4 === 2
+                      ? "text-blue-400"
+                      : "text-green-400"
                   }`}
                 />
               </motion.div>
@@ -159,7 +163,9 @@ export default function AccountCreatedPage() {
               <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
                 🎉 Félicitations !
               </CardTitle>
-              <h2 className="text-xl text-gray-700 mb-4">Bienvenue, {name} !</h2>
+              <h2 className="text-xl text-gray-700 mb-4">
+                Bienvenue, {name} !
+              </h2>
             </motion.div>
           </CardHeader>
 
@@ -188,7 +194,9 @@ export default function AccountCreatedPage() {
                   <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                     <Trophy className="h-4 w-4 text-white" />
                   </div>
-                  <span className="text-blue-700 font-medium">Badge "Bienvenue"</span>
+                  <span className="text-blue-700 font-medium">
+                    Badge "Bienvenue"
+                  </span>
                 </div>
                 <p className="text-blue-600 text-xs mt-1">
                   Votre première récompense sur ABC Bédarieux !
@@ -230,5 +238,13 @@ export default function AccountCreatedPage() {
         </Card>
       </motion.div>
     </div>
+  );
+}
+
+export default function AccountCreatedPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <AccountCreatedContent />
+    </Suspense>
   );
 }

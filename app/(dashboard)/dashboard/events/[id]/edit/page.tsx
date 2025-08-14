@@ -30,10 +30,10 @@ function toArray(val: unknown): string[] {
 
 export default async function EditEventPage({ params }: EditEventPageProps) {
   const { id } = await params;
-  
+
   // Vérifier l'authentification
   const session = await auth.api.getSession({ headers: await headers() });
-  
+
   if (!session?.user) {
     notFound();
   }
@@ -45,12 +45,12 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
       OR: [
         { organizerId: session.user.id },
         // Les admins peuvent modifier tous les événements
-        ...(["admin", "moderator"].includes(session.user.role!) ? [{}] : [])
-      ]
+        ...(["admin", "moderator"].includes(session.user.role!) ? [{}] : []),
+      ],
     },
     include: {
-      recurrenceRule: true
-    }
+      recurrenceRule: true,
+    },
   });
 
   if (!event) {
@@ -61,16 +61,14 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
   const places = await prisma.place.findMany({
     where: {
       status: PlaceStatus.ACTIVE,
-      isActive: true
+      isActive: true,
     },
     select: {
       id: true,
       name: true,
-      city: true
+      city: true,
     },
-    orderBy: [
-      { name: "asc" }
-    ]
+    orderBy: [{ name: "asc" }],
   });
 
   // Préparer les données pour le formulaire
@@ -78,8 +76,8 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
     id: event.id,
     title: event.title,
     slug: event.slug,
-    description: event.description,
-    summary: event.summary,
+    description: event.description ?? undefined,
+    summary: event.summary ?? undefined,
     status: event.status,
     isFeatured: event.isFeatured,
     placeId: event.placeId || "",
@@ -91,9 +89,9 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
     endDate: event.endDate.toISOString(),
     isAllDay: event.isAllDay,
     timezone: event.timezone,
-    locationName: event.locationName || "",
-    locationAddress: event.locationAddress || "",
-    locationCity: event.locationCity || "",
+    locationName: event.locationName ?? undefined,
+    locationAddress: event.locationAddress ?? undefined,
+    locationCity: event.locationCity ?? undefined,
     locationLatitude: event.locationLatitude || undefined,
     locationLongitude: event.locationLongitude || undefined,
     maxParticipants: event.maxParticipants || undefined,
@@ -115,17 +113,29 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
     tags: toArray(event.tags),
     category: event.category || undefined,
     isRecurring: event.isRecurring,
-    recurrence: event.recurrenceRule ? {
-      frequency: event.recurrenceRule.frequency,
-      interval: event.recurrenceRule.interval,
-      count: event.recurrenceRule.count || undefined,
-      until: event.recurrenceRule.until?.toISOString().split('T')[0] || undefined,
-      byWeekDay: event.recurrenceRule.byWeekDay ? toArray(event.recurrenceRule.byWeekDay).map(Number) : undefined,
-      byMonthDay: event.recurrenceRule.byMonthDay ? toArray(event.recurrenceRule.byMonthDay).map(Number) : undefined,
-      byMonth: event.recurrenceRule.byMonth ? toArray(event.recurrenceRule.byMonth).map(Number) : undefined,
-      exceptions: event.recurrenceRule.exceptions ? toArray(event.recurrenceRule.exceptions) : undefined,
-      workdaysOnly: event.recurrenceRule.workdaysOnly
-    } : undefined
+    recurrence: event.recurrenceRule
+      ? {
+          frequency: event.recurrenceRule.frequency,
+          interval: event.recurrenceRule.interval,
+          count: event.recurrenceRule.count || undefined,
+          until:
+            event.recurrenceRule.until?.toISOString().split("T")[0] ||
+            undefined,
+          byWeekDay: event.recurrenceRule.byWeekDay
+            ? toArray(event.recurrenceRule.byWeekDay).map(Number)
+            : undefined,
+          byMonthDay: event.recurrenceRule.byMonthDay
+            ? toArray(event.recurrenceRule.byMonthDay).map(Number)
+            : undefined,
+          byMonth: event.recurrenceRule.byMonth
+            ? toArray(event.recurrenceRule.byMonth).map(Number)
+            : undefined,
+          exceptions: event.recurrenceRule.exceptions
+            ? toArray(event.recurrenceRule.exceptions)
+            : undefined,
+          workdaysOnly: event.recurrenceRule.workdaysOnly,
+        }
+      : undefined,
   };
 
   return (

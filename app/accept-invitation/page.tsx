@@ -1,12 +1,21 @@
 "use client";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 import { CheckCircle, Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -29,12 +38,31 @@ const acceptInvitationSchema = z
   });
 
 export default function AcceptInvitationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Chargement...
+        </div>
+      }
+    >
+      <AcceptInvitationContent />
+    </Suspense>
+  );
+}
+
+function AcceptInvitationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const token = searchParams.get("token");
   const email = searchParams.get("email");
-  const role = searchParams.get("role") as "user" | "admin" | "moderator" | "dpo" | "editor";
+  const role = searchParams.get("role") as
+    | "user"
+    | "admin"
+    | "moderator"
+    | "dpo"
+    | "editor";
 
   const [formData, setFormData] = useState({
     firstname: "",
@@ -57,8 +85,8 @@ export default function AcceptInvitationPage() {
           <CardContent className="pt-6">
             <Alert variant="destructive">
               <AlertDescription>
-                Lien d'invitation invalide. Veuillez vérifier votre email ou contactez un
-                administrateur.
+                Lien d'invitation invalide. Veuillez vérifier votre email ou
+                contactez un administrateur.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -137,10 +165,12 @@ export default function AcceptInvitationPage() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
             <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Compte créé avec succès !</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Compte créé avec succès !
+            </h2>
             <p className="text-gray-600 mb-4">
-              Votre compte a été créé et vous êtes maintenant connecté(e). Redirection vers le
-              dashboard...
+              Votre compte a été créé et vous êtes maintenant connecté(e).
+              Redirection vers le dashboard...
             </p>
           </CardContent>
         </Card>
@@ -180,13 +210,17 @@ export default function AcceptInvitationPage() {
                   id="firstname"
                   type="text"
                   value={formData.firstname}
-                  onChange={(e) => setFormData({ ...formData, firstname: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, firstname: e.target.value })
+                  }
                   placeholder="John"
                   className={errors.firstname ? "border-red-500" : ""}
                   disabled={loading}
                   required
                 />
-                {errors.firstname && <p className="text-sm text-red-500">{errors.firstname}</p>}
+                {errors.firstname && (
+                  <p className="text-sm text-red-500">{errors.firstname}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastname">Nom *</Label>
@@ -194,13 +228,17 @@ export default function AcceptInvitationPage() {
                   id="lastname"
                   type="text"
                   value={formData.lastname}
-                  onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastname: e.target.value })
+                  }
                   placeholder="Doe"
                   className={errors.lastname ? "border-red-500" : ""}
                   disabled={loading}
                   required
                 />
-                {errors.lastname && <p className="text-sm text-red-500">{errors.lastname}</p>}
+                {errors.lastname && (
+                  <p className="text-sm text-red-500">{errors.lastname}</p>
+                )}
               </div>
             </div>
 
@@ -211,7 +249,9 @@ export default function AcceptInvitationPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   className={errors.password ? "border-red-500 pr-10" : "pr-10"}
                   disabled={loading}
                   required
@@ -229,18 +269,29 @@ export default function AcceptInvitationPage() {
                   )}
                 </button>
               </div>
-              {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-sm text-red-500">{errors.password}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe *</Label>
+              <Label htmlFor="confirmPassword">
+                Confirmer le mot de passe *
+              </Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                  className={
+                    errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"
+                  }
                   disabled={loading}
                   required
                 />
@@ -276,8 +327,8 @@ export default function AcceptInvitationPage() {
           <div className="mt-4 text-xs text-gray-500">
             <p>* Champs obligatoires</p>
             <p className="mt-1">
-              Le mot de passe doit contenir au moins 8 caractères avec une minuscule, une majuscule
-              et un chiffre.
+              Le mot de passe doit contenir au moins 8 caractères avec une
+              minuscule, une majuscule et un chiffre.
             </p>
           </div>
         </CardContent>

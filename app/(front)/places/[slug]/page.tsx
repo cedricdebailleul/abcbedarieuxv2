@@ -24,8 +24,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PlaceCategoriesBadges } from "@/components/places/place-categories-badges";
 import { FavoriteButton } from "@/components/places/favorite-button";
+import { SocialShare } from "@/components/shared/social-share";
+import { PlaceSchema } from "@/components/structured-data/place-schema";
+import { OpenGraphDebug } from "@/components/debug/og-debug";
+import { PrintHeader } from "@/components/print/print-header";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
+import { generatePlaceShareData } from "@/lib/share-utils";
 
 // ---------- helpers ----------
 const DAY_LABEL: Record<string, string> = {
@@ -116,7 +121,10 @@ function groupOpeningHours(
   }
   return byDay;
 }
-function computeOpenState(grouped: Record<string, Slot[]>, nowDate = new Date()) {
+function computeOpenState(
+  grouped: Record<string, Slot[]>,
+  nowDate = new Date()
+) {
   const dow = nowDate.getDay(); // 0=Dim..6=Sam
   const mapIdx: Record<number, (typeof DAY_ORDER)[number]> = {
     0: "SUNDAY",
@@ -175,9 +183,11 @@ function computeOpenState(grouped: Record<string, Slot[]>, nowDate = new Date())
 }
 
 // ---------- SEO ----------
-type PageProps = { params: { slug: string } };
+type PageProps = { params: Promise<{ slug: string }> };
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const place = await prisma.place.findFirst({
     where: { slug, status: PlaceStatus.ACTIVE, isActive: true },
@@ -190,6 +200,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       ogImage: true,
       images: true,
       slug: true,
+      street: true,
+      postalCode: true,
+      city: true,
     },
   });
   if (!place)
@@ -199,18 +212,50 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
 
   const gallery = toArray(place.images);
-  const ogImg = place.ogImage || place.coverImage || gallery[0] || undefined;
+  const ogImg = place.ogImage || place.coverImage || gallery[0];
+  const fullAddress = `${place.street}, ${place.postalCode} ${place.city}`;
+
+  // URL absolue pour l'image
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+  const absoluteImageUrl = ogImg
+    ? ogImg.startsWith("http")
+      ? ogImg
+      : `${baseUrl}${ogImg}`
+    : `${baseUrl}/images/og-place-default.jpg`;
 
   return {
-    title: place.metaTitle || `${place.name} — Établissement`,
-    description: place.metaDescription || place.summary || `Découvrez ${place.name}.`,
+    title: place.metaTitle || `${place.name} — Établissement à ${place.city}`,
+    description:
+      place.metaDescription ||
+      place.summary ||
+      `Découvrez ${place.name}, établissement situé ${fullAddress}.`,
     openGraph: {
       title: place.name,
-      description: place.summary || place.metaDescription || `Découvrez ${place.name}.`,
-      images: ogImg ? [ogImg] : [],
+      description:
+        place.summary ||
+        place.metaDescription ||
+        `Établissement situé ${fullAddress}`,
+      url: `${baseUrl}/places/${place.slug}`,
+      siteName: "ABC Bédarieux",
+      locale: "fr_FR",
       type: "article",
+      images: [
+        {
+          url: absoluteImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${place.name} - ${place.city}`,
+        },
+      ],
     },
-    // alternates: { canonical: `https://ton-domaine.com/places/${place.slug}` },
+    twitter: {
+      card: "summary_large_image",
+      title: place.name,
+      description: place.summary || `Établissement situé ${fullAddress}`,
+      images: [absoluteImageUrl],
+      creator: "@abc_bedarieux",
+    },
+    // alternates: { canonical: `${baseUrl}/places/${place.slug}` },
   };
 }
 
@@ -251,7 +296,13 @@ export default async function PlacePage({ params }: PageProps) {
       categories: {
         include: {
           category: {
-            select: { id: true, name: true, slug: true, icon: true, color: true },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              icon: true,
+              color: true,
+            },
           },
         },
       },
@@ -275,7 +326,9 @@ export default async function PlacePage({ params }: PageProps) {
   const mapSrc =
     place.latitude && place.longitude
       ? `https://www.google.com/maps?q=${place.latitude},${place.longitude}&z=16&output=embed`
-      : `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&z=16&output=embed`;
+      : `https://www.google.com/maps?q=${encodeURIComponent(
+          fullAddress
+        )}&z=16&output=embed`;
   const directionsHref =
     place.latitude && place.longitude
       ? `https://www.google.com/maps?daddr=${place.latitude},${place.longitude}`
@@ -283,6 +336,16 @@ export default async function PlacePage({ params }: PageProps) {
 
   return (
     <div className="relative">
+      {/* Données structurées pour SEO et réseaux sociaux */}
+      <PlaceSchema place={place} />
+
+      {/* En-tête d'impression */}
+      <PrintHeader
+        title={place.name}
+        subtitle={`${place.type} - ${place.city}`}
+        date={fullAddress}
+      />
+
       {/* Cover full-bleed sous le header */}
       <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
         <div className="relative h-[80vh] bg-muted">
@@ -324,9 +387,17 @@ export default async function PlacePage({ params }: PageProps) {
 
             <div className="flex-1">
               <div className="flex items-start justify-between">
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">{place.name}</h1>
-                {/* Bouton favori mobile */}
-                <div className="md:hidden">
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {place.name}
+                </h1>
+                {/* Boutons actions mobile */}
+                <div className="md:hidden flex items-center gap-2">
+                  <SocialShare
+                    data={generatePlaceShareData(place)}
+                    variant="ghost"
+                    size="icon"
+                    showLabel={false}
+                  />
                   <FavoriteButton
                     placeId={place.id}
                     placeName={place.name}
@@ -338,35 +409,49 @@ export default async function PlacePage({ params }: PageProps) {
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
                 <Badge variant="outline">{place.type}</Badge>
-                {place.isFeatured && <Badge variant="secondary">À la une</Badge>}
+                {place.isFeatured && (
+                  <Badge variant="secondary">À la une</Badge>
+                )}
                 <span className="inline-flex items-center">
                   <MapPin className="w-4 h-4 mr-1" />
                   <span className="leading-none">{fullAddress}</span>
                 </span>
               </div>
-              
+
               {/* Catégories de la place */}
               {place.categories && place.categories.length > 0 && (
                 <div className="mt-3">
-                  <PlaceCategoriesBadges categories={place.categories} maxDisplay={5} size="default" />
+                  <PlaceCategoriesBadges
+                    categories={place.categories}
+                    maxDisplay={5}
+                    size="default"
+                  />
                 </div>
               )}
             </div>
 
             {/* Statut ouverture et actions */}
             <div className="hidden md:flex flex-col items-end gap-2">
-              {/* Bouton favori */}
-              <FavoriteButton
-                placeId={place.id}
-                placeName={place.name}
-                variant="outline"
-                size="sm"
-                className="self-end"
-              />
-              
+              {/* Boutons actions */}
+              <div className="flex items-center gap-2">
+                <SocialShare
+                  data={generatePlaceShareData(place)}
+                  variant="outline"
+                  size="sm"
+                />
+                <FavoriteButton
+                  placeId={place.id}
+                  placeName={place.name}
+                  variant="outline"
+                  size="sm"
+                />
+              </div>
+
               <div
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  open ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                  open
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-rose-100 text-rose-700"
                 }`}
                 aria-live="polite"
               >
@@ -375,8 +460,8 @@ export default async function PlacePage({ params }: PageProps) {
                     ? "En pause bientôt"
                     : "Ouvert maintenant"
                   : pause
-                    ? "En pause"
-                    : "Fermé pour le moment"}
+                  ? "En pause"
+                  : "Fermé pour le moment"}
               </div>
               {nextChange && (
                 <span className="text-xs text-muted-foreground mt-1">
@@ -384,7 +469,8 @@ export default async function PlacePage({ params }: PageProps) {
                     // Format avec jour: "Ouvre Mardi à 10:00h"
                     <>
                       {nextChange.type === "close" ? "Ferme" : "Ouvre"}{" "}
-                      {nextChange.at.split(" ")[0]} à {formatHm(nextChange.at.split(" ")[1])}h
+                      {nextChange.at.split(" ")[0]} à{" "}
+                      {formatHm(nextChange.at.split(" ")[1])}h
                     </>
                   ) : (
                     // Format heure seule: "Ferme à 17:30h"
@@ -410,10 +496,14 @@ export default async function PlacePage({ params }: PageProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {place.summary && (
-                    <p className="text-foreground/90 font-medium">{place.summary}</p>
+                    <p className="text-foreground/90 font-medium">
+                      {place.summary}
+                    </p>
                   )}
                   {place.description && (
-                    <p className="text-muted-foreground whitespace-pre-wrap">{place.description}</p>
+                    <p className="text-muted-foreground whitespace-pre-wrap">
+                      {place.description}
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -441,7 +531,9 @@ export default async function PlacePage({ params }: PageProps) {
                         )}
                       </div>
                       {review.comment && (
-                        <p className="text-sm text-muted-foreground">{review.comment}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {review.comment}
+                        </p>
                       )}
                       <div className="text-xs text-muted-foreground">
                         {new Date(review.createdAt).toLocaleDateString("fr-FR")}
@@ -472,8 +564,9 @@ export default async function PlacePage({ params }: PageProps) {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Cette fiche a été créée par l'administration et peut être revendiquée. En la
-                    revendiquant, vous deviendrez propriétaire et pourrez la gérer.
+                    Cette fiche a été créée par l'administration et peut être
+                    revendiquée. En la revendiquant, vous deviendrez
+                    propriétaire et pourrez la gérer.
                   </p>
                   <ClaimPlaceButton
                     placeId={place.id}
@@ -495,7 +588,10 @@ export default async function PlacePage({ params }: PageProps) {
                   {place.phone && (
                     <div className="flex items-center">
                       <Phone className="w-4 h-4 mr-3 text-muted-foreground" />
-                      <a href={`tel:${place.phone}`} className="text-primary hover:underline">
+                      <a
+                        href={`tel:${place.phone}`}
+                        className="text-primary hover:underline"
+                      >
                         {place.phone}
                       </a>
                     </div>
@@ -503,7 +599,10 @@ export default async function PlacePage({ params }: PageProps) {
                   {place.email && (
                     <div className="flex items-center">
                       <Mail className="w-4 h-4 mr-3 text-muted-foreground" />
-                      <a href={`mailto:${place.email}`} className="text-primary hover:underline">
+                      <a
+                        href={`mailto:${place.email}`}
+                        className="text-primary hover:underline"
+                      >
                         {place.email}
                       </a>
                     </div>
@@ -537,7 +636,9 @@ export default async function PlacePage({ params }: PageProps) {
                 <CardContent className="space-y-2">
                   <div
                     className={`px-3 py-1 rounded-full text-sm inline-block ${
-                      open ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                      open
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-rose-100 text-rose-700"
                     }`}
                     aria-live="polite"
                   >
@@ -546,8 +647,8 @@ export default async function PlacePage({ params }: PageProps) {
                         ? "En pause bientôt"
                         : "Ouvert maintenant"
                       : pause
-                        ? "En pause"
-                        : "Fermé pour le moment"}
+                      ? "En pause"
+                      : "Fermé pour le moment"}
                     {nextChange && (
                       <span className="ml-2 text-foreground/70">
                         •{" "}
@@ -555,12 +656,15 @@ export default async function PlacePage({ params }: PageProps) {
                           // Format avec jour: "Ouvre Mardi à 10:00h"
                           <>
                             {nextChange.type === "close" ? "Ferme" : "Ouvre"}{" "}
-                            {nextChange.at.split(" ")[0]} à {formatHm(nextChange.at.split(" ")[1])}h
+                            {nextChange.at.split(" ")[0]} à{" "}
+                            {formatHm(nextChange.at.split(" ")[1])}h
                           </>
                         ) : (
                           // Format heure seule: "Ferme à 17:30h"
                           <>
-                            {nextChange.type === "close" ? "Ferme à" : "Ouvre à"}{" "}
+                            {nextChange.type === "close"
+                              ? "Ferme à"
+                              : "Ouvre à"}{" "}
                             {formatHm(nextChange.at)}h
                           </>
                         )}
@@ -579,14 +683,23 @@ export default async function PlacePage({ params }: PageProps) {
                             isToday ? "bg-muted/60" : ""
                           }`}
                         >
-                          <span className={`font-medium ${isToday ? "text-foreground" : ""}`}>
+                          <span
+                            className={`font-medium ${
+                              isToday ? "text-foreground" : ""
+                            }`}
+                          >
                             {DAY_LABEL[d]}
                           </span>
                           <span className="text-sm text-muted-foreground">
                             {slots.length === 0
                               ? "Fermé"
                               : slots
-                                  .map((s) => `${formatHm(s.openTime)} – ${formatHm(s.closeTime)}`)
+                                  .map(
+                                    (s) =>
+                                      `${formatHm(s.openTime)} – ${formatHm(
+                                        s.closeTime
+                                      )}`
+                                  )
                                   .join("  •  ")}
                           </span>
                         </div>
@@ -617,7 +730,11 @@ export default async function PlacePage({ params }: PageProps) {
                   />
                 </div>
                 <Button asChild className="w-full">
-                  <a href={directionsHref} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={directionsHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Itinéraire
                   </a>
                 </Button>
@@ -649,7 +766,8 @@ export default async function PlacePage({ params }: PageProps) {
                   {/* Nom complet ou nom d'utilisateur */}
                   <div>
                     <h3 className="font-medium text-foreground">
-                      {place.owner.profile.firstname && place.owner.profile.lastname
+                      {place.owner.profile.firstname &&
+                      place.owner.profile.lastname
                         ? `${place.owner.profile.firstname} ${place.owner.profile.lastname}`
                         : place.owner.name}
                     </h3>
@@ -663,7 +781,8 @@ export default async function PlacePage({ params }: PageProps) {
                   )}
 
                   {/* Contact */}
-                  {(place.owner.profile.showEmail || place.owner.profile.showPhone) && (
+                  {(place.owner.profile.showEmail ||
+                    place.owner.profile.showPhone) && (
                     <div className="space-y-2">
                       {place.owner.profile.showEmail && place.owner.email && (
                         <Button
@@ -679,25 +798,31 @@ export default async function PlacePage({ params }: PageProps) {
                         </Button>
                       )}
 
-                      {place.owner.profile.showPhone && place.owner.profile.phone && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start"
-                          asChild
-                        >
-                          <a href={`tel:${place.owner.profile.phone}`}>
-                            <Phone className="w-4 h-4 mr-2" />
-                            Appeler
-                          </a>
-                        </Button>
-                      )}
+                      {place.owner.profile.showPhone &&
+                        place.owner.profile.phone && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start"
+                            asChild
+                          >
+                            <a href={`tel:${place.owner.profile.phone}`}>
+                              <Phone className="w-4 h-4 mr-2" />
+                              Appeler
+                            </a>
+                          </Button>
+                        )}
                     </div>
                   )}
 
                   {/* Lien vers fiche complète */}
                   {place.owner.slug && (
-                    <Button variant="default" size="sm" className="w-full justify-start" asChild>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full justify-start"
+                      asChild
+                    >
                       <a href={`/profil/${place.owner.slug}`}>
                         <User className="w-4 h-4 mr-2" />
                         Voir la fiche complète
@@ -708,7 +833,9 @@ export default async function PlacePage({ params }: PageProps) {
                   {/* Réseaux sociaux du propriétaire */}
                   {(() => {
                     const socials = parseSocials(place.owner.profile.socials);
-                    const hasSocials = Object.keys(socials).some((key) => socials[key]);
+                    const hasSocials = Object.keys(socials).some(
+                      (key) => socials[key]
+                    );
 
                     if (!hasSocials) return null;
 
@@ -716,7 +843,9 @@ export default async function PlacePage({ params }: PageProps) {
                       <>
                         <Separator />
                         <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-foreground">Réseaux sociaux</h4>
+                          <h4 className="text-sm font-medium text-foreground">
+                            Réseaux sociaux
+                          </h4>
                           <div className="flex flex-wrap gap-2">
                             {socials.facebook && (
                               <Button variant="outline" size="sm" asChild>
@@ -779,7 +908,10 @@ export default async function PlacePage({ params }: PageProps) {
             )}
 
             {/* Réseaux sociaux */}
-            {(place.facebook || place.instagram || place.twitter || place.linkedin) && (
+            {(place.facebook ||
+              place.instagram ||
+              place.twitter ||
+              place.linkedin) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Réseaux sociaux</CardTitle>
@@ -829,6 +961,15 @@ export default async function PlacePage({ params }: PageProps) {
               </Card>
             )}
           </div>
+        </div>
+
+        {/* Debug Open Graph (dev seulement) */}
+        <div className="mt-8">
+          <OpenGraphDebug
+            url={`${
+              process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
+            }/places/${place.slug}`}
+          />
         </div>
       </div>
     </div>

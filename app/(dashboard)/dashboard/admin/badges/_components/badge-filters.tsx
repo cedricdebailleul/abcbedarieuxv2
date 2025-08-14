@@ -16,10 +16,10 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
-import { 
-  CATEGORY_LABELS, 
+import {
+  CATEGORY_LABELS,
   RARITY_LABELS,
-  type BadgeFilters 
+  type BadgeFilters,
 } from "@/lib/validations/badge";
 import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
 
@@ -30,7 +30,7 @@ interface BadgeFiltersProps {
 export function BadgeFilters({ initialFilters }: BadgeFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [filters, setFilters] = useState({
     search: initialFilters.search || "",
     category: initialFilters.category || "all",
@@ -43,17 +43,21 @@ export function BadgeFilters({ initialFilters }: BadgeFiltersProps) {
   // Appliquer les filtres
   const applyFilters = () => {
     const params = new URLSearchParams();
-    
+
     if (filters.search) params.set("search", filters.search);
-    if (filters.category && filters.category !== "all") params.set("category", filters.category);
-    if (filters.rarity && filters.rarity !== "all") params.set("rarity", filters.rarity);
-    if (filters.isActive && filters.isActive !== "all") params.set("isActive", filters.isActive);
+    if (filters.category && filters.category !== "all")
+      params.set("category", filters.category);
+    if (filters.rarity && filters.rarity !== "all")
+      params.set("rarity", filters.rarity);
+    if (filters.isActive && filters.isActive !== "all")
+      params.set("isActive", filters.isActive);
     if (filters.sortBy !== "createdAt") params.set("sortBy", filters.sortBy);
-    if (filters.sortOrder !== "desc") params.set("sortOrder", filters.sortOrder);
-    
+    if (filters.sortOrder !== "desc")
+      params.set("sortOrder", filters.sortOrder);
+
     // Réinitialiser la page à 1
     params.set("page", "1");
-    
+
     router.push(`?${params.toString()}`);
   };
 
@@ -90,7 +94,9 @@ export function BadgeFilters({ initialFilters }: BadgeFiltersProps) {
               id="search"
               placeholder="Titre ou description..."
               value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, search: e.target.value }))
+              }
               className="pl-10"
             />
           </div>
@@ -121,7 +127,9 @@ export function BadgeFilters({ initialFilters }: BadgeFiltersProps) {
           <Label htmlFor="category">Catégorie</Label>
           <Select
             value={filters.category}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, category: value }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Toutes" />
@@ -142,7 +150,9 @@ export function BadgeFilters({ initialFilters }: BadgeFiltersProps) {
           <Label htmlFor="rarity">Rareté</Label>
           <Select
             value={filters.rarity}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, rarity: value }))}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, rarity: value }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Toutes" />
@@ -163,7 +173,9 @@ export function BadgeFilters({ initialFilters }: BadgeFiltersProps) {
           <Label htmlFor="status">Statut</Label>
           <Select
             value={filters.isActive}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, isActive: value }))}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, isActive: value }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Tous" />
@@ -181,7 +193,9 @@ export function BadgeFilters({ initialFilters }: BadgeFiltersProps) {
           <Label htmlFor="sortBy">Trier par</Label>
           <Select
             value={filters.sortBy}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}
+            onValueChange={(
+              value: "title" | "category" | "rarity" | "createdAt"
+            ) => setFilters((prev) => ({ ...prev, sortBy: value }))}
           >
             <SelectTrigger>
               <SelectValue />
@@ -200,7 +214,9 @@ export function BadgeFilters({ initialFilters }: BadgeFiltersProps) {
           <Label htmlFor="sortOrder">Ordre</Label>
           <Select
             value={filters.sortOrder}
-            onValueChange={(value) => setFilters(prev => ({ ...prev, sortOrder: value }))}
+            onValueChange={(value: "asc" | "desc") =>
+              setFilters((prev) => ({ ...prev, sortOrder: value }))
+            }
           >
             <SelectTrigger>
               <SelectValue />

@@ -10,16 +10,19 @@ import { BadgeForm } from "../../_components/badge-form";
 import { getBadgeAction } from "@/actions/badge";
 
 interface EditBadgePageProps {
-  params: {
+  params: Promise<{
     badgeId: string;
-  };
+  }>;
 }
 
-export async function generateMetadata({ params }: EditBadgePageProps): Promise<Metadata> {
-  const result = await getBadgeAction(params.badgeId);
-  
+export async function generateMetadata({
+  params,
+}: EditBadgePageProps): Promise<Metadata> {
+  const { badgeId } = await params;
+  const result = await getBadgeAction(badgeId);
+
   return {
-    title: result.success 
+    title: result.success
       ? `Modifier ${result.data.title} | Administration`
       : "Badge introuvable | Administration",
     description: "Modifier les informations du badge",
@@ -27,8 +30,9 @@ export async function generateMetadata({ params }: EditBadgePageProps): Promise<
 }
 
 export default async function EditBadgePage({ params }: EditBadgePageProps) {
-  const result = await getBadgeAction(params.badgeId);
-  
+  const { badgeId } = await params;
+  const result = await getBadgeAction(badgeId);
+
   if (!result.success) {
     notFound();
   }
@@ -47,7 +51,9 @@ export default async function EditBadgePage({ params }: EditBadgePageProps) {
         <div className="flex items-center gap-2">
           <Edit className="h-6 w-6 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Modifier le badge</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Modifier le badge
+            </h1>
             <p className="text-muted-foreground">
               Modifiez les informations de "{badge.title}"
             </p>
@@ -61,9 +67,9 @@ export default async function EditBadgePage({ params }: EditBadgePageProps) {
           <CardTitle>Informations du badge</CardTitle>
         </CardHeader>
         <CardContent>
-          <BadgeForm 
-            mode="edit" 
-            badgeId={params.badgeId}
+          <BadgeForm
+            mode="edit"
+            badgeId={badgeId}
             initialData={{
               id: badge.id,
               title: badge.title,

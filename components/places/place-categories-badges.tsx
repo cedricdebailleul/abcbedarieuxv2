@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import * as LucideIcons from "lucide-react";
+import { lucideIconToEmoji } from "@/lib/share-utils";
 
 interface PlaceCategory {
   id: string;
   name: string;
   slug: string;
-  icon: string | null;
+  icon: string | null | undefined;
   color: string | null;
 }
 
@@ -23,11 +24,11 @@ interface PlaceCategoriesBadgesProps {
   clickable?: boolean;
 }
 
-export function PlaceCategoriesBadges({ 
-  categories = [], 
-  maxDisplay = 3, 
+export function PlaceCategoriesBadges({
+  categories = [],
+  maxDisplay = 3,
   size = "sm",
-  clickable = true
+  clickable = true,
 }: PlaceCategoriesBadgesProps) {
   if (!categories || categories.length === 0) {
     return null;
@@ -38,19 +39,15 @@ export function PlaceCategoriesBadges({
 
   const renderCategoryIcon = (icon: string | null) => {
     if (!icon) return null;
-    
-    // Vérifier si c'est un emoji
-    if (icon.length <= 4 && /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon)) {
-      return <span className="text-xs mr-1">{icon}</span>;
+
+    // Si l'icône commence par une majuscule, c'est probablement un nom Lucide
+    if (/^[A-Z]/.test(icon)) {
+      const emoji = lucideIconToEmoji(icon);
+      return <span className="text-xs mr-1">{emoji}</span>;
     }
-    
-    // Vérifier si c'est une icône Lucide
-    const IconComponent = (LucideIcons as any)[icon];
-    if (IconComponent) {
-      return <IconComponent className="w-3 h-3 mr-1" />;
-    }
-    
-    return null;
+
+    // Sinon, c'est déjà un emoji ou un caractère spécial
+    return <span className="text-xs mr-1">{icon}</span>;
   };
 
   const BadgeContent = ({ category }: { category: PlaceCategory }) => (
@@ -60,7 +57,9 @@ export function PlaceCategoriesBadges({
         text-xs px-2 py-0.5 
         ${size === "sm" ? "text-xs" : "text-sm"} 
         flex items-center
-        ${clickable ? 'hover:scale-105 transition-transform cursor-pointer' : ''}
+        ${
+          clickable ? "hover:scale-105 transition-transform cursor-pointer" : ""
+        }
       `}
       style={{
         backgroundColor: category.color ? `${category.color}15` : undefined,
@@ -68,7 +67,7 @@ export function PlaceCategoriesBadges({
         color: category.color || undefined,
       }}
     >
-      {renderCategoryIcon(category.icon)}
+      {renderCategoryIcon(category.icon ?? null)}
       {category.name}
     </Badge>
   );
@@ -86,7 +85,7 @@ export function PlaceCategoriesBadges({
           return <BadgeContent key={category.id} category={category} />;
         }
       })}
-      
+
       {remainingCount > 0 && (
         <Badge
           variant="outline"

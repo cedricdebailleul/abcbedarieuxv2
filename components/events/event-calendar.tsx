@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Users, Euro } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Euro,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,19 +44,28 @@ interface Event {
   _count: {
     participants: number;
   };
+  occurrenceId?: string; // Added property
 }
 
 interface EventCalendarProps {
   events: Event[];
 }
 
-const DAYS_OF_WEEK = [
-  "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"
-];
+const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
 const MONTHS = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+  "Janvier",
+  "Février",
+  "Mars",
+  "Avril",
+  "Mai",
+  "Juin",
+  "Juillet",
+  "Août",
+  "Septembre",
+  "Octobre",
+  "Novembre",
+  "Décembre",
 ];
 
 // Fonction utilitaire pour obtenir les jours du mois avec padding
@@ -56,12 +73,12 @@ function getCalendarDays(year: number, month: number) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
-  
+
   // Commencer le lundi (1) au lieu de dimanche (0)
   const startWeekday = (firstDay.getDay() + 6) % 7;
-  
+
   const days = [];
-  
+
   // Jours du mois précédent pour remplir
   const prevMonth = new Date(year, month - 1, 0);
   for (let i = startWeekday - 1; i >= 0; i--) {
@@ -69,20 +86,20 @@ function getCalendarDays(year: number, month: number) {
       date: prevMonth.getDate() - i,
       month: month - 1,
       year: month === 0 ? year - 1 : year,
-      isCurrentMonth: false
+      isCurrentMonth: false,
     });
   }
-  
+
   // Jours du mois actuel
   for (let date = 1; date <= daysInMonth; date++) {
     days.push({
       date,
       month,
       year,
-      isCurrentMonth: true
+      isCurrentMonth: true,
     });
   }
-  
+
   // Jours du mois suivant pour compléter la grille
   const totalCells = Math.ceil(days.length / 7) * 7;
   let nextMonthDate = 1;
@@ -91,40 +108,43 @@ function getCalendarDays(year: number, month: number) {
       date: nextMonthDate++,
       month: month + 1,
       year: month === 11 ? year + 1 : year,
-      isCurrentMonth: false
+      isCurrentMonth: false,
     });
   }
-  
+
   return days;
 }
 
 // Composant pour afficher un événement dans une cellule du calendrier
-function EventThumbnail({ event, isCompact = false }: { event: Event; isCompact?: boolean }) {
+function EventThumbnail({
+  event,
+  isCompact = false,
+}: {
+  event: Event;
+  isCompact?: boolean;
+}) {
   const startDate = new Date(event.startDate);
   const endDate = new Date(event.endDate);
   const isMultiDay = startDate.toDateString() !== endDate.toDateString();
-  
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <div
           className={`
             text-xs p-1 mb-1 rounded cursor-pointer transition-colors
-            ${event.isFeatured 
-              ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            ${
+              event.isFeatured
+                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }
             ${isCompact ? "truncate" : ""}
           `}
           title={event.title}
         >
           <div className="flex items-center gap-1">
-            {!event.isAllDay && (
-              <Clock className="w-3 h-3 shrink-0" />
-            )}
-            <span className="truncate font-medium">
-              {event.title}
-            </span>
+            {!event.isAllDay && <Clock className="w-3 h-3 shrink-0" />}
+            <span className="truncate font-medium">{event.title}</span>
             {isMultiDay && (
               <span className="shrink-0 text-xs opacity-75">...</span>
             )}
@@ -153,39 +173,37 @@ function EventThumbnail({ event, isCompact = false }: { event: Event; isCompact?
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <span>
-                {event.isAllDay ? (
-                  isMultiDay ? (
-                    `${startDate.toLocaleDateString("fr-FR")} - ${endDate.toLocaleDateString("fr-FR")}`
-                  ) : (
-                    `${startDate.toLocaleDateString("fr-FR")} (toute la journée)`
-                  )
-                ) : (
-                  isMultiDay ? (
-                    `${startDate.toLocaleDateString("fr-FR", { 
-                      weekday: "short", 
-                      day: "numeric", 
-                      month: "short" 
-                    })} ${startDate.toLocaleTimeString("fr-FR", { 
-                      hour: "2-digit", 
-                      minute: "2-digit" 
-                    })} - ${endDate.toLocaleDateString("fr-FR", { 
-                      weekday: "short", 
-                      day: "numeric", 
-                      month: "short" 
-                    })} ${endDate.toLocaleTimeString("fr-FR", { 
-                      hour: "2-digit", 
-                      minute: "2-digit" 
+                {event.isAllDay
+                  ? isMultiDay
+                    ? `${startDate.toLocaleDateString(
+                        "fr-FR"
+                      )} - ${endDate.toLocaleDateString("fr-FR")}`
+                    : `${startDate.toLocaleDateString(
+                        "fr-FR"
+                      )} (toute la journée)`
+                  : isMultiDay
+                  ? `${startDate.toLocaleDateString("fr-FR", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                    })} ${startDate.toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })} - ${endDate.toLocaleDateString("fr-FR", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                    })} ${endDate.toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}`
-                  ) : (
-                    `${startDate.toLocaleTimeString("fr-FR", { 
-                      hour: "2-digit", 
-                      minute: "2-digit" 
-                    })} - ${endDate.toLocaleTimeString("fr-FR", { 
-                      hour: "2-digit", 
-                      minute: "2-digit" 
-                    })}`
-                  )
-                )}
+                  : `${startDate.toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })} - ${endDate.toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}`}
               </span>
             </div>
 
@@ -207,7 +225,8 @@ function EventThumbnail({ event, isCompact = false }: { event: Event; isCompact?
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-muted-foreground" />
                 <span>
-                  {event._count.participants} participant{event._count.participants > 1 ? 's' : ''}
+                  {event._count.participants} participant
+                  {event._count.participants > 1 ? "s" : ""}
                   {event.maxParticipants && (
                     <span className="text-muted-foreground">
                       /{event.maxParticipants}
@@ -225,7 +244,8 @@ function EventThumbnail({ event, isCompact = false }: { event: Event; isCompact?
                   <div className="flex items-center gap-1 text-primary font-medium">
                     <Euro className="w-3 h-3" />
                     <span className="text-xs">
-                      {event.price}{event.currency === "EUR" ? "€" : event.currency}
+                      {event.price}
+                      {event.currency === "EUR" ? "€" : event.currency}
                     </span>
                   </div>
                 )}
@@ -234,9 +254,7 @@ function EventThumbnail({ event, isCompact = false }: { event: Event; isCompact?
           </div>
 
           <Button asChild className="w-full" size="sm">
-            <Link href={`/events/${event.slug}`}>
-              Voir l'événement
-            </Link>
+            <Link href={`/events/${event.slug}`}>Voir l'événement</Link>
           </Button>
         </div>
       </PopoverContent>
@@ -250,12 +268,12 @@ export function EventCalendar({ events }: EventCalendarProps) {
   const month = currentDate.getMonth();
 
   const days = getCalendarDays(year, month);
-  
+
   // Grouper les événements par date
   const eventsByDate = events.reduce((acc, event) => {
     const startDate = new Date(event.startDate);
     const endDate = new Date(event.endDate);
-    
+
     // Pour les événements multi-jours, les ajouter à chaque jour
     const current = new Date(startDate);
     while (current <= endDate) {
@@ -264,7 +282,7 @@ export function EventCalendar({ events }: EventCalendarProps) {
       acc[dateKey].push(event);
       current.setDate(current.getDate() + 1);
     }
-    
+
     return acc;
   }, {} as Record<string, Event[]>);
 
@@ -288,16 +306,16 @@ export function EventCalendar({ events }: EventCalendarProps) {
             <Button variant="outline" size="sm" onClick={goToToday}>
               Aujourd'hui
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => navigateMonth(-1)}
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => navigateMonth(1)}
             >
               <ChevronRight className="w-4 h-4" />
@@ -309,8 +327,8 @@ export function EventCalendar({ events }: EventCalendarProps) {
         <div className="grid grid-cols-7 gap-1">
           {/* En-têtes des jours */}
           {DAYS_OF_WEEK.map((day) => (
-            <div 
-              key={day} 
+            <div
+              key={day}
               className="p-3 text-sm font-medium text-center text-muted-foreground border-b"
             >
               {day}
@@ -321,7 +339,7 @@ export function EventCalendar({ events }: EventCalendarProps) {
           {days.map((day, index) => {
             const dateKey = `${day.year}-${day.month}-${day.date}`;
             const dayEvents = eventsByDate[dateKey] || [];
-            const isToday = 
+            const isToday =
               day.isCurrentMonth &&
               day.date === new Date().getDate() &&
               day.month === new Date().getMonth() &&
@@ -332,19 +350,17 @@ export function EventCalendar({ events }: EventCalendarProps) {
                 key={index}
                 className={`
                   min-h-[120px] p-2 border-r border-b
-                  ${day.isCurrentMonth 
-                    ? "bg-background" 
-                    : "bg-muted/30"
-                  }
+                  ${day.isCurrentMonth ? "bg-background" : "bg-muted/30"}
                   ${isToday ? "bg-primary/5 border-primary/20" : ""}
                 `}
               >
-                <div 
+                <div
                   className={`
                     text-sm font-medium mb-2
-                    ${day.isCurrentMonth 
-                      ? "text-foreground" 
-                      : "text-muted-foreground"
+                    ${
+                      day.isCurrentMonth
+                        ? "text-foreground"
+                        : "text-muted-foreground"
                     }
                     ${isToday ? "text-primary font-bold" : ""}
                   `}
@@ -354,13 +370,16 @@ export function EventCalendar({ events }: EventCalendarProps) {
 
                 <div className="space-y-1">
                   {dayEvents.slice(0, 3).map((event, eventIndex) => (
-                    <EventThumbnail 
-                      key={`${event.id}-${eventIndex}`} 
-                      event={event} 
+                    <EventThumbnail
+                      key={
+                        event.occurrenceId ||
+                        `${event.id}-${dateKey}-${eventIndex}`
+                      }
+                      event={event}
                       isCompact={dayEvents.length > 2}
                     />
                   ))}
-                  
+
                   {dayEvents.length > 3 && (
                     <div className="text-xs text-muted-foreground text-center py-1">
                       +{dayEvents.length - 3} autres

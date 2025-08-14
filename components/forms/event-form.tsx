@@ -55,7 +55,7 @@ import {
   eventWithRecurrenceSchema, 
   type EventWithRecurrenceData,
   EVENT_CATEGORIES_LABELS,
-  RECURRENCE_FREQUENCY_LABELS
+  RECURRENCE_FREQUENCY_OPTIONS
 } from "@/lib/validations/event";
 import { EventStatus, EventCategory, RecurrenceFrequency } from "@/lib/generated/prisma";
 
@@ -520,9 +520,9 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    {Object.entries(RECURRENCE_FREQUENCY_LABELS).map(([value, label]) => (
-                                      <SelectItem key={value} value={value}>
-                                        {label}
+                                    {RECURRENCE_FREQUENCY_OPTIONS.map((option) => (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>

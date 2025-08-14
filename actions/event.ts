@@ -12,6 +12,7 @@ import {
   type Event,
   type RecurrenceRule 
 } from "@/lib/generated/prisma";
+import { expandRecurrentEvents } from "@/lib/recurrence";
 
 // Types pour les réponses
 type ActionResult<T = unknown> = {
@@ -190,7 +191,11 @@ export async function createEventAction(data: EventFormData): Promise<ActionResu
           frequency: data.recurrence.frequency,
           interval: data.recurrence.interval,
           count: data.recurrence.count,
-          until: data.recurrence.until ? new Date(data.recurrence.until) : undefined,
+          until: data.recurrence.until ? (() => {
+            // Convertir la date "until" en fin de journée dans le fuseau horaire de l'événement
+            const untilDate = new Date(data.recurrence.until + 'T23:59:59');
+            return untilDate;
+          })() : undefined,
           byWeekDay: data.recurrence.byWeekDay ? JSON.stringify(data.recurrence.byWeekDay) : null,
           byMonthDay: data.recurrence.byMonthDay ? JSON.stringify(data.recurrence.byMonthDay) : null,
           byMonth: data.recurrence.byMonth ? JSON.stringify(data.recurrence.byMonth) : null,
@@ -241,6 +246,9 @@ export async function updateEventAction(
           // Les admins peuvent modifier tous les événements
           ...(["admin", "moderator"].includes(user.role!) ? [{}] : [])
         ]
+      },
+      include: {
+        recurrenceRule: true
       }
     });
 
@@ -318,6 +326,68 @@ export async function updateEventAction(
         ...(data.isRecurring !== undefined && { isRecurring: data.isRecurring })
       }
     });
+
+    // Gérer la mise à jour de la récurrence
+    if (data.isRecurring !== undefined) {
+      if (data.isRecurring && data.recurrence) {
+        // L'événement devient récurrent ou la récurrence est modifiée
+        if (existingEvent.recurrenceRuleId) {
+          // Mettre à jour la règle existante
+          await prisma.recurrenceRule.update({
+            where: { id: existingEvent.recurrenceRuleId },
+            data: {
+              frequency: data.recurrence.frequency,
+              interval: data.recurrence.interval,
+              count: data.recurrence.count,
+              until: data.recurrence.until ? (() => {
+                const untilDate = new Date(data.recurrence.until + 'T23:59:59');
+                return untilDate;
+              })() : undefined,
+              byWeekDay: data.recurrence.byWeekDay ? JSON.stringify(data.recurrence.byWeekDay) : null,
+              byMonthDay: data.recurrence.byMonthDay ? JSON.stringify(data.recurrence.byMonthDay) : null,
+              byMonth: data.recurrence.byMonth ? JSON.stringify(data.recurrence.byMonth) : null,
+              exceptions: data.recurrence.exceptions ? JSON.stringify(data.recurrence.exceptions) : null,
+              workdaysOnly: data.recurrence.workdaysOnly || false,
+            }
+          });
+        } else {
+          // Créer une nouvelle règle
+          const recurrenceRule = await prisma.recurrenceRule.create({
+            data: {
+              frequency: data.recurrence.frequency,
+              interval: data.recurrence.interval,
+              count: data.recurrence.count,
+              until: data.recurrence.until ? (() => {
+                const untilDate = new Date(data.recurrence.until + 'T23:59:59');
+                return untilDate;
+              })() : undefined,
+              byWeekDay: data.recurrence.byWeekDay ? JSON.stringify(data.recurrence.byWeekDay) : null,
+              byMonthDay: data.recurrence.byMonthDay ? JSON.stringify(data.recurrence.byMonthDay) : null,
+              byMonth: data.recurrence.byMonth ? JSON.stringify(data.recurrence.byMonth) : null,
+              exceptions: data.recurrence.exceptions ? JSON.stringify(data.recurrence.exceptions) : null,
+              workdaysOnly: data.recurrence.workdaysOnly || false,
+            }
+          });
+
+          // Lier la règle à l'événement
+          await prisma.event.update({
+            where: { id: eventId },
+            data: { recurrenceRuleId: recurrenceRule.id }
+          });
+        }
+      } else if (!data.isRecurring && existingEvent.recurrenceRuleId) {
+        // L'événement n'est plus récurrent, supprimer la règle
+        await prisma.recurrenceRule.delete({
+          where: { id: existingEvent.recurrenceRuleId }
+        });
+        
+        // Retirer la référence de l'événement
+        await prisma.event.update({
+          where: { id: eventId },
+          data: { recurrenceRuleId: null }
+        });
+      }
+    }
 
     // Revalider les pages concernées
     revalidatePath("/dashboard/events");
@@ -498,6 +568,7 @@ export async function getPublicEventsAction(options?: {
         organizer: {
           select: { id: true, name: true, slug: true }
         },
+        recurrenceRule: true, // Inclure les règles de récurrence
         _count: {
           select: { participants: true }
         }
@@ -507,16 +578,119 @@ export async function getPublicEventsAction(options?: {
         { startDate: "asc" },
         { createdAt: "desc" }
       ],
-      take: options?.limit || 100
+      take: options?.limit || 1000 // Augmenter la limite pour l'expansion
     });
+
+    // Définir la plage de dates pour l'expansion des récurrences
+    const defaultRangeStart = options?.startDate ? new Date(options.startDate) : new Date();
+    const defaultRangeEnd = options?.endDate ? new Date(options.endDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 an par défaut
+
+    // Expanser les événements récurrents
+    const expandedEvents = expandRecurrentEvents(events, defaultRangeStart, defaultRangeEnd);
+
+    // Appliquer la limite finale
+    const finalEvents = expandedEvents.slice(0, options?.limit || 100);
 
     return {
       success: true,
-      data: events
+      data: finalEvents
     };
 
   } catch (error) {
     console.error("Erreur lors de la récupération des événements publics:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur interne"
+    };
+  }
+}
+
+// Récupérer un événement par slug avec ses occurrences récurrentes
+export async function getEventBySlugAction(slug: string): Promise<ActionResult<any>> {
+  try {
+    const event = await prisma.event.findFirst({
+      where: { slug, status: EventStatus.PUBLISHED, isActive: true },
+      include: {
+        organizer: {
+          select: {
+            name: true,
+            email: true,
+            slug: true,
+            profile: {
+              select: {
+                firstname: true,
+                lastname: true,
+                bio: true,
+                phone: true,
+                socials: true,
+                isPublic: true,
+                showEmail: true,
+                showPhone: true
+              }
+            }
+          }
+        },
+        place: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            city: true,
+            street: true,
+            postalCode: true,
+            latitude: true,
+            longitude: true,
+          }
+        },
+        recurrenceRule: true,
+        participants: {
+          include: { 
+            user: { select: { name: true, slug: true } } 
+          },
+          orderBy: { registeredAt: "desc" },
+          take: 10
+        },
+        _count: {
+          select: { participants: true }
+        }
+      }
+    });
+
+    if (!event) {
+      return {
+        success: false,
+        error: "Événement introuvable"
+      };
+    }
+
+    // Si l'événement est récurrent, générer les occurrences pour les 6 prochains mois
+    if (event.isRecurring && event.recurrenceRule) {
+      const now = new Date();
+      const sixMonthsLater = new Date();
+      sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+
+      const expandedEvents = expandRecurrentEvents([event], now, sixMonthsLater);
+      
+      return {
+        success: true,
+        data: {
+          ...event,
+          occurrences: expandedEvents.map(e => ({
+            startDate: e.startDate,
+            endDate: e.endDate,
+            isOriginal: !e.isRecurrenceOccurrence
+          }))
+        }
+      };
+    }
+
+    return {
+      success: true,
+      data: event
+    };
+
+  } catch (error) {
+    console.error("Erreur lors de la récupération de l'événement:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur interne"

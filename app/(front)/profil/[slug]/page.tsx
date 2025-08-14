@@ -39,9 +39,11 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
-type PageProps = { params: { slug: string } };
+type PageProps = { params: Promise<{ slug: string }> };
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const user = await prisma.user.findFirst({
     where: { slug, profile: { isPublic: true } },
@@ -70,7 +72,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `Profil de ${displayName}`,
-    description: user.profile?.bio || `Découvrez le profil de ${displayName} sur ABC Bédarieux`,
+    description:
+      user.profile?.bio ||
+      `Découvrez le profil de ${displayName} sur ABC Bédarieux`,
   };
 }
 
@@ -158,15 +162,12 @@ export default async function ProfilePage({ params }: PageProps) {
   const socials = parseSocials(user.profile?.socials);
   const hasSocials = Object.keys(socials).some((key) => socials[key]);
 
-  const badgesByCategory = user.badges.reduce(
-    (acc, userBadge) => {
-      const category = userBadge.badge.category;
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(userBadge);
-      return acc;
-    },
-    {} as Record<string, typeof user.badges>
-  );
+  const badgesByCategory = user.badges.reduce((acc, userBadge) => {
+    const category = userBadge.badge.category;
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(userBadge);
+    return acc;
+  }, {} as Record<string, typeof user.badges>);
 
   const rarityOrder = ["LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"];
   const rarityColors = {
@@ -217,10 +218,14 @@ export default async function ProfilePage({ params }: PageProps) {
               </div>
 
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-foreground mb-2">{displayName}</h1>
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  {displayName}
+                </h1>
 
                 {user.profile?.bio && (
-                  <p className="text-muted-foreground mb-4 leading-relaxed">{user.profile.bio}</p>
+                  <p className="text-muted-foreground mb-4 leading-relaxed">
+                    {user.profile.bio}
+                  </p>
                 )}
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -232,14 +237,16 @@ export default async function ProfilePage({ params }: PageProps) {
                   {user._count.places > 0 && (
                     <div className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
-                      {user._count.places} lieu{user._count.places > 1 ? "x" : ""}
+                      {user._count.places} lieu
+                      {user._count.places > 1 ? "x" : ""}
                     </div>
                   )}
 
                   {user.badges.length > 0 && (
                     <div className="flex items-center gap-1">
                       <Award className="w-4 h-4" />
-                      {user.badges.length} badge{user.badges.length > 1 ? "s" : ""}
+                      {user.badges.length} badge
+                      {user.badges.length > 1 ? "s" : ""}
                     </div>
                   )}
                 </div>
@@ -265,7 +272,9 @@ export default async function ProfilePage({ params }: PageProps) {
                 {Object.entries(badgesByCategory).map(([category, badges]) => (
                   <div key={category}>
                     <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-                      {categoryLabels[category as keyof typeof categoryLabels] || category}
+                      {categoryLabels[
+                        category as keyof typeof categoryLabels
+                      ] || category}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {badges
@@ -281,7 +290,9 @@ export default async function ProfilePage({ params }: PageProps) {
                           >
                             <div className="flex items-start gap-3">
                               <div
-                                className={`w-12 h-12 rounded-full flex items-center justify-center text-white ${rarityColors[userBadge.badge.rarity]} shadow-lg`}
+                                className={`w-12 h-12 rounded-full flex items-center justify-center text-white ${
+                                  rarityColors[userBadge.badge.rarity]
+                                } shadow-lg`}
                               >
                                 <Trophy className="w-7 h-7" />
                               </div>
@@ -298,13 +309,15 @@ export default async function ProfilePage({ params }: PageProps) {
                                     variant="outline"
                                     className="text-xs"
                                     style={{
-                                      borderColor: userBadge.badge.color,
-                                      color: userBadge.badge.color,
+                                      borderColor:
+                                        userBadge.badge.color ?? "transparent",
+                                      color: userBadge.badge.color ?? undefined,
                                     }}
                                   >
                                     {
                                       rarityLabels[
-                                        userBadge.badge.rarity as keyof typeof rarityLabels
+                                        userBadge.badge
+                                          .rarity as keyof typeof rarityLabels
                                       ]
                                     }
                                   </Badge>
@@ -345,10 +358,14 @@ export default async function ProfilePage({ params }: PageProps) {
                       className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
                     >
                       <div>
-                        <h4 className="font-medium text-foreground">{place.name}</h4>
+                        <h4 className="font-medium text-foreground">
+                          {place.name}
+                        </h4>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline">{place.type}</Badge>
-                          <span className="text-sm text-muted-foreground">{place.city}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {place.city}
+                          </span>
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" asChild>
@@ -372,7 +389,11 @@ export default async function ProfilePage({ params }: PageProps) {
               </CardHeader>
               <CardContent className="space-y-3">
                 {user.profile.showEmail && user.email && (
-                  <Button variant="outline" className="w-full justify-start" asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    asChild
+                  >
                     <a href={`mailto:${user.email}`}>
                       <Mail className="w-4 h-4 mr-2" />
                       Envoyer un email
@@ -381,7 +402,11 @@ export default async function ProfilePage({ params }: PageProps) {
                 )}
 
                 {user.profile.showPhone && user.profile.phone && (
-                  <Button variant="outline" className="w-full justify-start" asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    asChild
+                  >
                     <a href={`tel:${user.profile.phone}`}>
                       <Phone className="w-4 h-4 mr-2" />
                       Appeler

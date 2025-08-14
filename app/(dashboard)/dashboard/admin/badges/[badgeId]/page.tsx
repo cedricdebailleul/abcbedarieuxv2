@@ -9,34 +9,40 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { getBadgeAction } from "@/actions/badge";
-import { 
-  CATEGORY_LABELS, 
-  RARITY_LABELS, 
-  RARITY_COLORS
+import {
+  CATEGORY_LABELS,
+  RARITY_LABELS,
+  RARITY_COLORS,
 } from "@/lib/validations/badge";
 import { ManualAwardBadge } from "../_components/manual-award-badge";
 import { RevokeBadgeButton } from "../_components/revoke-badge-button";
 
 interface BadgeDetailPageProps {
-  params: {
+  params: Promise<{
     badgeId: string;
-  };
+  }>;
 }
 
-export async function generateMetadata({ params }: BadgeDetailPageProps): Promise<Metadata> {
-  const result = await getBadgeAction(params.badgeId);
-  
+export async function generateMetadata({
+  params,
+}: BadgeDetailPageProps): Promise<Metadata> {
+  const { badgeId } = await params;
+  const result = await getBadgeAction(badgeId);
+
   return {
-    title: result.success 
+    title: result.success
       ? `${result.data.title} | Administration`
       : "Badge introuvable | Administration",
     description: "Détails et gestion du badge",
   };
 }
 
-export default async function BadgeDetailPage({ params }: BadgeDetailPageProps) {
-  const result = await getBadgeAction(params.badgeId);
-  
+export default async function BadgeDetailPage({
+  params,
+}: BadgeDetailPageProps) {
+  const { badgeId } = await params;
+  const result = await getBadgeAction(badgeId);
+
   if (!result.success) {
     notFound();
   }
@@ -45,19 +51,32 @@ export default async function BadgeDetailPage({ params }: BadgeDetailPageProps) 
 
   // Rendu de l'icône du badge
   const renderBadgeIcon = () => {
-    if (!badge.iconUrl) return <Award className="w-16 h-16 text-muted-foreground" />;
-    
-    const isUrl = badge.iconUrl.startsWith('http://') || badge.iconUrl.startsWith('https://') || badge.iconUrl.startsWith('/');
-    
+    if (!badge.iconUrl)
+      return <Award className="w-16 h-16 text-muted-foreground" />;
+
+    const isUrl =
+      badge.iconUrl.startsWith("http://") ||
+      badge.iconUrl.startsWith("https://") ||
+      badge.iconUrl.startsWith("/");
+
     if (isUrl) {
-      return <img src={badge.iconUrl} alt={badge.title} className="w-16 h-16 object-contain" />;
+      return (
+        <img
+          src={badge.iconUrl}
+          alt={badge.title}
+          className="w-16 h-16 object-contain"
+        />
+      );
     } else {
       return <span className="text-6xl">{badge.iconUrl}</span>;
     }
   };
 
   const getRarityColor = () => {
-    return RARITY_COLORS[badge.rarity as keyof typeof RARITY_COLORS] || RARITY_COLORS.COMMON;
+    return (
+      RARITY_COLORS[badge.rarity as keyof typeof RARITY_COLORS] ||
+      RARITY_COLORS.COMMON
+    );
   };
 
   return (
@@ -97,30 +116,40 @@ export default async function BadgeDetailPage({ params }: BadgeDetailPageProps) 
             <CardContent className="space-y-6">
               {/* Badge preview */}
               <div className="flex items-center gap-4 p-6 border rounded-lg bg-muted/50">
-                <div 
+                <div
                   className="w-20 h-20 rounded-full border-4 flex items-center justify-center flex-shrink-0"
-                  style={{ 
+                  style={{
                     borderColor: badge.color || getRarityColor(),
-                    backgroundColor: `${badge.color || getRarityColor()}20`
+                    backgroundColor: `${badge.color || getRarityColor()}20`,
                   }}
                 >
                   {renderBadgeIcon()}
                 </div>
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold">{badge.title}</h2>
-                  <p className="text-muted-foreground mt-1">{badge.description}</p>
+                  <p className="text-muted-foreground mt-1">
+                    {badge.description}
+                  </p>
                   <div className="flex gap-2 mt-3">
-                    <Badge 
+                    <Badge
                       variant="outline"
-                      style={{ 
+                      style={{
                         borderColor: badge.color || getRarityColor(),
-                        color: badge.color || getRarityColor()
+                        color: badge.color || getRarityColor(),
                       }}
                     >
-                      {RARITY_LABELS[badge.rarity as keyof typeof RARITY_LABELS]}
+                      {
+                        RARITY_LABELS[
+                          badge.rarity as keyof typeof RARITY_LABELS
+                        ]
+                      }
                     </Badge>
                     <Badge variant="outline">
-                      {CATEGORY_LABELS[badge.category as keyof typeof CATEGORY_LABELS]}
+                      {
+                        CATEGORY_LABELS[
+                          badge.category as keyof typeof CATEGORY_LABELS
+                        ]
+                      }
                     </Badge>
                     <Badge variant={badge.isActive ? "default" : "secondary"}>
                       {badge.isActive ? "Actif" : "Inactif"}
@@ -134,11 +163,15 @@ export default async function BadgeDetailPage({ params }: BadgeDetailPageProps) 
                 <div>
                   <span className="text-muted-foreground">Couleur:</span>
                   <div className="flex items-center gap-2 mt-1">
-                    <div 
+                    <div
                       className="w-4 h-4 rounded border"
-                      style={{ backgroundColor: badge.color || getRarityColor() }}
+                      style={{
+                        backgroundColor: badge.color || getRarityColor(),
+                      }}
                     />
-                    <span className="font-mono">{badge.color || getRarityColor()}</span>
+                    <span className="font-mono">
+                      {badge.color || getRarityColor()}
+                    </span>
                   </div>
                 </div>
                 <div>
@@ -167,12 +200,16 @@ export default async function BadgeDetailPage({ params }: BadgeDetailPageProps) 
               ) : (
                 <div className="space-y-3">
                   {badge.users.map((userBadge: any) => (
-                    <div key={userBadge.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={userBadge.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={userBadge.user.image} />
                           <AvatarFallback>
-                            {userBadge.user.name?.[0] || userBadge.user.email[0].toUpperCase()}
+                            {userBadge.user.name?.[0] ||
+                              userBadge.user.email[0].toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -184,11 +221,13 @@ export default async function BadgeDetailPage({ params }: BadgeDetailPageProps) 
                           </div>
                           <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {new Date(userBadge.earnedAt).toLocaleDateString("fr-FR")}
+                            {new Date(userBadge.earnedAt).toLocaleDateString(
+                              "fr-FR"
+                            )}
                           </div>
                         </div>
                       </div>
-                      <RevokeBadgeButton 
+                      <RevokeBadgeButton
                         badgeId={badge.id}
                         userId={userBadge.user.id}
                         badgeTitle={badge.title}

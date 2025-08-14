@@ -57,14 +57,14 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
 
   console.log("Search params received:", params); // Debug log
 
-  // Calculer la plage de dates pour le mois en cours (pour le calendrier)
+  // Calculer la plage de dates pour les événements récurrents (3 mois par défaut)
   const today = new Date();
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const startOfPeriod = new Date(today.getFullYear(), today.getMonth() - 1, 1); // Mois précédent
+  const endOfPeriod = new Date(today.getFullYear(), today.getMonth() + 3, 0); // 3 mois suivants
 
   // Si une date spécifique est sélectionnée, charger les événements pour cette journée
-  let startDate = startOfMonth.toISOString().split('T')[0];
-  let endDate = endOfMonth.toISOString().split('T')[0];
+  let startDate = startOfPeriod.toISOString().split('T')[0];
+  let endDate = endOfPeriod.toISOString().split('T')[0];
   
   if (selectedDate) {
     startDate = selectedDate;
@@ -225,8 +225,8 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                   {filteredEvents
                     .filter(event => event.isFeatured)
                     .slice(0, 3)
-                    .map((event) => (
-                      <EventCard key={event.id} event={event} />
+                    .map((event, index) => (
+                      <EventCard key={event.occurrenceId || `${event.id}-featured-${index}`} event={event} />
                     ))}
                 </div>
               </CardContent>
@@ -260,8 +260,8 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredEvents
                     .filter(event => !event.isFeatured)
-                    .map((event) => (
-                      <EventCard key={event.id} event={event} />
+                    .map((event, index) => (
+                      <EventCard key={event.occurrenceId || `${event.id}-regular-${index}`} event={event} />
                     ))}
                 </div>
               )}

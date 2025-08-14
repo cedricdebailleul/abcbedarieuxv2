@@ -16,7 +16,7 @@ import {
   Euro,
   Share2,
   Heart,
-  Ticket
+  Ticket,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -29,10 +29,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { EventParticipationButton } from "@/components/events/event-participation-button";
+import { SocialShare } from "@/components/shared/social-share";
+import { EventSchema } from "@/components/structured-data/event-schema";
+import { OpenGraphDebug } from "@/components/debug/og-debug";
+import { PrintHeader } from "@/components/print/print-header";
 
-import { EventStatus } from "@/lib/generated/prisma";
+import { EventCategory, EventStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { EVENT_CATEGORIES_LABELS } from "@/lib/validations/event";
+import { getEventBySlugAction } from "@/actions/event";
+import { generateEventShareData } from "@/lib/share-utils";
+import {
+  JSXElementConstructor,
+  Key,
+  ReactElement,
+  ReactNode,
+  ReactPortal,
+} from "react";
 
 // Types d'aide
 function toArray(val: unknown): string[] {
@@ -57,7 +70,12 @@ function normalizeImagePath(path?: string | null): string | null {
   return path;
 }
 
-function formatEventDateTime(startDate: Date, endDate: Date, isAllDay: boolean, timezone: string) {
+function formatEventDateTime(
+  startDate: Date,
+  endDate: Date,
+  isAllDay: boolean,
+  timezone: string
+) {
   const options: Intl.DateTimeFormatOptions = {
     timeZone: timezone,
     weekday: "long",
@@ -77,35 +95,49 @@ function formatEventDateTime(startDate: Date, endDate: Date, isAllDay: boolean, 
   if (isAllDay) {
     if (isMultiDay) {
       return {
-        primary: `Du ${startDate.toLocaleDateString("fr-FR", options)} au ${endDate.toLocaleDateString("fr-FR", options)}`,
-        secondary: "Toute la journée"
+        primary: `Du ${startDate.toLocaleDateString(
+          "fr-FR",
+          options
+        )} au ${endDate.toLocaleDateString("fr-FR", options)}`,
+        secondary: "Toute la journée",
       };
     } else {
       return {
         primary: startDate.toLocaleDateString("fr-FR", options),
-        secondary: "Toute la journée"
+        secondary: "Toute la journée",
       };
     }
   } else {
     if (isMultiDay) {
       return {
-        primary: `Du ${startDate.toLocaleDateString("fr-FR", options)} au ${endDate.toLocaleDateString("fr-FR", options)}`,
-        secondary: `De ${startDate.toLocaleTimeString("fr-FR", timeOptions)} à ${endDate.toLocaleTimeString("fr-FR", timeOptions)}`
+        primary: `Du ${startDate.toLocaleDateString(
+          "fr-FR",
+          options
+        )} au ${endDate.toLocaleDateString("fr-FR", options)}`,
+        secondary: `De ${startDate.toLocaleTimeString(
+          "fr-FR",
+          timeOptions
+        )} à ${endDate.toLocaleTimeString("fr-FR", timeOptions)}`,
       };
     } else {
       return {
         primary: startDate.toLocaleDateString("fr-FR", options),
-        secondary: `De ${startDate.toLocaleTimeString("fr-FR", timeOptions)} à ${endDate.toLocaleTimeString("fr-FR", timeOptions)}`
+        secondary: `De ${startDate.toLocaleTimeString(
+          "fr-FR",
+          timeOptions
+        )} à ${endDate.toLocaleTimeString("fr-FR", timeOptions)}`,
       };
     }
   }
 }
 
 // Types de props
-type PageProps = { params: { slug: string } };
+type PageProps = { params: Promise<{ slug: string }> };
 
 // SEO
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const event = await prisma.event.findFirst({
     where: { slug, status: EventStatus.PUBLISHED, isActive: true },
@@ -120,10 +152,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       slug: true,
       startDate: true,
       endDate: true,
-      locationCity: true
+      locationCity: true,
     },
   });
-  
+
   if (!event) {
     return {
       title: "Événement introuvable",
@@ -132,17 +164,57 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const gallery = toArray(event.images);
-  const ogImg = event.ogImage || event.coverImage || gallery[0] || undefined;
-  const eventDate = event.startDate.toLocaleDateString("fr-FR");
+  const ogImg = event.ogImage || event.coverImage || gallery[0];
+  const eventDate = event.startDate.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const eventLocation = event.locationCity || "Bédarieux";
+
+  // URL absolue pour l'image
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+  const absoluteImageUrl = ogImg
+    ? ogImg.startsWith("http")
+      ? ogImg
+      : `${baseUrl}${ogImg}`
+    : `${baseUrl}/images/og-event-default.jpg`;
 
   return {
     title: event.metaTitle || `${event.title} — Événement ${eventDate}`,
-    description: event.metaDescription || event.summary || `Découvrez ${event.title}, événement à ${event.locationCity} le ${eventDate}.`,
+    description:
+      event.metaDescription ||
+      event.summary ||
+      `Découvrez ${event.title}, événement à ${eventLocation} le ${eventDate}.`,
     openGraph: {
       title: event.title,
-      description: event.summary || event.metaDescription || `Découvrez ${event.title}.`,
-      images: ogImg ? [ogImg] : [],
+      description:
+        event.summary ||
+        event.metaDescription ||
+        `Événement à ${eventLocation} le ${eventDate}`,
+      url: `${baseUrl}/events/${event.slug}`,
+      siteName: "ABC Bédarieux",
+      locale: "fr_FR",
       type: "article",
+      publishedTime: event.startDate.toISOString(),
+      authors: ["ABC Bédarieux"],
+      images: [
+        {
+          url: absoluteImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${event.title} - ${eventDate}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: event.title,
+      description:
+        event.summary || `Événement à ${eventLocation} le ${eventDate}`,
+      images: [absoluteImageUrl],
+      creator: "@abc_bedarieux",
     },
   };
 }
@@ -150,54 +222,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // Page principale
 export default async function EventPage({ params }: PageProps) {
   const { slug } = await params;
-  const event = await prisma.event.findFirst({
-    where: { slug, status: EventStatus.PUBLISHED, isActive: true },
-    include: {
-      organizer: {
-        select: {
-          name: true,
-          email: true,
-          slug: true,
-          profile: {
-            select: {
-              firstname: true,
-              lastname: true,
-              bio: true,
-              phone: true,
-              socials: true,
-              isPublic: true,
-              showEmail: true,
-              showPhone: true,
-            },
-          },
-        },
-      },
-      place: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          city: true,
-          street: true,
-          postalCode: true,
-          latitude: true,
-          longitude: true,
-        }
-      },
-      participants: {
-        include: { 
-          user: { select: { name: true, slug: true } } 
-        },
-        orderBy: { registeredAt: "desc" },
-        take: 10
-      },
-      _count: {
-        select: { participants: true }
-      }
-    },
-  });
-  
-  if (!event) notFound();
+
+  // Utiliser l'action qui gère les événements récurrents
+  const eventResult = await getEventBySlugAction(slug);
+
+  if (!eventResult.success || !eventResult.data) {
+    notFound();
+  }
+
+  const event = eventResult.data as {
+    category: EventCategory;
+  } & typeof eventResult.data;
 
   const gallery = toArray(event.images);
   const videos = toArray(event.videos);
@@ -206,39 +241,69 @@ export default async function EventPage({ params }: PageProps) {
   const logo = normalizeImagePath(event.logo);
 
   const dateInfo = formatEventDateTime(
-    new Date(event.startDate), 
-    new Date(event.endDate), 
+    new Date(event.startDate),
+    new Date(event.endDate),
     event.isAllDay,
     event.timezone
   );
 
   const isUpcoming = new Date(event.startDate) > new Date();
   const isPast = new Date(event.endDate) < new Date();
-  const isOngoing = new Date() >= new Date(event.startDate) && new Date() <= new Date(event.endDate);
-  const isFull = event.maxParticipants && event._count.participants >= event.maxParticipants;
+  const isOngoing =
+    new Date() >= new Date(event.startDate) &&
+    new Date() <= new Date(event.endDate);
+  const isFull =
+    event.maxParticipants && event._count.participants >= event.maxParticipants;
 
   // Construire l'adresse complète
-  const fullAddress = event.locationAddress 
+  const fullAddress = event.locationAddress
     ? `${event.locationAddress}, ${event.locationCity}`
     : event.place
     ? `${event.place.street}, ${event.place.postalCode} ${event.place.city}`
     : event.locationCity;
 
   // URLs de carte et itinéraire
-  const mapSrc = (event.locationLatitude && event.locationLongitude) || (event.place?.latitude && event.place?.longitude)
-    ? `https://www.google.com/maps?q=${event.locationLatitude || event.place?.latitude},${event.locationLongitude || event.place?.longitude}&z=16&output=embed`
-    : fullAddress
-    ? `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&z=16&output=embed`
-    : null;
+  const mapSrc =
+    (event.locationLatitude && event.locationLongitude) ||
+    (event.place?.latitude && event.place?.longitude)
+      ? `https://www.google.com/maps?q=${
+          event.locationLatitude || event.place?.latitude
+        },${
+          event.locationLongitude || event.place?.longitude
+        }&z=16&output=embed`
+      : fullAddress
+      ? `https://www.google.com/maps?q=${encodeURIComponent(
+          fullAddress
+        )}&z=16&output=embed`
+      : null;
 
-  const directionsHref = (event.locationLatitude && event.locationLongitude) || (event.place?.latitude && event.place?.longitude)
-    ? `https://www.google.com/maps?daddr=${event.locationLatitude || event.place?.latitude},${event.locationLongitude || event.place?.longitude}`
-    : fullAddress
-    ? `https://www.google.com/maps?daddr=${encodeURIComponent(fullAddress)}`
-    : null;
+  const directionsHref =
+    (event.locationLatitude && event.locationLongitude) ||
+    (event.place?.latitude && event.place?.longitude)
+      ? `https://www.google.com/maps?daddr=${
+          event.locationLatitude || event.place?.latitude
+        },${event.locationLongitude || event.place?.longitude}`
+      : fullAddress
+      ? `https://www.google.com/maps?daddr=${encodeURIComponent(fullAddress)}`
+      : null;
 
   return (
     <div className="relative">
+      {/* Données structurées pour SEO et réseaux sociaux */}
+      <EventSchema event={event} />
+
+      {/* En-tête d'impression */}
+      <PrintHeader
+        title={event.title}
+        subtitle="Événement"
+        date={event.startDate.toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })}
+      />
+
       {/* Cover full-bleed sous le header */}
       <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
         <div className="relative h-[80vh] bg-muted">
@@ -255,7 +320,17 @@ export default async function EventPage({ params }: PageProps) {
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          
+
+          {/* Bouton de partage en haut à droite */}
+          <div className="absolute top-8 right-8">
+            <SocialShare
+              data={generateEventShareData(event)}
+              variant="outline"
+              className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20"
+              showLabel={false}
+            />
+          </div>
+
           {/* Informations overlay sur l'image */}
           <div className="absolute bottom-8 left-8 right-8 text-white">
             <div className="max-w-4xl">
@@ -264,8 +339,11 @@ export default async function EventPage({ params }: PageProps) {
                   <Badge variant="secondary">À la une</Badge>
                 )}
                 {event.category && (
-                  <Badge variant="outline" className="border-white/30 text-white">
-                    {EVENT_CATEGORIES_LABELS[event.category]}
+                  <Badge
+                    variant="outline"
+                    className="border-white/30 text-white"
+                  >
+                    {EVENT_CATEGORIES_LABELS[event.category as EventCategory]}
                   </Badge>
                 )}
                 {isOngoing && (
@@ -278,9 +356,13 @@ export default async function EventPage({ params }: PageProps) {
                   <Badge className="bg-red-600 text-white">Complet</Badge>
                 )}
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">{event.title}</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                {event.title}
+              </h1>
               {event.summary && (
-                <p className="text-xl text-white/90 max-w-2xl">{event.summary}</p>
+                <p className="text-xl text-white/90 max-w-2xl">
+                  {event.summary}
+                </p>
               )}
             </div>
           </div>
@@ -299,10 +381,10 @@ export default async function EventPage({ params }: PageProps) {
                   <CardTitle>À propos de l'événement</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div 
+                  <div
                     className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ 
-                      __html: event.description.replace(/\n/g, '<br>') 
+                    dangerouslySetInnerHTML={{
+                      __html: event.description.replace(/\n/g, "<br>"),
                     }}
                   />
                 </CardContent>
@@ -344,6 +426,113 @@ export default async function EventPage({ params }: PageProps) {
               </Card>
             )}
 
+            {/* Occurrences récurrentes */}
+            {event.isRecurring &&
+              event.occurrences &&
+              event.occurrences.length > 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Prochaines dates ({event.occurrences.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {event.occurrences
+                        .slice(0, 8)
+                        .map(
+                          (
+                            occurrence: {
+                              startDate: string | number | Date;
+                              endDate: string | number | Date;
+                              isOriginal: any;
+                            },
+                            index: Key | null | undefined
+                          ) => {
+                            const startDate = new Date(occurrence.startDate);
+                            const endDate = new Date(occurrence.endDate);
+                            const isToday =
+                              startDate.toDateString() ===
+                              new Date().toDateString();
+                            const isPast = endDate < new Date();
+
+                            return (
+                              <div
+                                key={index}
+                                className={`flex items-center justify-between p-3 rounded-lg border ${
+                                  isToday
+                                    ? "bg-primary/5 border-primary/20"
+                                    : isPast
+                                    ? "bg-muted/50 border-muted"
+                                    : "bg-background border-border"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <Clock className="w-4 h-4 text-muted-foreground" />
+                                  <div>
+                                    <p
+                                      className={`font-medium ${
+                                        isPast
+                                          ? "text-muted-foreground line-through"
+                                          : ""
+                                      }`}
+                                    >
+                                      {startDate.toLocaleDateString("fr-FR", {
+                                        weekday: "long",
+                                        day: "numeric",
+                                        month: "long",
+                                        year:
+                                          startDate.getFullYear() !==
+                                          new Date().getFullYear()
+                                            ? "numeric"
+                                            : undefined,
+                                      })}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {event.isAllDay
+                                        ? "Toute la journée"
+                                        : `${startDate.toLocaleTimeString(
+                                            "fr-FR",
+                                            {
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                            }
+                                          )} - ${endDate.toLocaleTimeString(
+                                            "fr-FR",
+                                            {
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                            }
+                                          )}`}
+                                    </p>
+                                  </div>
+                                </div>
+                                {isToday && (
+                                  <Badge variant="default" className="text-xs">
+                                    Aujourd'hui
+                                  </Badge>
+                                )}
+                                {occurrence.isOriginal && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Original
+                                  </Badge>
+                                )}
+                              </div>
+                            );
+                          }
+                        )}
+
+                      {event.occurrences.length > 8 && (
+                        <p className="text-sm text-muted-foreground text-center pt-2 border-t">
+                          Et {event.occurrences.length - 8} autres dates...
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
             {/* Participants */}
             {event.participants.length > 0 && (
               <Card>
@@ -355,22 +544,95 @@ export default async function EventPage({ params }: PageProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {event.participants.slice(0, 10).map((participant) => (
-                      <div key={participant.id} className="flex items-center justify-between">
-                        <Link
-                          href={`/profil/${participant.user.slug}`}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          {participant.user.name}
-                        </Link>
-                        <span className="text-sm text-muted-foreground">
-                          {participant.registeredAt.toLocaleDateString("fr-FR")}
-                        </span>
-                      </div>
-                    ))}
+                    {event.participants
+                      .slice(0, 10)
+                      .map(
+                        (participant: {
+                          id: Key | null | undefined;
+                          user: {
+                            slug: any;
+                            name:
+                              | string
+                              | number
+                              | bigint
+                              | boolean
+                              | ReactElement<
+                                  unknown,
+                                  string | JSXElementConstructor<any>
+                                >
+                              | Iterable<ReactNode>
+                              | ReactPortal
+                              | Promise<
+                                  | string
+                                  | number
+                                  | bigint
+                                  | boolean
+                                  | ReactPortal
+                                  | ReactElement<
+                                      unknown,
+                                      string | JSXElementConstructor<any>
+                                    >
+                                  | Iterable<ReactNode>
+                                  | null
+                                  | undefined
+                                >
+                              | null
+                              | undefined;
+                          };
+                          registeredAt: {
+                            toLocaleDateString: (
+                              arg0: string
+                            ) =>
+                              | string
+                              | number
+                              | bigint
+                              | boolean
+                              | ReactElement<
+                                  unknown,
+                                  string | JSXElementConstructor<any>
+                                >
+                              | Iterable<ReactNode>
+                              | ReactPortal
+                              | Promise<
+                                  | string
+                                  | number
+                                  | bigint
+                                  | boolean
+                                  | ReactPortal
+                                  | ReactElement<
+                                      unknown,
+                                      string | JSXElementConstructor<any>
+                                    >
+                                  | Iterable<ReactNode>
+                                  | null
+                                  | undefined
+                                >
+                              | null
+                              | undefined;
+                          };
+                        }) => (
+                          <div
+                            key={participant.id}
+                            className="flex items-center justify-between"
+                          >
+                            <Link
+                              href={`/profil/${participant.user.slug}`}
+                              className="font-medium text-primary hover:underline"
+                            >
+                              {participant.user.name}
+                            </Link>
+                            <span className="text-sm text-muted-foreground">
+                              {participant.registeredAt.toLocaleDateString(
+                                "fr-FR"
+                              )}
+                            </span>
+                          </div>
+                        )
+                      )}
                     {event._count.participants > 10 && (
                       <p className="text-sm text-muted-foreground pt-2 border-t">
-                        Et {event._count.participants - 10} autres participants...
+                        Et {event._count.participants - 10} autres
+                        participants...
                       </p>
                     )}
                   </div>
@@ -395,7 +657,9 @@ export default async function EventPage({ params }: PageProps) {
                   <h4 className="font-medium mb-2">Date et heure</h4>
                   <div className="text-sm">
                     <p className="font-medium">{dateInfo.primary}</p>
-                    <p className="text-muted-foreground">{dateInfo.secondary}</p>
+                    <p className="text-muted-foreground">
+                      {dateInfo.secondary}
+                    </p>
                   </div>
                 </div>
 
@@ -403,14 +667,18 @@ export default async function EventPage({ params }: PageProps) {
                 <div>
                   <h4 className="font-medium mb-2">Tarif</h4>
                   {event.isFree ? (
-                    <Badge variant="outline" className="text-green-600 border-green-200">
+                    <Badge
+                      variant="outline"
+                      className="text-green-600 border-green-200"
+                    >
                       Gratuit
                     </Badge>
                   ) : (
                     <div className="flex items-center gap-1">
                       <Euro className="w-4 h-4 text-primary" />
                       <span className="font-medium">
-                        {event.price}{event.currency === "EUR" ? "€" : event.currency}
+                        {event.price}
+                        {event.currency === "EUR" ? "€" : event.currency}
                       </span>
                       {event.priceDetails && (
                         <span className="text-sm text-muted-foreground ml-2">
@@ -428,14 +696,20 @@ export default async function EventPage({ params }: PageProps) {
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm">
-                        {event._count.participants} / {event.maxParticipants} participants
+                        {event._count.participants} / {event.maxParticipants}{" "}
+                        participants
                       </span>
                     </div>
                     <div className="w-full bg-secondary rounded-full h-2 mt-2">
-                      <div 
+                      <div
                         className="bg-primary h-2 rounded-full transition-all"
-                        style={{ 
-                          width: `${Math.min((event._count.participants / event.maxParticipants) * 100, 100)}%` 
+                        style={{
+                          width: `${Math.min(
+                            (event._count.participants /
+                              event.maxParticipants) *
+                              100,
+                            100
+                          )}%`,
                         }}
                       />
                     </div>
@@ -455,7 +729,7 @@ export default async function EventPage({ params }: PageProps) {
                 {/* Billetterie */}
                 {event.ticketUrl && isUpcoming && (
                   <Button asChild className="w-full">
-                    <a 
+                    <a
                       href={event.ticketUrl}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -480,7 +754,10 @@ export default async function EventPage({ params }: PageProps) {
                   {event.phone && (
                     <div className="flex items-center">
                       <Phone className="w-4 h-4 mr-3 text-muted-foreground" />
-                      <a href={`tel:${event.phone}`} className="text-primary hover:underline">
+                      <a
+                        href={`tel:${event.phone}`}
+                        className="text-primary hover:underline"
+                      >
                         {event.phone}
                       </a>
                     </div>
@@ -488,7 +765,10 @@ export default async function EventPage({ params }: PageProps) {
                   {event.email && (
                     <div className="flex items-center">
                       <Mail className="w-4 h-4 mr-3 text-muted-foreground" />
-                      <a href={`mailto:${event.email}`} className="text-primary hover:underline">
+                      <a
+                        href={`mailto:${event.email}`}
+                        className="text-primary hover:underline"
+                      >
                         {event.email}
                       </a>
                     </div>
@@ -522,7 +802,9 @@ export default async function EventPage({ params }: PageProps) {
                       {event.locationName || event.place?.name}
                     </h4>
                     {fullAddress && (
-                      <p className="text-sm text-muted-foreground">{fullAddress}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {fullAddress}
+                      </p>
                     )}
                   </div>
 
@@ -547,7 +829,11 @@ export default async function EventPage({ params }: PageProps) {
                       </div>
                       {directionsHref && (
                         <Button asChild className="w-full" size="sm">
-                          <a href={directionsHref} target="_blank" rel="noopener noreferrer">
+                          <a
+                            href={directionsHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             Itinéraire
                           </a>
                         </Button>
@@ -570,7 +856,8 @@ export default async function EventPage({ params }: PageProps) {
                 <CardContent className="space-y-4">
                   <div>
                     <h4 className="font-medium">
-                      {event.organizer.profile?.firstname && event.organizer.profile?.lastname
+                      {event.organizer.profile?.firstname &&
+                      event.organizer.profile?.lastname
                         ? `${event.organizer.profile.firstname} ${event.organizer.profile.lastname}`
                         : event.organizer.name}
                     </h4>
@@ -581,20 +868,29 @@ export default async function EventPage({ params }: PageProps) {
                     )}
                   </div>
 
-                  {event.organizer.profile?.isPublic && event.organizer.slug && (
-                    <Button asChild variant="outline" size="sm" className="w-full">
-                      <Link href={`/profil/${event.organizer.slug}`}>
-                        <User className="w-4 h-4 mr-2" />
-                        Voir le profil
-                      </Link>
-                    </Button>
-                  )}
+                  {event.organizer.profile?.isPublic &&
+                    event.organizer.slug && (
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        <Link href={`/profil/${event.organizer.slug}`}>
+                          <User className="w-4 h-4 mr-2" />
+                          Voir le profil
+                        </Link>
+                      </Button>
+                    )}
                 </CardContent>
               </Card>
             )}
 
             {/* Réseaux sociaux */}
-            {(event.facebook || event.instagram || event.twitter || event.linkedin) && (
+            {(event.facebook ||
+              event.instagram ||
+              event.twitter ||
+              event.linkedin) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Suivez l'événement</CardTitle>
@@ -662,6 +958,15 @@ export default async function EventPage({ params }: PageProps) {
               </Card>
             )}
           </div>
+        </div>
+
+        {/* Debug Open Graph (dev seulement) */}
+        <div className="mt-8">
+          <OpenGraphDebug
+            url={`${
+              process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
+            }/events/${event.slug}`}
+          />
         </div>
       </div>
     </div>
