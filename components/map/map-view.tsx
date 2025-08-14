@@ -34,6 +34,9 @@ export function MapView({
   // Créer un mapping des catégories pour les couleurs
   const categoryMap = useRef<Map<string, { color: string; icon?: string }>>(new Map());
 
+  const [categoriesReady, setCategoriesReady] = useState(false);
+  const [forceRender, setForceRender] = useState(0);
+
   useEffect(() => {
     categories.forEach(category => {
       categoryMap.current.set(category.id, {
@@ -48,7 +51,26 @@ export function MapView({
         });
       });
     });
+    
+    // Marquer les catégories comme prêtes
+    setCategoriesReady(true);
+    
+    // Forcer un re-rendu après que les catégories soient prêtes
+    setTimeout(() => setForceRender(prev => prev + 1), 200);
   }, [categories]);
+
+  // Vérification de sécurité - si pas de markers après 2 secondes, forcer re-création
+  useEffect(() => {
+    if (places.length > 0 && categoriesReady) {
+      const checkTimer = setTimeout(() => {
+        if (markersRef.current.size === 0) {
+          setForceRender(prev => prev + 1);
+        }
+      }, 2000);
+      
+      return () => clearTimeout(checkTimer);
+    }
+  }, [places.length, categoriesReady]);
 
   // Initialiser Google Maps
   useEffect(() => {
@@ -155,52 +177,40 @@ export function MapView({
       icon = getPlaceTypeIcon(place.type);
     }
 
+    // Créer un style plus simple et compatible avec Google Maps
+    markerDiv.style.cssText = `
+      position: absolute;
+      transform: translate(-50%, -100%);
+      z-index: ${place.isFeatured ? 1000 : 500};
+    `;
+
     markerDiv.innerHTML = `
-      <div style="position: relative; transform: translate(-50%, -100%);">
+      <div style="position: relative;">
         <div style="
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background-color: ${color};
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background-color: ${color};
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
           cursor: pointer;
-          transition: transform 0.2s;
-          ${place.isFeatured ? 'box-shadow: 0 0 0 2px #fbbf24, 0 0 0 4px rgba(251, 191, 36, 0.3);' : ''}
-        " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-          <span style="color: white; font-size: 18px; font-weight: 600;">${icon}</span>
+          ${place.isFeatured ? 'border: 3px solid #fbbf24;' : 'border: 2px solid white;'}
+        ">
+          <span style="color: white; font-size: 16px; line-height: 1;">${icon}</span>
         </div>
         <div style="
           position: absolute;
           top: 100%;
           left: 50%;
-          transform: translateX(-50%);
+          margin-left: -6px;
           width: 0;
           height: 0;
-          border-left: 8px solid transparent;
-          border-right: 8px solid transparent;
-          border-top: 12px solid ${color};
+          border-left: 6px solid transparent;
+          border-right: 6px solid transparent;
+          border-top: 8px solid ${color};
         "></div>
-        ${place.isFeatured ? `
-          <div style="
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            width: 16px;
-            height: 16px;
-            background-color: #fbbf24;
-            border-radius: 50%;
-            border: 2px solid white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: #92400e;
-            font-weight: bold;
-          ">★</div>
-        ` : ''}
       </div>
     `;
 
@@ -209,45 +219,43 @@ export function MapView({
 
   // Mettre à jour les markers des places
   useEffect(() => {
-    if (!mapInstanceRef.current || !window.google || categoryMap.current.size === 0) {
-      console.log('Markers not ready:', {
-        hasMap: !!mapInstanceRef.current,
-        hasGoogle: !!window.google,
-        categoriesCount: categoryMap.current.size
-      });
+    if (!mapInstanceRef.current || !window.google || !categoriesReady) {
       return;
     }
 
-    console.log('Creating markers for', places.length, 'places');
+    // Attendre un petit délai pour s'assurer que la carte est complètement initialisée
+    const timer = setTimeout(() => {
+      // Supprimer les anciens markers
+      markersRef.current.forEach(marker => marker.map = null);
+      markersRef.current.clear();
 
-    // Supprimer les anciens markers
-    markersRef.current.forEach(marker => marker.map = null);
-    markersRef.current.clear();
+      // Créer les nouveaux markers
+      places.forEach(place => {
+        if (!place.latitude || !place.longitude) return;
 
-    // Créer les nouveaux markers
-    places.forEach(place => {
-      if (!place.latitude || !place.longitude) return;
-
-      const markerContent = createCustomMarker(place);
-      
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map: mapInstanceRef.current,
-        position: { lat: place.latitude, lng: place.longitude },
-        content: markerContent,
-        title: place.name
-      });
-
-      marker.addListener('click', () => {
-        onPlaceSelect(place);
+        const markerContent = createCustomMarker(place);
         
-        // Animer vers le marker sélectionné
-        mapInstanceRef.current?.panTo({ lat: place.latitude!, lng: place.longitude! });
+        const marker = new google.maps.marker.AdvancedMarkerElement({
+          map: mapInstanceRef.current,
+          position: { lat: place.latitude, lng: place.longitude },
+          content: markerContent,
+          title: place.name,
+          zIndex: place.isFeatured ? 1000 : 500
+        });
+
+        marker.addListener('click', () => {
+          onPlaceSelect(place);
+          
+          // Animer vers le marker sélectionné
+          mapInstanceRef.current?.panTo({ lat: place.latitude!, lng: place.longitude! });
+        });
+
+        markersRef.current.set(place.id, marker);
       });
+    }, 50); // Réduire encore le délai
 
-      markersRef.current.set(place.id, marker);
-    });
-
-  }, [places, onPlaceSelect, categories]); // Ajouter categories comme dépendance
+    return () => clearTimeout(timer);
+  }, [places, onPlaceSelect, categoriesReady, forceRender]);
 
   // Mettre à jour le marker de l'utilisateur
   useEffect(() => {

@@ -105,6 +105,7 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapKey, setMapKey] = useState(0);
 
   // Demander la géolocalisation au chargement
   useEffect(() => {
@@ -125,6 +126,44 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
       );
     }
   }, []);
+
+  // Forcer plusieurs re-rendus pour s'assurer que les markers apparaissent
+  useEffect(() => {
+    if (places.length > 0 && categories.length > 0) {
+      // Premier re-rendu rapide
+      const timer1 = setTimeout(() => {
+        setMapKey(prev => prev + 1);
+      }, 500);
+      
+      // Deuxième re-rendu de sécurité
+      const timer2 = setTimeout(() => {
+        setMapKey(prev => prev + 1);
+      }, 1500);
+      
+      // Troisième re-rendu de sécurité
+      const timer3 = setTimeout(() => {
+        setMapKey(prev => prev + 1);
+      }, 3000);
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
+    }
+  }, [places.length, categories.length]);
+
+  // Forcer le re-rendu quand les filtres changent (mais seulement pour les catégories)
+  const handleFiltersChange = (newFilters: MapFilters) => {
+    const categoriesChanged = newFilters.categories.length !== filters.categories.length || 
+      newFilters.categories.some(cat => !filters.categories.includes(cat));
+    
+    setFilters(newFilters);
+    
+    if (categoriesChanged) {
+      setMapKey(prev => prev + 1);
+    }
+  };
 
   // Filtrer les places
   const filteredPlaces = useMemo(() => {
@@ -211,7 +250,7 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
       <div className="hidden lg:flex w-80 flex-col border-r bg-background">
         <MapFilters
           filters={filters}
-          onFiltersChange={setFilters}
+          onFiltersChange={handleFiltersChange}
           categories={categories}
           placesCount={filteredPlaces.length}
           totalPlaces={places.length}
@@ -222,6 +261,7 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
       {/* Map Container */}
       <div className="flex-1 relative">
         <MapView
+          key={`map-${mapKey}`}
           places={filteredPlaces}
           selectedPlace={selectedPlace}
           onPlaceSelect={setSelectedPlace}
@@ -277,7 +317,7 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
           <div className="flex-1 overflow-y-auto">
             <MobileMapFilters
               filters={filters}
-              onFiltersChange={setFilters}
+              onFiltersChange={handleFiltersChange}
               categories={categories}
               placesCount={filteredPlaces.length}
               totalPlaces={places.length}
