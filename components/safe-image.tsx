@@ -47,8 +47,7 @@ export function SafeImage({
       className={className}
       unoptimized={unoptimized ?? isExternal(src)}
       sizes={sizes}
-      onError={(e) => {
-        console.error("Erreur chargement image:", src, e);
+      onError={() => {
         setHasError(true);
       }}
     />
