@@ -6,11 +6,27 @@ import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 
 const NAV = [
-  { label: "Ville", items: ["Conseil", "Histoire", "Stats", "Règlements"] },
-  { label: "Services", items: ["Permis", "Collecte", "Urbanisme", "Taxes"] },
+  { 
+    label: "Établissements", 
+    items: [
+      { name: "Tous les établissements", href: "/places" },
+      { name: "Par catégories", href: "/categories" },
+      { name: "Carte interactive", href: "/carte" }
+    ] 
+  },
+  { 
+    label: "Événements", 
+    items: [
+      { name: "Tous les événements", href: "/events" },
+      { name: "Événements simples", href: "/events/simple" }
+    ] 
+  },
   {
-    label: "Loisirs",
-    items: ["Bibliothèque", "Évènements", "Sports", "Parcs"],
+    label: "Contenu",
+    items: [
+      { name: "Articles", href: "/articles" },
+      { name: "Actualités", href: "/actualites" }
+    ],
   },
 ];
 
@@ -30,14 +46,14 @@ export function MainHeader() {
               <button type="button" className="flex items-center gap-1 text-gray-700 font-medium hover:text-gray-900">
                 {label} <ChevronDown className="w-4 h-4" />
               </button>
-              <div className="absolute left-0 mt-2 w-48 bg-white shadow-lg rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-                {items.map((i) => (
+              <div className="absolute left-0 mt-2 w-48 bg-white shadow-lg rounded-md opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                {items.map((item) => (
                   <Link
-                    key={i}
-                    href="#"
+                    key={item.name}
+                    href={item.href}
                     className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                   >
-                    {i}
+                    {item.name}
                   </Link>
                 ))}
               </div>

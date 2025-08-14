@@ -8,6 +8,9 @@ import { EventCard } from "@/components/events/event-card";
 
 import { getPublicEventsAction } from "@/actions/event";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Événements à Bédarieux - Agenda local",
   description: "Découvrez tous les événements, concerts, festivals et activités à Bédarieux et ses environs.",

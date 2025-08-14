@@ -23,43 +23,41 @@ interface HeaderProps {
 
 const navItems: NavItem[] = [
   {
-    label: "Bédarieux",
-    href: "/ville",
+    label: "Établissements",
+    href: "/places",
     hasDropdown: true,
     items: [
-      { label: "À propos", href: "/ville/a-propos" },
-      { label: "Histoire", href: "/ville/histoire" },
-      { label: "Conseil municipal", href: "/ville/conseil" },
+      { label: "Tous les établissements", href: "/places" },
+      { label: "Par catégories", href: "/categories" },
+      { label: "Carte interactive", href: "/carte" },
     ],
   },
   {
-    label: "Services",
-    href: "/services",
+    label: "Événements",
+    href: "/events",
     hasDropdown: true,
     items: [
-      { label: "Services aux citoyens", href: "/services/citoyens" },
-      { label: "Collectes", href: "/services/collectes" },
-      { label: "Permis", href: "/services/permis" },
+      { label: "Tous les événements", href: "/events" },
+      { label: "Événements simples", href: "/events/simple" },
     ],
   },
   {
-    label: "L'Association",
-    href: "/loisirs",
+    label: "Contenu",
+    href: "/articles",
     hasDropdown: true,
     items: [
-      { label: "Bibliothèque", href: "/loisirs/bibliotheque" },
-      { label: "Activités", href: "/loisirs/activites" },
-      { label: "Installations", href: "/loisirs/installations" },
+      { label: "Articles", href: "/articles" },
+      { label: "Actualités", href: "/actualites" },
     ],
   },
 ];
 
 const topBarLinks = [
-  { label: "Nous joindre", href: "/nous-joindre" },
-  { label: "Actualités", href: "/posts" },
-  { label: "Calendrier des événements", href: "/events" },
-  { label: "Carte Intéractive", href: "/carte-interactive" },
-  { label: "Catégories d'établissements", href: "/categories" },
+  { label: "Actualités", href: "/articles" },
+  { label: "Événements", href: "/events" },
+  { label: "Carte Interactive", href: "/carte" },
+  { label: "Catégories", href: "/categories" },
+  { label: "Places", href: "/places" },
 ];
 
 export default function Header({ className }: HeaderProps) {
@@ -382,7 +380,7 @@ export default function Header({ className }: HeaderProps) {
                   >
                     <div className="px-12 py-10">
                       <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-                        {/* Colonne 1 - Activités et vie de quartier */}
+                        {/* Colonne 1 - Établissements */}
                         <motion.div
                           className="space-y-6"
                           initial={{ opacity: 0, y: 20 }}
@@ -394,69 +392,34 @@ export default function Header({ className }: HeaderProps) {
                           }}
                         >
                           <h3 className="font-semibold text-sm text-primary uppercase tracking-wide mb-4">
-                            ACTIVITÉS ET VIE DE QUARTIER
+                            ÉTABLISSEMENTS
                           </h3>
                           <div className="space-y-3">
                             <Link
-                              href="/calendrier-des-evenements"
+                              href="/places"
                               className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
-                              Calendrier des événements
+                              Tous les établissements
                             </Link>
                             <Link
-                              href="/camps-de-jour"
+                              href="/categories"
                               className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
-                              Camps de jour
+                              Par catégories
                             </Link>
                             <Link
-                              href="/fete-des-voisins"
+                              href="/carte"
                               className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
-                              Fête des voisins
-                            </Link>
-                            <Link
-                              href="/inscription-activites"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Inscription aux activités
-                            </Link>
-                            <Link
-                              href="/jouer-dans-ma-rue"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Jouer dans ma rue
-                            </Link>
-                            <Link
-                              href="/organismes-reconnus"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Organismes reconnus
-                            </Link>
-                            <Link
-                              href="/reservation-salles"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Réservation de salles
-                            </Link>
-                            <Link
-                              href="/ventes-garage"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Ventes de garage
+                              Carte interactive
                             </Link>
                           </div>
                         </motion.div>
 
-                        {/* Colonne 2 - Installations sportives */}
+                        {/* Colonne 2 - Événements */}
                         <motion.div
                           className="space-y-6"
                           initial={{ opacity: 0, y: 20 }}
@@ -468,41 +431,27 @@ export default function Header({ className }: HeaderProps) {
                           }}
                         >
                           <h3 className="font-semibold text-sm text-primary uppercase tracking-wide mb-4">
-                            INSTALLATIONS SPORTIVES ET PLEIN AIR
+                            ÉVÉNEMENTS
                           </h3>
                           <div className="space-y-3">
                             <Link
-                              href="/activites-sportives"
+                              href="/events"
                               className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
-                              Activités sportives
+                              Tous les événements
                             </Link>
                             <Link
-                              href="/parcs-espaces-verts"
+                              href="/events/simple"
                               className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
-                              Parcs et espaces verts
-                            </Link>
-                            <Link
-                              href="/patinoires-glissades"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Patinoires et glissades
-                            </Link>
-                            <Link
-                              href="/sentiers"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Sentiers
+                              Événements simples
                             </Link>
                           </div>
                         </motion.div>
 
-                        {/* Colonne 3 - Art, culture et patrimoine */}
+                        {/* Colonne 3 - Contenu */}
                         <motion.div
                           className="space-y-6"
                           initial={{ opacity: 0, y: 20 }}
@@ -514,43 +463,22 @@ export default function Header({ className }: HeaderProps) {
                           }}
                         >
                           <h3 className="font-semibold text-sm text-primary uppercase tracking-wide mb-4">
-                            ART, CULTURE ET PATRIMOINE
+                            CONTENU
                           </h3>
                           <div className="space-y-3">
                             <Link
-                              href="/bibliotheque"
+                              href="/articles"
                               className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
-                              Bibliothèque
+                              Articles
                             </Link>
                             <Link
-                              href="/oeuvres-art"
+                              href="/actualites"
                               className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
-                              Œuvres d&apos;art
-                            </Link>
-                            <Link
-                              href="/patrimoine"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Patrimoine
-                            </Link>
-                            <Link
-                              href="/soutien-artistes"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Soutien aux artistes
-                            </Link>
-                            <Link
-                              href="/toponymie"
-                              className="block text-gray-800 hover:text-primary transition-colors text-sm font-medium"
-                              onClick={() => setIsMegaMenuOpen(false)}
-                            >
-                              Toponymie
+                              Actualités
                             </Link>
                           </div>
                         </motion.div>
