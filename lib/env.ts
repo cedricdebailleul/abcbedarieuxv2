@@ -3,39 +3,39 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string(),
-    BETTER_AUTH_SECRET: z.string().min(1),
+    DATABASE_URL: z.string().optional(),
+    BETTER_AUTH_SECRET: z.string().optional(),
 
-    GITHUB_CLIENT_ID: z.string().min(1),
-    GITHUB_CLIENT_SECRET: z.string().min(1),
+    GITHUB_CLIENT_ID: z.string().optional(),
+    GITHUB_CLIENT_SECRET: z.string().optional(),
 
-    GOOGLE_CLIENT_ID: z.string().min(1),
-    GOOGLE_CLIENT_SECRET: z.string().min(1),
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
 
-    MAIL_HOST: z.string().min(1),
-    MAIL_PORT: z.coerce.number(),
-    MAIL_USER: z.email(),
-    MAIL_PASS: z.string().min(1),
+    MAIL_HOST: z.string().optional(),
+    MAIL_PORT: z.coerce.number().optional(),
+    MAIL_USER: z.string().optional(),
+    MAIL_PASS: z.string().optional(),
 
-    ARCJET_KEY: z.string().min(1),
+    ARCJET_KEY: z.string().optional(),
 
-    AWS_ACCESS_KEY_ID: z.string().min(1),
-    AWS_SECRET_ACCESS_KEY: z.string().min(1),
-    AWS_ENDPOINT_URL_S3: z.string(),
-    AWS_ENDPOINT_URL_IAM: z.string(),
-    AWS_REGION: z.string().min(1),
+    AWS_ACCESS_KEY_ID: z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    AWS_ENDPOINT_URL_S3: z.string().optional(),
+    AWS_ENDPOINT_URL_IAM: z.string().optional(),
+    AWS_REGION: z.string().optional(),
 
-    DATA_RETENTION_DAYS: z.coerce.number().min(1),
-    GDPR_NOTIFICATION_EMAIL: z.string().min(1),
+    DATA_RETENTION_DAYS: z.coerce.number().optional(),
+    GDPR_NOTIFICATION_EMAIL: z.string().optional(),
   },
 
   client: {
-    NEXT_PUBLIC_URL: z.string().min(1),
-    NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES: z.string().min(1),
-    NEXT_PUBLIC_S3_BUCKET_NAME_VIDEOS: z.string().min(1),
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().min(1),
-    NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: z.string().min(1),
-    NEXT_PUBLIC_PRIVACY_POLICY_URL: z.string().min(1),
+    NEXT_PUBLIC_URL: z.string().optional(),
+    NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES: z.string().optional(),
+    NEXT_PUBLIC_S3_BUCKET_NAME_VIDEOS: z.string().optional(),
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
+    NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: z.string().optional(),
+    NEXT_PUBLIC_PRIVACY_POLICY_URL: z.string().optional(),
   },
 
   runtimeEnv: {
