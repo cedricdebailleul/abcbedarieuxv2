@@ -13,6 +13,7 @@ import {
   IconHeart,
   IconListDetails,
   IconMapPin,
+  IconMail,
   IconReport,
   IconSearch,
   IconSettings,
@@ -98,6 +99,10 @@ const data = {
         {
           title: "Catégories des places",
           url: "/dashboard/admin/place-categories",
+        },
+        {
+          title: "Newsletter",
+          url: "/dashboard/admin/newsletter",
         },
       ],
     },

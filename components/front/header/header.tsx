@@ -53,6 +53,7 @@ const navItems: NavItem[] = [
 ];
 
 const topBarLinks = [
+  { label: "Nous Joindre", href: "/contact" },
   { label: "Actualités", href: "/articles" },
   { label: "Événements", href: "/events" },
   { label: "Carte Interactive", href: "/carte" },

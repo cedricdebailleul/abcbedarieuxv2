@@ -22,23 +22,23 @@ export default function UsersStats() {
   });
   const [loading, setLoading] = useState(true);
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const response = await fetch("/api/admin/users/stats");
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.stats);
-      }
-    } catch (error) {
-      console.error("Erreur lors du chargement des statistiques:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("/api/admin/users/stats");
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data.stats);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des statistiques:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchStats();
-  }, [fetchStats]);
+  }, []); // Dépendance vide pour exécuter une seule fois
 
   const StatCard = ({
     title,

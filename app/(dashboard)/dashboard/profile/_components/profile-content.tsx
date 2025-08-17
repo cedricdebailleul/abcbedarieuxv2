@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BadgeCollection from "./badge-collection";
 import EmailVerification from "./email-verification";
 import ProfileEditForm from "./profile-edit-form";
+import NewsletterPreferences from "./newsletter-preferences";
 
 const transformUserData = (dbUser: any): UserData => {
   return {
@@ -389,6 +390,9 @@ export default function ProfileContent({
               </div>
             </CardContent>
           </Card>
+
+          {/* Newsletter */}
+          <NewsletterPreferences userEmail={userData.email} />
 
           {/* Aperçu des badges récents */}
           <Card>

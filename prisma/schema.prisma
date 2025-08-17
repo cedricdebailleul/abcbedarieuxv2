@@ -59,6 +59,7 @@ model User {
   events         Event[]            @relation("EventOrganizer")
   eventParticipations EventParticipant[]
   eventReminders EventReminder[]
+  newsletterCampaigns NewsletterCampaign[]
 
   // Index pour les performances
   @@unique([email])
@@ -1078,4 +1079,160 @@ enum ReminderType {
   EMAIL
   PUSH
   SMS
+}
+
+// ============================================================
+//                    NEWSLETTER SYSTEM
+// ============================================================
+
+model NewsletterSubscriber {
+  id          String @id @default(cuid())
+  email       String @unique
+  firstName   String?
+  lastName    String?
+  
+  // Préférences d'abonnement
+  preferences NewsletterPreferences?
+  
+  // Statut
+  isActive    Boolean   @default(true)
+  isVerified  Boolean   @default(false)
+  verificationToken String? @unique
+  unsubscribeToken  String? @unique
+  
+  // Métadonnées
+  subscribedAt DateTime @default(now())
+  lastEmailSent DateTime?
+  
+  // Relations
+  campaigns   NewsletterCampaignSent[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("newsletter_subscribers")
+}
+
+model NewsletterPreferences {
+  id          String @id @default(cuid())
+  subscriberId String @unique
+  subscriber  NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  
+  // Types de contenus
+  events      Boolean @default(true)   // Événements et animations
+  places      Boolean @default(true)   // Nouveaux commerces
+  offers      Boolean @default(false)  // Offres et promotions
+  news        Boolean @default(true)   // Actualités association
+  
+  // Fréquence
+  frequency   NewsletterFrequency @default(WEEKLY)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("newsletter_preferences")
+}
+
+model NewsletterCampaign {
+  id          String @id @default(cuid())
+  title       String
+  subject     String
+  content     String @db.Text
+  
+  // Configuration
+  type        NewsletterType @default(NEWSLETTER)
+  status      CampaignStatus @default(DRAFT)
+  
+  // Planification
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  
+  // Contenu sélectionné
+  includedEvents  String[] // IDs des événements
+  includedPlaces  String[] // IDs des places
+  includedPosts   String[] // IDs des posts
+  
+  // Statistiques
+  totalRecipients     Int @default(0)
+  totalSent          Int @default(0)
+  totalDelivered     Int @default(0)
+  totalOpened        Int @default(0)
+  totalClicked       Int @default(0)
+  totalUnsubscribed  Int @default(0)
+  
+  // Relations
+  sentCampaigns NewsletterCampaignSent[]
+  
+  // Métadonnées
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("newsletter_campaigns")
+}
+
+model NewsletterCampaignSent {
+  id           String @id @default(cuid())
+  campaignId   String
+  campaign     NewsletterCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subscriberId String
+  subscriber   NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  
+  // Statut de l'envoi
+  status       EmailStatus @default(PENDING)
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  openedAt     DateTime?
+  clickedAt    DateTime?
+  unsubscribedAt DateTime?
+  
+  // Métadonnées de l'email
+  messageId    String?
+  errorMessage String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([campaignId, subscriberId])
+  @@map("newsletter_campaign_sent")
+}
+
+// ============================================================
+//                    NEWSLETTER ENUMS
+// ============================================================
+
+enum NewsletterFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum NewsletterType {
+  NEWSLETTER      // Newsletter régulière
+  ANNOUNCEMENT    // Annonce spéciale
+  EVENT_DIGEST    // Digest d'événements
+  PLACE_UPDATE    // Nouveaux commerces
+  PROMOTIONAL     // Offres promotionnelles
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+  ERROR
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  UNSUBSCRIBED
+  ERROR
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AdminGuard } from "@/components/auth/admin-guard";
 import { useSession } from "@/hooks/use-session";
@@ -11,7 +11,7 @@ interface Place {
   name: string;
   slug: string;
   type: string;
-  status: string;
+  status: "ACTIVE" | "PENDING" | "DRAFT" | "INACTIVE" | string;
   city: string;
   street: string;
   isVerified: boolean;
@@ -42,6 +42,37 @@ interface ApiResponse {
   };
 }
 
+const getStatusBadge = (status: string, _isVerified: boolean) => {
+  const base = "px-2 py-1 text-xs font-medium rounded-full";
+  switch (status) {
+    case "ACTIVE":
+      return `${base} bg-green-100 text-green-800`;
+    case "PENDING":
+      return `${base} bg-yellow-100 text-yellow-800`;
+    case "DRAFT":
+      return `${base} bg-gray-100 text-gray-800`;
+    case "INACTIVE":
+      return `${base} bg-red-100 text-red-800`;
+    default:
+      return `${base} bg-gray-100 text-gray-800`;
+  }
+};
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case "ACTIVE":
+      return "Actif";
+    case "PENDING":
+      return "En attente";
+    case "DRAFT":
+      return "Brouillon";
+    case "INACTIVE":
+      return "Inactif";
+    default:
+      return status;
+  }
+};
+
 function AdminPlacesContent() {
   const { data: session, status } = useSession();
   const [places, setPlaces] = useState<Place[]>([]);
@@ -50,45 +81,74 @@ function AdminPlacesContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const [pendingCount, setPendingCount] = useState(0);
 
-  const fetchPlaces = async () => {
+  // Abort les requêtes en vol si les deps changent
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Debounce 300 ms pour la recherche
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // Construit l’URL de façon mémoïsée (utile pour debug)
+  const queryString = useMemo(() => {
+    const params = new URLSearchParams({
+      page: currentPage.toString(),
+      limit: "20",
+    });
+    if (statusFilter && statusFilter !== "all")
+      params.append("status", statusFilter);
+    if (debouncedQuery) params.append("search", debouncedQuery);
+    return params.toString();
+  }, [currentPage, statusFilter, debouncedQuery]);
+
+  // fetchPlaces MEMOISÉE (dépend des filtres/page)
+  const fetchPlaces = useCallback(async () => {
+    // annule la requête précédente si existante
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       setLoading(true);
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: "20",
+      const response = await fetch(`/api/admin/places?${queryString}`, {
+        signal: controller.signal,
       });
 
-      if (statusFilter && statusFilter !== "all") {
-        params.append("status", statusFilter);
+      if (!response.ok) {
+        throw new Error("Erreur lors du chargement");
       }
-
-      if (searchQuery) {
-        params.append("search", searchQuery);
-      }
-
-      const response = await fetch(`/api/admin/places?${params}`);
-      if (!response.ok) throw new Error("Erreur lors du chargement");
 
       const data: ApiResponse = await response.json();
       setPlaces(data.places);
       setTotalPages(data.pagination.pages);
       setPendingCount(data.stats.pendingCount);
-    } catch (error) {
+    } catch (error: unknown) {
+      // Ignore l'erreur si c’est un abort
+      if (error instanceof DOMException && error.name === "AbortError") return;
       console.error("Erreur:", error);
       toast.error("Erreur lors du chargement des places");
     } finally {
       setLoading(false);
     }
-  };
+  }, [queryString]);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role === "admin") {
       fetchPlaces();
     }
-  }, [status, session, fetchPlaces]);
+    // cleanup: abort si on quitte la page
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+    };
+  }, [status, session?.user?.role, fetchPlaces]);
 
+  // Actions
   const handleValidation = async (
     placeId: string,
     action: "approve" | "reject",
@@ -102,83 +162,68 @@ function AdminPlacesContent() {
     if (!confirm(confirmMessage)) return;
 
     try {
-      const response = await fetch(`/api/admin/places/${placeId}/validate`, {
+      const res = await fetch(`/api/admin/places/${placeId}/validate`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de la validation");
-      }
+      if (!res.ok) throw new Error("Erreur lors de la validation");
 
-      const result = await response.json();
+      const result = await res.json();
       toast.success(result.message);
-      fetchPlaces(); // Recharger la liste
+      fetchPlaces();
     } catch (error) {
       console.error("Erreur:", error);
       toast.error("Erreur lors de la validation");
     }
   };
 
-  const getStatusBadge = (status: string, _isVerified: boolean) => {
-    const baseClasses = "px-2 py-1 text-xs font-medium rounded-full";
-
-    switch (status) {
-      case "ACTIVE":
-        return `${baseClasses} bg-green-100 text-green-800`;
-      case "PENDING":
-        return `${baseClasses} bg-yellow-100 text-yellow-800`;
-      case "DRAFT":
-        return `${baseClasses} bg-gray-100 text-gray-800`;
-      case "INACTIVE":
-        return `${baseClasses} bg-red-100 text-red-800`;
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Actif";
-      case "PENDING":
-        return "En attente";
-      case "DRAFT":
-        return "Brouillon";
-      case "INACTIVE":
-        return "Inactif";
-      default:
-        return status;
-    }
-  };
-
+  // Loading auth
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
       </div>
     );
   }
+
+  /* =======================
+     Render
+     ======================= */
 
   return (
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Administration des Places</h1>
-          <p className="text-gray-600">Gérez et validez les places du répertoire</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Administration des Places
+          </h1>
+          <p className="text-gray-600">
+            Gérez et validez les places du répertoire
+          </p>
         </div>
 
         <Link
           href="/dashboard/admin/places/new"
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" role="img" aria-label="Icône d'ajout">
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            role="img"
+            aria-label="Icône d'ajout"
+          >
             <title>Ajouter une nouvelle place</title>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
           </svg>
           Créer une place
         </Link>
@@ -191,7 +236,7 @@ function AdminPlacesContent() {
         )}
       </div>
 
-      {/* Filtres et recherche */}
+      {/* Filtres & recherche */}
       <div className="flex flex-col sm:flex-row gap-4">
         <select
           value={statusFilter}
@@ -222,7 +267,7 @@ function AdminPlacesContent() {
         </div>
       </div>
 
-      {/* Liste des places */}
+      {/* Liste */}
       {loading ? (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="animate-pulse">
@@ -261,13 +306,15 @@ function AdminPlacesContent() {
               d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
             />
           </svg>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">Aucune place trouvée</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            Aucune place trouvée
+          </h3>
           <p className="text-gray-600">
-            {searchQuery
+            {debouncedQuery
               ? "Aucun résultat pour cette recherche."
               : statusFilter === "all"
-                ? "Aucune place dans le système."
-                : `Aucune place avec le statut "${getStatusText(statusFilter)}".`}
+              ? "Aucune place dans le système."
+              : `Aucune place avec le statut "${getStatusText(statusFilter)}".`}
           </p>
         </div>
       ) : (
@@ -279,15 +326,20 @@ function AdminPlacesContent() {
                   <div className="flex-1">
                     <div className="flex items-start gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{place.name}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                          {place.name}
+                        </h3>
                         <p className="text-sm text-gray-600 mb-2">
                           {place.type} • {place.city}
                         </p>
-                        <p className="text-sm text-gray-500 mb-2">{place.street}</p>
+                        <p className="text-sm text-gray-500 mb-2">
+                          {place.street}
+                        </p>
 
                         {place.owner ? (
                           <p className="text-sm text-gray-500">
-                            Propriétaire: {place.owner.name} ({place.owner.email})
+                            Propriétaire: {place.owner.name} (
+                            {place.owner.email})
                           </p>
                         ) : (
                           <p className="text-sm text-orange-600 font-medium">
@@ -308,11 +360,19 @@ function AdminPlacesContent() {
                       </div>
 
                       <div className="text-right">
-                        <span className={getStatusBadge(place.status, place.isVerified)}>
+                        <span
+                          className={getStatusBadge(
+                            place.status,
+                            place.isVerified
+                          )}
+                        >
                           {getStatusText(place.status)}
                         </span>
                         <p className="text-xs text-gray-500 mt-2">
-                          Créé le {new Date(place.createdAt).toLocaleDateString("fr-FR")}
+                          Créé le{" "}
+                          {new Date(place.createdAt).toLocaleDateString(
+                            "fr-FR"
+                          )}
                         </p>
                       </div>
                     </div>
@@ -347,13 +407,17 @@ function AdminPlacesContent() {
                   {place.status === "PENDING" && (
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => handleValidation(place.id, "approve", place.name)}
+                        onClick={() =>
+                          handleValidation(place.id, "approve", place.name)
+                        }
                         className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
                       >
                         Approuver
                       </button>
                       <button
-                        onClick={() => handleValidation(place.id, "reject", place.name)}
+                        onClick={() =>
+                          handleValidation(place.id, "reject", place.name)
+                        }
                         className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
                       >
                         Rejeter
@@ -373,7 +437,7 @@ function AdminPlacesContent() {
           <div className="flex flex-1 justify-between sm:hidden">
             <button
               type="button"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
@@ -381,7 +445,7 @@ function AdminPlacesContent() {
             </button>
             <button
               type="button"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
@@ -402,12 +466,16 @@ function AdminPlacesContent() {
               >
                 <button
                   type="button"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
                   <span className="sr-only">Précédent</span>
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
@@ -478,12 +546,18 @@ function AdminPlacesContent() {
                 )}
 
                 <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
                   <span className="sr-only">Suivant</span>
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
@@ -499,6 +573,10 @@ function AdminPlacesContent() {
     </div>
   );
 }
+
+/* =======================
+   Page wrapper (Guard)
+   ======================= */
 
 export default function AdminPlacesPage() {
   return (
