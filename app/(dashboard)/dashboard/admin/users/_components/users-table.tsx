@@ -14,7 +14,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -114,7 +114,7 @@ export default function UsersTable() {
   }>({ open: false });
 
   // Charger les utilisateurs
-  const fetchUsers = async (
+  const fetchUsers = useCallback(async (
     params: { page?: number; search?: string; role?: string; status?: string } = {}
   ) => {
     try {
@@ -124,14 +124,14 @@ export default function UsersTable() {
       queryParams.append("page", (params.page || pagination.page).toString());
       queryParams.append("limit", pagination.limit.toString());
 
-      if (params.search || search) {
-        queryParams.append("search", params.search || search);
+      if (params.search !== undefined ? params.search : search) {
+        queryParams.append("search", params.search !== undefined ? params.search : search);
       }
-      if ((params.role || roleFilter) && (params.role || roleFilter) !== "all") {
-        queryParams.append("role", params.role || roleFilter);
+      if ((params.role !== undefined ? params.role : roleFilter) && (params.role !== undefined ? params.role : roleFilter) !== "all") {
+        queryParams.append("role", params.role !== undefined ? params.role : roleFilter);
       }
-      if ((params.status || statusFilter) && (params.status || statusFilter) !== "all") {
-        queryParams.append("status", params.status || statusFilter);
+      if ((params.status !== undefined ? params.status : statusFilter) && (params.status !== undefined ? params.status : statusFilter) !== "all") {
+        queryParams.append("status", params.status !== undefined ? params.status : statusFilter);
       }
 
       const response = await fetch(`/api/admin/users?${queryParams}`);
@@ -149,21 +149,16 @@ export default function UsersTable() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, search, roleFilter, statusFilter]);
 
-  // Effet pour le chargement initial
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  // Effet pour les filtres avec debounce
+  // Effet pour le chargement initial et les changements de filtres
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchUsers({ page: 1 });
-    }, 500);
+      fetchUsers();
+    }, search || roleFilter !== "all" || statusFilter !== "all" ? 500 : 0);
 
     return () => clearTimeout(timeout);
-  }, [fetchUsers]);
+  }, [fetchUsers]); // fetchUsers est maintenant stable grâce à useCallback
 
   // Supprimer un utilisateur
   const handleDeleteUser = async (user: User) => {

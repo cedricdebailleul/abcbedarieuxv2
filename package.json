@@ -26,6 +26,7 @@
     "test:categories-system": "tsx scripts/test-full-categories-flow.ts",
     "test:categories-pages": "tsx scripts/test-categories-pages.ts",
     "db:reset": "prisma migrate reset",
+    "newsletter:migrate": "node scripts/migrate-newsletter.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

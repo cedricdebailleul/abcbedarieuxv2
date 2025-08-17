@@ -17,6 +17,13 @@ export const env = createEnv({
     MAIL_USER: z.string().optional(),
     MAIL_PASS: z.string().optional(),
 
+    SMTP_HOST: z.string().optional(),
+    SMTP_PORT: z.coerce.number().optional(),
+    SMTP_SECURE: z.coerce.boolean().optional(),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASSWORD: z.string().optional(),
+    SMTP_FROM: z.string().optional(),
+
     ARCJET_KEY: z.string().optional(),
 
     AWS_ACCESS_KEY_ID: z.string().optional(),
@@ -52,6 +59,13 @@ export const env = createEnv({
     MAIL_PORT: process.env.MAIL_PORT,
     MAIL_USER: process.env.MAIL_USER,
     MAIL_PASS: process.env.MAIL_PASS,
+
+    SMTP_HOST: process.env.SMTP_HOST,
+    SMTP_PORT: process.env.SMTP_PORT,
+    SMTP_SECURE: process.env.SMTP_SECURE,
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PASSWORD: process.env.SMTP_PASSWORD,
+    SMTP_FROM: process.env.SMTP_FROM,
 
     ARCJET_KEY: process.env.ARCJET_KEY,
 

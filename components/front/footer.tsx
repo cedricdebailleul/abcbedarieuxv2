@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import { useRef } from "react";
 import Logo from "@/components/logo";
+import FooterNewsletter from "./footer-newsletter";
 
 import { Button } from "@/components/ui/button";
 
@@ -85,10 +86,10 @@ export default function FooterSection() {
   ];
 
   const bottomNavItems = [
-    { icon: "📞", label: "Nous Appeler" },
-    { icon: "📋", label: "Avis publics" },
-    { icon: "ℹ️", label: "Presse" },
-    { icon: "📧", label: "Devenir partenaire" },
+    { icon: "📞", label: "Nous Appeler", href: "/contact" },
+    { icon: "📋", label: "Avis publics", href: "/avis-publics" },
+    { icon: "ℹ️", label: "Presse", href: "/presse" },
+    { icon: "📧", label: "Devenir partenaire", href: "/contact" },
   ];
 
   return (
@@ -143,7 +144,7 @@ export default function FooterSection() {
                 whileHover={{ y: -2 }}
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
-                <Link href="#" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/faq" className="text-gray-300 hover:text-white transition-colors">
                   Foire aux questions
                 </Link>
               </motion.div>
@@ -151,37 +152,7 @@ export default function FooterSection() {
           </div>
 
           {/* Right Section - Newsletter */}
-          <motion.div className="flex justify-end h-full" variants={itemVariants}>
-            <div className="bg-blue-100 text-gray-900 p-6 rounded-2xl max-w-md w-full">
-              <div className="text-xs text-gray-600 mb-2 tracking-wide">
-                POUR PLUS D&apos;INFORMATION
-              </div>
-              <h3 className="text-xl font-bold mb-6">Abonnez-vous à l&apos;essentiel</h3>
-              <div className="flex gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-1"
-                >
-                  <Button className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-full w-full">
-                    S&apos;abonner à la newsletter
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-1"
-                >
-                  <Button
-                    variant="outline"
-                    className="border-blue-300 text-gray-900 hover:bg-pink-50 px-6 py-2 rounded-full w-full bg-transparent"
-                  >
-                    S&apos;abonner aux avis
-                  </Button>
-                </motion.div>
-              </div>
-            </div>
-          </motion.div>
+          <FooterNewsletter />
         </motion.div>
 
         {/* Bottom Section */}
@@ -212,7 +183,7 @@ export default function FooterSection() {
                 whileHover={{ y: -1 }}
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
                   Politique de confidentialité
                 </Link>
               </motion.div>
@@ -237,7 +208,7 @@ export default function FooterSection() {
                 whileTap={{ scale: 0.98 }}
               >
                 <Link
-                  href="#"
+                  href={item.href}
                   className="bg-gray-800 hover:bg-gray-700 p-4 rounded-full transition-colors block"
                 >
                   <div className="flex items-center gap-3">
