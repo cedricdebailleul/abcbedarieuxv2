@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import { sendEmail, createVerificationEmailTemplate } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -112,9 +113,26 @@ export async function POST(request: NextRequest) {
         include: { preferences: true },
       });
 
-      // TODO: Envoyer un email de vérification
-      // Ici, vous pouvez ajouter l'envoi d'un email de vérification
-      // avec le verificationToken pour confirmer l'abonnement
+      // Envoyer un email de vérification
+      const baseUrl = process.env.NEXTAUTH_URL || `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+      const verificationUrl = `${baseUrl}/api/newsletter/verify?token=${verificationToken}`;
+      
+      const emailHtml = createVerificationEmailTemplate({
+        verificationUrl,
+        subscriberName: newSubscriber.firstName || undefined,
+      });
+
+      const emailResult = await sendEmail({
+        to: newSubscriber.email,
+        subject: "Confirmez votre abonnement à la newsletter ABC Bédarieux",
+        html: emailHtml,
+      });
+
+      if (!emailResult.success) {
+        console.error("Erreur envoi email de vérification:", emailResult.error);
+        // Ne pas faire échouer l'inscription si l'email ne part pas
+        // L'utilisateur peut toujours demander un renvoi
+      }
 
       return NextResponse.json({
         success: true,

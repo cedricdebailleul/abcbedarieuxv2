@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendEmail, createVerificationEmailTemplate } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -30,19 +31,14 @@ export async function GET(request: NextRequest) {
       where: { id: subscriber.id },
       data: {
         isVerified: true,
-        verifiedAt: new Date(),
         verificationToken: null, // Supprimer le token après utilisation
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Email vérifié avec succès ! Votre abonnement à la newsletter est maintenant actif.",
-      subscriber: {
-        email: verifiedSubscriber.email,
-        verifiedAt: verifiedSubscriber.verifiedAt,
-      },
-    });
+    // Rediriger vers la page de confirmation
+    return NextResponse.redirect(
+      new URL("/newsletter/confirmed", request.url)
+    );
 
   } catch (error) {
     console.error("Erreur lors de la vérification:", error);
@@ -94,8 +90,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Renvoyer l'email de vérification
-    // await sendVerificationEmail(subscriber.email, subscriber.verificationToken);
+    // Renvoyer l'email de vérification
+    const baseUrl = process.env.NEXTAUTH_URL || `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+    const verificationUrl = `${baseUrl}/api/newsletter/verify?token=${subscriber.verificationToken}`;
+    
+    const emailHtml = createVerificationEmailTemplate({
+      verificationUrl,
+      subscriberName: subscriber.firstName || undefined,
+    });
+
+    const emailResult = await sendEmail({
+      to: subscriber.email,
+      subject: "Confirmez votre abonnement à la newsletter ABC Bédarieux",
+      html: emailHtml,
+    });
+
+    if (!emailResult.success) {
+      console.error("Erreur envoi email de re-vérification:", emailResult.error);
+      return NextResponse.json(
+        { 
+          success: false,
+          error: "Erreur lors de l'envoi de l'email de vérification" 
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

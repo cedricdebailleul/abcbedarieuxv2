@@ -8,33 +8,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  Mail, 
-  Calendar, 
-  MapPin, 
-  FileText, 
   Send, 
   Save,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw,
+  Users
 } from "lucide-react";
-
-interface ContentItem {
-  id: string;
-  type: "event" | "place" | "post";
-  title: string;
-  description?: string;
-  date?: string;
-  location?: string;
-}
+import { useAvailableContent } from "../_hooks/useAvailableContent";
+import { ContentSelector } from "../_components/ContentSelector";
+import { AttachmentManager, type Attachment } from "../_components/AttachmentManager";
+import { NewsletterPreview } from "../_components/NewsletterPreview";
 
 export default function NewCampaignPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  // Utiliser le hook pour récupérer le contenu dynamique
+  const { content, stats, loading: contentLoading, error: contentError, refetch } = useAvailableContent();
   
   const [formData, setFormData] = useState({
     title: "",
@@ -47,30 +43,7 @@ export default function NewCampaignPage() {
     scheduledAt: ""
   });
 
-  // Mock data - à remplacer par de vraies données
-  const [availableContent] = useState<ContentItem[]>([
-    {
-      id: "event-1",
-      type: "event",
-      title: "Festival de Bédarieux 2024",
-      description: "Grand festival de musique au cœur de la ville",
-      date: "2024-09-15",
-      location: "Place de la République"
-    },
-    {
-      id: "place-1", 
-      type: "place",
-      title: "Nouvelle Boulangerie Artisanale",
-      description: "Ouverture d'une nouvelle boulangerie bio",
-      location: "Rue de la Liberté"
-    },
-    {
-      id: "post-1",
-      type: "post", 
-      title: "Les soldes d'été arrivent",
-      description: "Découvrez les meilleures offres de nos commerçants"
-    }
-  ]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const handleSubmit = async (e: React.FormEvent, status: "DRAFT" | "SCHEDULED") => {
     e.preventDefault();
@@ -118,25 +91,31 @@ export default function NewCampaignPage() {
     }
   };
 
-  const toggleContent = (contentId: string, type: "event" | "place" | "post") => {
-    const field = type === "event" ? "includedEvents" : 
-                 type === "place" ? "includedPlaces" : "includedPosts";
-    
+  const toggleEvent = (eventId: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: prev[field].includes(contentId)
-        ? prev[field].filter(id => id !== contentId)
-        : [...prev[field], contentId]
+      includedEvents: prev.includedEvents.includes(eventId)
+        ? prev.includedEvents.filter(id => id !== eventId)
+        : [...prev.includedEvents, eventId]
     }));
   };
 
-  const getContentIcon = (type: string) => {
-    switch (type) {
-      case "event": return <Calendar className="w-4 h-4" />;
-      case "place": return <MapPin className="w-4 h-4" />;
-      case "post": return <FileText className="w-4 h-4" />;
-      default: return <FileText className="w-4 h-4" />;
-    }
+  const togglePlace = (placeId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      includedPlaces: prev.includedPlaces.includes(placeId)
+        ? prev.includedPlaces.filter(id => id !== placeId)
+        : [...prev.includedPlaces, placeId]
+    }));
+  };
+
+  const togglePost = (postId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      includedPosts: prev.includedPosts.includes(postId)
+        ? prev.includedPosts.filter(id => id !== postId)
+        : [...prev.includedPosts, postId]
+    }));
   };
 
   return (
@@ -153,6 +132,24 @@ export default function NewCampaignPage() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {contentError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Erreur lors du chargement du contenu: {contentError}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refetch}
+              className="ml-2"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Réessayer
+            </Button>
+          </AlertDescription>
         </Alert>
       )}
 
@@ -212,89 +209,67 @@ export default function NewCampaignPage() {
             {/* Content Selection */}
             <Card>
               <CardHeader>
-                <CardTitle>Contenu à inclure</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Contenu à inclure</CardTitle>
+                  {contentLoading && (
+                    <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="events" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="events">Événements</TabsTrigger>
-                    <TabsTrigger value="places">Commerces</TabsTrigger>
-                    <TabsTrigger value="posts">Articles</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="events" className="space-y-4">
-                    {availableContent
-                      .filter(item => item.type === "event")
-                      .map((item) => (
-                        <div key={item.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                          <Checkbox
-                            checked={formData.includedEvents.includes(item.id)}
-                            onCheckedChange={() => toggleContent(item.id, "event")}
-                          />
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              {getContentIcon(item.type)}
-                              <h4 className="font-medium">{item.title}</h4>
-                            </div>
-                            {item.description && (
-                              <p className="text-sm text-muted-foreground">{item.description}</p>
-                            )}
-                            <div className="flex gap-4 text-xs text-muted-foreground">
-                              {item.date && <span>📅 {new Date(item.date).toLocaleDateString("fr-FR")}</span>}
-                              {item.location && <span>📍 {item.location}</span>}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </TabsContent>
-                  
-                  <TabsContent value="places" className="space-y-4">
-                    {availableContent
-                      .filter(item => item.type === "place")
-                      .map((item) => (
-                        <div key={item.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                          <Checkbox
-                            checked={formData.includedPlaces.includes(item.id)}
-                            onCheckedChange={() => toggleContent(item.id, "place")}
-                          />
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              {getContentIcon(item.type)}
-                              <h4 className="font-medium">{item.title}</h4>
-                            </div>
-                            {item.description && (
-                              <p className="text-sm text-muted-foreground">{item.description}</p>
-                            )}
-                            {item.location && (
-                              <p className="text-xs text-muted-foreground">📍 {item.location}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                  </TabsContent>
-                  
-                  <TabsContent value="posts" className="space-y-4">
-                    {availableContent
-                      .filter(item => item.type === "post")
-                      .map((item) => (
-                        <div key={item.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                          <Checkbox
-                            checked={formData.includedPosts.includes(item.id)}
-                            onCheckedChange={() => toggleContent(item.id, "post")}
-                          />
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              {getContentIcon(item.type)}
-                              <h4 className="font-medium">{item.title}</h4>
-                            </div>
-                            {item.description && (
-                              <p className="text-sm text-muted-foreground">{item.description}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                  </TabsContent>
-                </Tabs>
+                {contentLoading ? (
+                  <div className="space-y-4">
+                    <div className="flex space-x-1">
+                      <Skeleton className="h-10 flex-1" />
+                      <Skeleton className="h-10 flex-1" />
+                      <Skeleton className="h-10 flex-1" />
+                    </div>
+                    {[...Array(3)].map((_, i) => (
+                      <Skeleton key={i} className="h-20 w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <Tabs defaultValue="events" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="events">
+                        Événements ({content.events.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="places">
+                        Commerces ({content.places.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="posts">
+                        Articles ({content.posts.length})
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="events" className="mt-6">
+                      <ContentSelector
+                        items={content.events}
+                        selectedIds={formData.includedEvents}
+                        onToggle={toggleEvent}
+                        type="event"
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="places" className="mt-6">
+                      <ContentSelector
+                        items={content.places}
+                        selectedIds={formData.includedPlaces}
+                        onToggle={togglePlace}
+                        type="place"
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="posts" className="mt-6">
+                      <ContentSelector
+                        items={content.posts}
+                        selectedIds={formData.includedPosts}
+                        onToggle={togglePost}
+                        type="post"
+                      />
+                    </TabsContent>
+                  </Tabs>
+                )}
               </CardContent>
             </Card>
 
@@ -316,6 +291,12 @@ export default function NewCampaignPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Attachments */}
+            <AttachmentManager
+              attachments={attachments}
+              onAttachmentsChange={setAttachments}
+            />
           </div>
 
           {/* Sidebar */}
@@ -326,15 +307,15 @@ export default function NewCampaignPage() {
                 <CardTitle>Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {/* TODO: Implement preview */}}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Aperçu
-                </Button>
+                <NewsletterPreview
+                  campaignTitle={formData.title || "Aperçu de la campagne"}
+                  subject={formData.subject || "Sujet de l'email"}
+                  content={formData.content}
+                  selectedEvents={content.events.filter(e => formData.includedEvents.includes(e.id))}
+                  selectedPlaces={content.places.filter(p => formData.includedPlaces.includes(p.id))}
+                  selectedPosts={content.posts.filter(p => formData.includedPosts.includes(p.id))}
+                  attachments={attachments}
+                />
                 
                 <Button
                   type="button"
@@ -384,27 +365,63 @@ export default function NewCampaignPage() {
             {/* Statistics Preview */}
             <Card>
               <CardHeader>
-                <CardTitle>Aperçu des destinataires</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Aperçu des destinataires
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Abonnés actifs :</span>
-                    <span className="font-medium">TODO</span>
+                {contentLoading ? (
+                  <div className="space-y-2">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex justify-between">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-8" />
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Événements :</span>
-                    <span className="font-medium">TODO</span>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-blue-600" />
+                        Abonnés actifs :
+                      </span>
+                      <span className="font-medium text-blue-600">
+                        {stats.totalSubscribers}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Événements sélectionnés :</span>
+                      <span className="font-medium">
+                        {formData.includedEvents.length} / {stats.eventsCount}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Commerces sélectionnés :</span>
+                      <span className="font-medium">
+                        {formData.includedPlaces.length} / {stats.placesCount}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Articles sélectionnés :</span>
+                      <span className="font-medium">
+                        {formData.includedPosts.length} / {stats.postsCount}
+                      </span>
+                    </div>
+                    
+                    {(formData.includedEvents.length + formData.includedPlaces.length + formData.includedPosts.length) > 0 && (
+                      <div className="pt-2 border-t">
+                        <div className="flex justify-between text-sm font-medium">
+                          <span>Total contenu :</span>
+                          <span className="text-green-600">
+                            {formData.includedEvents.length + formData.includedPlaces.length + formData.includedPosts.length} éléments
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Commerces :</span>
-                    <span className="font-medium">TODO</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Actualités :</span>
-                    <span className="font-medium">TODO</span>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>

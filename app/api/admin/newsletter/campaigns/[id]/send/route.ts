@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendEmail, createNewsletterEmailTemplate } from "@/lib/email";
+import { newsletterQueue } from "@/lib/newsletter-queue";
 import crypto from "crypto";
 
 export async function POST(
@@ -52,9 +52,9 @@ export async function POST(
         );
       }
 
-      if (campaign.status !== "DRAFT") {
+      if (!["DRAFT", "SCHEDULED"].includes(campaign.status)) {
         return NextResponse.json(
-          { error: "Seules les campagnes en brouillon peuvent être envoyées" },
+          { error: "Seules les campagnes en brouillon ou programmées peuvent être envoyées" },
           { status: 400 }
         );
       }
@@ -101,153 +101,37 @@ export async function POST(
         data: {
           status: "SENDING",
           sentAt: new Date(),
+          totalRecipients: filteredSubscribers.length,
         },
       });
 
-      // Statistiques d'envoi
-      let sentCount = 0;
-      let deliveredCount = 0;
-      let errorCount = 0;
-      const sendResults = [];
+      // Ajouter tous les emails à la file d'attente
+      const subscriberIds = filteredSubscribers.map(s => s.id);
+      const queueResult = await newsletterQueue.addToQueue(id, subscriberIds);
 
-      // Envoyer les emails un par un avec un délai pour éviter le spam
-      for (const subscriber of filteredSubscribers) {
-        try {
-          // Créer un token de sécurité pour le tracking
-          const trackingToken = crypto.randomBytes(16).toString('hex');
-          
-          // URLs de tracking
-          const baseUrl = process.env.NEXTAUTH_URL || request.nextUrl.origin;
-          const trackingPixelUrl = `${baseUrl}/api/newsletter/track/open?c=${id}&s=${subscriber.id}&t=${trackingToken}`;
-          const unsubscribeUrl = `${baseUrl}/newsletter/unsubscribe?token=${subscriber.unsubscribeToken}`;
-
-          // Créer le contenu HTML de l'email
-          const emailHtml = createNewsletterEmailTemplate({
-            campaignTitle: campaign.title,
-            subject: campaign.subject,
-            content: campaign.content,
-            unsubscribeUrl,
-            trackingPixelUrl,
-            subscriberName: subscriber.firstName,
-          });
-
-          // Envoyer l'email
-          const emailResult = await sendEmail({
-            to: subscriber.email,
-            subject: campaign.subject,
-            html: emailHtml,
-          });
-
-          if (emailResult.success) {
-            sentCount++;
-            deliveredCount++; // Pour l'instant, on considère envoyé = livré
-
-            // Enregistrer l'envoi dans la base de données
-            await prisma.newsletterCampaignSent.create({
-              data: {
-                campaignId: id,
-                subscriberId: subscriber.id,
-                status: 'DELIVERED',
-                sentAt: new Date(),
-                deliveredAt: new Date(),
-                messageId: emailResult.messageId,
-              },
-            });
-
-            sendResults.push({
-              email: subscriber.email,
-              status: 'sent',
-              messageId: emailResult.messageId,
-            });
-          } else {
-            errorCount++;
-            
-            // Enregistrer l'erreur
-            await prisma.newsletterCampaignSent.create({
-              data: {
-                campaignId: id,
-                subscriberId: subscriber.id,
-                status: 'FAILED',
-                sentAt: new Date(),
-                errorMessage: emailResult.error,
-                messageId: `error-${Date.now()}`,
-              },
-            });
-
-            sendResults.push({
-              email: subscriber.email,
-              status: 'error',
-              error: emailResult.error,
-            });
-          }
-
-          // Délai de 100ms entre chaque email pour éviter les limitations
-          await new Promise(resolve => setTimeout(resolve, 100));
-
-        } catch (emailError) {
-          console.error(`Erreur envoi email pour ${subscriber.email}:`, emailError);
-          errorCount++;
-          
-          sendResults.push({
-            email: subscriber.email,
-            status: 'error',
-            error: emailError.message,
-          });
-        }
-      }
-
-      // Déterminer le statut final de la campagne
-      const finalStatus = errorCount === filteredSubscribers.length ? "ERROR" : "SENT";
-
-      // Mettre à jour la campagne avec les statistiques d'envoi réelles
-      const updatedCampaign = await prisma.newsletterCampaign.update({
-        where: { id },
-        data: {
-          status: finalStatus,
-          totalSent: sentCount,
-          totalDelivered: deliveredCount,
-          totalOpened: 0, // Sera mis à jour par le tracking
-          totalClicked: 0, // Sera mis à jour par le tracking
-          totalUnsubscribed: 0,
-        },
-        include: {
-          createdBy: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
-        },
-      });
-
-      // Mettre à jour la date du dernier email envoyé pour chaque abonné
-      await prisma.newsletterSubscriber.updateMany({
-        where: {
-          id: {
-            in: filteredSubscribers.map(s => s.id),
-          },
-        },
-        data: {
-          lastEmailSent: new Date(),
-        },
-      });
+      console.log(`📧 ${queueResult.queued} emails ajoutés à la file d'attente pour la campagne ${campaign.title}`);
 
       return NextResponse.json({
         success: true,
-        campaign: updatedCampaign,
-        message: `Campagne envoyée: ${sentCount} réussis, ${errorCount} erreurs sur ${filteredSubscribers.length} destinataires`,
+        campaign: {
+          id: campaign.id,
+          title: campaign.title,
+          status: "SENDING",
+          totalRecipients: filteredSubscribers.length,
+        },
+        message: `Campagne mise en file d'attente: ${queueResult.queued} emails à envoyer (par batch de 10)`,
         stats: {
           totalRecipients: filteredSubscribers.length,
-          sent: sentCount,
-          delivered: deliveredCount,
-          errors: errorCount,
+          queued: queueResult.queued,
+          batchSize: 10,
         },
-        details: sendResults,
+        queueStatus: await newsletterQueue.getQueueStatus(),
       });
 
     } catch (prismaError: any) {
       // En cas d'erreur, remettre le statut en brouillon
       try {
+        const { id } = await params;
         await prisma.newsletterCampaign.update({
           where: { id },
           data: {

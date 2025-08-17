@@ -49,7 +49,7 @@ interface Campaign {
 }
 
 interface CampaignDetailsProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
@@ -57,11 +57,21 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [campaignId, setCampaignId] = useState<string | null>(null);
+
+  // Resolve params
+  useEffect(() => {
+    params.then(({ id }) => setCampaignId(id));
+  }, [params]);
 
   const fetchCampaign = async () => {
+    if (!campaignId) return;
+    
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/newsletter/campaigns/${params.id}`);
+      const response = await fetch(`/api/admin/newsletter/campaigns/${campaignId}`, {
+        credentials: "include",
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -80,35 +90,50 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
 
   useEffect(() => {
     fetchCampaign();
-  }, [params.id]);
+  }, [campaignId]);
 
   const handleSendNow = async () => {
-    if (!confirm("Êtes-vous sûr de vouloir envoyer cette campagne maintenant ?")) return;
+    if (!campaignId || !confirm("Êtes-vous sûr de vouloir envoyer cette campagne maintenant ?")) return;
 
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/admin/newsletter/campaigns/${params.id}/send`, {
+      const response = await fetch(`/api/admin/newsletter/campaigns/${campaignId}/send`, {
         method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
-      if (response.ok) {
-        toast.success("Campagne envoyée avec succès");
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success(data.message || "Campagne envoyée avec succès");
+        console.log('📧 Résultat d\'envoi:', data);
         fetchCampaign();
       } else {
-        toast.error("Erreur lors de l'envoi");
+        console.error('❌ Erreur d\'envoi:', data);
+        toast.error(data.error || "Erreur lors de l'envoi");
       }
     } catch (error) {
-      toast.error("Erreur lors de l'envoi");
+      console.error('❌ Erreur réseau:', error);
+      toast.error("Erreur de connexion lors de l'envoi");
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleDuplicate = async () => {
+    if (!campaignId) return;
+    
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/admin/newsletter/campaigns/${params.id}/duplicate`, {
+      const response = await fetch(`/api/admin/newsletter/campaigns/${campaignId}/duplicate`, {
         method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       const data = await response.json();
@@ -124,11 +149,15 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette campagne ?")) return;
+    if (!campaignId || !confirm("Êtes-vous sûr de vouloir supprimer cette campagne ?")) return;
 
     try {
-      const response = await fetch(`/api/admin/newsletter/campaigns/${params.id}`, {
+      const response = await fetch(`/api/admin/newsletter/campaigns/${campaignId}`, {
         method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
@@ -229,7 +258,7 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
         </div>
 
         <div className="flex gap-2">
-          {campaign.status === "DRAFT" && (
+          {(campaign.status === "DRAFT" || campaign.status === "SCHEDULED") && (
             <>
               <Button variant="outline" asChild>
                 <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/edit`}>
@@ -239,9 +268,16 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
               </Button>
               <Button onClick={handleSendNow} disabled={actionLoading}>
                 <Send className="w-4 h-4 mr-2" />
-                Envoyer maintenant
+                {campaign.status === "SCHEDULED" ? "Envoyer maintenant" : "Envoyer maintenant"}
               </Button>
             </>
+          )}
+
+          {campaign.status === "ERROR" && (
+            <Button onClick={handleSendNow} disabled={actionLoading}>
+              <Send className="w-4 h-4 mr-2" />
+              Réessayer l'envoi
+            </Button>
           )}
 
           {campaign.status === "SENT" && (

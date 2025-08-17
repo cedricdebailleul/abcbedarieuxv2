@@ -3,10 +3,10 @@ import { env } from '@/lib/env';
 
 // Configuration du transporteur email
 const createTransporter = () => {
-  if (env.NODE_ENV === 'development' || !env.SMTP_HOST) {
+  if (!env.SMTP_HOST) {
     // Pour le développement, utiliser un transporteur qui log seulement
     console.log('📧 Mode développement: Les emails seront loggés mais pas envoyés');
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       streamTransport: true,
       newline: 'unix',
       buffer: true
@@ -14,10 +14,10 @@ const createTransporter = () => {
   }
 
   // Pour la production, utiliser les vraies configurations SMTP
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: env.SMTP_HOST,
-    port: env.SMTP_PORT || 587,
-    secure: env.SMTP_SECURE || false,
+    port: env.SMTP_PORT || 465,
+    secure: env.SMTP_SECURE || true, // true for port 465 (SSL)
     auth: {
       user: env.SMTP_USER,
       pass: env.SMTP_PASSWORD,
@@ -48,7 +48,7 @@ export async function sendEmail({ to, subject, html, text, from }: EmailOptions)
     const result = await transporter.sendMail(mailOptions);
     
     // En mode développement, extraire et logger le contenu
-    if (env.NODE_ENV === 'development' || !env.SMTP_HOST) {
+    if (!env.SMTP_HOST) {
       const emailContent = result.message?.toString() || '';
       console.log('📧 Email simulé envoyé:', {
         to,
@@ -97,6 +97,10 @@ export function createNewsletterEmailTemplate({
   unsubscribeUrl,
   trackingPixelUrl,
   subscriberName,
+  places = [],
+  posts = [],
+  events = [],
+  attachments = [],
 }: {
   campaignTitle: string;
   subject: string;
@@ -104,6 +108,10 @@ export function createNewsletterEmailTemplate({
   unsubscribeUrl: string;
   trackingPixelUrl: string;
   subscriberName?: string;
+  places?: any[];
+  posts?: any[];
+  events?: any[];
+  attachments?: { name: string; url: string; size: number; type: string }[];
 }) {
   return `
 <!DOCTYPE html>
@@ -176,9 +184,136 @@ export function createNewsletterEmailTemplate({
             font-weight: 600;
             color: #3b82f6;
         }
+        .content-item {
+            background: #f8fafc;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .content-item.event {
+            border-left: 4px solid #f59e0b;
+            background: #fef3c7;
+        }
+        .content-item.place {
+            border-left: 4px solid #10b981;
+        }
+        .content-item.post {
+            border-left: 4px solid #8b5cf6;
+            background: #ede9fe;
+        }
+        .content-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .content-image-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+        .content-details {
+            flex: 1;
+            min-width: 0;
+        }
+        .content-details h4 {
+            margin: 0 0 8px 0;
+            color: #1f2937;
+            font-size: 18px;
+            line-height: 1.3;
+        }
+        .content-details h4 a {
+            color: #1f2937;
+            text-decoration: none;
+        }
+        .content-meta {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        .content-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 12px;
+            margin-bottom: 4px;
+        }
+        .view-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .attachments {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #e5e7eb;
+        }
+        .attachments h3 {
+            margin: 0 0 15px 0;
+            color: #1f2937;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            margin: 8px 0;
+            border: 1px solid #e5e7eb;
+        }
+        .attachment-icon {
+            font-size: 20px;
+        }
+        .attachment-info {
+            flex: 1;
+        }
+        .attachment-name {
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 2px;
+        }
+        .attachment-size {
+            color: #6b7280;
+            font-size: 12px;
+        }
         @media (max-width: 480px) {
             .container { margin: 10px; }
             .header, .content { padding: 20px 15px; }
+            .content-item { 
+                flex-direction: column; 
+                text-align: center;
+            }
+            .content-image, .content-image-placeholder { 
+                width: 100%; 
+                height: 200px; 
+                margin: 0 auto 15px auto;
+            }
+            .content-details {
+                text-align: left;
+            }
         }
     </style>
 </head>
@@ -197,6 +332,115 @@ export function createNewsletterEmailTemplate({
             <div class="main-content">
                 ${content.replace(/\n/g, '<br>')}
             </div>
+            
+            ${places.length > 0 ? `
+            <div style="margin: 30px 0;">
+                <h3 style="color: #1f2937; margin-bottom: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 8px;">🏪 Commerces à découvrir</h3>
+                ${places.map(place => `
+                <div class="content-item place">
+                    ${place.coverImage || place.logo ? 
+                        `<img src="${place.coverImage || place.logo}" alt="${place.name}" class="content-image">` :
+                        `<div class="content-image-placeholder">🏪</div>`
+                    }
+                    <div class="content-details">
+                        <h4>
+                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/places/${place.slug}">
+                                ${place.name}
+                            </a>
+                        </h4>
+                        ${place.summary ? `<p style="margin: 8px 0; color: #4b5563; font-size: 14px;">${place.summary}</p>` : ''}
+                        <div class="content-meta">
+                            ${place.street ? `<span>📍 ${place.street}, ${place.city}</span>` : ''}
+                            ${place.phone ? `<span>📞 ${place.phone}</span>` : ''}
+                            ${place.website ? `<span>🌐 <a href="${place.website}" style="color: #3b82f6; text-decoration: none;" target="_blank">Site web</a></span>` : ''}
+                            <br>
+                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/places/${place.slug}" class="view-link">
+                                ➡️ Voir la fiche complète
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                `).join('')}
+            </div>
+            ` : ''}
+            
+            ${events.length > 0 ? `
+            <div style="margin: 30px 0;">
+                <h3 style="color: #1f2937; margin-bottom: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 8px;">📅 Événements à venir</h3>
+                ${events.map(event => `
+                <div class="content-item event">
+                    ${event.coverImage ? 
+                        `<img src="${event.coverImage}" alt="${event.title}" class="content-image">` :
+                        `<div class="content-image-placeholder">📅</div>`
+                    }
+                    <div class="content-details">
+                        <h4>
+                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/events/${event.slug}">
+                                ${event.title}
+                            </a>
+                        </h4>
+                        ${event.description ? `<p style="margin: 8px 0; color: #4b5563; font-size: 14px;">${event.description}</p>` : ''}
+                        <div class="content-meta">
+                            ${event.startDate ? `<span>📅 ${new Date(event.startDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>` : ''}
+                            ${event.locationName || event.locationAddress || event.locationCity ? `<span>📍 ${[event.locationName, event.locationAddress, event.locationCity].filter(Boolean).join(', ')}</span>` : ''}
+                            <br>
+                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/events/${event.slug}" class="view-link">
+                                ➡️ Voir les détails de l'événement
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                `).join('')}
+            </div>
+            ` : ''}
+            
+            ${posts.length > 0 ? `
+            <div style="margin: 30px 0;">
+                <h3 style="color: #1f2937; margin-bottom: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 8px;">📄 Actualités</h3>
+                ${posts.map(post => `
+                <div class="content-item post">
+                    ${post.coverImage ? 
+                        `<img src="${post.coverImage}" alt="${post.title}" class="content-image">` :
+                        `<div class="content-image-placeholder">📄</div>`
+                    }
+                    <div class="content-details">
+                        <h4>
+                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/posts/${post.slug}">
+                                ${post.title}
+                            </a>
+                        </h4>
+                        ${post.excerpt ? `<p style="margin: 8px 0; color: #4b5563; font-size: 14px;">${post.excerpt}</p>` : ''}
+                        <div class="content-meta">
+                            ${post.publishedAt ? `<span>📅 ${new Date(post.publishedAt).toLocaleDateString('fr-FR')}</span>` : ''}
+                            ${post.author ? `<span>👤 ${post.author.name}</span>` : ''}
+                            <br>
+                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/posts/${post.slug}" class="view-link">
+                                ➡️ Lire l'article complet
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                `).join('')}
+            </div>
+            ` : ''}
+            
+            ${attachments.length > 0 ? `
+            <div class="attachments">
+                <h3>📎 Pièces jointes</h3>
+                ${attachments.map(attachment => `
+                <div class="attachment-item">
+                    <span class="attachment-icon">${attachment.type.includes('pdf') ? '📄' : '🖼️'}</span>
+                    <div class="attachment-info">
+                        <div class="attachment-name">${attachment.name}</div>
+                        <div class="attachment-size">${(attachment.size / 1024 / 1024).toFixed(1)} MB</div>
+                    </div>
+                    <a href="${attachment.url}" style="color: #3b82f6; text-decoration: none; font-size: 14px;" download>
+                        Télécharger
+                    </a>
+                </div>
+                `).join('')}
+            </div>
+            ` : ''}
             
             <p style="margin-top: 25px; color: #6b7280; font-size: 14px;">
                 Merci de votre fidélité à l'association ABC Bédarieux !

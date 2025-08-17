@@ -18,7 +18,8 @@ import {
   UserCheck,
   UserX,
   Filter,
-  Trash2
+  Trash2,
+  RefreshCw
 } from "lucide-react";
 import {
   Table,
@@ -155,6 +156,58 @@ export default function SubscribersPage() {
     }
   };
 
+  const handleBulkResendVerification = async () => {
+    if (selectedIds.length === 0) {
+      toast.error("Aucun abonné sélectionné");
+      return;
+    }
+
+    // Filtrer seulement les abonnés non vérifiés
+    const unverifiedSubscribers = subscribers.filter(s => 
+      selectedIds.includes(s.id) && !s.isVerified
+    );
+
+    if (unverifiedSubscribers.length === 0) {
+      toast.error("Aucun abonné non vérifié sélectionné");
+      return;
+    }
+
+    const confirmed = confirm(`Renvoyer l'email de validation à ${unverifiedSubscribers.length} abonné(s) non vérifié(s) ?`);
+    if (!confirmed) return;
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const subscriber of unverifiedSubscribers) {
+        try {
+          const response = await fetch("/api/newsletter/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: subscriber.email }),
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`${successCount} email(s) de validation envoyé(s)`);
+      }
+      if (errorCount > 0) {
+        toast.error(`${errorCount} erreur(s) lors de l'envoi`);
+      }
+    } catch (error) {
+      toast.error("Erreur lors de l'envoi des validations");
+    }
+  };
+
   const exportSubscribers = async () => {
     try {
       const response = await fetch("/api/admin/newsletter/subscribers/export");
@@ -168,6 +221,97 @@ export default function SubscribersPage() {
       toast.success("Export en cours de téléchargement");
     } catch (error) {
       toast.error("Erreur lors de l'export");
+    }
+  };
+
+  const sendTestEmail = async (subscriber: Subscriber) => {
+    if (!confirm(`Envoyer un email de test à ${subscriber.email} ?`)) return;
+
+    try {
+      const response = await fetch("/api/admin/newsletter/send-test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          subscriberId: subscriber.id,
+          email: subscriber.email,
+          firstName: subscriber.firstName
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(`Email de test envoyé à ${subscriber.email}`);
+      } else {
+        toast.error(data.error || "Erreur lors de l'envoi de l'email");
+      }
+    } catch (error) {
+      console.error("Erreur envoi email:", error);
+      toast.error("Erreur lors de l'envoi de l'email");
+    }
+  };
+
+  const toggleSubscriberStatus = async (subscriber: Subscriber) => {
+    const action = subscriber.isActive ? "désactiver" : "activer";
+    if (!confirm(`Êtes-vous sûr de vouloir ${action} ${subscriber.email} ?`)) return;
+
+    try {
+      const response = await fetch(`/api/admin/newsletter/subscribers/${subscriber.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !subscriber.isActive }),
+      });
+
+      if (response.ok) {
+        toast.success(`Abonné ${action === "activer" ? "activé" : "désactivé"}`);
+        fetchSubscribers();
+      } else {
+        toast.error(`Erreur lors de l'${action}ation`);
+      }
+    } catch (error) {
+      toast.error(`Erreur lors de l'${action}ation`);
+    }
+  };
+
+  const deleteSubscriber = async (subscriber: Subscriber) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${subscriber.email} ?`)) return;
+
+    try {
+      const response = await fetch(`/api/admin/newsletter/subscribers/${subscriber.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast.success("Abonné supprimé");
+        fetchSubscribers();
+      } else {
+        toast.error("Erreur lors de la suppression");
+      }
+    } catch (error) {
+      toast.error("Erreur lors de la suppression");
+    }
+  };
+
+  const resendVerificationEmail = async (subscriber: Subscriber) => {
+    if (!confirm(`Renvoyer l'email de validation à ${subscriber.email} ?`)) return;
+
+    try {
+      const response = await fetch("/api/newsletter/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: subscriber.email }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(`Email de validation renvoyé à ${subscriber.email}`);
+      } else {
+        toast.error(data.error || "Erreur lors du renvoi de l'email");
+      }
+    } catch (error) {
+      console.error("Erreur renvoi validation:", error);
+      toast.error("Erreur lors du renvoi de l'email de validation");
     }
   };
 
@@ -191,10 +335,28 @@ export default function SubscribersPage() {
             Gérez votre liste d'abonnés et leurs préférences
           </p>
         </div>
-        <Button onClick={exportSubscribers}>
-          <Download className="w-4 h-4 mr-2" />
-          Exporter CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              const unverified = subscribers.filter(s => !s.isVerified);
+              if (unverified.length === 0) {
+                toast.info("Aucun abonné en attente de validation");
+                return;
+              }
+              setSelectedIds(unverified.map(s => s.id));
+              setTimeout(() => handleBulkResendVerification(), 100);
+            }}
+            disabled={subscribers.filter(s => !s.isVerified).length === 0}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Renvoyer toutes les validations ({subscribers.filter(s => !s.isVerified).length})
+          </Button>
+          <Button onClick={exportSubscribers}>
+            <Download className="w-4 h-4 mr-2" />
+            Exporter CSV
+          </Button>
+        </div>
       </div>
 
       {/* Statistiques */}
@@ -310,6 +472,10 @@ export default function SubscribersPage() {
                 <Button size="sm" variant="outline" onClick={() => handleBulkAction("deactivate")}>
                   Désactiver
                 </Button>
+                <Button size="sm" variant="outline" onClick={handleBulkResendVerification}>
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Renvoyer validations
+                </Button>
                 <Button size="sm" variant="destructive" onClick={() => handleBulkAction("delete")}>
                   Supprimer
                 </Button>
@@ -417,12 +583,19 @@ export default function SubscribersPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => sendTestEmail(subscriber)}>
                             <Mail className="w-4 h-4 mr-2" />
                             Envoyer un email
                           </DropdownMenuItem>
                           
-                          <DropdownMenuItem>
+                          {!subscriber.isVerified && (
+                            <DropdownMenuItem onClick={() => resendVerificationEmail(subscriber)}>
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              Renvoyer validation
+                            </DropdownMenuItem>
+                          )}
+                          
+                          <DropdownMenuItem onClick={() => toggleSubscriberStatus(subscriber)}>
                             {subscriber.isActive ? (
                               <>
                                 <UserX className="w-4 h-4 mr-2" />
@@ -436,7 +609,10 @@ export default function SubscribersPage() {
                             )}
                           </DropdownMenuItem>
                           
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => deleteSubscriber(subscriber)}
+                          >
                             <Trash2 className="w-4 h-4 mr-2" />
                             Supprimer
                           </DropdownMenuItem>
