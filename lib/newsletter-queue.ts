@@ -90,6 +90,9 @@ class NewsletterQueue {
     this.isProcessing = true;
     console.log('🚀 Démarrage du traitement de la file d\'attente');
 
+    // Vérifier et corriger les campagnes qui peuvent être coincées en statut SENDING
+    await this.updateCampaignStatuses();
+
     try {
       while (true) {
         // Récupérer le prochain batch de jobs en attente
@@ -122,6 +125,9 @@ class NewsletterQueue {
           }
         }
 
+        // Vérifier et mettre à jour les statuts des campagnes après chaque batch
+        await this.updateCampaignStatuses();
+
         // Délai entre chaque batch
         await this.sleep(this.batchDelay);
       }
@@ -152,6 +158,14 @@ class NewsletterQueue {
       const trackingPixelUrl = `${emailData.baseUrl}/api/newsletter/track/open?c=${job.campaignId}&s=${job.subscriberId}`;
       const unsubscribeUrl = `${emailData.baseUrl}/newsletter/unsubscribe?token=${emailData.subscriber.unsubscribeToken}`;
 
+      // Mapper les pièces jointes pour le template email
+      const templateAttachments = emailData.attachments.map(attachment => ({
+        name: attachment.originalName,
+        size: attachment.fileSize,
+        type: attachment.fileType,
+        url: `${emailData.baseUrl}${attachment.filePath}`
+      }));
+
       // Générer le contenu de l'email
       const emailHtml = createNewsletterEmailTemplate({
         campaignTitle: emailData.campaign.title,
@@ -163,14 +177,24 @@ class NewsletterQueue {
         events: emailData.selectedContent.events,
         places: emailData.selectedContent.places,
         posts: emailData.selectedContent.posts,
-        attachments: emailData.attachments
+        attachments: templateAttachments,
+        campaignId: job.campaignId,
+        subscriberId: job.subscriberId
       });
+
+      // Préparer les pièces jointes pour l'email
+      const emailAttachments = emailData.attachments.map(attachment => ({
+        filename: attachment.originalName,
+        path: `${process.cwd()}/public${attachment.filePath}`, // Chemin vers le fichier
+        contentType: attachment.fileType
+      }));
 
       // Envoyer l'email
       const emailResult = await sendEmail({
         to: emailData.subscriber.email,
         subject: emailData.campaign.subject,
-        html: emailHtml
+        html: emailHtml,
+        attachments: emailAttachments.length > 0 ? emailAttachments : undefined
       });
 
       if (emailResult.success) {
@@ -368,6 +392,69 @@ class NewsletterQueue {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  private async updateCampaignStatuses() {
+    try {
+      // Récupérer toutes les campagnes en cours d'envoi
+      const sendingCampaigns = await prisma.newsletterCampaign.findMany({
+        where: {
+          status: 'SENDING'
+        },
+        select: {
+          id: true,
+          title: true,
+          totalRecipients: true
+        }
+      });
+
+      for (const campaign of sendingCampaigns) {
+        // Vérifier si tous les jobs de cette campagne sont terminés
+        const [pendingCount, totalJobsCount, completedCount, failedCount] = await Promise.all([
+          prisma.newsletterQueue.count({
+            where: {
+              campaignId: campaign.id,
+              status: { in: ['PENDING', 'PROCESSING'] }
+            }
+          }),
+          prisma.newsletterQueue.count({
+            where: {
+              campaignId: campaign.id
+            }
+          }),
+          prisma.newsletterQueue.count({
+            where: {
+              campaignId: campaign.id,
+              status: 'COMPLETED'
+            }
+          }),
+          prisma.newsletterQueue.count({
+            where: {
+              campaignId: campaign.id,
+              status: 'FAILED'
+            }
+          })
+        ]);
+
+        // Si plus aucun job en attente ou en cours de traitement
+        if (pendingCount === 0 && totalJobsCount > 0) {
+          const newStatus = failedCount === totalJobsCount ? 'ERROR' : 'SENT';
+          
+          await prisma.newsletterCampaign.update({
+            where: { id: campaign.id },
+            data: {
+              status: newStatus,
+              totalSent: completedCount,
+              totalDelivered: completedCount // On assume que les emails sont délivrés s'ils sont envoyés avec succès
+            }
+          });
+
+          console.log(`✅ Campagne "${campaign.title}" mise à jour avec le statut ${newStatus} (${completedCount} réussies, ${failedCount} échouées)`);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la mise à jour des statuts de campagne:', error);
+    }
+  }
+
   async getQueueStatus() {
     const stats = await prisma.newsletterQueue.groupBy({
       by: ['status'],
@@ -392,6 +479,12 @@ class NewsletterQueue {
 
     console.log(`🧹 ${result.count} jobs complétés supprimés de la file d'attente`);
     return result.count;
+  }
+
+  async fixStuckCampaigns() {
+    console.log('🔍 Vérification des campagnes bloquées...');
+    await this.updateCampaignStatuses();
+    console.log('✅ Mise à jour des campagnes terminée');
   }
 }
 

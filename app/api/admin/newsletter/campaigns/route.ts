@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
       includedEvents = [],
       includedPlaces = [],
       includedPosts = [],
+      attachments = [],
       status = "DRAFT",
       scheduledAt
     } = body;
@@ -58,28 +59,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Créer la campagne
-    const campaign = await prisma.newsletterCampaign.create({
-      data: {
-        title,
-        subject,
-        content,
-        type,
-        status,
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-        includedEvents,
-        includedPlaces,
-        includedPosts,
-        createdById: session.user.id,
-      },
-      include: {
-        createdBy: {
-          select: {
-            name: true,
-            email: true
+    // Créer la campagne avec les pièces jointes dans une transaction
+    const campaign = await prisma.$transaction(async (tx) => {
+      // Créer la campagne
+      const newCampaign = await tx.newsletterCampaign.create({
+        data: {
+          title,
+          subject,
+          content,
+          type,
+          status,
+          scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+          includedEvents,
+          includedPlaces,
+          includedPosts,
+          createdById: session.user.id,
+        },
+        include: {
+          createdBy: {
+            select: {
+              name: true,
+              email: true
+            }
           }
         }
+      });
+
+      // Créer les pièces jointes si présentes
+      if (attachments && attachments.length > 0) {
+        const attachmentData = attachments.map((attachment: any) => ({
+          campaignId: newCampaign.id,
+          fileName: attachment.id || `file-${Date.now()}`, // Utilise l'ID généré comme nom de fichier
+          originalName: attachment.name,
+          fileType: attachment.type,
+          fileSize: attachment.size,
+          filePath: attachment.url, // URL du fichier uploadé
+          uploadedBy: session.user.id,
+        }));
+
+        await tx.newsletterAttachment.createMany({
+          data: attachmentData
+        });
       }
+
+      // Retourner la campagne avec les pièces jointes
+      return await tx.newsletterCampaign.findUnique({
+        where: { id: newCampaign.id },
+        include: {
+          createdBy: {
+            select: {
+              name: true,
+              email: true
+            }
+          },
+          attachments: true,
+        }
+      });
     });
 
     return NextResponse.json({

@@ -282,9 +282,9 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
 
           {campaign.status === "SENT" && (
             <Button variant="outline" asChild>
-              <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/analytics`}>
+              <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/stats`}>
                 <BarChart3 className="w-4 h-4 mr-2" />
-                Statistiques
+                Statistiques temps réel
               </Link>
             </Button>
           )}

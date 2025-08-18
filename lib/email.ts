@@ -31,9 +31,14 @@ interface EmailOptions {
   html: string;
   text?: string;
   from?: string;
+  attachments?: Array<{
+    filename: string;
+    path: string;
+    contentType?: string;
+  }>;
 }
 
-export async function sendEmail({ to, subject, html, text, from }: EmailOptions) {
+export async function sendEmail({ to, subject, html, text, from, attachments }: EmailOptions) {
   try {
     const transporter = createTransporter();
     
@@ -43,6 +48,7 @@ export async function sendEmail({ to, subject, html, text, from }: EmailOptions)
       subject,
       html,
       text: text || html.replace(/<[^>]*>/g, ''), // Fallback texte sans HTML
+      attachments: attachments || undefined,
     };
 
     const result = await transporter.sendMail(mailOptions);
@@ -101,6 +107,8 @@ export function createNewsletterEmailTemplate({
   posts = [],
   events = [],
   attachments = [],
+  campaignId,
+  subscriberId,
 }: {
   campaignTitle: string;
   subject: string;
@@ -112,7 +120,22 @@ export function createNewsletterEmailTemplate({
   posts?: any[];
   events?: any[];
   attachments?: { name: string; url: string; size: number; type: string }[];
+  campaignId?: string;
+  subscriberId?: string;
 }) {
+  
+  // En développement, utiliser localhost, en production abc-bedarieux.fr
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? (process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr')
+    : 'http://localhost:3001';
+  
+  // Fonction helper pour créer des liens trackés
+  const createTrackedLink = (destinationUrl: string) => {
+    if (campaignId && subscriberId) {
+      return `${baseUrl}/api/newsletter/track/click?c=${campaignId}&s=${subscriberId}&url=${encodeURIComponent(destinationUrl)}`;
+    }
+    return destinationUrl;
+  };
   return `
 <!DOCTYPE html>
 <html lang="fr">
@@ -327,6 +350,15 @@ export function createNewsletterEmailTemplate({
         <div class="content">
             ${subscriberName ? `<div class="greeting">Bonjour ${subscriberName},</div>` : ''}
             
+            ${campaignId && subscriberId ? `
+            <div style="text-align: center; margin-bottom: 20px; padding: 10px; background: #f8fafc; border-radius: 6px;">
+                <a href="${baseUrl}/api/newsletter/web-view?c=${campaignId}&s=${subscriberId}" 
+                   style="color: #3b82f6; text-decoration: none; font-size: 12px;">
+                    📧 Voir cette newsletter dans votre navigateur
+                </a>
+            </div>
+            ` : ''}
+            
             <h2 style="color: #1f2937; margin-bottom: 15px;">${campaignTitle}</h2>
             
             <div class="main-content">
@@ -344,7 +376,7 @@ export function createNewsletterEmailTemplate({
                     }
                     <div class="content-details">
                         <h4>
-                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/places/${place.slug}">
+                            <a href="${createTrackedLink(`${baseUrl}/places/${place.slug}`)}">
                                 ${place.name}
                             </a>
                         </h4>
@@ -354,7 +386,7 @@ export function createNewsletterEmailTemplate({
                             ${place.phone ? `<span>📞 ${place.phone}</span>` : ''}
                             ${place.website ? `<span>🌐 <a href="${place.website}" style="color: #3b82f6; text-decoration: none;" target="_blank">Site web</a></span>` : ''}
                             <br>
-                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/places/${place.slug}" class="view-link">
+                            <a href="${createTrackedLink(`${baseUrl}/places/${place.slug}`)}" class="view-link">
                                 ➡️ Voir la fiche complète
                             </a>
                         </div>
@@ -375,7 +407,7 @@ export function createNewsletterEmailTemplate({
                     }
                     <div class="content-details">
                         <h4>
-                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/events/${event.slug}">
+                            <a href="${createTrackedLink(`${baseUrl}/events/${event.slug}`)}">
                                 ${event.title}
                             </a>
                         </h4>
@@ -384,7 +416,7 @@ export function createNewsletterEmailTemplate({
                             ${event.startDate ? `<span>📅 ${new Date(event.startDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>` : ''}
                             ${event.locationName || event.locationAddress || event.locationCity ? `<span>📍 ${[event.locationName, event.locationAddress, event.locationCity].filter(Boolean).join(', ')}</span>` : ''}
                             <br>
-                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/events/${event.slug}" class="view-link">
+                            <a href="${createTrackedLink(`${baseUrl}/events/${event.slug}`)}" class="view-link">
                                 ➡️ Voir les détails de l'événement
                             </a>
                         </div>
@@ -405,7 +437,7 @@ export function createNewsletterEmailTemplate({
                     }
                     <div class="content-details">
                         <h4>
-                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/posts/${post.slug}">
+                            <a href="${createTrackedLink(`${baseUrl}/posts/${post.slug}`)}">
                                 ${post.title}
                             </a>
                         </h4>
@@ -414,7 +446,7 @@ export function createNewsletterEmailTemplate({
                             ${post.publishedAt ? `<span>📅 ${new Date(post.publishedAt).toLocaleDateString('fr-FR')}</span>` : ''}
                             ${post.author ? `<span>👤 ${post.author.name}</span>` : ''}
                             <br>
-                            <a href="${process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr'}/posts/${post.slug}" class="view-link">
+                            <a href="${createTrackedLink(`${baseUrl}/posts/${post.slug}`)}" class="view-link">
                                 ➡️ Lire l'article complet
                             </a>
                         </div>
@@ -459,8 +491,10 @@ export function createNewsletterEmailTemplate({
                 Se désabonner de cette newsletter
             </a>
             
-            <!-- Pixel de tracking pour les ouvertures -->
-            <img src="${trackingPixelUrl}" width="1" height="1" style="display: none;" alt="">
+            <!-- Pixels de tracking pour les ouvertures (multiples méthodes) -->
+            <img src="${trackingPixelUrl}" width="1" height="1" style="display: block; opacity: 0; position: absolute; top: 0; left: 0;" alt="">
+            <img src="${trackingPixelUrl}&t=${Date.now()}" width="1" height="1" style="display: none;" alt="">
+            <div style="background: url('${trackingPixelUrl}&method=css'); width: 1px; height: 1px; opacity: 0;"></div>
         </div>
     </div>
 </body>

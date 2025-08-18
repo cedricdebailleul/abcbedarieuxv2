@@ -382,8 +382,8 @@ export default async function NewsletterAdminPage() {
             </p>
             <div className="space-y-2">
               <Button asChild className="w-full">
-                <Link href="/dashboard/admin/newsletter/analytics">
-                  Voir les stats
+                <Link href="/dashboard/admin/newsletter/campaigns">
+                  Voir les campagnes
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full">
