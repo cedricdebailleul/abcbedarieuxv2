@@ -129,7 +129,7 @@ export default function GmailTrackingHelpPage() {
               
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p>🖼️ <strong>Autoriser les images dans Gmail</strong></p>
-                <p>→ Paramètres Gmail > Images > Toujours afficher</p>
+                <p>→ Paramètres Gmail {">"} Images {">"} Toujours afficher</p>
               </div>
             </div>
             
