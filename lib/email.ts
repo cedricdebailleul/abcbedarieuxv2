@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env } from '@/lib/env';
+import DOMPurify from 'isomorphic-dompurify';
 
 // Configuration du transporteur email
 const createTransporter = () => {
@@ -25,6 +26,50 @@ const createTransporter = () => {
   });
 };
 
+// Configuration pour la sanitisation HTML
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'a', 'b', 'strong', 'i', 'em', 'u', 'br', 'p', 'div', 'span', 
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'img',
+    'table', 'thead', 'tbody', 'tr', 'td', 'th'
+  ],
+  ALLOWED_ATTR: [
+    'href', 'src', 'alt', 'title', 'style', 'class', 'id',
+    'width', 'height', 'target', 'rel'
+  ],
+  ALLOW_DATA_ATTR: false,
+  FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input']
+};
+
+// Fonction pour sanitiser le contenu HTML
+export function sanitizeHtmlContent(html: string): string {
+  if (!html || typeof html !== 'string') {
+    return '';
+  }
+  
+  try {
+    return DOMPurify.sanitize(html, SANITIZE_CONFIG);
+  } catch (error) {
+    console.error('Erreur lors de la sanitisation HTML:', error);
+    // En cas d'erreur, retourner le texte sans HTML
+    return html.replace(/<[^>]*>/g, '');
+  }
+}
+
+// Fonction pour sanitiser les en-têtes d'email
+export function sanitizeEmailHeader(header: string): string {
+  if (!header || typeof header !== 'string') {
+    return '';
+  }
+  
+  // Supprimer les caractères dangereux pour les en-têtes
+  return header
+    .replace(/[\r\n]/g, '') // Supprimer les retours à la ligne
+    .replace(/[<>]/g, '') // Supprimer les chevrons
+    .trim()
+    .substring(0, 255); // Limiter la longueur
+}
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -42,12 +87,17 @@ export async function sendEmail({ to, subject, html, text, from, attachments }: 
   try {
     const transporter = createTransporter();
     
+    // Sanitiser le contenu HTML et les en-têtes
+    const sanitizedHtml = sanitizeHtmlContent(html);
+    const sanitizedSubject = sanitizeEmailHeader(subject);
+    const sanitizedTo = sanitizeEmailHeader(to);
+    
     const mailOptions = {
       from: from || env.SMTP_FROM || 'ABC Bédarieux <noreply@abc-bedarieux.fr>',
-      to,
-      subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, ''), // Fallback texte sans HTML
+      to: sanitizedTo,
+      subject: sanitizedSubject,
+      html: sanitizedHtml,
+      text: text || sanitizedHtml.replace(/<[^>]*>/g, ''), // Fallback texte sans HTML
       attachments: attachments || undefined,
     };
 
@@ -55,7 +105,7 @@ export async function sendEmail({ to, subject, html, text, from, attachments }: 
     
     // En mode développement, extraire et logger le contenu
     if (!env.SMTP_HOST) {
-      const emailContent = result.message?.toString() || '';
+      const emailContent = result.messageId || '';
       console.log('📧 Email simulé envoyé:', {
         to,
         subject,
@@ -90,7 +140,7 @@ export async function sendEmail({ to, subject, html, text, from, attachments }: 
     console.error('❌ Erreur envoi email:', error);
     return {
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Une erreur inconnue est survenue',
     };
   }
 }
@@ -359,10 +409,10 @@ export function createNewsletterEmailTemplate({
             </div>
             ` : ''}
             
-            <h2 style="color: #1f2937; margin-bottom: 15px;">${campaignTitle}</h2>
+            <h2 style="color: #1f2937; margin-bottom: 15px;">${sanitizeEmailHeader(campaignTitle)}</h2>
             
             <div class="main-content">
-                ${content.replace(/\n/g, '<br>')}
+                ${sanitizeHtmlContent(content.replace(/\n/g, '<br>'))}
             </div>
             
             ${places.length > 0 ? `

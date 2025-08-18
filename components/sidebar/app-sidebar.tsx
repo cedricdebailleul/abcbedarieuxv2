@@ -1,23 +1,22 @@
 "use client";
 
 import {
-  IconCamera,
+  IconCalendar,
+  IconCategory,
   IconChartBar,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
   IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
   IconHeart,
-  IconListDetails,
   IconMapPin,
   IconMail,
-  IconReport,
-  IconSearch,
   IconSettings,
   IconUsers,
+  IconUserPlus,
+  IconAward,
+  IconBuilding,
+  IconClaim,
+  IconNotebook,
+  IconBell,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import type * as React from "react";
@@ -45,24 +44,19 @@ const data = {
       icon: IconDashboard,
     },
     {
-      title: "Categories",
-      url: "#",
-      items: [
-        {
-          title: "Categories",
-          url: "/dashboard/category",
-        },
-        {
-          title: "Main Categories",
-          url: "/dashboard/main-categories",
-        },
-      ],
-      icon: IconListDetails,
-    },
-    {
       title: "Places",
       url: "/dashboard/places",
       icon: IconMapPin,
+    },
+    {
+      title: "Evénements",
+      url: "/dashboard/events",
+      icon: IconCalendar,
+    },
+    {
+      title: "Articles",
+      url: "/dashboard/posts",
+      icon: IconFileDescription,
     },
     {
       title: "Favoris",
@@ -70,14 +64,9 @@ const data = {
       icon: IconHeart,
     },
     {
-      title: "Evénements",
-      url: "/dashboard/events",
-      icon: IconChartBar,
-    },
-    {
-      title: "Articles",
-      url: "/dashboard/posts",
-      icon: IconFileDescription,
+      title: "Notifications",
+      url: "/dashboard/notifications",
+      icon: IconBell,
     },
     {
       title: "Administration",
@@ -89,16 +78,16 @@ const data = {
           url: "/dashboard/admin/users",
         },
         {
-          title: "Invitations",
-          url: "/dashboard/admin/invitations",
-        },
-        {
           title: "Badges",
           url: "/dashboard/admin/badges",
         },
         {
-          title: "Catégories des places",
+          title: "Catégories",
           url: "/dashboard/admin/place-categories",
+        },
+        {
+          title: "Réclamations",
+          url: "/dashboard/admin/claims",
         },
         {
           title: "Newsletter",
@@ -109,7 +98,7 @@ const data = {
   ],
   navSecondary: [
     {
-      title: "Profil",
+      title: "Mon Profil",
       url: "/dashboard/profile",
       icon: IconSettings,
     },
@@ -133,11 +122,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Filtrer les items de navigation selon le rôle utilisateur
   const filteredNavMain = data.navMain.filter((item) => {
-    // Si c'est le menu Administration, ne l'afficher que pour les admins, modérateurs et éditeurs
+    // Si c'est le menu Administration, ne l'afficher que pour les admins et modérateurs
     if (item.title === "Administration") {
-      return session?.user?.role && ["admin", "moderator", "editor"].includes(session.user.role);
+      return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
     }
     return true;
+  }).map((item) => {
+    // Filtrer les sous-items d'administration selon les permissions
+    if (item.title === "Administration" && item.items) {
+      const filteredItems = item.items.filter((subItem) => {
+        // Newsletter et Badges : admin seulement
+        if (["Newsletter", "Badges"].includes(subItem.title)) {
+          return session?.user?.role === "admin";
+        }
+        // Utilisateurs et Réclamations : admin et modérateur
+        if (["Utilisateurs", "Réclamations"].includes(subItem.title)) {
+          return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
+        }
+        // Catégories : tous les rôles admin/moderator
+        return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
+      });
+      return { ...item, items: filteredItems };
+    }
+    return item;
   });
 
   return (

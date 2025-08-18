@@ -24,11 +24,11 @@ type NavMainProps = {
 };
 
 export function NavMain({ items }: NavMainProps) {
-  // Local state pour chaque sous-menu ouvert
+  // Local state pour chaque sous-menu ouvert - utilise le title comme clé unique
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
-  const toggleMenu = (url: string) => {
-    setOpenMenus((prev) => (prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]));
+  const toggleMenu = (title: string) => {
+    setOpenMenus((prev) => (prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]));
   };
 
   return (
@@ -43,13 +43,13 @@ export function NavMain({ items }: NavMainProps) {
                 <>
                   <button
                     type="button"
-                    onClick={() => toggleMenu(item.url)}
+                    onClick={() => toggleMenu(item.title)}
                     className="flex items-center gap-2 w-full px-2 py-2 rounded hover:bg-muted/80 font-medium transition"
                   >
                     {item.icon && <item.icon className="w-5 h-5" />}
                     <span>{item.title}</span>
                     <span className="ml-auto">
-                      {openMenus.includes(item.url) ? (
+                      {openMenus.includes(item.title) ? (
                         <ChevronDown className="w-4 h-4" />
                       ) : (
                         <ChevronRight className="w-4 h-4" />
@@ -57,7 +57,7 @@ export function NavMain({ items }: NavMainProps) {
                     </span>
                   </button>
                   {/* Sous-menu */}
-                  {openMenus.includes(item.url) && (
+                  {openMenus.includes(item.title) && (
                     <ul className="ml-6 mt-1 space-y-1 flex flex-col gap-1">
                       {item.items.map((sub) => (
                         <li

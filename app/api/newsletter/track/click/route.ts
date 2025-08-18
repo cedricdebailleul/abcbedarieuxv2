@@ -1,6 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// Domaines autorisés pour les redirections
+const ALLOWED_DOMAINS = [
+  'abc-bedarieux.fr',
+  'www.abc-bedarieux.fr',
+  'localhost:3000',
+  'localhost:3001',
+  '127.0.0.1:3000',
+  '127.0.0.1:3001'
+];
+
+// Fonction pour valider l'URL de redirection
+function validateRedirectUrl(url: string, requestUrl: string): URL {
+  try {
+    const targetUrl = new URL(decodeURIComponent(url));
+    
+    // Vérifier si le domaine est autorisé
+    if (ALLOWED_DOMAINS.includes(targetUrl.hostname) || 
+        ALLOWED_DOMAINS.includes(`${targetUrl.hostname}:${targetUrl.port}`)) {
+      return targetUrl;
+    }
+    
+    // Si le domaine n'est pas autorisé, rediriger vers la page d'accueil
+    console.warn(`🚨 Tentative de redirection vers un domaine non autorisé: ${targetUrl.hostname}`);
+    return new URL('/', requestUrl);
+  } catch (error) {
+    // En cas d'URL malformée, rediriger vers la page d'accueil
+    console.error('🚨 URL malformée détectée:', url);
+    return new URL('/', requestUrl);
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,7 +55,8 @@ export async function GET(request: NextRequest) {
       ]);
 
       if (!campaign || !subscriber) {
-        return NextResponse.redirect(new URL(decodeURIComponent(url)));
+        const safeUrl = validateRedirectUrl(url, request.url);
+        return NextResponse.redirect(safeUrl);
       }
 
       // Capturer les informations de l'utilisateur
@@ -108,13 +140,18 @@ export async function GET(request: NextRequest) {
       console.error('Erreur lors du tracking de clic:', error);
     }
 
-    // Rediriger vers l'URL de destination
-    return NextResponse.redirect(new URL(decodeURIComponent(url)));
+    // Rediriger vers l'URL de destination (sécurisée)
+    const safeUrl = validateRedirectUrl(url, request.url);
+    return NextResponse.redirect(safeUrl);
 
   } catch (error) {
     console.error('Erreur générale tracking clic:', error);
-    // En cas d'erreur, rediriger vers l'URL ou la page d'accueil
+    // En cas d'erreur, rediriger vers l'URL sécurisée ou la page d'accueil
     const url = new URL(request.url).searchParams.get('url');
-    return NextResponse.redirect(new URL(url ? decodeURIComponent(url) : '/', request.url));
+    if (url) {
+      const safeUrl = validateRedirectUrl(url, request.url);
+      return NextResponse.redirect(safeUrl);
+    }
+    return NextResponse.redirect(new URL('/', request.url));
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateAndSanitize, updateCampaignSchema } from "@/lib/validation";
 
 export async function GET(
   request: NextRequest,
@@ -116,16 +117,22 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { 
-      title, 
-      subject, 
-      content, 
-      type, 
-      scheduledAt,
-      includedEvents = [],
-      includedPlaces = [],
-      includedPosts = []
-    } = body;
+    
+    // Validation et sanitisation des données
+    let validatedData;
+    try {
+      validatedData = validateAndSanitize(updateCampaignSchema, {
+        ...body,
+        eventIds: body.includedEvents || [],
+        placeIds: body.includedPlaces || [],
+        postIds: body.includedPosts || []
+      });
+    } catch (error) {
+      return NextResponse.json(
+        { error: `Données invalides: ${error instanceof Error ? error.message : 'Erreur de validation'}` },
+        { status: 400 }
+      );
+    }
 
     try {
       const { id } = await params;
@@ -149,18 +156,18 @@ export async function PUT(
         );
       }
 
-      // Mettre à jour la campagne
+      // Mettre à jour la campagne avec les données validées
       const updatedCampaign = await prisma.newsletterCampaign.update({
         where: { id },
         data: {
-          title,
-          subject,
-          content,
-          type,
-          scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-          includedEvents,
-          includedPlaces,
-          includedPosts,
+          ...(validatedData.title && { title: validatedData.title }),
+          ...(validatedData.subject && { subject: validatedData.subject }),
+          ...(validatedData.content && { content: validatedData.content }),
+          ...(validatedData.type && { type: validatedData.type }),
+          ...(validatedData.scheduledAt && { scheduledAt: new Date(validatedData.scheduledAt) }),
+          ...(validatedData.eventIds && { includedEvents: validatedData.eventIds }),
+          ...(validatedData.placeIds && { includedPlaces: validatedData.placeIds }),
+          ...(validatedData.postIds && { includedPosts: validatedData.postIds }),
           updatedAt: new Date(),
         },
         include: {

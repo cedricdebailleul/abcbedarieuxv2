@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AdminGuard } from "@/components/auth/admin-guard";
 import { useSession } from "@/hooks/use-session";
@@ -61,7 +61,7 @@ function AdminClaimsContent() {
   const [pendingCount, setPendingCount] = useState(0);
   const [processingClaim, setProcessingClaim] = useState<string | null>(null);
 
-  const fetchClaims = async () => {
+  const fetchClaims = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -86,7 +86,7 @@ function AdminClaimsContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, statusFilter]);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role === "admin") {

@@ -54,7 +54,7 @@ export function NavUser() {
                     : session?.user.email.split("@")[0]}
                 </span>
                 <span className="text-muted-foreground truncate text-xs">
-                  {session?.user.email}
+                  {session?.user.email?.replace(/(.{3}).*@/, '$1***@')}
                 </span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
@@ -92,7 +92,7 @@ export function NavUser() {
                       : session?.user.email.split("@")[0]}
                   </span>
                   <span className="text-muted-foreground truncate text-xs">
-                    {session?.user.email}
+                    {session?.user.email?.replace(/(.{3}).*@/, '$1***@')}
                   </span>
                 </div>
               </div>
@@ -112,9 +112,9 @@ export function NavUser() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/notifications">
+                <Link href="/dashboard/profile">
                   <IconNotification />
-                  Notifications
+                  Mon Profil
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
