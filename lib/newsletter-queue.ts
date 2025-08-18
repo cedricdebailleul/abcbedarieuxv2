@@ -227,7 +227,7 @@ class NewsletterQueue {
           }
         });
 
-        console.log(`✅ Email envoyé avec succès à ${emailData.subscriber.email}`);
+        console.log(`✅ Email envoyé avec succès à ${emailData.subscriber.firstName || 'subscriber'} (ID: ${emailData.subscriber.id})`);
       } else {
         throw new Error(emailResult.error || 'Erreur d\'envoi inconnue');
       }
@@ -366,7 +366,10 @@ class NewsletterQueue {
       const baseUrl = process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr';
 
       return {
-        subscriber,
+        subscriber: {
+          ...subscriber,
+          unsubscribeToken: subscriber.unsubscribeToken || ''
+        },
         campaign: {
           id: campaign.id,
           title: campaign.title,

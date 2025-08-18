@@ -102,7 +102,7 @@ export async function DELETE(request: NextRequest) {
         };
       });
 
-      console.log(`🗑️ Suppression en masse: ${result.deletedCount} campagnes supprimées par ${session.user.email}`);
+      console.log(`🗑️ Suppression en masse: ${result.deletedCount} campagnes supprimées par admin ${session.user.id}`);
 
       return NextResponse.json({
         success: true,

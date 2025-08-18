@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIP, trackingLimit } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting pour le tracking (moins strict)
+    const clientIP = getClientIP(request);
+    const rateLimitResult = await checkRateLimit(trackingLimit, clientIP, request);
+    
+    // Pour le tracking, on ne bloque pas complètement mais on log si limite dépassée
+    if (!rateLimitResult.success) {
+      console.warn(`🚨 Rate limit tracking dépassé pour IP ${clientIP}`);
+    }
+    
     const { searchParams } = new URL(request.url);
     const campaignId = searchParams.get('c');
     const subscriberId = searchParams.get('s');
@@ -43,7 +53,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      console.log(`✅ Campagne et abonné trouvés - ${campaign.title}, ${subscriber.email}`);
+      console.log(`✅ Tracking pixel accessed - Campagne: ${campaign.title}, Abonné ID: ${subscriber.id}`);
 
       // Capturer les informations de l'utilisateur
       const userAgent = request.headers.get('user-agent') || '';

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       `, { status: 404, headers: { 'Content-Type': 'text/html' } });
     }
 
-    console.log(`✅ Données trouvées - Campagne: "${campaign.title}", Abonné: ${subscriber.email}`);
+    console.log(`✅ Web view accessed - Campagne: "${campaign.title}", Abonné ID: ${subscriber.id}`);
 
     // Marquer comme ouvert si pas déjà fait (tracking Web fiable)
     const existingRecord = await prisma.newsletterCampaignSent.findUnique({

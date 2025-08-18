@@ -313,6 +313,7 @@ model Post {
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   tags       PostTag[]
+  views      PostView[]
 
   // Image de couverture
   coverImage String?
@@ -390,6 +391,29 @@ model PostTag {
   @@index([postId])
   @@index([tagId])
   @@map("post_tags")
+}
+
+model PostView {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  // Informations de tracking
+  ipAddress String
+  userAgent String   @default("")
+  referer   String   @default("")
+  
+  // Géolocalisation (optionnel)
+  country   String?
+  region    String?
+  city      String?
+  
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@map("post_views")
 }
 
 // ============================================================

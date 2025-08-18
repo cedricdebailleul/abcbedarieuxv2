@@ -2,34 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { sendEmail, createVerificationEmailTemplate } from "@/lib/email";
+import { checkRateLimit, createRateLimitResponse, getClientIP, newsletterSubscribeLimit } from "@/lib/rate-limit";
+import { validateAndSanitize, subscribeSchema } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
   try {
+    // Vérifier le rate limiting en premier
+    const clientIP = getClientIP(request);
+    const rateLimitResult = await checkRateLimit(newsletterSubscribeLimit, clientIP, request);
+    
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(rateLimitResult);
+    }
+    
     const body = await request.json();
-    const {
-      email,
-      firstName,
-      lastName,
-      preferences = {},
-      source = "website",
-    } = body;
-
-    // Validation
-    if (!email) {
+    
+    // Validation et sanitisation des données
+    let validatedData;
+    try {
+      validatedData = validateAndSanitize(subscribeSchema, body);
+    } catch (error) {
       return NextResponse.json(
-        { error: "L'email est requis" },
+        { error: `Données invalides: ${error instanceof Error ? error.message : 'Erreur de validation'}` },
         { status: 400 }
       );
     }
 
-    // Validation email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Format d'email invalide" },
-        { status: 400 }
-      );
-    }
+    const { email, firstName, lastName, preferences, source } = validatedData;
 
     try {
       // Vérifier si l'email existe déjà
