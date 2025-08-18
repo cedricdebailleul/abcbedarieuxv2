@@ -50,7 +50,45 @@ export function AttachmentManager({
   const totalSize = attachments.reduce((total, att) => total + att.size, 0);
   const totalSizeMB = totalSize / (1024 * 1024);
   
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const uploadFile = async (attachment: Attachment) => {
+    const formData = new FormData();
+    formData.append('files', attachment.file!);
+
+    try {
+      const response = await fetch('/api/admin/newsletter/attachments/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.files.length > 0) {
+        const uploadedFile = result.files[0];
+        return {
+          ...attachment,
+          url: uploadedFile.url,
+          uploaded: true,
+          uploading: false,
+          error: undefined
+        };
+      } else {
+        return {
+          ...attachment,
+          uploading: false,
+          error: result.error || 'Erreur d\'upload'
+        };
+      }
+    } catch (error) {
+      return {
+        ...attachment,
+        uploading: false,
+        error: 'Erreur réseau'
+      };
+    }
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const newAttachments: Attachment[] = [];
     let currentSize = totalSize;
     
@@ -72,20 +110,39 @@ export function AttachmentManager({
         break;
       }
       
-      newAttachments.push({
+      const attachment: Attachment = {
         id: Math.random().toString(36).substr(2, 9),
         name: file.name,
         size: file.size,
         type: file.type,
         file,
-        uploading: false,
+        uploading: true,
         uploaded: false
-      });
+      };
       
+      newAttachments.push(attachment);
       currentSize += file.size;
     }
     
-    onAttachmentsChange([...attachments, ...newAttachments]);
+    // Ajouter les fichiers avec statut "uploading"
+    const updatedAttachments = [...attachments, ...newAttachments];
+    onAttachmentsChange(updatedAttachments);
+
+    // Uploader chaque fichier
+    for (let i = 0; i < newAttachments.length; i++) {
+      const attachment = newAttachments[i];
+      if (!attachment.error && attachment.file) {
+        const uploadedAttachment = await uploadFile(attachment);
+        
+        // Mettre à jour le fichier spécifique
+        const currentAttachments = [...updatedAttachments];
+        const index = currentAttachments.findIndex(a => a.id === attachment.id);
+        if (index !== -1) {
+          currentAttachments[index] = uploadedAttachment;
+          onAttachmentsChange(currentAttachments);
+        }
+      }
+    }
   }, [attachments, maxFiles, maxTotalSize, totalSize, onAttachmentsChange]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

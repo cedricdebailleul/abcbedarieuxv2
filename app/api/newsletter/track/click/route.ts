@@ -6,10 +6,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const campaignId = searchParams.get('c');
     const subscriberId = searchParams.get('s');
-    const token = searchParams.get('t');
     const url = searchParams.get('url');
 
-    if (!campaignId || !subscriberId || !token || !url) {
+    if (!campaignId || !subscriberId || !url) {
       return NextResponse.redirect(new URL('/', request.url));
     }
 
@@ -28,43 +27,82 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL(decodeURIComponent(url)));
       }
 
-      // Enregistrer le clic
-      await prisma.newsletterCampaignSent.upsert({
+      // Capturer les informations de l'utilisateur
+      const userAgent = request.headers.get('user-agent') || '';
+      const forwardedFor = request.headers.get('x-forwarded-for');
+      const realIp = request.headers.get('x-real-ip');
+      const clientIp = forwardedFor?.split(',')[0] || realIp || 'unknown';
+
+      // Vérifier si déjà cliqué pour éviter les doublons
+      const existingRecord = await prisma.newsletterCampaignSent.findUnique({
         where: {
           campaignId_subscriberId: {
             campaignId,
             subscriberId
           }
-        },
-        update: {
-          clickedAt: new Date(),
-          status: 'CLICKED'
-        },
-        create: {
-          campaignId,
-          subscriberId,
-          status: 'CLICKED',
-          sentAt: new Date(),
-          deliveredAt: new Date(),
-          clickedAt: new Date(),
-          messageId: `click-${Date.now()}`
         }
       });
 
-      // Mettre à jour les statistiques de la campagne
-      const clickCount = await prisma.newsletterCampaignSent.count({
-        where: {
-          campaignId,
-          clickedAt: { not: null }
-        }
-      });
+      if (existingRecord && !existingRecord.clickedAt) {
+        // Premier clic
+        await prisma.newsletterCampaignSent.update({
+          where: {
+            campaignId_subscriberId: {
+              campaignId,
+              subscriberId
+            }
+          },
+          data: {
+            clickedAt: new Date(),
+            status: 'CLICKED',
+            // S'assurer que l'email est marqué comme ouvert aussi (fallback pour Gmail)
+            ...((!existingRecord.openedAt) && { openedAt: new Date() })
+          }
+        });
 
-      await prisma.newsletterCampaign.update({
-        where: { id: campaignId },
-        data: { totalClicked: clickCount }
-      });
+        // Mettre à jour les statistiques de la campagne
+        const [clickCount, openCount] = await Promise.all([
+          prisma.newsletterCampaignSent.count({
+            where: {
+              campaignId,
+              clickedAt: { not: null }
+            }
+          }),
+          prisma.newsletterCampaignSent.count({
+            where: {
+              campaignId,
+              openedAt: { not: null }
+            }
+          })
+        ]);
 
-      console.log(`Lien cliqué: Campagne ${campaignId}, Abonné ${subscriberId}, URL: ${url}`);
+        await prisma.newsletterCampaign.update({
+          where: { id: campaignId },
+          data: { 
+            totalClicked: clickCount,
+            totalOpened: openCount
+          }
+        });
+
+        console.log(`🖱️ Nouveau clic: Campagne ${campaignId}, Abonné ${subscriberId}, URL: ${url}, IP: ${clientIp}`);
+      } else if (!existingRecord) {
+        // Enregistrement inexistant (cas rare), créer l'entrée
+        await prisma.newsletterCampaignSent.create({
+          data: {
+            campaignId,
+            subscriberId,
+            status: 'CLICKED',
+            sentAt: new Date(),
+            deliveredAt: new Date(),
+            openedAt: new Date(),
+            clickedAt: new Date(),
+            messageId: `track-click-${Date.now()}`
+          }
+        });
+
+        console.log(`🖱️ Clic tracké (nouvel enregistrement): Campagne ${campaignId}, Abonné ${subscriberId}, URL: ${url}`);
+      }
+      // Si déjà cliqué, on ne fait rien mais on redirige quand même
 
     } catch (error) {
       console.error('Erreur lors du tracking de clic:', error);

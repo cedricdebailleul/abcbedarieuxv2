@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,23 +11,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { 
-  Send, 
   Save,
-  Eye,
+  ArrowLeft,
   AlertTriangle,
   RefreshCw,
-  Users
+  Users,
+  Calendar,
+  Edit3
 } from "lucide-react";
-import { useAvailableContent } from "../_hooks/useAvailableContent";
-import { ContentSelector } from "../_components/ContentSelector";
-import { AttachmentManager, type Attachment } from "../_components/AttachmentManager";
-import { NewsletterPreview } from "../_components/NewsletterPreview";
+import { useAvailableContent } from "../../_hooks/useAvailableContent";
+import { ContentSelector } from "../../_components/ContentSelector";
+import { AttachmentManager, type Attachment } from "../../_components/AttachmentManager";
+import { NewsletterPreview } from "../../_components/NewsletterPreview";
 
-export default function NewCampaignPage() {
+interface CampaignData {
+  id: string;
+  title: string;
+  subject: string;
+  content: string;
+  type: string;
+  status: string;
+  scheduledAt?: string;
+  includedEvents: string[];
+  includedPlaces: string[];
+  includedPosts: string[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy: {
+    name: string;
+    email: string;
+  };
+  totalRecipients: number;
+}
+
+interface EditCampaignPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function EditCampaignPage({ params }: EditCampaignPageProps) {
+  const { id } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [campaign, setCampaign] = useState<CampaignData | null>(null);
+  const [campaignLoading, setCampaignLoading] = useState(true);
   
   // Utiliser le hook pour récupérer le contenu dynamique
   const { content, stats, loading: contentLoading, error: contentError, refetch } = useAvailableContent();
@@ -45,50 +75,74 @@ export default function NewCampaignPage() {
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent, status: "DRAFT" | "SCHEDULED") => {
-    e.preventDefault();
-    setLoading(true);
+  // Charger les données de la campagne
+  useEffect(() => {
+    async function loadCampaign() {
+      try {
+        setCampaignLoading(true);
+        const response = await fetch(`/api/admin/newsletter/campaigns/${id}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Erreur lors du chargement");
+        }
+
+        if (data.campaign) {
+          setCampaign(data.campaign);
+          setFormData({
+            title: data.campaign.title,
+            subject: data.campaign.subject,
+            type: data.campaign.type,
+            content: data.campaign.content,
+            includedEvents: data.campaign.includedEvents || [],
+            includedPlaces: data.campaign.includedPlaces || [],
+            includedPosts: data.campaign.includedPosts || [],
+            scheduledAt: data.campaign.scheduledAt ? 
+              new Date(data.campaign.scheduledAt).toISOString().slice(0, 16) : ""
+          });
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur lors du chargement");
+      } finally {
+        setCampaignLoading(false);
+      }
+    }
+
+    if (id) {
+      loadCampaign();
+    }
+  }, [id]);
+
+  const handleSave = async () => {
+    setSaving(true);
     setError("");
 
     try {
-      const response = await fetch("/api/admin/newsletter/campaigns", {
-        method: "POST",
+      const response = await fetch(`/api/admin/newsletter/campaigns/${id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...formData,
-          attachments: attachments.filter(a => a.uploaded), // Seulement les fichiers uploadés
-          status,
-          scheduledAt: status === "SCHEDULED" ? formData.scheduledAt : null
+          attachments: attachments.filter(a => a.uploaded),
+          scheduledAt: formData.scheduledAt || null
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.migrationRequired) {
-          setError("Migration de base de données requise. Veuillez exécuter 'pnpm newsletter:migrate' pour créer les tables newsletter.");
-        } else {
-          throw new Error(data.error || "Erreur lors de la création");
-        }
-        return;
+        throw new Error(data.error || "Erreur lors de la sauvegarde");
       }
 
-      if (data.campaign?.id) {
-        router.push(`/dashboard/admin/newsletter/campaigns/${data.campaign.id}`);
-      } else {
-        router.push("/dashboard/admin/newsletter");
-      }
+      // Rediriger vers la page de détails
+      router.push(`/dashboard/admin/newsletter/campaigns/${id}`);
       
     } catch (err) {
-      if (err instanceof SyntaxError && err.message.includes("Unexpected token")) {
-        setError("Erreur de communication avec le serveur. Veuillez vérifier que toutes les routes API sont configurées.");
-      } else {
-        setError(err instanceof Error ? err.message : "Une erreur est survenue");
-      }
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -119,14 +173,89 @@ export default function NewCampaignPage() {
     }));
   };
 
+  if (campaignLoading) {
+    return (
+      <div className="space-y-8">
+        <Skeleton className="h-20 w-full" />
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-64 w-full" />
+            ))}
+          </div>
+          <div className="space-y-6">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!campaign) {
+    return (
+      <div className="space-y-8">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Campagne non trouvée ou erreur lors du chargement.
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => router.back()} variant="outline">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Retour
+        </Button>
+      </div>
+    );
+  }
+
+  if (campaign.status !== "DRAFT") {
+    return (
+      <div className="space-y-8">
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Seules les campagnes en brouillon peuvent être modifiées. 
+            Cette campagne a le statut : <Badge variant="outline">{campaign.status}</Badge>
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => router.back()} variant="outline">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Retour
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Nouvelle campagne</h1>
-        <p className="text-muted-foreground">
-          Créez une nouvelle campagne d'email pour vos abonnés
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => router.back()}
+              className="p-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h1 className="text-3xl font-bold">Modifier la campagne</h1>
+          </div>
+          <p className="text-muted-foreground">
+            {campaign.title} • Créée le {new Date(campaign.createdAt).toLocaleDateString('fr-FR')}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge variant={campaign.status === "DRAFT" ? "secondary" : "default"}>
+            {campaign.status}
+          </Badge>
+          <Button onClick={handleSave} disabled={saving}>
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? "Sauvegarde..." : "Sauvegarder"}
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -161,7 +290,10 @@ export default function NewCampaignPage() {
             {/* Basic Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Informations générales</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Edit3 className="w-5 h-5" />
+                  Informations générales
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -305,36 +437,28 @@ export default function NewCampaignPage() {
             {/* Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Actions</CardTitle>
+                <CardTitle>Aperçu</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent>
                 <NewsletterPreview
-                  campaignTitle={formData.title || "Aperçu de la campagne"}
-                  subject={formData.subject || "Sujet de l'email"}
+                  campaignTitle={formData.title || campaign.title}
+                  subject={formData.subject || campaign.subject}
                   content={formData.content}
                   selectedEvents={content.events.filter(e => formData.includedEvents.includes(e.id))}
                   selectedPlaces={content.places.filter(p => formData.includedPlaces.includes(p.id))}
                   selectedPosts={content.posts.filter(p => formData.includedPosts.includes(p.id))}
                   attachments={attachments}
                 />
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={(e) => handleSubmit(e, "DRAFT")}
-                  disabled={loading}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Enregistrer le brouillon
-                </Button>
               </CardContent>
             </Card>
 
             {/* Scheduling */}
             <Card>
               <CardHeader>
-                <CardTitle>Programmation</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Programmation
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -350,79 +474,40 @@ export default function NewCampaignPage() {
                     Laissez vide pour envoyer immédiatement
                   </p>
                 </div>
-
-                <Button
-                  type="button"
-                  className="w-full"
-                  onClick={(e) => handleSubmit(e, "SCHEDULED")}
-                  disabled={loading || !formData.title || !formData.subject}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  {formData.scheduledAt ? "Programmer l'envoi" : "Envoyer maintenant"}
-                </Button>
               </CardContent>
             </Card>
 
-            {/* Statistics Preview */}
+            {/* Info Campaign */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Aperçu des destinataires
+                  Informations
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {contentLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} className="flex justify-between">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-4 w-8" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-blue-600" />
-                        Abonnés actifs :
-                      </span>
-                      <span className="font-medium text-blue-600">
-                        {stats.totalSubscribers}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Événements sélectionnés :</span>
-                      <span className="font-medium">
-                        {formData.includedEvents.length} / {stats.eventsCount}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Commerces sélectionnés :</span>
-                      <span className="font-medium">
-                        {formData.includedPlaces.length} / {stats.placesCount}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Articles sélectionnés :</span>
-                      <span className="font-medium">
-                        {formData.includedPosts.length} / {stats.postsCount}
-                      </span>
-                    </div>
-                    
-                    {(formData.includedEvents.length + formData.includedPlaces.length + formData.includedPosts.length) > 0 && (
-                      <div className="pt-2 border-t">
-                        <div className="flex justify-between text-sm font-medium">
-                          <span>Total contenu :</span>
-                          <span className="text-green-600">
-                            {formData.includedEvents.length + formData.includedPlaces.length + formData.includedPosts.length} éléments
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+              <CardContent className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span>Créée par :</span>
+                  <span className="font-medium">{campaign.createdBy.name}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Créée le :</span>
+                  <span className="font-medium">
+                    {new Date(campaign.createdAt).toLocaleDateString('fr-FR')}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Modifiée le :</span>
+                  <span className="font-medium">
+                    {new Date(campaign.updatedAt).toLocaleDateString('fr-FR')}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Destinataires potentiels :</span>
+                  <span className="font-medium text-blue-600">
+                    {campaign.totalRecipients}
+                  </span>
+                </div>
               </CardContent>
             </Card>
           </div>
