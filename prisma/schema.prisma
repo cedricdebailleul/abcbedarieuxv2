@@ -34,6 +34,8 @@ model User {
   consent      UserConsent?
   gdprRequests GDPRRequest[]
   posts        Post[] // Ajout pour le contenu utilisateur
+  notifications UserNotificationStatus[] @relation("UserNotifications")
+  processedRegistrations AbcRegistration[] @relation("AbcRegistrationProcessor")
 
   // Modération améliorée
   role       Role       @default(user) // Enum en majuscules
@@ -61,6 +63,10 @@ model User {
   eventReminders EventReminder[]
   newsletterCampaigns NewsletterCampaign[]
   newsletterAttachments NewsletterAttachment[]
+  abcMember          AbcMember?
+  abcMeetingsCreated AbcMeeting[]        @relation("AbcMeetingCreator")
+  abcDocumentsUploaded AbcDocument[]     @relation("AbcDocumentUploader")
+  abcBulletinsCreated AbcBulletin[]      @relation("AbcBulletinCreator")
 
   // Index pour les performances
   @@unique([email])
@@ -1328,4 +1334,321 @@ enum QueueStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+// ============================================================
+//                    ABC ASSOCIATION MANAGEMENT
+// ============================================================
+
+model AbcMember {
+  id          String        @id @default(cuid())
+  userId      String        @unique
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        AbcMemberType
+  role        AbcMemberRole @default(MEMBRE)
+  status      AbcMemberStatus @default(ACTIVE)
+  
+  // Informations adhésion
+  memberNumber String?       @unique
+  membershipDate DateTime?     // Date d'adhésion réelle (papier ou site)
+  joinedAt    DateTime      @default(now()) // Date création sur le site (pour compatibilité)
+  renewedAt   DateTime?      // Date du dernier renouvellement
+  expiresAt   DateTime?      // Date d'expiration de l'adhésion
+  
+  // Relations
+  payments    AbcPayment[]
+  meetings    AbcMeetingAttendee[]
+  documents   AbcDocumentShare[]
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@map("abc_members")
+}
+
+model AbcPayment {
+  id          String @id @default(cuid())
+  memberId    String
+  member      AbcMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  amount      Float
+  mode        AbcPaymentMode
+  status      AbcPaymentStatus @default(PENDING)
+  
+  // Détails selon le mode
+  checkNumber String? // Pour les chèques
+  reference   String? // Pour les virements
+  
+  // Période de cotisation
+  year        Int
+  quarter     Int?    // 1-4 pour cotisations trimestrielles
+  
+  // Métadonnées
+  paidAt      DateTime?
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([memberId, year, quarter])
+  @@map("abc_payments")
+}
+
+model AbcMeeting {
+  id          String @id @default(cuid())
+  title       String
+  description String? @db.Text
+  
+  type        AbcMeetingType @default(GENERAL)
+  status      AbcMeetingStatus @default(SCHEDULED)
+  
+  // Planification
+  scheduledAt DateTime
+  duration    Int? // en minutes
+  location    String?
+  
+  // Ordre du jour et PV
+  agenda      String? @db.Text
+  minutes     String? @db.Text
+  
+  // Relations
+  attendees   AbcMeetingAttendee[]
+  documents   AbcDocument[]
+  bulletins   AbcBulletin[]
+  
+  // Métadonnées
+  createdById String
+  createdBy   User   @relation("AbcMeetingCreator", fields: [createdById], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("abc_meetings")
+}
+
+model AbcMeetingAttendee {
+  id        String @id @default(cuid())
+  meetingId String
+  meeting   AbcMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    AbcMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  status    AbcAttendanceStatus @default(INVITED)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([meetingId, memberId])
+  @@map("abc_meeting_attendees")
+}
+
+model AbcDocument {
+  id          String @id @default(cuid())
+  title       String
+  description String? @db.Text
+  
+  type        AbcDocumentType
+  fileName    String
+  filePath    String
+  fileSize    Int
+  
+  // Association à une réunion (optionnel)
+  meetingId   String?
+  meeting     AbcMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  
+  // Partage
+  shares      AbcDocumentShare[]
+  
+  // Métadonnées
+  uploadedById String
+  uploadedBy   User @relation("AbcDocumentUploader", fields: [uploadedById], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("abc_documents")
+}
+
+model AbcDocumentShare {
+  id         String @id @default(cuid())
+  documentId String
+  document   AbcDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  memberId   String
+  member     AbcMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  accessLevel AbcDocumentAccess @default(READ)
+  sharedAt    DateTime @default(now())
+  
+  @@unique([documentId, memberId])
+  @@map("abc_document_shares")
+}
+
+model AbcBulletin {
+  id          String @id @default(cuid())
+  title       String
+  content     String @db.Text
+  
+  // Publication
+  isPublished Boolean @default(false)
+  publishedAt DateTime?
+  
+  // Relations optionnelles
+  meetingId   String?
+  meeting     AbcMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  
+  // Métadonnées
+  createdById String
+  createdBy   User @relation("AbcBulletinCreator", fields: [createdById], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("abc_bulletins")
+}
+
+model UserNotificationStatus {
+  id           String @id @default(cuid())
+  userId       String
+  user         User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  notificationId String // Format: "bulletin-{bulletinId}" ou autre
+  type         String // "NEW_BULLETIN", etc.
+  isRead       Boolean @default(false)
+  readAt       DateTime?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([userId, notificationId])
+  @@map("user_notification_status")
+}
+
+model AbcRegistration {
+  id                String @id @default(cuid())
+  
+  // Informations personnelles
+  firstName         String
+  lastName          String
+  email             String
+  phone             String?
+  birthDate         DateTime?
+  address           String?
+  city              String?
+  postalCode        String?
+  
+  // Informations professionnelles
+  profession        String?
+  company           String?
+  siret             String?
+  
+  // Type de membership souhaité
+  membershipType    AbcMemberType @default(ACTIF)
+  
+  // Motivations
+  motivation        String? @db.Text
+  interests         String? // JSON array of interests
+  
+  // Statut de la demande
+  status            AbcRegistrationStatus @default(PENDING)
+  processedAt       DateTime?
+  processedBy       String?
+  processorUser     User? @relation("AbcRegistrationProcessor", fields: [processedBy], references: [id])
+  
+  // Notes admin
+  adminNotes        String? @db.Text
+  
+  // Fichiers
+  pdfPath           String? // Chemin vers le PDF généré
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+  @@map("abc_registrations")
+}
+
+// ============================================================
+//                    ABC ENUMS
+// ============================================================
+
+enum AbcMemberType {
+  ACTIF
+  ARTISAN
+  AUTO_ENTREPRENEUR
+  PARTENAIRE
+  BIENFAITEUR
+}
+
+enum AbcMemberRole {
+  MEMBRE
+  SECRETAIRE
+  TRESORIER
+  PRESIDENT
+  VICE_PRESIDENT
+}
+
+enum AbcMemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  EXPIRED
+}
+
+enum AbcPaymentMode {
+  CHEQUE
+  ESPECE
+  VIREMENT
+}
+
+enum AbcPaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum AbcMeetingType {
+  GENERAL
+  BUREAU
+  EXTRAORDINAIRE
+  COMMISSION
+}
+
+enum AbcMeetingStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AbcAttendanceStatus {
+  INVITED
+  CONFIRMED
+  PRESENT
+  ABSENT
+  EXCUSED
+}
+
+enum AbcDocumentType {
+  MINUTES
+  AGENDA
+  FINANCIAL
+  LEGAL
+  COMMUNICATION
+  OTHER
+}
+
+enum AbcDocumentAccess {
+  READ
+  WRITE
+  ADMIN
+}
+
+enum AbcRegistrationStatus {
+  PENDING     // En attente de traitement
+  APPROVED    // Approuvée
+  REJECTED    // Rejetée
+  PROCESSED   // Traitée (membre créé)
 }

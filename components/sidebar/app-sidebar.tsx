@@ -69,10 +69,19 @@ const data = {
       icon: IconBell,
     },
     {
+      title: "Association ABC",
+      url: "/dashboard/association",
+      icon: IconBuilding,
+    },
+    {
       title: "Administration",
       url: "#",
       icon: IconSettings,
       items: [
+        {
+          title: "Vue d'ensemble",
+          url: "/dashboard/admin",
+        },
         {
           title: "Utilisateurs",
           url: "/dashboard/admin/users",
@@ -80,6 +89,10 @@ const data = {
         {
           title: "Badges",
           url: "/dashboard/admin/badges",
+        },
+        {
+          title: "Places",
+          url: "/dashboard/admin/places",
         },
         {
           title: "Catégories",
@@ -92,6 +105,41 @@ const data = {
         {
           title: "Newsletter",
           url: "/dashboard/admin/newsletter",
+        },
+      ],
+    },
+    {
+      title: "ABC",
+      url: "#",
+      icon: IconBuilding,
+      items: [
+        {
+          title: "Vue d'ensemble",
+          url: "/dashboard/admin/abc",
+        },
+        {
+          title: "Membres",
+          url: "/dashboard/admin/abc/members",
+        },
+        {
+          title: "Paiements",
+          url: "/dashboard/admin/abc/payments",
+        },
+        {
+          title: "Réunions",
+          url: "/dashboard/admin/abc/meetings",
+        },
+        {
+          title: "Documents",
+          url: "/dashboard/admin/abc/documents",
+        },
+        {
+          title: "Bulletins",
+          url: "/dashboard/admin/abc/bulletins",
+        },
+        {
+          title: "Inscriptions",
+          url: "/dashboard/admin/abc/registrations",
         },
       ],
     },
@@ -122,8 +170,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Filtrer les items de navigation selon le rôle utilisateur
   const filteredNavMain = data.navMain.filter((item) => {
-    // Si c'est le menu Administration, ne l'afficher que pour les admins et modérateurs
-    if (item.title === "Administration") {
+    // Si c'est le menu Administration ou ABC, ne l'afficher que pour les admins et modérateurs
+    if (item.title === "Administration" || item.title === "ABC") {
       return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
     }
     return true;
@@ -131,12 +179,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     // Filtrer les sous-items d'administration selon les permissions
     if (item.title === "Administration" && item.items) {
       const filteredItems = item.items.filter((subItem) => {
+        // Vue d'ensemble : admin et modérateur
+        if (subItem.title === "Vue d'ensemble") {
+          return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
+        }
         // Newsletter et Badges : admin seulement
         if (["Newsletter", "Badges"].includes(subItem.title)) {
           return session?.user?.role === "admin";
         }
-        // Utilisateurs et Réclamations : admin et modérateur
-        if (["Utilisateurs", "Réclamations"].includes(subItem.title)) {
+        // Utilisateurs, Réclamations et Places : admin et modérateur
+        if (["Utilisateurs", "Réclamations", "Places"].includes(subItem.title)) {
           return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
         }
         // Catégories : tous les rôles admin/moderator

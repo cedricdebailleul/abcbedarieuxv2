@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SectionCards } from "@/components/sidebar/section-cards";
+import { UserSectionCards } from "@/components/sidebar/user-section-cards";
 import { DynamicChart } from "@/components/dashboard/dynamic-chart";
 import { ActivityTable } from "@/components/dashboard/activity-table";
 import { ViewsAnalytics } from "@/components/dashboard/views-analytics";
@@ -14,7 +14,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Toujours afficher les cartes principales */}
-      <SectionCards />
+      <UserSectionCards />
       
       {/* Onglets pour les différentes vues */}
       <div className="px-4 lg:px-6">
