@@ -6,6 +6,7 @@ import Hero from "@/components/front/hero";
 import { PostCard } from "@/components/posts/post-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { RegistrationForm } from "@/components/abc/registration-form";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -80,6 +81,20 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      {/* Section d'inscription à l'association */}
+      <section className="py-16 bg-muted/30">
+        <div className="mx-auto px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Rejoignez l'Association ABC Bédarieux</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Soutenez le commerce local et l'artisanat bédaricien en devenant membre de notre association.
+              Remplissez le formulaire ci-dessous pour faire votre demande d'adhésion.
+            </p>
+          </div>
+          <RegistrationForm />
+        </div>
+      </section>
     </>
   );
 }

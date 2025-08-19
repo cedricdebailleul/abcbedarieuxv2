@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { NotificationBadge } from "@/components/association/notification-badge";
 
 type NavItem = {
   title: string;
@@ -80,6 +81,7 @@ export function NavMain({ items }: NavMainProps) {
                   <Link href={item.url} className="flex items-center gap-2">
                     {item.icon && <item.icon className="w-5 h-5" />}
                     <span>{item.title}</span>
+                    {item.title === "Association ABC" && <NotificationBadge />}
                   </Link>
                 </SidebarMenuButton>
               )}

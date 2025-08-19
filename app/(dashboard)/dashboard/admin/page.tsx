@@ -1,8 +1,9 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { IconUsers, IconAward, IconBuilding, IconMail, IconFlag, IconTrendingUp } from "@tabler/icons-react";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
-import { redirect } from "next/navigation";
+import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
 
 export default function AdminPage() {
   return (
@@ -13,6 +14,9 @@ export default function AdminPage() {
           Gérez les utilisateurs, contenus et paramètres de la plateforme ABC Bédarieux.
         </p>
       </div>
+
+      {/* Statistiques générales du site */}
+      <AdminStatsCards />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Utilisateurs */}
@@ -123,29 +127,41 @@ export default function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Statistiques d'administration</CardTitle>
+          <CardTitle>Actions rapides</CardTitle>
           <CardDescription>
-            Aperçu rapide de l'activité administrative
+            Accès direct aux tâches d'administration les plus courantes
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Total utilisateurs</p>
-              <p className="text-2xl font-bold">-</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Badges créés</p>
-              <p className="text-2xl font-bold">-</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Réclamations en attente</p>
-              <p className="text-2xl font-bold">-</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Campagnes newsletter</p>
-              <p className="text-2xl font-bold">-</p>
-            </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link 
+              href="/dashboard/admin/claims" 
+              className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+            >
+              <IconFlag className="h-4 w-4 text-orange-500" />
+              <span className="text-sm font-medium">Traiter les réclamations</span>
+            </Link>
+            <Link 
+              href="/dashboard/admin/newsletter" 
+              className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+            >
+              <IconMail className="h-4 w-4 text-purple-500" />
+              <span className="text-sm font-medium">Envoyer une newsletter</span>
+            </Link>
+            <Link 
+              href="/dashboard/admin/users" 
+              className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+            >
+              <IconUsers className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium">Gérer les utilisateurs</span>
+            </Link>
+            <Link 
+              href="/dashboard/admin/badges" 
+              className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+            >
+              <IconAward className="h-4 w-4 text-yellow-500" />
+              <span className="text-sm font-medium">Attribuer des badges</span>
+            </Link>
           </div>
         </CardContent>
       </Card>

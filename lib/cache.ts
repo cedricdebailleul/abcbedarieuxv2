@@ -66,6 +66,7 @@ export const getCacheKey = {
   dashboardStats: () => 'dashboard:stats',
   viewsStats: (period: string) => `views:stats:${period}`,
   userStats: (userId: string) => `user:stats:${userId}`,
+  adminStats: () => 'admin:stats',
   postViews: (postId: string) => `post:views:${postId}`,
   monthlyData: (year: number, month: number) => `monthly:${year}:${month}`,
 };
