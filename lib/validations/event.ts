@@ -235,7 +235,7 @@ export const recurrenceSchema = z.object({
 }, {
   message: "Il faut définir soit un nombre d'occurrences, soit une date de fin"
 })
-.refine((data) => {
+.refine(() => {
   // Si count ET until sont définis, donner un avertissement
   // (pas d'erreur, mais privilégier count)
   return true; // Toujours valide, mais on privilégiera count dans le code

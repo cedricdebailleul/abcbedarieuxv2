@@ -166,7 +166,11 @@ export async function toggleFavoriteAction(placeId: string): Promise<ActionResul
           data: { isFavorite: false }
         };
       }
-      return result;
+      return {
+        success: false,
+        data: { isFavorite: false },
+        error: result.error
+      };
     } else {
       // Ajouter aux favoris
       const result = await addToFavoritesAction(placeId);
@@ -176,7 +180,11 @@ export async function toggleFavoriteAction(placeId: string): Promise<ActionResul
           data: { isFavorite: true }
         };
       }
-      return result;
+      return {
+        success: false,
+        data: { isFavorite: true },
+        error: result.error
+      };
     }
 
   } catch (error) {
@@ -229,7 +237,34 @@ export async function getUserFavoritesAction(options?: {
   page?: number;
   limit?: number;
 }): Promise<ActionResult<{
-  favorites: any[];
+  favorites: {
+    id: string;
+    name: string;
+    slug: string;
+    type: string;
+    status: string;
+    city: string;
+    street: string;
+    coverImage: string | null;
+    logo: string | null;
+    isFeatured: boolean;
+    createdAt: Date;
+    latitude: number;
+    longitude: number;
+    categories: {
+      category: {
+        id: string;
+        name: string;
+        slug: string;
+        icon: string;
+        color: string;
+      };
+    }[];
+    _count: {
+      reviews: number;
+      favorites: number;
+    };
+  }[];
   pagination: {
     page: number;
     limit: number;
@@ -275,7 +310,19 @@ export async function getUserFavoritesAction(options?: {
     return {
       success: true,
       data: {
-        favorites: favorites.map(fav => fav.place),
+        favorites: favorites.map(fav => ({
+          ...fav.place,
+          latitude: fav.place.latitude ?? 0,
+          longitude: fav.place.longitude ?? 0,
+          categories: fav.place.categories.map(cat => ({
+            ...cat,
+            category: {
+              ...cat.category,
+              icon: cat.category.icon ?? "",
+              color: cat.category.color ?? "",
+            }
+          }))
+        })),
         pagination: {
           page,
           limit,

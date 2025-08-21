@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { newsletterQueue } from "@/lib/newsletter-queue";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Vérifier l'authentification
     const session = await auth.api.getSession({
@@ -15,8 +15,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier les permissions admin
-    if (!session.user.role || !["admin", "moderator"].includes(session.user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+    if (
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     // Corriger les campagnes bloquées
@@ -24,9 +30,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Campagnes bloquées corrigées avec succès"
+      message: "Campagnes bloquées corrigées avec succès",
     });
-
   } catch (error) {
     console.error("Erreur lors de la correction des campagnes:", error);
     return NextResponse.json(

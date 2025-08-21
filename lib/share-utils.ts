@@ -15,7 +15,7 @@ export function generateEventShareData(event: {
   locationName?: string | null;
   locationCity?: string | null;
   category?: string | null;
-  tags?: any;
+  tags?: string[] | null;
   coverImage?: string | null;
   place?: {
     name: string;

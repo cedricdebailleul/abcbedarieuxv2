@@ -17,7 +17,23 @@ const createTransporter = () => {
 };
 
 // Template HTML pour le bulletin
-const createEmailTemplate = (bulletin: any, member: any) => {
+interface Bulletin {
+  title: string;
+  content: string;
+  meeting?: {
+    title: string;
+    scheduledAt: string | Date;
+  };
+}
+
+interface Member {
+  user: {
+    name: string;
+    email: string;
+  };
+}
+
+const createEmailTemplate = (bulletin: Bulletin, member: Member) => {
   return `
 <!DOCTYPE html>
 <html>
@@ -81,23 +97,29 @@ const createEmailTemplate = (bulletin: any, member: any) => {
             <p>Bonjour ${member.user.name},</p>
             
             <div class="bulletin-content">
-                ${bulletin.content.replace(/\n/g, '<br>')}
+                ${bulletin.content.replace(/\n/g, "<br>")}
             </div>
             
-            ${bulletin.meeting ? `
+            ${
+              bulletin.meeting
+                ? `
             <div class="meeting-info">
                 <h3>📅 Réunion associée</h3>
                 <p><strong>${bulletin.meeting.title}</strong></p>
-                <p>Date : ${new Date(bulletin.meeting.scheduledAt).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
+                <p>Date : ${new Date(
+                  bulletin.meeting.scheduledAt
+                ).toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })}</p>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
             
             <p>Cordialement,<br>L'équipe ABC Bédarieux</p>
         </div>
@@ -122,7 +144,11 @@ export async function POST(
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -199,7 +225,18 @@ export async function POST(
     // Envoyer l'email à chaque membre
     for (const member of members) {
       try {
-        const emailTemplate = createEmailTemplate(bulletin, member);
+        const emailTemplate = createEmailTemplate(
+          {
+            ...bulletin,
+            meeting: bulletin.meeting
+              ? {
+                  title: bulletin.meeting.title,
+                  scheduledAt: bulletin.meeting.scheduledAt,
+                }
+              : undefined,
+          },
+          member
+        );
 
         await transporter.sendMail({
           from: process.env.SMTP_FROM || process.env.SMTP_USER,
@@ -210,7 +247,6 @@ export async function POST(
 
         sentCount++;
         console.log(`Email envoyé à ${member.user.email}`);
-
       } catch (emailError) {
         errorCount++;
         const errorMessage = `Erreur envoi à ${member.user.email}: ${emailError}`;
@@ -242,7 +278,6 @@ export async function POST(
     console.log(`Bulletin ${bulletin.title} envoyé:`, response.stats);
 
     return NextResponse.json(response);
-
   } catch (error) {
     console.error("Erreur lors de l'envoi du bulletin:", error);
     return NextResponse.json(

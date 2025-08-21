@@ -1,15 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
-      headers: await headers()
+      headers: await headers(),
     });
-    
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -32,9 +36,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(registrations);
   } catch (error) {
     console.error("Erreur lors du chargement des inscriptions:", error);
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

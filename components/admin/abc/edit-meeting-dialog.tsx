@@ -73,7 +73,7 @@ export function EditMeetingDialog({ meeting, onSuccess, onCancel }: EditMeetingD
       setLoading(true);
       setError("");
 
-      const updateData: any = {
+      const updateData: Partial<Omit<Meeting, "id" | "createdAt">> = {
         title,
         description: description || null,
         type,

@@ -26,10 +26,10 @@ interface CreateMemberDialogProps {
 
 const typeLabels = {
   ACTIF: "Actif",
-  ARTISAN: "Artisan", 
+  ARTISAN: "Artisan",
   AUTO_ENTREPRENEUR: "Auto-entrepreneur",
   PARTENAIRE: "Partenaire",
-  BIENFAITEUR: "Bienfaiteur"
+  BIENFAITEUR: "Bienfaiteur",
 };
 
 const roleLabels = {
@@ -37,7 +37,7 @@ const roleLabels = {
   SECRETAIRE: "Secrétaire",
   TRESORIER: "Trésorier",
   PRESIDENT: "Président",
-  VICE_PRESIDENT: "Vice-président"
+  VICE_PRESIDENT: "Vice-président",
 };
 
 export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
@@ -48,10 +48,9 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
   const [type, setType] = useState("");
   const [role, setRole] = useState("MEMBRE");
   const [memberNumber, setMemberNumber] = useState("");
-  const [membershipYear, setMembershipYear] = useState(new Date().getFullYear().toString());
   const [membershipDate, setMembershipDate] = useState(() => {
     const today = new Date();
-    return today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+    return today.toISOString().split("T")[0]; // Format YYYY-MM-DD
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -64,14 +63,16 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
 
     try {
       setSearchLoading(true);
-      const response = await fetch(`/api/admin/users/search?q=${encodeURIComponent(query)}`);
-      
+      const response = await fetch(
+        `/api/admin/users/search?q=${encodeURIComponent(query)}`
+      );
+
       if (response.ok) {
         const data = await response.json();
         setSearchResults(data.users || []);
       }
     } catch (error) {
-      console.error('Erreur lors de la recherche:', error);
+      console.error("Erreur lors de la recherche:", error);
     } finally {
       setSearchLoading(false);
     }
@@ -93,7 +94,7 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedUser || !type) {
       setError("Veuillez sélectionner un utilisateur et un type de membre");
       return;
@@ -103,10 +104,10 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
       setLoading(true);
       setError("");
 
-      const response = await fetch('/api/admin/abc/members', {
-        method: 'POST',
+      const response = await fetch("/api/admin/abc/members", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userId: selectedUser.id,
@@ -119,12 +120,12 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la création');
+        throw new Error(errorData.error || "Erreur lors de la création");
       }
 
       onSuccess();
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Erreur inconnue');
+      setError(error instanceof Error ? error.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
@@ -154,7 +155,7 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
             <IconLoader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin" />
           )}
         </div>
-        
+
         {searchResults.length > 0 && (
           <div className="border rounded-md bg-background max-h-48 overflow-y-auto">
             {searchResults.map((user) => (
@@ -164,7 +165,9 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
                 onClick={() => handleUserSelect(user)}
               >
                 <div className="font-medium">{user.name}</div>
-                <div className="text-sm text-muted-foreground">{user.email}</div>
+                <div className="text-sm text-muted-foreground">
+                  {user.email}
+                </div>
               </div>
             ))}
           </div>
@@ -173,7 +176,9 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
         {selectedUser && (
           <div className="p-2 bg-muted rounded-md">
             <div className="font-medium">{selectedUser.name}</div>
-            <div className="text-sm text-muted-foreground">{selectedUser.email}</div>
+            <div className="text-sm text-muted-foreground">
+              {selectedUser.email}
+            </div>
           </div>
         )}
       </div>
@@ -214,7 +219,7 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
 
       {/* Date d'adhésion */}
       <div className="space-y-2">
-        <Label htmlFor="membership-date">Date d'adhésion réelle *</Label>
+        <Label htmlFor="membership-date">Date d&apos;adhésion réelle *</Label>
         <Input
           id="membership-date"
           type="date"
@@ -222,7 +227,7 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
           onChange={(e) => setMembershipDate(e.target.value)}
         />
         <p className="text-xs text-muted-foreground">
-          Date réelle d'adhésion (sur papier ou en ligne)
+          Date réelle d&apos;adhésion (sur papier ou en ligne)
         </p>
       </div>
 
@@ -238,10 +243,7 @@ export function CreateMemberDialog({ onSuccess }: CreateMemberDialogProps) {
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button
-          type="submit"
-          disabled={loading || !selectedUser || !type}
-        >
+        <Button type="submit" disabled={loading || !selectedUser || !type}>
           {loading && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}
           Créer le membre
         </Button>

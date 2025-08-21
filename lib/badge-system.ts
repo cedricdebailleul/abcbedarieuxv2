@@ -8,7 +8,7 @@ interface BadgeAward {
 
 export class BadgeSystem {
   // Cache des badges pour éviter les requêtes répétées
-  private static badgeCache: Record<string, any> = {};
+  private static badgeCache: Record<string, { id: string; title: string; description: string; iconUrl?: string | null; color?: string | null; rarity: string; isActive: boolean } | null> = {};
 
   private static async getBadge(title: string) {
     if (!BadgeSystem.badgeCache[title]) {
@@ -103,8 +103,9 @@ export class BadgeSystem {
         if (hasSocials) {
           await BadgeSystem.awardBadge(userId, "Ambassadeur", "Profil public avec réseaux sociaux");
         }
-      } catch (_e) {
+      } catch {
         // Ignore JSON parse errors
+        console.warn("Erreur lors de la lecture des réseaux sociaux du profil");
       }
     }
   }

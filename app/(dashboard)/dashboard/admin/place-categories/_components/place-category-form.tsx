@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { HexColorPicker } from "react-colorful";
-import { Palette, Save, Eye, Hash, FolderOpen, Sparkles } from "lucide-react";
+import { Save, Hash, FolderOpen, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import * as LucideIcons from "lucide-react";
 
@@ -34,8 +34,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 import {
@@ -59,7 +57,7 @@ import z from "zod";
 interface PlaceCategoryFormProps {
   mode: "create" | "edit";
   categoryId?: string;
-  initialData?: any;
+  initialData?: Partial<CreatePlaceCategoryInput & UpdatePlaceCategoryInput>;
 }
 
 export function PlaceCategoryForm({
@@ -72,7 +70,19 @@ export function PlaceCategoryForm({
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [loading, setLoading] = useState(mode === "edit" && !initialData);
-  const [parentCategories, setParentCategories] = useState<any[]>([]);
+
+  type ParentCategory = {
+    id: string;
+    name: string;
+    // parent can be either a nested object returned by the API, or just an id string, or null
+    parent?: { id: string; name: string; slug?: string } | string | null;
+    parentId?: string | null;
+    [key: string]: unknown;
+  };
+
+  const [parentCategories, setParentCategories] = useState<ParentCategory[]>(
+    []
+  );
 
   const schema =
     mode === "create"
@@ -120,7 +130,7 @@ export function PlaceCategoryForm({
         if (result.success) {
           // Ne garder que les catégories principales (sans parent) pour le sélecteur
           let filtered = result.data!.categories.filter(
-            (cat) => cat.parentId === null
+            (cat) => cat.parent === null
           );
 
           // Exclure la catégorie actuelle si on est en mode édition
@@ -147,7 +157,7 @@ export function PlaceCategoryForm({
       const loadCategory = async () => {
         try {
           const result = await getPlaceCategoryAction(categoryId);
-          if (result.success) {
+          if (result.success && result.data) {
             const category = result.data;
             form.reset({
               id: category.id,
@@ -167,7 +177,7 @@ export function PlaceCategoryForm({
             toast.error(result.error || "Erreur lors du chargement");
             router.push("/dashboard/admin/place-categories");
           }
-        } catch (error) {
+        } catch {
           toast.error("Erreur lors du chargement de la catégorie");
           router.push("/dashboard/admin/place-categories");
         }
@@ -205,12 +215,17 @@ export function PlaceCategoryForm({
     }
 
     // Icône Lucide
-    const IconComponent = (LucideIcons as any)[icon];
+    const IconComponent = (
+      LucideIcons as unknown as Record<
+        string,
+        React.ComponentType<React.SVGProps<SVGSVGElement>>
+      >
+    )[icon];
     if (IconComponent) {
       return (
         <IconComponent
           className="w-8 h-8"
-          style={{ color: previewData.color }}
+          color={previewData.color ?? undefined}
         />
       );
     }
@@ -281,7 +296,7 @@ export function PlaceCategoryForm({
         } else {
           if (result.errors) {
             Object.entries(result.errors).forEach(([field, messages]) => {
-              form.setError(field as any, {
+              form.setError(field as keyof CreatePlaceCategoryInput | keyof UpdatePlaceCategoryInput, {
                 message: messages.join(", "),
               });
             });
@@ -289,7 +304,7 @@ export function PlaceCategoryForm({
             toast.error(result.error || "Une erreur est survenue");
           }
         }
-      } catch (error) {
+      } catch {
         toast.error("Une erreur est survenue");
       }
     });
@@ -448,11 +463,16 @@ export function PlaceCategoryForm({
                               <h4 className="font-medium">
                                 Icônes prédéfinies
                               </h4>
-                              <div className="grid grid-cols-8 gap-2">
+                              <div className="grid grid-cols-5 gap-2">
                                 {PREDEFINED_ICONS.map(({ icon, name }) => {
-                                  const IconComponent = (LucideIcons as any)[
-                                    icon
-                                  ];
+                                  const IconComponent = (
+                                    LucideIcons as unknown as Record<
+                                      string,
+                                      React.ComponentType<
+                                        React.SVGProps<SVGSVGElement>
+                                      >
+                                    >
+                                  )[icon];
                                   return (
                                     <Button
                                       key={icon}
@@ -466,8 +486,10 @@ export function PlaceCategoryForm({
                                       type="button"
                                       title={name}
                                     >
-                                      {IconComponent && (
+                                      {IconComponent ? (
                                         <IconComponent className="w-4 h-4" />
+                                      ) : (
+                                        <span className="text-sm">{name}</span>
                                       )}
                                     </Button>
                                   );
@@ -478,7 +500,7 @@ export function PlaceCategoryForm({
                         </Popover>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Nom d'icône Lucide ou emoji
+                        Nom d&apos;icône Lucide ou emoji
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -573,7 +595,7 @@ export function PlaceCategoryForm({
                   name="sortOrder"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ordre d'affichage</FormLabel>
+                      <FormLabel>Ordre d&apos;affichage</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

@@ -15,7 +15,11 @@ export async function GET(
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -56,7 +60,7 @@ export async function GET(
     }
 
     // Construire le chemin complet du fichier
-    const fullPath = path.join(process.cwd(), 'public', document.filePath);
+    const fullPath = path.join(process.cwd(), "public", document.filePath);
 
     // Vérifier que le fichier existe
     if (!existsSync(fullPath)) {
@@ -71,47 +75,51 @@ export async function GET(
 
     // Déterminer le type MIME basé sur l'extension
     const ext = path.extname(document.fileName).toLowerCase();
-    let mimeType = 'application/octet-stream';
-    
+    let mimeType = "application/octet-stream";
+
     switch (ext) {
-      case '.pdf':
-        mimeType = 'application/pdf';
+      case ".pdf":
+        mimeType = "application/pdf";
         break;
-      case '.doc':
-        mimeType = 'application/msword';
+      case ".doc":
+        mimeType = "application/msword";
         break;
-      case '.docx':
-        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case ".docx":
+        mimeType =
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
         break;
-      case '.xls':
-        mimeType = 'application/vnd.ms-excel';
+      case ".xls":
+        mimeType = "application/vnd.ms-excel";
         break;
-      case '.xlsx':
-        mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      case ".xlsx":
+        mimeType =
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         break;
-      case '.jpg':
-      case '.jpeg':
-        mimeType = 'image/jpeg';
+      case ".jpg":
+      case ".jpeg":
+        mimeType = "image/jpeg";
         break;
-      case '.png':
-        mimeType = 'image/png';
+      case ".png":
+        mimeType = "image/png";
         break;
-      case '.gif':
-        mimeType = 'image/gif';
+      case ".gif":
+        mimeType = "image/gif";
         break;
-      case '.txt':
-        mimeType = 'text/plain';
+      case ".txt":
+        mimeType = "text/plain";
         break;
     }
 
     // Créer la réponse avec le fichier
-    const response = new NextResponse(fileBuffer);
-    response.headers.set('Content-Type', mimeType);
-    response.headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(document.fileName)}"`);
-    response.headers.set('Content-Length', fileBuffer.length.toString());
+    const response = new NextResponse(new Uint8Array(fileBuffer));
+    response.headers.set("Content-Type", mimeType);
+    response.headers.set(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(document.fileName)}"`
+    );
+    response.headers.set("Content-Length", fileBuffer.length.toString());
 
     return response;
-
   } catch (error) {
     console.error("Erreur lors du téléchargement du document:", error);
     return NextResponse.json(

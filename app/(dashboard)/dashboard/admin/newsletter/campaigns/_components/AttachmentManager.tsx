@@ -7,8 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Upload, 
-  X, 
+  Upload,
   FileText, 
   Image as ImageIcon, 
   Download,
@@ -42,9 +41,7 @@ export function AttachmentManager({
   attachments,
   onAttachmentsChange,
   maxTotalSize = 15,
-  maxFiles = 10,
-  acceptedTypes = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']
-}: AttachmentManagerProps) {
+  maxFiles = 10}: AttachmentManagerProps) {
   const [dragActive, setDragActive] = useState(false);
 
   const totalSize = attachments.reduce((total, att) => total + att.size, 0);
@@ -79,7 +76,7 @@ export function AttachmentManager({
           error: result.error || 'Erreur d\'upload'
         };
       }
-    } catch (error) {
+    } catch {
       return {
         ...attachment,
         uploading: false,

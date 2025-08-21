@@ -30,16 +30,26 @@ interface PlaceCategoriesPageProps {
   };
 }
 
-export default function PlaceCategoriesPage({ searchParams }: PlaceCategoriesPageProps) {
+export default function PlaceCategoriesPage({
+  searchParams,
+}: PlaceCategoriesPageProps) {
   // Construire les filtres depuis les paramètres de recherche
   const filters = {
     page: Number.parseInt(searchParams.page || "1"),
     limit: Number.parseInt(searchParams.limit || "20"),
     search: searchParams.search || "",
-    isActive: searchParams.isActive ? searchParams.isActive === "true" : undefined,
+    isActive: searchParams.isActive
+      ? searchParams.isActive === "true"
+      : undefined,
     parentId: searchParams.parentId || undefined,
-    sortBy: (searchParams.sortBy as any) || "sortOrder",
-    sortOrder: (searchParams.sortOrder as any) || "asc",
+    sortBy:
+      (searchParams.sortBy as
+        | "name"
+        | "sortOrder"
+        | "createdAt"
+        | "placeCount"
+        | undefined) || "sortOrder",
+    sortOrder: (searchParams.sortOrder as "asc" | "desc" | undefined) || "asc",
   };
 
   const currentView = searchParams.view || "list";
@@ -51,7 +61,9 @@ export default function PlaceCategoriesPage({ searchParams }: PlaceCategoriesPag
         <div className="flex items-center gap-2">
           <FolderTree className="h-6 w-6 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Catégories de places</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Catégories de places
+            </h1>
             <p className="text-muted-foreground">
               Organisez et gérez les catégories des lieux et commerces
             </p>
@@ -98,7 +110,7 @@ export default function PlaceCategoriesPage({ searchParams }: PlaceCategoriesPag
       {/* Sélecteur de vue et filtres */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button 
+          <Button
             variant={currentView === "list" ? "default" : "outline"}
             asChild
           >
@@ -107,7 +119,7 @@ export default function PlaceCategoriesPage({ searchParams }: PlaceCategoriesPag
               Vue liste
             </Link>
           </Button>
-          <Button 
+          <Button
             variant={currentView === "hierarchy" ? "default" : "outline"}
             asChild
           >

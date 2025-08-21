@@ -244,7 +244,7 @@ export default function InvitationsTable() {
     }
   };
 
-  const getStatusBadge = (status: string, user?: any) => {
+  const getStatusBadge = (status: string, user?: Invitation["user"]) => {
     if (user) {
       return (
         <Badge variant="default" className="bg-green-600">
@@ -276,7 +276,7 @@ export default function InvitationsTable() {
     return format(new Date(dateString), "dd MMM yyyy", { locale: fr });
   };
 
-  const getStatusIcon = (status: string, user?: any) => {
+  const getStatusIcon = (status: string, user?: Invitation["user"]) => {
     if (user) return <CheckCircle className="h-4 w-4 text-green-600" />;
 
     const icons = {
@@ -505,7 +505,7 @@ export default function InvitationsTable() {
       <AlertDialog open={resendDialog.open} onOpenChange={(open) => setResendDialog({ open })}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Renvoyer l'invitation</AlertDialogTitle>
+            <AlertDialogTitle>Renvoyer l&apos;invitation</AlertDialogTitle>
             <AlertDialogDescription>
               Voulez-vous renvoyer une invitation à{" "}
               <strong>{resendDialog.invitation?.email}</strong> ?
@@ -531,9 +531,9 @@ export default function InvitationsTable() {
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open })}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer l'invitation</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer l&apos;invitation</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer l'invitation de{" "}
+              Êtes-vous sûr de vouloir supprimer l&apos;invitation de{" "}
               <strong>{deleteDialog.invitation?.email}</strong> ?
               <br />
               Cette action est irréversible.

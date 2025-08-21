@@ -1,8 +1,8 @@
 import { RecurrenceFrequency } from "@/lib/generated/prisma";
 
 export interface RecurrenceRule {
-  frequency: RecurrenceFrequency;
-  interval: number;
+  frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+  interval?: number;
   count?: number;
   until?: string;
   byWeekDay?: number[];
@@ -31,29 +31,34 @@ export function generateRecurrenceOccurrences(
 ): EventOccurrence[] {
   const occurrences: EventOccurrence[] = [];
   const eventDuration = baseEndDate.getTime() - baseStartDate.getTime();
-  
+
   let currentDate = new Date(baseStartDate);
   let occurrenceCount = 0;
   const maxOccurrences = recurrenceRule.count || 1000; // Limite de sécurité
-  const untilDate = recurrenceRule.until ? new Date(recurrenceRule.until) : null;
+  const untilDate = recurrenceRule.until
+    ? new Date(recurrenceRule.until)
+    : null;
 
   while (occurrenceCount < maxOccurrences && currentDate <= rangeEnd) {
     // Vérifier si la date est dans la plage demandée
     if (currentDate >= rangeStart) {
       const occurrenceEndDate = new Date(currentDate.getTime() + eventDuration);
-      
+
       // Vérifier les exceptions
-      const dateString = currentDate.toISOString().split('T')[0];
+      const dateString = currentDate.toISOString().split("T")[0];
       if (!recurrenceRule.exceptions?.includes(dateString)) {
         // Vérifier les jours de la semaine (si spécifié)
-        if (!recurrenceRule.byWeekDay || recurrenceRule.byWeekDay.includes(currentDate.getDay() || 7)) {
+        if (
+          !recurrenceRule.byWeekDay ||
+          recurrenceRule.byWeekDay.includes(currentDate.getDay() || 7)
+        ) {
           // Vérifier workdaysOnly
           if (!recurrenceRule.workdaysOnly || isWorkday(currentDate)) {
             occurrences.push({
               startDate: new Date(currentDate),
               endDate: occurrenceEndDate,
               isOriginal: occurrenceCount === 0,
-              originalEventId: '' // Sera rempli par l'appelant
+              originalEventId: "", // Sera rempli par l'appelant
             });
           }
         }
@@ -78,25 +83,25 @@ export function generateRecurrenceOccurrences(
  */
 function getNextOccurrence(currentDate: Date, rule: RecurrenceRule): Date {
   const nextDate = new Date(currentDate);
-  
+
   switch (rule.frequency) {
     case RecurrenceFrequency.DAILY:
-      nextDate.setDate(nextDate.getDate() + rule.interval);
+      nextDate.setDate(nextDate.getDate() + (rule.interval || 1));
       break;
-      
+
     case RecurrenceFrequency.WEEKLY:
-      nextDate.setDate(nextDate.getDate() + (rule.interval * 7));
+      nextDate.setDate(nextDate.getDate() + (rule.interval || 1) * 7);
       break;
-      
+
     case RecurrenceFrequency.MONTHLY:
-      nextDate.setMonth(nextDate.getMonth() + rule.interval);
+      nextDate.setMonth(nextDate.getMonth() + (rule.interval || 1));
       break;
-      
+
     case RecurrenceFrequency.YEARLY:
-      nextDate.setFullYear(nextDate.getFullYear() + rule.interval);
+      nextDate.setFullYear(nextDate.getFullYear() + (rule.interval || 1));
       break;
   }
-  
+
   return nextDate;
 }
 
@@ -112,11 +117,35 @@ function isWorkday(date: Date): boolean {
  * Expanse les événements récurrents en occurrences individuelles
  */
 export function expandRecurrentEvents(
-  events: any[],
+  events: {
+    id: string;
+    startDate: string;
+    endDate: string;
+    isRecurring: boolean;
+    recurrenceRule?: RecurrenceRule;
+  }[],
   rangeStart: Date,
   rangeEnd: Date
-): any[] {
-  const expandedEvents: any[] = [];
+): {
+  id: string;
+  startDate: Date;
+  endDate: Date;
+  isRecurring: boolean;
+  isRecurrenceOccurrence: boolean;
+  originalEventId?: string;
+  occurrenceId?: string;
+  recurrenceRule?: RecurrenceRule;
+}[] {
+  const expandedEvents: {
+    id: string;
+    startDate: Date;
+    endDate: Date;
+    isRecurring: boolean;
+    isRecurrenceOccurrence: boolean;
+    originalEventId?: string;
+    occurrenceId?: string;
+    recurrenceRule?: RecurrenceRule;
+  }[] = [];
 
   for (const event of events) {
     if (event.isRecurring && event.recurrenceRule) {
@@ -128,16 +157,29 @@ export function expandRecurrentEvents(
           interval: event.recurrenceRule.interval,
           count: event.recurrenceRule.count,
           until: event.recurrenceRule.until,
-          byWeekDay: event.recurrenceRule.byWeekDay ? JSON.parse(event.recurrenceRule.byWeekDay) : undefined,
-          byMonthDay: event.recurrenceRule.byMonthDay ? JSON.parse(event.recurrenceRule.byMonthDay) : undefined,
-          byMonth: event.recurrenceRule.byMonth ? JSON.parse(event.recurrenceRule.byMonth) : undefined,
-          exceptions: event.recurrenceRule.exceptions ? JSON.parse(event.recurrenceRule.exceptions) : undefined,
-          workdaysOnly: event.recurrenceRule.workdaysOnly || false
+          byWeekDay: event.recurrenceRule.byWeekDay
+            ? event.recurrenceRule.byWeekDay
+            : undefined,
+          byMonthDay: event.recurrenceRule.byMonthDay
+            ? event.recurrenceRule.byMonthDay
+            : undefined,
+          byMonth: event.recurrenceRule.byMonth
+            ? event.recurrenceRule.byMonth
+            : undefined,
+          exceptions: event.recurrenceRule.exceptions
+            ? event.recurrenceRule.exceptions
+            : undefined,
+          workdaysOnly: event.recurrenceRule.workdaysOnly || false,
         };
       } catch (error) {
         console.error("Erreur parsing règle récurrence:", error);
         // Si erreur de parsing, traiter comme événement normal
-        expandedEvents.push(event);
+        expandedEvents.push({
+          ...event,
+          startDate: new Date(event.startDate),
+          endDate: new Date(event.endDate),
+          isRecurrenceOccurrence: false,
+        });
         continue;
       }
 
@@ -158,7 +200,7 @@ export function expandRecurrentEvents(
           endDate: occurrence.endDate,
           isRecurrenceOccurrence: !occurrence.isOriginal,
           originalEventId: event.id,
-          occurrenceId: `${event.id}-${occurrence.startDate.toISOString()}`
+          occurrenceId: `${event.id}-${occurrence.startDate.toISOString()}`,
         });
       }
     } else {
@@ -167,13 +209,15 @@ export function expandRecurrentEvents(
       if (eventStart >= rangeStart && eventStart <= rangeEnd) {
         expandedEvents.push({
           ...event,
-          isRecurrenceOccurrence: false
+          startDate: new Date(event.startDate),
+          endDate: new Date(event.endDate),
+          isRecurrenceOccurrence: false,
         });
       }
     }
   }
 
-  return expandedEvents.sort((a, b) => 
-    new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+  return expandedEvents.sort(
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
   );
 }

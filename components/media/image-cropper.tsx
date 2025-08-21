@@ -2,10 +2,20 @@
 
 import { Crop as CropIcon, RotateCcw, Save, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
-import ReactCrop, { type Crop, centerCrop, makeAspectCrop, type PixelCrop } from "react-image-crop";
+import ReactCrop, {
+  type Crop,
+  centerCrop,
+  makeAspectCrop,
+  type PixelCrop,
+} from "react-image-crop";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -15,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import "react-image-crop/dist/ReactCrop.css";
+import Image from "next/image";
 
 interface ImageCropperProps {
   src: string;
@@ -69,41 +80,44 @@ export function ImageCropper({
     setCrop(crop);
   }
 
-  const generateCanvas = useCallback((image: HTMLImageElement, crop: PixelCrop) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const generateCanvas = useCallback(
+    (image: HTMLImageElement, crop: PixelCrop) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
 
-    // Calculer les dimensions réelles du crop dans l'image naturelle
-    const cropWidth = crop.width * scaleX;
-    const cropHeight = crop.height * scaleY;
+      // Calculer les dimensions réelles du crop dans l'image naturelle
+      const cropWidth = crop.width * scaleX;
+      const cropHeight = crop.height * scaleY;
 
-    const pixelRatio = window.devicePixelRatio;
+      const pixelRatio = window.devicePixelRatio;
 
-    // Utiliser les dimensions réelles pour le canvas
-    canvas.width = cropWidth * pixelRatio;
-    canvas.height = cropHeight * pixelRatio;
+      // Utiliser les dimensions réelles pour le canvas
+      canvas.width = cropWidth * pixelRatio;
+      canvas.height = cropHeight * pixelRatio;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    ctx.imageSmoothingQuality = "high";
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      ctx.imageSmoothingQuality = "high";
 
-    ctx.drawImage(
-      image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      cropWidth,
-      cropHeight,
-      0,
-      0,
-      cropWidth,
-      cropHeight
-    );
-  }, []);
+      ctx.drawImage(
+        image,
+        crop.x * scaleX,
+        crop.y * scaleY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        cropWidth,
+        cropHeight
+      );
+    },
+    []
+  );
 
   const onSaveCrop = useCallback(async () => {
     const image = imgRef.current;
@@ -194,7 +208,7 @@ export function ImageCropper({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CropIcon className="h-5 w-5" />
-            Rogner l'image
+            Rogner l&apos;image
           </DialogTitle>
         </DialogHeader>
 
@@ -204,7 +218,9 @@ export function ImageCropper({
             <div className="flex items-center gap-2">
               <Label>Format:</Label>
               <Select
-                value={aspectRatios.find((r) => r.value === aspect)?.label || "Libre"}
+                value={
+                  aspectRatios.find((r) => r.value === aspect)?.label || "Libre"
+                }
                 onValueChange={handleAspectChange}
               >
                 <SelectTrigger className="w-40">
@@ -227,7 +243,8 @@ export function ImageCropper({
 
             {completedCrop && (
               <Badge variant="secondary">
-                {Math.round(completedCrop.width)} x {Math.round(completedCrop.height)}px
+                {Math.round(completedCrop.width)} x{" "}
+                {Math.round(completedCrop.height)}px
               </Badge>
             )}
           </div>
@@ -243,7 +260,7 @@ export function ImageCropper({
               minHeight={50}
               className="max-w-full"
             >
-              <img
+              <Image
                 ref={imgRef}
                 src={src}
                 alt="Image à rogner"

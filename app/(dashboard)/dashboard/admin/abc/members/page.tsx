@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,7 +141,7 @@ export default function AbcMembersPage() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [deletingMember, setDeletingMember] = useState<Member | null>(null);
 
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -166,11 +166,11 @@ export default function AbcMembersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, typeFilter, statusFilter]);
 
   useEffect(() => {
     fetchMembers();
-  }, [page, search, typeFilter, statusFilter]);
+  }, [page, search, typeFilter, statusFilter, fetchMembers]);
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -247,7 +247,8 @@ export default function AbcMembersPage() {
             <DialogHeader>
               <DialogTitle>Nouveau membre</DialogTitle>
               <DialogDescription>
-                Enregistrer un nouvel utilisateur comme membre de l'association
+                Enregistrer un nouvel utilisateur comme membre de
+                l&apos;association
               </DialogDescription>
             </DialogHeader>
             <CreateMemberDialog onSuccess={handleMemberCreated} />
@@ -472,7 +473,7 @@ export default function AbcMembersPage() {
             <AlertDialogTitle>Supprimer le membre</AlertDialogTitle>
             <AlertDialogDescription>
               Êtes-vous sûr de vouloir supprimer {deletingMember?.user.name} de
-              l'association ? Cette action est irréversible.
+              l&apos;association ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

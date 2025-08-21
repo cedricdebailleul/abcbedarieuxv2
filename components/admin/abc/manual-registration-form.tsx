@@ -22,13 +22,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  IconLoader2, 
-  IconUserPlus, 
+import {
+  IconLoader2,
+  IconUserPlus,
   IconSearch,
   IconX,
   IconCheck,
-  IconUser,
 } from "@tabler/icons-react";
 
 interface User {
@@ -52,11 +51,27 @@ interface ManualRegistrationFormProps {
 }
 
 const membershipTypes = [
-  { value: "ACTIF", label: "Membre Actif", description: "Participation active aux activités" },
+  {
+    value: "ACTIF",
+    label: "Membre Actif",
+    description: "Participation active aux activités",
+  },
   { value: "ARTISAN", label: "Artisan", description: "Artisan local" },
-  { value: "AUTO_ENTREPRENEUR", label: "Auto-Entrepreneur", description: "Travailleur indépendant" },
-  { value: "PARTENAIRE", label: "Partenaire", description: "Entreprise partenaire" },
-  { value: "BIENFAITEUR", label: "Bienfaiteur", description: "Soutien financier" },
+  {
+    value: "AUTO_ENTREPRENEUR",
+    label: "Auto-Entrepreneur",
+    description: "Travailleur indépendant",
+  },
+  {
+    value: "PARTENAIRE",
+    label: "Partenaire",
+    description: "Entreprise partenaire",
+  },
+  {
+    value: "BIENFAITEUR",
+    label: "Bienfaiteur",
+    description: "Soutien financier",
+  },
 ];
 
 const interestOptions = [
@@ -70,7 +85,11 @@ const interestOptions = [
   "Solidarité",
 ];
 
-export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: ManualRegistrationFormProps) {
+export function ManualRegistrationForm({
+  open,
+  onOpenChange,
+  onSuccess,
+}: ManualRegistrationFormProps) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userSearch, setUserSearch] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
@@ -107,7 +126,11 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
 
       setLoadingSearch(true);
       try {
-        const response = await fetch(`/api/admin/users/search?q=${encodeURIComponent(userSearch)}&includeMembers=true`);
+        const response = await fetch(
+          `/api/admin/users/search?q=${encodeURIComponent(
+            userSearch
+          )}&includeMembers=true`
+        );
         if (response.ok) {
           const data = await response.json();
           setSearchResults(data.users || []);
@@ -127,27 +150,27 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
     setSelectedUser(user);
     setUserSearch("");
     setSearchResults([]);
-    
+
     // Préremplir les champs avec les informations de l'utilisateur
-    const nameParts = user.name?.split(' ') || [];
-    setFormData(prev => ({
+    const nameParts = user.name?.split(" ") || [];
+    setFormData((prev) => ({
       ...prev,
       firstName: nameParts[0] || "",
-      lastName: nameParts.slice(1).join(' ') || "",
+      lastName: nameParts.slice(1).join(" ") || "",
       email: user.email,
     }));
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleInterestToggle = (interest: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       interests: prev.interests.includes(interest)
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
+        ? prev.interests.filter((i) => i !== interest)
+        : [...prev.interests, interest],
     }));
   };
 
@@ -155,20 +178,23 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
     e.preventDefault();
     setLoading(true);
     setError("");
-    
+
     try {
-      const response = await fetch("/api/admin/abc/registrations/create-manual", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: selectedUser?.id,
-          ...formData,
-          autoApprove,
-          adminNotes,
-        }),
-      });
+      const response = await fetch(
+        "/api/admin/abc/registrations/create-manual",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: selectedUser?.id,
+            ...formData,
+            autoApprove,
+            adminNotes,
+          }),
+        }
+      );
 
       const result = await response.json();
 
@@ -217,7 +243,11 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
   };
 
   const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase();
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
   };
 
   if (success) {
@@ -230,8 +260,8 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
               Inscription créée !
             </h3>
             <p className="text-muted-foreground">
-              {autoApprove 
-                ? "L'inscription a été créée et approuvée automatiquement." 
+              {autoApprove
+                ? "L'inscription a été créée et approuvée automatiquement."
                 : "L'inscription a été créée avec succès."}
             </p>
           </div>
@@ -261,19 +291,24 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Utilisateur (optionnel)</h3>
             <p className="text-sm text-muted-foreground">
-              Recherchez un utilisateur existant ou laissez vide pour créer une nouvelle inscription.
+              Recherchez un utilisateur existant ou laissez vide pour créer une
+              nouvelle inscription.
             </p>
-            
+
             {selectedUser ? (
               <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center space-x-3">
                   <Avatar>
                     <AvatarImage src={selectedUser.image || ""} />
-                    <AvatarFallback>{getInitials(selectedUser.name)}</AvatarFallback>
+                    <AvatarFallback>
+                      {getInitials(selectedUser.name)}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium">{selectedUser.name}</p>
-                    <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedUser.email}
+                    </p>
                     {selectedUser.isAbcMember && (
                       <Badge variant="outline" className="text-xs mt-1">
                         Déjà membre ABC: {selectedUser.abcMember?.memberNumber}
@@ -287,7 +322,12 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
                   size="sm"
                   onClick={() => {
                     setSelectedUser(null);
-                    setFormData(prev => ({ ...prev, firstName: "", lastName: "", email: "" }));
+                    setFormData((prev) => ({
+                      ...prev,
+                      firstName: "",
+                      lastName: "",
+                      email: "",
+                    }));
                   }}
                 >
                   <IconX className="h-4 w-4" />
@@ -307,7 +347,7 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
                     <IconLoader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
                   )}
                 </div>
-                
+
                 {searchResults.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {searchResults.map((user) => (
@@ -318,11 +358,15 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
                       >
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={user.image || ""} />
-                          <AvatarFallback className="text-xs">{getInitials(user.name)}</AvatarFallback>
+                          <AvatarFallback className="text-xs">
+                            {getInitials(user.name)}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm">{user.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user.email}
+                          </p>
                           {user.isAbcMember && (
                             <Badge variant="outline" className="text-xs mt-1">
                               Membre ABC: {user.abcMember?.memberNumber}
@@ -346,7 +390,9 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
                 <Input
                   id="firstName"
                   value={formData.firstName}
-                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("firstName", e.target.value)
+                  }
                   required
                 />
               </div>
@@ -355,7 +401,9 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
                 <Input
                   id="lastName"
                   value={formData.lastName}
-                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("lastName", e.target.value)
+                  }
                   required
                 />
               </div>
@@ -384,7 +432,9 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
                   id="birthDate"
                   type="date"
                   value={formData.birthDate}
-                  onChange={(e) => handleInputChange("birthDate", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("birthDate", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -407,7 +457,9 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
                 <Input
                   id="postalCode"
                   value={formData.postalCode}
-                  onChange={(e) => handleInputChange("postalCode", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("postalCode", e.target.value)
+                  }
                 />
               </div>
               <div className="md:col-span-2">
@@ -423,14 +475,18 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
 
           {/* Informations professionnelles */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Informations professionnelles</h3>
+            <h3 className="text-lg font-semibold">
+              Informations professionnelles
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="profession">Profession</Label>
                 <Input
                   id="profession"
                   value={formData.profession}
-                  onChange={(e) => handleInputChange("profession", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("profession", e.target.value)
+                  }
                 />
               </div>
               <div>
@@ -454,10 +510,12 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
 
           {/* Type d'adhésion */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Type d'adhésion</h3>
+            <h3 className="text-lg font-semibold">Type d&apos;adhésion</h3>
             <Select
               value={formData.membershipType}
-              onValueChange={(value) => handleInputChange("membershipType", value)}
+              onValueChange={(value) =>
+                handleInputChange("membershipType", value)
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -467,7 +525,9 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
                   <SelectItem key={type.value} value={type.value}>
                     <div>
                       <div className="font-medium">{type.label}</div>
-                      <div className="text-sm text-muted-foreground">{type.description}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {type.description}
+                      </div>
                     </div>
                   </SelectItem>
                 ))}
@@ -477,7 +537,7 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
 
           {/* Centres d'intérêt */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Centres d'intérêt</h3>
+            <h3 className="text-lg font-semibold">Centres d&apos;intérêt</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {interestOptions.map((interest) => (
                 <div key={interest} className="flex items-center space-x-2">
@@ -513,10 +573,13 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
                 <Checkbox
                   id="autoApprove"
                   checked={autoApprove}
-                  onCheckedChange={setAutoApprove}
+                  onCheckedChange={(checked) =>
+                    setAutoApprove(checked === true)
+                  }
                 />
                 <Label htmlFor="autoApprove" className="text-sm">
-                  Approuver automatiquement cette inscription (créera immédiatement le membre ABC)
+                  Approuver automatiquement cette inscription (créera
+                  immédiatement le membre ABC)
                 </Label>
               </div>
               <div>
@@ -551,7 +614,7 @@ export function ManualRegistrationForm({ open, onOpenChange, onSuccess }: Manual
               ) : (
                 <>
                   <IconUserPlus className="h-4 w-4 mr-2" />
-                  Créer l'inscription
+                  Créer l&apos;inscription
                 </>
               )}
             </Button>

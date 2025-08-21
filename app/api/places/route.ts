@@ -5,14 +5,25 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { BadgeSystem } from "@/lib/badge-system";
-import { PlaceStatus, PlaceType } from "@/lib/generated/prisma";
+import { DayOfWeek, PlaceStatus, PlaceType } from "@/lib/generated/prisma";
+import type { Prisma } from "@/lib/generated/prisma";
 import { notifyAdminsNewPlace } from "@/lib/place-notifications";
 import { prisma } from "@/lib/prisma";
 
 const renameAsync = promisify(rename);
 
 // Fonction pour déplacer les fichiers temporaires vers le dossier final
-async function moveTemporaryFiles(dataToCreate: any, finalSlug: string) {
+interface DataToCreate {
+  logo?: string;
+  coverImage?: string;
+  images?: string[];
+  [key: string]: string | number | boolean | string[] | undefined; // Add additional fields as necessary
+}
+
+async function moveTemporaryFiles(
+  dataToCreate: DataToCreate,
+  finalSlug: string
+) {
   const baseUploadPath = join(process.cwd(), "public", "uploads", "places");
 
   // Chercher tous les dossiers temporaires qui pourraient correspondre
@@ -41,7 +52,9 @@ async function moveTemporaryFiles(dataToCreate: any, finalSlug: string) {
 
             try {
               await renameAsync(tempFilePath, finalFilePath);
-              console.log(`Fichier déplacé: ${tempFilePath} -> ${finalFilePath}`);
+              console.log(
+                `Fichier déplacé: ${tempFilePath} -> ${finalFilePath}`
+              );
             } catch (error) {
               console.error(`Erreur déplacement fichier ${file}:`, error);
             }
@@ -53,7 +66,10 @@ async function moveTemporaryFiles(dataToCreate: any, finalSlug: string) {
             await rmdir(tempPath);
             console.log(`Dossier temporaire supprimé: ${tempPath}`);
           } catch (error) {
-            console.error(`Erreur suppression dossier temporaire ${tempPath}:`, error);
+            console.error(
+              `Erreur suppression dossier temporaire ${tempPath}:`,
+              error
+            );
           }
 
           // Mettre à jour les URLs dans les données si elles pointent vers le dossier temporaire
@@ -69,10 +85,17 @@ async function moveTemporaryFiles(dataToCreate: any, finalSlug: string) {
 }
 
 // Fonction pour mettre à jour les URLs des fichiers
-function updateFileUrls(dataToCreate: any, tempSlug: string, finalSlug: string) {
+function updateFileUrls(
+  dataToCreate: DataToCreate,
+  tempSlug: string,
+  finalSlug: string
+) {
   const updateUrl = (url: string) => {
     if (url?.includes(`/uploads/places/${tempSlug}/`)) {
-      return url.replace(`/uploads/places/${tempSlug}/`, `/uploads/places/${finalSlug}/`);
+      return url.replace(
+        `/uploads/places/${tempSlug}/`,
+        `/uploads/places/${finalSlug}/`
+      );
     }
     return url;
   };
@@ -138,110 +161,56 @@ const placeSchema = z.object({
   createForClaim: z.boolean().optional(),
 });
 
-type RawHour =
-  | {
-      dayOfWeek: string;
-      isClosed?: boolean;
-      openTime?: string | null;
-      closeTime?: string | null;
-      slots?: { openTime: string; closeTime: string }[];
-    }
-  | any;
+// GET /api/places - Liste des places
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "20");
+  const type = searchParams.get("type");
+  const status = searchParams.get("status");
+  const search = searchParams.get("search");
 
-function _toOpeningRows(placeId: string, openingHours?: RawHour[]) {
-  if (!openingHours?.length) return [];
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
-  const rows: {
-    placeId: string;
-    dayOfWeek: string;
-    openTime: string | null;
-    closeTime: string | null;
-    isClosed: boolean;
-  }[] = [];
+  const offset = (page - 1) * limit;
 
-  for (const item of openingHours) {
-    const day = String(item.dayOfWeek).toUpperCase();
-    const closed = !!item.isClosed;
+  // Construction de la requête
+  const where: Record<string, unknown> = {};
 
-    // slots (matin/aprem…)
-    if (Array.isArray(item.slots) && item.slots.length) {
-      for (const s of item.slots) {
-        if (!closed && s?.openTime && s?.closeTime) {
-          rows.push({
-            placeId,
-            dayOfWeek: day,
-            openTime: s.openTime,
-            closeTime: s.closeTime,
-            isClosed: false,
-          });
-        }
-      }
-      continue;
-    }
+  // Filtres publics
+  if (type) where.type = type;
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+      { city: { contains: search, mode: "insensitive" } },
+    ];
+  }
 
-    // format simple
-    if (!closed && item.openTime && item.closeTime) {
-      rows.push({
-        placeId,
-        dayOfWeek: day,
-        openTime: item.openTime,
-        closeTime: item.closeTime,
-        isClosed: false,
-      });
+  // Gestion des permissions
+  if (!session?.user) {
+    // Public : seulement les places actives et vérifiées
+    where.status = PlaceStatus.ACTIVE;
+    where.isActive = true;
+  } else if (session.user.role === "admin") {
+    // Admin : peut voir toutes les places avec filtre status
+    if (status) where.status = status;
+  } else {
+    // Utilisateur connecté : ses places + places publiques
+    if (status) {
+      where.status = status;
+      where.ownerId = session.user.id;
+    } else {
+      where.OR = [
+        { status: PlaceStatus.ACTIVE, isActive: true },
+        { ownerId: session.user.id },
+      ];
     }
   }
 
-  // sécurité: filtre slots vides / mal formés
-  return rows.filter((r) => r.openTime && r.closeTime);
-}
-
-// GET /api/places - Liste des places
-export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const type = searchParams.get("type");
-    const status = searchParams.get("status");
-    const search = searchParams.get("search");
-
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    const offset = (page - 1) * limit;
-
-    // Construction de la requête
-    const where: any = {};
-
-    // Filtres publics
-    if (type) where.type = type;
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { city: { contains: search, mode: "insensitive" } },
-      ];
-    }
-
-    // Gestion des permissions
-    if (!session?.user) {
-      // Public : seulement les places actives et vérifiées
-      where.status = PlaceStatus.ACTIVE;
-      where.isActive = true;
-    } else if (session.user.role === "admin") {
-      // Admin : peut voir toutes les places avec filtre status
-      if (status) where.status = status;
-    } else {
-      // Utilisateur connecté : ses places + places publiques
-      if (status) {
-        where.status = status;
-        where.ownerId = session.user.id;
-      } else {
-        where.OR = [{ status: PlaceStatus.ACTIVE, isActive: true }, { ownerId: session.user.id }];
-      }
-    }
-
     const [places, total] = await Promise.all([
       prisma.place.findMany({
         where,
@@ -254,7 +223,13 @@ export async function GET(request: Request) {
           categories: {
             include: {
               category: {
-                select: { id: true, name: true, slug: true, icon: true, color: true },
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  icon: true,
+                  color: true,
+                },
               },
             },
           },
@@ -278,7 +253,10 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des places:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }
 
@@ -290,7 +268,10 @@ export async function POST(request: Request) {
     });
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentification requise" },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
@@ -300,8 +281,8 @@ export async function POST(request: Request) {
       validatedData.photos && validatedData.photos.length > 0
         ? validatedData.photos
         : validatedData.images && validatedData.images.length > 0
-          ? validatedData.images
-          : [];
+        ? validatedData.images
+        : [];
 
     // Générer un slug unique
     const baseSlug = validatedData.name
@@ -319,48 +300,102 @@ export async function POST(request: Request) {
 
     // Préparer les données additionnelles
     // Exclure les champs qui ne sont pas dans le modèle Prisma
-    const { openingHours, photos, images, createForClaim, categories, ...placeData } = validatedData;
+    const { openingHours, categories, ...placeData } = validatedData;
 
     const openingHoursCreate =
       Array.isArray(openingHours) && openingHours.length > 0
-        ? openingHours.flatMap((oh: any) => {
-            if (oh.isClosed) {
+        ? openingHours.flatMap(
+            (oh: {
+              dayOfWeek: DayOfWeek | string;
+              isClosed: boolean;
+              slots?: { openTime: string | null; closeTime: string | null }[];
+              openTime?: string | null;
+              closeTime?: string | null;
+            }) => {
+              const dayOfWeek = String(oh.dayOfWeek).toUpperCase() as DayOfWeek;
+              if (oh.isClosed) {
+                return [
+                  {
+                    dayOfWeek,
+                    isClosed: true,
+                    openTime: null,
+                    closeTime: null,
+                  },
+                ];
+              }
+              // cas multi-créneaux (pause midi)
+              if (Array.isArray(oh.slots) && oh.slots.length > 0) {
+                return oh.slots.map(
+                  (p: {
+                    openTime: string | null;
+                    closeTime: string | null;
+                  }) => ({
+                    dayOfWeek,
+                    isClosed: false,
+                    openTime: p.openTime ?? null,
+                    closeTime: p.closeTime ?? null,
+                  })
+                );
+              }
+              // cas simple 1 créneau
               return [
                 {
-                  dayOfWeek: oh.dayOfWeek,
-                  isClosed: true,
-                  openTime: null,
-                  closeTime: null,
+                  dayOfWeek,
+                  isClosed: !!oh.isClosed,
+                  openTime: oh.openTime ?? null,
+                  closeTime: oh.closeTime ?? null,
                 },
               ];
             }
-            // cas multi-créneaux (pause midi)
-            if (Array.isArray(oh.slots) && oh.slots.length > 0) {
-              return oh.slots.map((p: any) => ({
-                dayOfWeek: oh.dayOfWeek,
-                isClosed: false,
-                openTime: p.openTime ?? null,
-                closeTime: p.closeTime ?? null,
-              }));
-            }
-            // cas simple 1 créneau
-            return [
-              {
-                dayOfWeek: oh.dayOfWeek,
-                isClosed: !!oh.isClosed,
-                openTime: oh.openTime ?? null,
-                closeTime: oh.closeTime ?? null,
-              },
-            ];
-          })
+          )
         : [];
 
     // Détermine si c'est une création d'admin pour revendication
     const isAdminCreating = session.user.role === "admin";
     const createForClaimFlag = isAdminCreating && validatedData.createForClaim; // Nouveau paramètre optionnel
 
-    const dataToCreate: any = {
+    const dataToCreate: Omit<DataToCreate, "images"> & {
+      slug: string;
+      status: PlaceStatus;
+      name: string;
+      type: PlaceType;
+      street: string;
+      postalCode: string;
+      city: string;
+      owner?: { connect: { id: string } };
+      openingHours?: {
+        create: Array<{
+          dayOfWeek: DayOfWeek;
+          isClosed: boolean;
+          openTime: string | null;
+          closeTime: string | null;
+        }>;
+      };
+      googleBusinessData?: {
+        openingHours?: Array<{
+          dayOfWeek?: string;
+          isClosed?: boolean;
+          openTime?: string | null;
+          closeTime?: string | null;
+          slots?: Array<{
+            openTime?: string | null;
+            closeTime?: string | null;
+          }>;
+        }>;
+        images?: string[];
+        [key: string]: unknown;
+      };
+    } = {
       ...placeData,
+      type: validatedData.type,
+      street: validatedData.street,
+      postalCode: validatedData.postalCode,
+      city: validatedData.city,
+      ...Object.fromEntries(
+        Object.entries(placeData).filter(
+          ([key]) => !["type", "street", "postalCode", "city"].includes(key)
+        )
+      ),
       slug,
       status: createForClaimFlag ? PlaceStatus.ACTIVE : PlaceStatus.PENDING, // Les fiches admin sont directement actives
     };
@@ -391,17 +426,29 @@ export async function POST(request: Request) {
     }
 
     const googleBusinessData =
-      (Array.isArray(openingHours) && openingHours.length > 0) || normalizedPhotos.length > 0
-        ? { openingHours: openingHours || [], images: normalizedPhotos }
+      (Array.isArray(openingHours) && openingHours.length > 0) ||
+      normalizedPhotos.length > 0
+        ? {
+            openingHours: (openingHours ?? []).map((oh) => ({ ...oh })) as {
+              dayOfWeek?: string;
+              isClosed?: boolean;
+              openTime?: string | null;
+              closeTime?: string | null;
+              slots?: Array<{
+                openTime?: string | null;
+                closeTime?: string | null;
+              }>;
+            }[],
+            images: normalizedPhotos,
+          }
         : null;
 
     if (googleBusinessData) {
-      dataToCreate.googleBusinessData = googleBusinessData; // uniquement si le champ existe dans ton modèle
+      dataToCreate.googleBusinessData = googleBusinessData;
     }
-
     // Créer la place
     const place = await prisma.place.create({
-      data: dataToCreate,
+      data: dataToCreate as Prisma.PlaceCreateInput,
       include: {
         owner: {
           select: { id: true, name: true, email: true },
@@ -412,7 +459,7 @@ export async function POST(request: Request) {
     // Créer les relations avec les catégories si elles sont spécifiées
     if (categories && Array.isArray(categories) && categories.length > 0) {
       await prisma.placeToCategory.createMany({
-        data: categories.map(categoryId => ({
+        data: categories.map((categoryId) => ({
           placeId: place.id,
           categoryId: categoryId,
         })),
@@ -428,13 +475,20 @@ export async function POST(request: Request) {
       await prisma.place.update({
         where: { id: place.id },
         data: {
-          logo: dataToCreate.logo,
-          coverImage: dataToCreate.coverImage,
+          logo:
+            typeof dataToCreate.logo === "string" ? dataToCreate.logo : null,
+          coverImage:
+            typeof dataToCreate.coverImage === "string"
+              ? dataToCreate.coverImage
+              : null,
           images: dataToCreate.images,
         },
       });
     } catch (error) {
-      console.error("Erreur lors du déplacement des fichiers temporaires:", error);
+      console.error(
+        "Erreur lors du déplacement des fichiers temporaires:",
+        error
+      );
       // Continuer même si le déplacement échoue
     }
 
@@ -448,8 +502,8 @@ export async function POST(request: Request) {
     }
 
     // Envoyer notification à l'admin (en arrière-plan)
-    if (place.owner) {
-      notifyAdminsNewPlace(place.name, place.owner.name, place.owner.email, place.id).catch(
+    if (place.ownerId) {
+      notifyAdminsNewPlace(place.name, place.ownerId, session.user.email).catch(
         (error) => {
           console.error("Erreur notification admin:", error);
         }
@@ -466,6 +520,9 @@ export async function POST(request: Request) {
     }
 
     console.error("Erreur lors de la création de la place:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

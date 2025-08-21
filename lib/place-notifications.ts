@@ -4,7 +4,7 @@ import { sendEmail } from "./mailer";
 // Templates d'emails pour les places
 export const emailTemplates = {
   // Notification admin - nouvelle place créée
-  adminNewPlace: (placeName: string, userName: string, userEmail: string, _placeId: string) => ({
+  adminNewPlace: (placeName: string, userName: string, userEmail: string) => ({
     subject: `Nouvelle place en attente : ${placeName}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -37,8 +37,7 @@ export const emailTemplates = {
     placeName: string,
     userName: string,
     userEmail: string,
-    message: string,
-    _claimId: string
+    message: string
   ) => ({
     subject: `Revendication de place : ${placeName}`,
     html: `
@@ -274,12 +273,15 @@ async function getAdminEmails(): Promise<string[]> {
 export async function notifyAdminsNewPlace(
   placeName: string,
   userName: string,
-  userEmail: string,
-  placeId: string
+  userEmail: string
 ) {
   try {
     const adminEmails = await getAdminEmails();
-    const template = emailTemplates.adminNewPlace(placeName, userName, userEmail, placeId);
+    const template = emailTemplates.adminNewPlace(
+      placeName,
+      userName,
+      userEmail
+    );
 
     for (const email of adminEmails) {
       await sendEmail({
@@ -301,8 +303,7 @@ export async function notifyAdminsPlaceClaimed(
   placeName: string,
   userName: string,
   userEmail: string,
-  message: string,
-  claimId: string
+  message: string
 ) {
   try {
     const adminEmails = await getAdminEmails();
@@ -310,8 +311,7 @@ export async function notifyAdminsPlaceClaimed(
       placeName,
       userName,
       userEmail,
-      message,
-      claimId
+      message
     );
 
     for (const email of adminEmails) {
@@ -345,9 +345,14 @@ export async function notifyUserPlaceApproved(
       html: template.html,
     });
 
-    console.log(`Notification d'approbation envoyée à ${userEmail} pour: ${placeName}`);
+    console.log(
+      `Notification d'approbation envoyée à ${userEmail} pour: ${placeName}`
+    );
   } catch (error) {
-    console.error("Erreur lors de l'envoi de la notification d'approbation:", error);
+    console.error(
+      "Erreur lors de l'envoi de la notification d'approbation:",
+      error
+    );
   }
 }
 
@@ -365,7 +370,9 @@ export async function notifyUserPlaceRejected(
       html: template.html,
     });
 
-    console.log(`Notification de rejet envoyée à ${userEmail} pour: ${placeName}`);
+    console.log(
+      `Notification de rejet envoyée à ${userEmail} pour: ${placeName}`
+    );
   } catch (error) {
     console.error("Erreur lors de l'envoi de la notification de rejet:", error);
   }
@@ -389,7 +396,10 @@ export async function notifyUserClaimApproved(
       `Notification de revendication approuvée envoyée à ${userEmail} pour: ${placeName}`
     );
   } catch (error) {
-    console.error("Erreur lors de l'envoi de la notification de revendication approuvée:", error);
+    console.error(
+      "Erreur lors de l'envoi de la notification de revendication approuvée:",
+      error
+    );
   }
 }
 
@@ -407,8 +417,13 @@ export async function notifyUserClaimRejected(
       html: template.html,
     });
 
-    console.log(`Notification de revendication rejetée envoyée à ${userEmail} pour: ${placeName}`);
+    console.log(
+      `Notification de revendication rejetée envoyée à ${userEmail} pour: ${placeName}`
+    );
   } catch (error) {
-    console.error("Erreur lors de l'envoi de la notification de revendication rejetée:", error);
+    console.error(
+      "Erreur lors de l'envoi de la notification de revendication rejetée:",
+      error
+    );
   }
 }

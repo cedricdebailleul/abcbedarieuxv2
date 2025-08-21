@@ -3,24 +3,32 @@
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { Calendar, Clock, MapPin, Users, MoreHorizontal, Plus, Filter } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  MoreHorizontal,
+  Plus,
+  Filter,
+} from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { SafeImage } from "@/components/safe-image";
 
@@ -80,7 +88,7 @@ const STATUS_LABELS: Record<EventStatus, string> = {
   [EventStatus.CANCELLED]: "Annulé",
   [EventStatus.POSTPONED]: "Reporté",
   [EventStatus.COMPLETED]: "Terminé",
-  [EventStatus.ARCHIVED]: "Archivé"
+  [EventStatus.ARCHIVED]: "Archivé",
 };
 
 const STATUS_COLORS: Record<EventStatus, string> = {
@@ -90,11 +98,11 @@ const STATUS_COLORS: Record<EventStatus, string> = {
   [EventStatus.CANCELLED]: "bg-red-100 text-red-800",
   [EventStatus.POSTPONED]: "bg-orange-100 text-orange-800",
   [EventStatus.COMPLETED]: "bg-blue-100 text-blue-800",
-  [EventStatus.ARCHIVED]: "bg-gray-100 text-gray-800"
+  [EventStatus.ARCHIVED]: "bg-gray-100 text-gray-800",
 };
 
 export default function MyEventsPage() {
-  const { data: session, status } = useSession();
+  const { data: status } = useSession();
   const [eventsData, setEventsData] = useState<EventsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,11 +121,34 @@ export default function MyEventsPage() {
       const result = await getUserEventsAction({
         page: currentPage,
         limit: 12,
-        status: statusFilter !== "all" ? statusFilter as EventStatus : undefined
+        status:
+          statusFilter !== "all" ? (statusFilter as EventStatus) : undefined,
       });
 
       if (result.success) {
-        setEventsData(result.data!);
+        setEventsData({
+          ...result.data!,
+          events: result.data!.events.map((event) => ({
+            ...event,
+            status: (event as unknown as Event).status || EventStatus.DRAFT,
+            isFeatured: Boolean(
+              "isFeatured" in event ? event.isFeatured : false
+            ),
+            isFree: Boolean("isFree" in event ? event.isFree : true),
+            createdAt:
+              "createdAt" in event &&
+              typeof event.createdAt === "string" &&
+              event.createdAt
+                ? event.createdAt
+                : new Date().toISOString(),
+            startDate: new Date(event.startDate).toISOString(),
+            endDate: new Date(event.endDate).toISOString(),
+            _count:
+              "_count" in event
+                ? (event._count as { participants: number })
+                : { participants: 0 },
+          })),
+        });
       } else {
         toast.error(result.error || "Erreur lors du chargement des événements");
       }
@@ -131,7 +162,7 @@ export default function MyEventsPage() {
   }, [currentPage, statusFilter, lastFetchTime]);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status && status.user) {
       fetchEvents();
     }
   }, [status, fetchEvents]);
@@ -162,23 +193,23 @@ export default function MyEventsPage() {
     const isMultiDay = start.toDateString() !== end.toDateString();
 
     if (isMultiDay) {
-      return `${start.toLocaleDateString("fr-FR", { 
-        day: "numeric", 
-        month: "short" 
-      })} - ${end.toLocaleDateString("fr-FR", { 
-        day: "numeric", 
-        month: "short" 
+      return `${start.toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "short",
+      })} - ${end.toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "short",
       })}`;
     } else {
-      return start.toLocaleDateString("fr-FR", { 
-        weekday: "short", 
-        day: "numeric", 
-        month: "short" 
+      return start.toLocaleDateString("fr-FR", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
       });
     }
   };
 
-  if (status === "loading") {
+  if (!status) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -186,11 +217,15 @@ export default function MyEventsPage() {
     );
   }
 
-  if (status === "unauthenticated") {
+  if (status?.state === "unauthenticated") {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Connexion requise</h1>
-        <p className="text-gray-600">Vous devez être connecté pour voir vos événements.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          Connexion requise
+        </h1>
+        <p className="text-gray-600">
+          Vous devez être connecté pour voir vos événements.
+        </p>
       </div>
     );
   }
@@ -201,7 +236,9 @@ export default function MyEventsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Mes Événements</h1>
-          <p className="text-gray-600">Gérez vos événements et consultez les statistiques</p>
+          <p className="text-gray-600">
+            Gérez vos événements et consultez les statistiques
+          </p>
         </div>
 
         <Button asChild>
@@ -220,7 +257,9 @@ export default function MyEventsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total</p>
-                  <p className="text-2xl font-bold">{eventsData.pagination.total}</p>
+                  <p className="text-2xl font-bold">
+                    {eventsData.pagination.total}
+                  </p>
                 </div>
                 <Calendar className="w-8 h-8 text-muted-foreground" />
               </div>
@@ -232,7 +271,11 @@ export default function MyEventsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Publiés</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {eventsData.events.filter(e => e.status === EventStatus.PUBLISHED).length}
+                    {
+                      eventsData.events.filter(
+                        (e) => e.status === EventStatus.PUBLISHED
+                      ).length
+                    }
                   </p>
                 </div>
                 <Users className="w-8 h-8 text-green-600" />
@@ -245,7 +288,11 @@ export default function MyEventsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Brouillons</p>
                   <p className="text-2xl font-bold text-gray-600">
-                    {eventsData.events.filter(e => e.status === EventStatus.DRAFT).length}
+                    {
+                      eventsData.events.filter(
+                        (e) => e.status === EventStatus.DRAFT
+                      ).length
+                    }
                   </p>
                 </div>
                 <Clock className="w-8 h-8 text-gray-600" />
@@ -258,7 +305,10 @@ export default function MyEventsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Participants</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {eventsData.events.reduce((sum, e) => sum + e._count.participants, 0)}
+                    {eventsData.events.reduce(
+                      (sum, e) => sum + e._count.participants,
+                      0
+                    )}
                   </p>
                 </div>
                 <Users className="w-8 h-8 text-blue-600" />
@@ -270,10 +320,13 @@ export default function MyEventsPage() {
 
       {/* Filtres */}
       <div className="flex flex-wrap gap-4">
-        <Select value={statusFilter} onValueChange={(value) => {
-          setStatusFilter(value);
-          setCurrentPage(1);
-        }}>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => {
+            setStatusFilter(value);
+            setCurrentPage(1);
+          }}
+        >
           <SelectTrigger className="w-48">
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Tous les statuts" />
@@ -311,16 +364,18 @@ export default function MyEventsPage() {
         <div className="text-center py-12">
           <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-medium text-gray-900 mb-2">
-            {statusFilter === "all" 
+            {statusFilter === "all"
               ? "Aucun événement créé"
-              : `Aucun événement ${STATUS_LABELS[statusFilter as EventStatus].toLowerCase()}`
-            }
+              : `Aucun événement ${STATUS_LABELS[
+                  statusFilter as EventStatus
+                ].toLowerCase()}`}
           </h3>
           <p className="text-gray-600 mb-6">
             {statusFilter === "all"
               ? "Commencez par créer votre premier événement."
-              : `Aucun événement avec le statut "${STATUS_LABELS[statusFilter as EventStatus]}".`
-            }
+              : `Aucun événement avec le statut "${
+                  STATUS_LABELS[statusFilter as EventStatus]
+                }".`}
           </p>
           <Button asChild>
             <Link href="/dashboard/events/new">
@@ -336,7 +391,10 @@ export default function MyEventsPage() {
             const isPast = new Date(event.endDate) < new Date();
 
             return (
-              <Card key={event.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={event.id}
+                className="hover:shadow-md transition-shadow"
+              >
                 <div className="relative h-48 w-full">
                   <SafeImage
                     src={normalizeImagePath(event.coverImage) || ""}
@@ -346,10 +404,14 @@ export default function MyEventsPage() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     fallbackClassName="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 rounded-t-lg flex items-center justify-center"
                   />
-                  
+
                   {/* Badges overlay */}
                   <div className="absolute top-2 left-2 flex flex-col gap-1">
-                    <Badge className={`px-2 py-1 text-xs ${STATUS_COLORS[event.status]}`}>
+                    <Badge
+                      className={`px-2 py-1 text-xs ${
+                        STATUS_COLORS[event.status]
+                      }`}
+                    >
                       {STATUS_LABELS[event.status]}
                     </Badge>
                     {event.isFeatured && (
@@ -361,7 +423,11 @@ export default function MyEventsPage() {
                   <div className="absolute top-2 right-2">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="bg-white/90">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-white/90"
+                        >
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -392,11 +458,13 @@ export default function MyEventsPage() {
                     <h3 className="text-lg font-semibold line-clamp-1 mb-1">
                       {event.title}
                     </h3>
-                    
+
                     <div className="flex items-center text-sm text-muted-foreground gap-4">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>{formatEventDate(event.startDate, event.endDate)}</span>
+                        <span>
+                          {formatEventDate(event.startDate, event.endDate)}
+                        </span>
                       </div>
                       {!event.isFree && (
                         <div className="flex items-center gap-1">
@@ -412,7 +480,10 @@ export default function MyEventsPage() {
                       <span className="truncate">
                         {event.locationName || event.place?.name}
                         {(event.locationCity || event.place?.city) && (
-                          <span> • {event.locationCity || event.place?.city}</span>
+                          <span>
+                            {" "}
+                            • {event.locationCity || event.place?.city}
+                          </span>
                         )}
                       </span>
                     </div>
@@ -428,27 +499,39 @@ export default function MyEventsPage() {
                     <div className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
                       <span>
-                        {event._count.participants} participant{event._count.participants > 1 ? 's' : ''}
+                        {event._count.participants} participant
+                        {event._count.participants > 1 ? "s" : ""}
                         {event.maxParticipants && (
                           <span>/{event.maxParticipants}</span>
                         )}
                       </span>
                     </div>
-                    <span className={isPast ? "text-red-600" : isUpcoming ? "text-green-600" : "text-blue-600"}>
+                    <span
+                      className={
+                        isPast
+                          ? "text-red-600"
+                          : isUpcoming
+                          ? "text-green-600"
+                          : "text-blue-600"
+                      }
+                    >
                       {isPast ? "Terminé" : isUpcoming ? "À venir" : "En cours"}
                     </span>
                   </div>
 
                   <div className="flex gap-2">
-                    <Button asChild variant="outline" size="sm" className="flex-1">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
                       <Link href={`/dashboard/events/${event.id}/edit`}>
                         Modifier
                       </Link>
                     </Button>
                     <Button asChild size="sm" className="flex-1">
-                      <Link href={`/events/${event.slug}`}>
-                        Voir
-                      </Link>
+                      <Link href={`/events/${event.slug}`}>Voir</Link>
                     </Button>
                   </div>
                 </CardContent>
@@ -462,25 +545,29 @@ export default function MyEventsPage() {
       {eventsData && eventsData.pagination.pages > 1 && (
         <div className="flex items-center justify-center space-x-2 mt-8">
           {currentPage > 1 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setCurrentPage(currentPage - 1)}
             >
               Précédent
             </Button>
           )}
-          
+
           <div className="flex items-center space-x-1">
-            {Array.from({ length: eventsData.pagination.pages }, (_, i) => i + 1).map((pageNumber) => {
+            {Array.from(
+              { length: eventsData.pagination.pages },
+              (_, i) => i + 1
+            ).map((pageNumber) => {
               const isCurrentPage = pageNumber === currentPage;
               const isNearCurrentPage = Math.abs(pageNumber - currentPage) <= 2;
-              const isFirstOrLast = pageNumber === 1 || pageNumber === eventsData.pagination.pages;
-              
+              const isFirstOrLast =
+                pageNumber === 1 || pageNumber === eventsData.pagination.pages;
+
               if (!isNearCurrentPage && !isFirstOrLast) {
                 return null;
               }
-              
+
               return (
                 <Button
                   key={pageNumber}
@@ -496,9 +583,9 @@ export default function MyEventsPage() {
           </div>
 
           {currentPage < eventsData.pagination.pages && (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setCurrentPage(currentPage + 1)}
             >
               Suivant

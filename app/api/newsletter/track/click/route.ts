@@ -3,55 +3,59 @@ import { prisma } from "@/lib/prisma";
 
 // Domaines autorisés pour les redirections
 const ALLOWED_DOMAINS = [
-  'abc-bedarieux.fr',
-  'www.abc-bedarieux.fr',
-  'localhost:3000',
-  'localhost:3001',
-  '127.0.0.1:3000',
-  '127.0.0.1:3001'
+  "abc-bedarieux.fr",
+  "www.abc-bedarieux.fr",
+  "localhost:3000",
+  "localhost:3001",
+  "127.0.0.1:3000",
+  "127.0.0.1:3001",
 ];
 
 // Fonction pour valider l'URL de redirection
 function validateRedirectUrl(url: string, requestUrl: string): URL {
   try {
     const targetUrl = new URL(decodeURIComponent(url));
-    
+
     // Vérifier si le domaine est autorisé
-    if (ALLOWED_DOMAINS.includes(targetUrl.hostname) || 
-        ALLOWED_DOMAINS.includes(`${targetUrl.hostname}:${targetUrl.port}`)) {
+    if (
+      ALLOWED_DOMAINS.includes(targetUrl.hostname) ||
+      ALLOWED_DOMAINS.includes(`${targetUrl.hostname}:${targetUrl.port}`)
+    ) {
       return targetUrl;
     }
-    
+
     // Si le domaine n'est pas autorisé, rediriger vers la page d'accueil
-    console.warn(`🚨 Tentative de redirection vers un domaine non autorisé: ${targetUrl.hostname}`);
-    return new URL('/', requestUrl);
-  } catch (error) {
+    console.warn(
+      `🚨 Tentative de redirection vers un domaine non autorisé: ${targetUrl.hostname}`
+    );
+    return new URL("/", requestUrl);
+  } catch {
     // En cas d'URL malformée, rediriger vers la page d'accueil
-    console.error('🚨 URL malformée détectée:', url);
-    return new URL('/', requestUrl);
+    console.error("🚨 URL malformée détectée:", url);
+    return new URL("/", requestUrl);
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const campaignId = searchParams.get('c');
-    const subscriberId = searchParams.get('s');
-    const url = searchParams.get('url');
+    const campaignId = searchParams.get("c");
+    const subscriberId = searchParams.get("s");
+    const url = searchParams.get("url");
 
     if (!campaignId || !subscriberId || !url) {
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
     try {
       // Vérifier que la campagne et l'abonné existent
       const [campaign, subscriber] = await Promise.all([
         prisma.newsletterCampaign.findUnique({
-          where: { id: campaignId }
+          where: { id: campaignId },
         }),
         prisma.newsletterSubscriber.findUnique({
-          where: { id: subscriberId }
-        })
+          where: { id: subscriberId },
+        }),
       ]);
 
       if (!campaign || !subscriber) {
@@ -60,19 +64,18 @@ export async function GET(request: NextRequest) {
       }
 
       // Capturer les informations de l'utilisateur
-      const userAgent = request.headers.get('user-agent') || '';
-      const forwardedFor = request.headers.get('x-forwarded-for');
-      const realIp = request.headers.get('x-real-ip');
-      const clientIp = forwardedFor?.split(',')[0] || realIp || 'unknown';
+      const forwardedFor = request.headers.get("x-forwarded-for");
+      const realIp = request.headers.get("x-real-ip");
+      const clientIp = forwardedFor?.split(",")[0] || realIp || "unknown";
 
       // Vérifier si déjà cliqué pour éviter les doublons
       const existingRecord = await prisma.newsletterCampaignSent.findUnique({
         where: {
           campaignId_subscriberId: {
             campaignId,
-            subscriberId
-          }
-        }
+            subscriberId,
+          },
+        },
       });
 
       if (existingRecord && !existingRecord.clickedAt) {
@@ -81,15 +84,15 @@ export async function GET(request: NextRequest) {
           where: {
             campaignId_subscriberId: {
               campaignId,
-              subscriberId
-            }
+              subscriberId,
+            },
           },
           data: {
             clickedAt: new Date(),
-            status: 'CLICKED',
+            status: "CLICKED",
             // S'assurer que l'email est marqué comme ouvert aussi (fallback pour Gmail)
-            ...((!existingRecord.openedAt) && { openedAt: new Date() })
-          }
+            ...(!existingRecord.openedAt && { openedAt: new Date() }),
+          },
         });
 
         // Mettre à jour les statistiques de la campagne
@@ -97,61 +100,63 @@ export async function GET(request: NextRequest) {
           prisma.newsletterCampaignSent.count({
             where: {
               campaignId,
-              clickedAt: { not: null }
-            }
+              clickedAt: { not: null },
+            },
           }),
           prisma.newsletterCampaignSent.count({
             where: {
               campaignId,
-              openedAt: { not: null }
-            }
-          })
+              openedAt: { not: null },
+            },
+          }),
         ]);
 
         await prisma.newsletterCampaign.update({
           where: { id: campaignId },
-          data: { 
+          data: {
             totalClicked: clickCount,
-            totalOpened: openCount
-          }
+            totalOpened: openCount,
+          },
         });
 
-        console.log(`🖱️ Nouveau clic: Campagne ${campaignId}, Abonné ${subscriberId}, URL: ${url}, IP: ${clientIp}`);
+        console.log(
+          `🖱️ Nouveau clic: Campagne ${campaignId}, Abonné ${subscriberId}, URL: ${url}, IP: ${clientIp}`
+        );
       } else if (!existingRecord) {
         // Enregistrement inexistant (cas rare), créer l'entrée
         await prisma.newsletterCampaignSent.create({
           data: {
             campaignId,
             subscriberId,
-            status: 'CLICKED',
+            status: "CLICKED",
             sentAt: new Date(),
             deliveredAt: new Date(),
             openedAt: new Date(),
             clickedAt: new Date(),
-            messageId: `track-click-${Date.now()}`
-          }
+            messageId: `track-click-${Date.now()}`,
+          },
         });
 
-        console.log(`🖱️ Clic tracké (nouvel enregistrement): Campagne ${campaignId}, Abonné ${subscriberId}, URL: ${url}`);
+        console.log(
+          `🖱️ Clic tracké (nouvel enregistrement): Campagne ${campaignId}, Abonné ${subscriberId}, URL: ${url}`
+        );
       }
       // Si déjà cliqué, on ne fait rien mais on redirige quand même
-
     } catch (error) {
-      console.error('Erreur lors du tracking de clic:', error);
+      console.error("Erreur lors du tracking de clic:", error);
     }
 
     // Rediriger vers l'URL de destination (sécurisée)
     const safeUrl = validateRedirectUrl(url, request.url);
     return NextResponse.redirect(safeUrl);
-
   } catch (error) {
-    console.error('Erreur générale tracking clic:', error);
+    console.error("Erreur générale tracking clic:", error);
     // En cas d'erreur, rediriger vers l'URL sécurisée ou la page d'accueil
-    const url = new URL(request.url).searchParams.get('url');
+    const url = new URL(request.url).searchParams.get("url");
     if (url) {
       const safeUrl = validateRedirectUrl(url, request.url);
       return NextResponse.redirect(safeUrl);
     }
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 }

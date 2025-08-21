@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { ArrowLeft, Edit, Users, Award, Calendar, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, Users, Award, Calendar } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -16,6 +16,7 @@ import {
 } from "@/lib/validations/badge";
 import { ManualAwardBadge } from "../_components/manual-award-badge";
 import { RevokeBadgeButton } from "../_components/revoke-badge-button";
+import Image from "next/image";
 
 interface BadgeDetailPageProps {
   params: Promise<{
@@ -30,9 +31,10 @@ export async function generateMetadata({
   const result = await getBadgeAction(badgeId);
 
   return {
-    title: result.success
-      ? `${result.data.title} | Administration`
-      : "Badge introuvable | Administration",
+    title:
+      result.success && result.data
+        ? `${result.data.title} | Administration`
+        : "Badge introuvable | Administration",
     description: "Détails et gestion du badge",
   };
 }
@@ -43,7 +45,7 @@ export default async function BadgeDetailPage({
   const { badgeId } = await params;
   const result = await getBadgeAction(badgeId);
 
-  if (!result.success) {
+  if (!result.success || !result.data) {
     notFound();
   }
 
@@ -61,7 +63,7 @@ export default async function BadgeDetailPage({
 
     if (isUrl) {
       return (
-        <img
+        <Image
           src={badge.iconUrl}
           alt={badge.title}
           className="w-16 h-16 object-contain"
@@ -195,18 +197,18 @@ export default async function BadgeDetailPage({
             <CardContent>
               {badge.users.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Aucun utilisateur n'a encore ce badge
+                  Aucun utilisateur n&apos;a encore ce badge
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {badge.users.map((userBadge: any) => (
+                  {badge.users.map((userBadge) => (
                     <div
-                      key={userBadge.id}
+                      key={userBadge.user.id}
                       className="flex items-center justify-between p-3 border rounded-lg"
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={userBadge.user.image} />
+                          <AvatarImage src={userBadge.user.image || ""} />
                           <AvatarFallback>
                             {userBadge.user.name?.[0] ||
                               userBadge.user.email[0].toUpperCase()}
@@ -215,9 +217,6 @@ export default async function BadgeDetailPage({
                         <div>
                           <div className="font-medium">
                             {userBadge.user.name || userBadge.user.email}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {userBadge.reason}
                           </div>
                           <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar className="h-3 w-3" />

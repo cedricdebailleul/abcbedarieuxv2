@@ -12,32 +12,32 @@ interface Event {
   id: string;
   title: string;
   slug: string;
-  summary?: string;
-  startDate: string;
-  endDate: string;
+  summary?: string | null;
+  startDate: string | Date;
+  endDate: string | Date;
   isAllDay: boolean;
-  category?: string;
+  category?: string | null | undefined | { id: string; name: string; slug: string; color?: string | null };
   isFeatured: boolean;
   isFree: boolean;
-  price?: number;
-  currency?: string;
-  coverImage?: string;
-  locationName?: string;
-  locationCity?: string;
+  price?: number | null;
+  currency?: string | null;
+  coverImage?: string | null;
+  locationName?: string | null;
+  locationCity?: string | null;
   maxParticipants?: number | null;
   participantCount: number;
-  ticketUrl?: string;
+  ticketUrl?: string | null;
   place?: {
     id: string;
     name: string;
     slug: string;
     city: string;
-  };
+  } | null;
   organizer?: {
     id: string;
     name: string;
     slug: string;
-  };
+  } | null;
   _count: {
     participants: number;
   };
@@ -64,12 +64,12 @@ function normalizeImagePath(path?: string | null): string | undefined {
 
 // Formatage dates (inchangé)
 function formatEventDate(
-  startDate: string,
-  endDate: string,
+  startDate: string | Date,
+  endDate: string | Date,
   isAllDay: boolean
 ) {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = startDate instanceof Date ? startDate : new Date(startDate);
+  const end = endDate instanceof Date ? endDate : new Date(endDate);
   const isMultiDay = start.toDateString() !== end.toDateString();
 
   if (isAllDay) {
@@ -141,10 +141,10 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
     event.isAllDay
   );
 
-  // Évite les new Date() multiples (lisible + léger + moins d’erreurs)
+  // Évite les new Date() multiples (lisible + léger + moins d'erreurs)
   const now = new Date();
-  const start = new Date(event.startDate);
-  const end = new Date(event.endDate);
+  const start = event.startDate instanceof Date ? event.startDate : new Date(event.startDate);
+  const end = event.endDate instanceof Date ? event.endDate : new Date(event.endDate);
 
   const isUpcoming = start > now;
   const isPast = end < now;
@@ -214,9 +214,22 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
           <div className="absolute top-2 right-2 flex flex-col gap-2 items-end">
             <SocialShare
               data={generateEventShareData({
-                ...event,
-                startDate: new Date(event.startDate),
-                endDate: new Date(event.endDate),
+                title: event.title,
+                slug: event.slug,
+                summary: event.summary,
+                description: undefined,
+                startDate: start,
+                endDate: end,
+                isAllDay: event.isAllDay,
+                locationName: event.locationName,
+                locationCity: event.locationCity,
+                category: typeof event.category === "string" ? event.category : event.category?.name || null,
+                tags: undefined,
+                coverImage: event.coverImage,
+                place: event.place ? {
+                  name: event.place.name,
+                  city: event.place.city
+                } : null,
               })}
               variant="outline"
               size="sm"
@@ -326,7 +339,7 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
 
               {event.category && (
                 <Badge variant="outline" className="text-xs">
-                  {event.category}
+                  {typeof event.category === "string" ? event.category : event.category.name}
                 </Badge>
               )}
             </div>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
 
 interface PostCardProps {
   post: {
@@ -139,10 +140,12 @@ export function PostCard({
         {/* Image de couverture */}
         {post.coverImage && (
           <div className="relative overflow-hidden">
-            <img
+            <Image
               src={post.coverImage}
               alt={post.title}
               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+              width={600}
+              height={300}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             {/* Catégorie overlay sur l'image */}
@@ -278,10 +281,12 @@ export function PostCard({
       {/* Image de couverture */}
       {post.coverImage && (
         <div className="relative overflow-hidden">
-          <img
+          <Image
             src={post.coverImage}
             alt={post.title}
             className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+            width={600}
+            height={300}
           />
           {/* Catégorie overlay sur l'image */}
           {showCategory && post.category && (

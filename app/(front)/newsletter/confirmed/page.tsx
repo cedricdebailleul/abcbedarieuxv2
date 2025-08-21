@@ -39,17 +39,18 @@ export default function NewsletterConfirmedPage() {
           className="space-y-4 mb-8"
         >
           <p className="text-gray-600">
-            Merci d'avoir confirmé votre abonnement à la newsletter d'ABC Bédarieux.
+            Merci d&apos;avoir confirmé votre abonnement à la newsletter
+            d&apos;ABC Bédarieux.
           </p>
-          
+
           <div className="bg-blue-50 rounded-lg p-4">
             <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
               <Mail className="w-5 h-5" />
               <span className="font-medium">Vous êtes maintenant abonné !</span>
             </div>
             <p className="text-sm text-blue-600">
-              Vous recevrez bientôt nos actualités, événements et offres spéciales 
-              directement dans votre boîte email.
+              Vous recevrez bientôt nos actualités, événements et offres
+              spéciales directement dans votre boîte email.
             </p>
           </div>
         </motion.div>
@@ -63,14 +64,12 @@ export default function NewsletterConfirmedPage() {
           <Button asChild className="w-full">
             <Link href="/">
               <Home className="w-4 h-4 mr-2" />
-              Retour à l'accueil
+              Retour à l&apos;accueil
             </Link>
           </Button>
-          
+
           <Button variant="outline" asChild className="w-full">
-            <Link href="/newsletter">
-              Gérer mes préférences
-            </Link>
+            <Link href="/newsletter">Gérer mes préférences</Link>
           </Button>
         </motion.div>
 
@@ -80,8 +79,8 @@ export default function NewsletterConfirmedPage() {
           transition={{ delay: 0.6 }}
           className="text-xs text-gray-500 mt-6"
         >
-          Vous pouvez vous désabonner à tout moment en cliquant sur le lien 
-          de désinscription présent dans nos emails.
+          Vous pouvez vous désabonner à tout moment en cliquant sur le lien de
+          désinscription présent dans nos emails.
         </motion.p>
       </motion.div>
     </div>

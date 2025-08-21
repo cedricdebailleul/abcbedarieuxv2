@@ -142,9 +142,35 @@ export async function GET(request: NextRequest) {
       unsubscribeUrl,
       trackingPixelUrl,
       subscriberName: subscriber.firstName || undefined,
-      events,
-      places,
-      posts,
+      events: events.map(event => ({
+        title: event.title,
+        slug: event.slug,
+        coverImage: event.coverImage || undefined,
+        description: event.description || undefined,
+        startDate: event.startDate.toISOString(),
+        locationName: event.locationName || undefined,
+        locationAddress: event.locationAddress || undefined,
+        locationCity: event.locationCity || undefined,
+      })),
+      places: places.map(place => ({
+        name: place.name,
+        slug: place.slug,
+        coverImage: place.coverImage || undefined,
+        logo: place.logo || undefined,
+        summary: place.summary || undefined,
+        street: place.street || undefined,
+        city: place.city || undefined,
+        phone: place.phone || undefined,
+        website: place.website || undefined,
+      })),
+      posts: posts.map(post => ({
+        title: post.title,
+        slug: post.slug,
+        coverImage: post.coverImage || undefined,
+        excerpt: post.excerpt || undefined,
+        publishedAt: post.publishedAt ? post.publishedAt.toISOString() : undefined,
+        author: post.author ? { name: post.author.name } : undefined,
+      })),
       attachments: templateAttachments,
       campaignId,
       subscriberId
@@ -161,11 +187,12 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error("❌ Erreur lors de l'affichage web:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     return new NextResponse(`
       <html><body style="font-family: Arial; padding: 40px; text-align: center;">
         <h1>❌ Erreur serveur</h1>
         <p>Une erreur est survenue lors du chargement de la newsletter.</p>
-        <p>Erreur: ${error.message}</p>
+        <p>Erreur: ${errorMessage}</p>
       </body></html>
     `, { status: 500, headers: { 'Content-Type': 'text/html' } });
   }

@@ -2,20 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { AbcDocumentType } from "@/lib/generated/prisma";
+import { AbcDocumentType, Prisma } from "@/lib/generated/prisma";
 import path from "path";
 import fs from "fs";
-
-const createDocumentSchema = z.object({
-  title: z.string().min(1, "Le titre est obligatoire"),
-  description: z.string().nullable().optional(),
-  type: z.enum(['MINUTES', 'AGENDA', 'FINANCIAL', 'LEGAL', 'COMMUNICATION', 'OTHER']),
-  fileName: z.string().min(1, "Le nom de fichier est obligatoire"),
-  filePath: z.string().min(1, "Le chemin du fichier est obligatoire"),
-  fileSize: z.number().positive("La taille du fichier doit être positive"),
-  meetingId: z.string().nullable().optional(),
-  isPublic: z.boolean().default(false),
-});
 
 // GET /api/admin/abc/documents - Liste des documents
 export async function GET(request: Request) {
@@ -24,7 +13,11 @@ export async function GET(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -40,7 +33,22 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    // >>>>>>>>>>>>>>>>>>
+    // Le where au bon type Prisma
+    // >>>>>>>>>>>>>>>>>>
+    const where: Prisma.AbcDocumentWhereInput = {
+      ...(search
+        ? {
+            OR: [
+              { title: { contains: search, mode: "insensitive" } },
+              { description: { contains: search, mode: "insensitive" } },
+              { fileName: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+      ...(type ? { type: type as AbcDocumentType } : {}),
+      ...(meetingId ? { meetingId } : {}),
+    };
 
     if (search) {
       where.OR = [
@@ -51,7 +59,7 @@ export async function GET(request: Request) {
     }
 
     if (type) {
-      where.type = type;
+      where.type = type ? (type as AbcDocumentType) : undefined;
     }
 
     if (meetingId) {
@@ -60,10 +68,10 @@ export async function GET(request: Request) {
 
     const [documents, total] = await Promise.all([
       prisma.abcDocument.findMany({
-        where,
+        where: where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           uploadedBy: {
             select: {
@@ -110,7 +118,6 @@ export async function GET(request: Request) {
         pages,
       },
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération des documents:", error);
     return NextResponse.json(
@@ -127,7 +134,11 @@ export async function POST(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -147,7 +158,7 @@ export async function POST(request: Request) {
       description,
       type,
       isPublic,
-      file: file ? { name: file.name, size: file.size, type: file.type } : null
+      file: file ? { name: file.name, size: file.size, type: file.type } : null,
     });
 
     if (!title || !type || !file) {
@@ -176,26 +187,33 @@ export async function POST(request: Request) {
 
     // Vérifier le type de fichier
     const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'text/plain',
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "text/plain",
     ];
 
     if (!file.type || !allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: `Type de fichier non autorisé: ${file.type || 'unknown'}` },
+        { error: `Type de fichier non autorisé: ${file.type || "unknown"}` },
         { status: 400 }
       );
     }
 
     // Valider le type de document
-    const validDocumentTypes = ['MINUTES', 'AGENDA', 'FINANCIAL', 'LEGAL', 'COMMUNICATION', 'OTHER'];
+    const validDocumentTypes = [
+      "MINUTES",
+      "AGENDA",
+      "FINANCIAL",
+      "LEGAL",
+      "COMMUNICATION",
+      "OTHER",
+    ];
     if (!validDocumentTypes.includes(type)) {
       return NextResponse.json(
         { error: "Type de document invalide" },
@@ -206,11 +224,16 @@ export async function POST(request: Request) {
     // Créer un nom de fichier unique
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 15);
-    const safeName = (file.name || 'unknown').replace(/[^a-zA-Z0-9.-]/g, '_');
+    const safeName = (file.name || "unknown").replace(/[^a-zA-Z0-9.-]/g, "_");
     const fileName = `${timestamp}_${randomSuffix}_${safeName}`;
 
     // Créer le répertoire de destination
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents');
+    const uploadDir = path.join(
+      process.cwd(),
+      "public",
+      "uploads",
+      "documents"
+    );
     if (!fs.existsSync(uploadDir)) {
       await fs.promises.mkdir(uploadDir, { recursive: true });
     }
@@ -303,10 +326,10 @@ export async function POST(request: Request) {
 
       if (attendees.length > 0) {
         await prisma.abcDocumentShare.createMany({
-          data: attendees.map(attendee => ({
+          data: attendees.map((attendee) => ({
             documentId: document.id,
             memberId: attendee.memberId,
-            accessLevel: 'READ',
+            accessLevel: "READ",
           })),
           skipDuplicates: true,
         });
@@ -317,7 +340,6 @@ export async function POST(request: Request) {
       document,
       message: "Document créé avec succès",
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

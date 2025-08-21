@@ -2,16 +2,23 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  AbcPaymentMode,
+  AbcPaymentStatus,
+  Prisma,
+} from "@/lib/generated/prisma";
 
 const createPaymentSchema = z.object({
   memberId: z.string().min(1, "Le membre est obligatoire"),
   amount: z.number().positive("Le montant doit être positif"),
-  mode: z.enum(['CHEQUE', 'ESPECE', 'VIREMENT']),
+  mode: z.enum(["CHEQUE", "ESPECE", "VIREMENT"]),
   checkNumber: z.string().nullable().optional(),
   reference: z.string().nullable().optional(),
   year: z.number().int().min(2020).max(2030),
   quarter: z.number().int().min(1).max(4).nullable().optional(),
-  status: z.enum(['PENDING', 'PAID', 'CANCELLED', 'REFUNDED']).default('PENDING'),
+  status: z
+    .enum(["PENDING", "PAID", "CANCELLED", "REFUNDED"])
+    .default("PENDING"),
   notes: z.string().nullable().optional(),
   paidAt: z.string().datetime().nullable().optional(),
 });
@@ -23,7 +30,11 @@ export async function GET(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -40,7 +51,7 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Prisma.AbcPaymentWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -61,11 +72,25 @@ export async function GET(request: Request) {
     }
 
     if (status) {
-      where.status = status;
+      if (["PENDING", "PAID", "CANCELLED", "REFUNDED"].includes(status)) {
+        where.status = status as AbcPaymentStatus;
+      } else {
+        return NextResponse.json(
+          { error: "Statut de paiement invalide" },
+          { status: 400 }
+        );
+      }
     }
 
     if (mode) {
-      where.mode = mode;
+      if (["CHEQUE", "ESPECE", "VIREMENT"].includes(mode)) {
+        where.mode = mode as AbcPaymentMode;
+      } else {
+        return NextResponse.json(
+          { error: "Mode de paiement invalide" },
+          { status: 400 }
+        );
+      }
     }
 
     if (year) {
@@ -82,7 +107,7 @@ export async function GET(request: Request) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           member: {
             include: {
@@ -111,7 +136,6 @@ export async function GET(request: Request) {
         pages,
       },
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération des paiements:", error);
     return NextResponse.json(
@@ -128,7 +152,11 @@ export async function POST(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -183,7 +211,6 @@ export async function POST(request: Request) {
       payment,
       message: "Paiement créé avec succès",
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

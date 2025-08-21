@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { IconBell, IconCheck } from "@tabler/icons-react";
 
 export default function NotificationsPage() {
@@ -28,12 +34,16 @@ export default function NotificationsPage() {
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                 <IconCheck className="h-4 w-4 text-green-500" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Bienvenue sur ABC Bédarieux !</p>
+                  <p className="text-sm font-medium">
+                    Bienvenue sur ABC Bédarieux !
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     Votre compte a été créé avec succès.
                   </p>
                 </div>
-                <span className="text-xs text-muted-foreground">Maintenant</span>
+                <span className="text-xs text-muted-foreground">
+                  Maintenant
+                </span>
               </div>
             </div>
           </CardContent>
@@ -62,7 +72,7 @@ export default function NotificationsPage() {
                 <div>
                   <p className="font-medium">Newsletter</p>
                   <p className="text-sm text-muted-foreground">
-                    Recevoir la newsletter hebdomadaire d'ABC Bédarieux
+                    Recevoir la newsletter hebdomadaire d&apos;ABC Bédarieux
                   </p>
                 </div>
                 <div className="text-sm text-muted-foreground">Configuré</div>

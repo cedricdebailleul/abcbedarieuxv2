@@ -1,6 +1,14 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Crop, Eye, Image as ImageIcon, Upload, X } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Crop,
+  Eye,
+  Image as ImageIcon,
+  Upload,
+  X,
+} from "lucide-react";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import type { PixelCrop } from "react-image-crop";
@@ -10,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { ImageCropper } from "./image-cropper";
+import Image from "next/image";
 
 interface ImageUploadProps {
   value?: string;
@@ -116,7 +125,8 @@ export function ImageUpload({
           ...prev,
           isUploading: false,
           progress: 0,
-          error: error instanceof Error ? error.message : "Erreur lors de l'upload",
+          error:
+            error instanceof Error ? error.message : "Erreur lors de l'upload",
         }));
       }
     },
@@ -169,7 +179,7 @@ export function ImageUpload({
   });
 
   const handleCropComplete = useCallback(
-    (cropData: PixelCrop, _croppedImageUrl: string) => {
+    (cropData: PixelCrop) => {
       if (originalFile) {
         setState((prev) => ({ ...prev, cropData }));
         uploadImage(originalFile, cropData);
@@ -185,9 +195,12 @@ export function ImageUpload({
       setState((prev) => ({ ...prev, isUploading: true }));
 
       try {
-        const response = await fetch(`/api/upload?path=${encodeURIComponent(value)}`, {
-          method: "DELETE",
-        });
+        const response = await fetch(
+          `/api/upload?path=${encodeURIComponent(value)}`,
+          {
+            method: "DELETE",
+          }
+        );
 
         if (!response.ok) {
           console.error("Erreur lors de la suppression du fichier");
@@ -244,7 +257,9 @@ export function ImageUpload({
 
                 <div className="space-y-2">
                   <h3 className="text-lg font-medium">
-                    {isDragActive ? "Déposez l'image ici" : "Télécharger une image"}
+                    {isDragActive
+                      ? "Déposez l'image ici"
+                      : "Télécharger une image"}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Glissez-déposez une image ou cliquez pour sélectionner
@@ -270,7 +285,9 @@ export function ImageUpload({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Upload en cours...</span>
-                <span className="text-sm text-muted-foreground">{state.progress}%</span>
+                <span className="text-sm text-muted-foreground">
+                  {state.progress}%
+                </span>
               </div>
               <Progress value={state.progress} />
             </div>
@@ -296,7 +313,7 @@ export function ImageUpload({
           <CardContent className="p-4">
             <div className="flex items-start space-x-4">
               <div className="relative">
-                <img
+                <Image
                   src={value}
                   alt="Image uploadée"
                   className="w-24 h-24 object-cover rounded-lg"

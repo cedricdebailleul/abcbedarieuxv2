@@ -58,17 +58,6 @@ const getShareUrls = (data: ShareData) => {
   const encodedTitle = encodeURIComponent(data.title);
   const encodedDescription = encodeURIComponent(data.description);
 
-  // URL absolue pour l'image (nécessaire pour Facebook Open Graph)
-  const baseUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
-  const absoluteImageUrl = data.image
-    ? data.image.startsWith("http")
-      ? data.image
-      : `${baseUrl}${data.image}`
-    : `${baseUrl}/images/og-default.jpg`;
-
   // Hashtags optimisés selon le type
   const typeHashtags = {
     event: ["Bédarieux", "Événement", "Sortie"],

@@ -1,28 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Mail, 
-  Plus, 
-  Search, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Send,
-  Calendar,
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Plus,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
   Users,
   BarChart3,
   Filter,
   MoreVertical,
   Copy,
-  Archive,
-  CheckSquare
 } from "lucide-react";
 import {
   Table,
@@ -39,15 +40,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
@@ -87,14 +88,14 @@ export default function CampaignsPage() {
     totalCount: 0,
     totalPages: 0,
     hasNextPage: false,
-    hasPrevPage: false
+    hasPrevPage: false,
   });
 
   // Filtres
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  
+
   // Sélection multiple et suppression
   const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -102,7 +103,7 @@ export default function CampaignsPage() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [forceDeleting, setForceDeleting] = useState(false);
 
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -127,12 +128,12 @@ export default function CampaignsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, search, statusFilter, typeFilter]);
 
   useEffect(() => {
     const timeout = setTimeout(fetchCampaigns, search ? 500 : 0);
     return () => clearTimeout(timeout);
-  }, [search, statusFilter, typeFilter, pagination.page]);
+  }, [search, statusFilter, typeFilter, pagination.page, fetchCampaigns]);
 
   const handleDelete = async (campaignId: string) => {
     setCampaignToDelete(campaignId);
@@ -143,20 +144,25 @@ export default function CampaignsPage() {
     if (!campaignToDelete) return;
 
     try {
-      const response = await fetch(`/api/admin/newsletter/campaigns/${campaignToDelete}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/admin/newsletter/campaigns/${campaignToDelete}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
         toast.success("Campagne supprimée avec succès");
         fetchCampaigns();
-        setSelectedCampaigns(prev => prev.filter(id => id !== campaignToDelete));
+        setSelectedCampaigns((prev) =>
+          prev.filter((id) => id !== campaignToDelete)
+        );
       } else {
         toast.error(data.error || "Erreur lors de la suppression");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la suppression");
     } finally {
       setShowDeleteDialog(false);
@@ -166,37 +172,46 @@ export default function CampaignsPage() {
 
   const handleBulkDelete = async (force = false) => {
     if (selectedCampaigns.length === 0) return;
-    
+
     if (force) {
       setForceDeleting(true);
     } else {
       setBulkDeleting(true);
     }
-    
+
     try {
-      const response = await fetch('/api/admin/newsletter/campaigns/bulk-delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          campaignIds: selectedCampaigns,
-          force: force 
-        })
-      });
+      const response = await fetch(
+        "/api/admin/newsletter/campaigns/bulk-delete",
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            campaignIds: selectedCampaigns,
+            force: force,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(`${data.deletedCount} campagne(s) supprimée(s) avec succès`);
+        toast.success(
+          `${data.deletedCount} campagne(s) supprimée(s) avec succès`
+        );
         fetchCampaigns();
         setSelectedCampaigns([]);
       } else {
         if (data.undeletableCampaigns && !force) {
-          toast.error(`Impossible de supprimer certaines campagnes: ${data.undeletableCampaigns.map(c => c.reason).join(', ')}`);
+          toast.error(
+            `Impossible de supprimer certaines campagnes: ${data.undeletableCampaigns
+              .map((c: { reason: string }) => c.reason)
+              .join(", ")}`
+          );
         } else {
           toast.error(data.error || "Erreur lors de la suppression");
         }
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la suppression en masse");
     } finally {
       setBulkDeleting(false);
@@ -208,50 +223,70 @@ export default function CampaignsPage() {
     if (selectedCampaigns.length === campaigns.length) {
       setSelectedCampaigns([]);
     } else {
-      setSelectedCampaigns(campaigns.map(c => c.id));
+      setSelectedCampaigns(campaigns.map((c) => c.id));
     }
   };
 
   const toggleSelectCampaign = (campaignId: string) => {
-    setSelectedCampaigns(prev => 
-      prev.includes(campaignId) 
-        ? prev.filter(id => id !== campaignId)
+    setSelectedCampaigns((prev) =>
+      prev.includes(campaignId)
+        ? prev.filter((id) => id !== campaignId)
         : [...prev, campaignId]
     );
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "DRAFT": return "bg-gray-100 text-gray-800";
-      case "SCHEDULED": return "bg-blue-100 text-blue-800";
-      case "SENDING": return "bg-orange-100 text-orange-800";
-      case "SENT": return "bg-green-100 text-green-800";
-      case "CANCELLED": return "bg-red-100 text-red-800";
-      case "ERROR": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "DRAFT":
+        return "bg-gray-100 text-gray-800";
+      case "SCHEDULED":
+        return "bg-blue-100 text-blue-800";
+      case "SENDING":
+        return "bg-orange-100 text-orange-800";
+      case "SENT":
+        return "bg-green-100 text-green-800";
+      case "CANCELLED":
+        return "bg-red-100 text-red-800";
+      case "ERROR":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "DRAFT": return "Brouillon";
-      case "SCHEDULED": return "Programmée";
-      case "SENDING": return "En cours";
-      case "SENT": return "Envoyée";
-      case "CANCELLED": return "Annulée";
-      case "ERROR": return "Erreur";
-      default: return status;
+      case "DRAFT":
+        return "Brouillon";
+      case "SCHEDULED":
+        return "Programmée";
+      case "SENDING":
+        return "En cours";
+      case "SENT":
+        return "Envoyée";
+      case "CANCELLED":
+        return "Annulée";
+      case "ERROR":
+        return "Erreur";
+      default:
+        return status;
     }
   };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case "NEWSLETTER": return "Newsletter";
-      case "ANNOUNCEMENT": return "Annonce";
-      case "EVENT_DIGEST": return "Événements";
-      case "PLACE_UPDATE": return "Commerces";
-      case "PROMOTIONAL": return "Promotion";
-      default: return type;
+      case "NEWSLETTER":
+        return "Newsletter";
+      case "ANNOUNCEMENT":
+        return "Annonce";
+      case "EVENT_DIGEST":
+        return "Événements";
+      case "PLACE_UPDATE":
+        return "Commerces";
+      case "PROMOTIONAL":
+        return "Promotion";
+      default:
+        return type;
     }
   };
 
@@ -262,7 +297,7 @@ export default function CampaignsPage() {
         <div>
           <h1 className="text-3xl font-bold">Campagnes Newsletter</h1>
           <p className="text-muted-foreground">
-            Gérez toutes vos campagnes d'email marketing
+            Gérez toutes vos campagnes d&apos;email marketing
             {selectedCampaigns.length > 0 && (
               <span className="ml-2 text-blue-600 font-medium">
                 • {selectedCampaigns.length} sélectionnée(s)
@@ -273,25 +308,29 @@ export default function CampaignsPage() {
         <div className="flex items-center gap-2">
           {selectedCampaigns.length > 0 && (
             <>
-              <Button 
-                variant="destructive" 
-                size="sm" 
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={() => handleBulkDelete(false)}
                 disabled={bulkDeleting || forceDeleting}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                {bulkDeleting ? "Suppression..." : `Supprimer (${selectedCampaigns.length})`}
+                {bulkDeleting
+                  ? "Suppression..."
+                  : `Supprimer (${selectedCampaigns.length})`}
               </Button>
-              <Button 
-                variant="destructive" 
-                size="sm" 
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={() => handleBulkDelete(true)}
                 disabled={bulkDeleting || forceDeleting}
                 className="bg-red-600 hover:bg-red-700"
                 title="Suppression forcée (Admin) - Supprime même les campagnes envoyées"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                {forceDeleting ? "Suppression..." : `Forcer (${selectedCampaigns.length})`}
+                {forceDeleting
+                  ? "Suppression..."
+                  : `Forcer (${selectedCampaigns.length})`}
               </Button>
             </>
           )}
@@ -362,7 +401,8 @@ export default function CampaignsPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {pagination.totalCount} campagne{pagination.totalCount > 1 ? "s" : ""}
+            {pagination.totalCount} campagne
+            {pagination.totalCount > 1 ? "s" : ""}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -377,8 +417,11 @@ export default function CampaignsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">
-                    <Checkbox 
-                      checked={selectedCampaigns.length === campaigns.length && campaigns.length > 0}
+                    <Checkbox
+                      checked={
+                        selectedCampaigns.length === campaigns.length &&
+                        campaigns.length > 0
+                      }
                       onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>
@@ -393,11 +436,20 @@ export default function CampaignsPage() {
               </TableHeader>
               <TableBody>
                 {campaigns.map((campaign) => (
-                  <TableRow key={campaign.id} className={selectedCampaigns.includes(campaign.id) ? "bg-muted/50" : ""}>
+                  <TableRow
+                    key={campaign.id}
+                    className={
+                      selectedCampaigns.includes(campaign.id)
+                        ? "bg-muted/50"
+                        : ""
+                    }
+                  >
                     <TableCell>
-                      <Checkbox 
+                      <Checkbox
                         checked={selectedCampaigns.includes(campaign.id)}
-                        onCheckedChange={() => toggleSelectCampaign(campaign.id)}
+                        onCheckedChange={() =>
+                          toggleSelectCampaign(campaign.id)
+                        }
                       />
                     </TableCell>
                     <TableCell>
@@ -411,26 +463,26 @@ export default function CampaignsPage() {
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <Badge variant="secondary">
                         {getTypeLabel(campaign.type)}
                       </Badge>
                     </TableCell>
-                    
+
                     <TableCell>
                       <Badge className={getStatusColor(campaign.status)}>
                         {getStatusLabel(campaign.status)}
                       </Badge>
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
                         {campaign.totalRecipients}
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       {campaign.status === "SENT" && (
                         <div className="text-sm">
@@ -445,58 +497,73 @@ export default function CampaignsPage() {
                           </div>
                           <div>Ouverts: {campaign.totalOpened}</div>
                           <div className="text-xs text-muted-foreground">
-                            Taux: {campaign.totalSent > 0 ? Math.round((campaign.totalOpened / campaign.totalSent) * 100) : 0}%
+                            Taux:{" "}
+                            {campaign.totalSent > 0
+                              ? Math.round(
+                                  (campaign.totalOpened / campaign.totalSent) *
+                                    100
+                                )
+                              : 0}
+                            %
                           </div>
                         </div>
                       )}
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="text-sm">
                         {campaign.sentAt && (
-                          <div>✅ {new Date(campaign.sentAt).toLocaleDateString("fr-FR")}</div>
+                          <div>
+                            ✅{" "}
+                            {new Date(campaign.sentAt).toLocaleDateString(
+                              "fr-FR"
+                            )}
+                          </div>
                         )}
-                        {campaign.scheduledAt && campaign.status === "SCHEDULED" && (
-                          <div>📅 {new Date(campaign.scheduledAt).toLocaleDateString("fr-FR")}</div>
-                        )}
+                        {campaign.scheduledAt &&
+                          campaign.status === "SCHEDULED" && (
+                            <div>
+                              📅{" "}
+                              {new Date(
+                                campaign.scheduledAt
+                              ).toLocaleDateString("fr-FR")}
+                            </div>
+                          )}
                         <div className="text-xs text-muted-foreground">
-                          Créée le {new Date(campaign.createdAt).toLocaleDateString("fr-FR")}
+                          Créée le{" "}
+                          {new Date(campaign.createdAt).toLocaleDateString(
+                            "fr-FR"
+                          )}
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell className="text-right">
                       <div className="flex justify-end items-center gap-2">
                         {/* Actions rapides */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                        >
-                          <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}`}>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link
+                            href={`/dashboard/admin/newsletter/campaigns/${campaign.id}`}
+                          >
                             <Eye className="w-4 h-4" />
                           </Link>
                         </Button>
-                        
+
                         {campaign.status === "DRAFT" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            asChild
-                          >
-                            <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/edit`}>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link
+                              href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/edit`}
+                            >
                               <Edit className="w-4 h-4" />
                             </Link>
                           </Button>
                         )}
-                        
+
                         {campaign.status === "SENT" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            asChild
-                          >
-                            <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/stats`}>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link
+                              href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/stats`}
+                            >
                               <BarChart3 className="w-4 h-4" />
                             </Link>
                           </Button>
@@ -511,48 +578,56 @@ export default function CampaignsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}`}>
+                              <Link
+                                href={`/dashboard/admin/newsletter/campaigns/${campaign.id}`}
+                              >
                                 <Eye className="w-4 h-4 mr-2" />
                                 Voir détails
                               </Link>
                             </DropdownMenuItem>
-                            
+
                             {campaign.status === "DRAFT" && (
                               <>
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/edit`}>
+                                  <Link
+                                    href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/edit`}
+                                  >
                                     <Edit className="w-4 h-4 mr-2" />
                                     Modifier
                                   </Link>
                                 </DropdownMenuItem>
-                                
+
                                 <DropdownMenuItem>
                                   <Copy className="w-4 h-4 mr-2" />
                                   Dupliquer
                                 </DropdownMenuItem>
                               </>
                             )}
-                            
+
                             {campaign.status === "SENT" && (
                               <DropdownMenuItem asChild>
-                                <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/stats`}>
+                                <Link
+                                  href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/stats`}
+                                >
                                   <BarChart3 className="w-4 h-4 mr-2" />
                                   Statistiques
                                 </Link>
                               </DropdownMenuItem>
                             )}
-                          
-                          {["DRAFT", "CANCELLED"].includes(campaign.status) && (
-                            <DropdownMenuItem 
-                              onClick={() => handleDelete(campaign.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+
+                            {["DRAFT", "CANCELLED"].includes(
+                              campaign.status
+                            ) && (
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(campaign.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -569,19 +644,23 @@ export default function CampaignsPage() {
           <Button
             variant="outline"
             disabled={!pagination.hasPrevPage}
-            onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+            onClick={() =>
+              setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
+            }
           >
             Précédent
           </Button>
-          
+
           <span className="flex items-center px-4">
             Page {pagination.page} sur {pagination.totalPages}
           </span>
-          
+
           <Button
             variant="outline"
             disabled={!pagination.hasNextPage}
-            onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+            onClick={() =>
+              setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+            }
           >
             Suivant
           </Button>
@@ -594,12 +673,16 @@ export default function CampaignsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cette campagne ? Cette action ne peut pas être annulée.
+              Êtes-vous sûr de vouloir supprimer cette campagne ? Cette action
+              ne peut pas être annulée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>

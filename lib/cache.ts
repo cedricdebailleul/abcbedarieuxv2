@@ -1,27 +1,31 @@
 // Simple cache en mémoire pour les statistiques
 class StatsCache {
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private cache = new Map<
+    string,
+    { data: unknown; timestamp: number; ttl: number }
+  >();
 
-  set(key: string, data: any, ttlMs: number = 5 * 60 * 1000) { // 5 minutes par défaut
+  set<T>(key: string, data: T, ttlMs: number = 5 * 60 * 1000) {
+    // 5 minutes par défaut
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl: ttlMs
+      ttl: ttlMs,
     });
   }
 
-  get(key: string): any | null {
+  get<T>(key: string): T | null {
     const item = this.cache.get(key);
-    
+
     if (!item) return null;
-    
+
     // Vérifier si l'item a expiré
     if (Date.now() - item.timestamp > item.ttl) {
       this.cache.delete(key);
       return null;
     }
-    
-    return item.data;
+
+    return item.data as T;
   }
 
   delete(key: string): boolean {
@@ -46,7 +50,7 @@ class StatsCache {
   getStats(): { size: number; keys: string[] } {
     return {
       size: this.cache.size,
-      keys: Array.from(this.cache.keys())
+      keys: Array.from(this.cache.keys()),
     };
   }
 }
@@ -55,7 +59,8 @@ class StatsCache {
 export const statsCache = new StatsCache();
 
 // Nettoyage automatique toutes les 10 minutes
-if (typeof window === 'undefined') { // Côté serveur seulement
+if (typeof window === "undefined") {
+  // Côté serveur seulement
   setInterval(() => {
     statsCache.cleanup();
   }, 10 * 60 * 1000);
@@ -63,10 +68,10 @@ if (typeof window === 'undefined') { // Côté serveur seulement
 
 // Fonctions utilitaires pour les clés de cache
 export const getCacheKey = {
-  dashboardStats: () => 'dashboard:stats',
+  dashboardStats: () => "dashboard:stats",
   viewsStats: (period: string) => `views:stats:${period}`,
   userStats: (userId: string) => `user:stats:${userId}`,
-  adminStats: () => 'admin:stats',
+  adminStats: () => "admin:stats",
   postViews: (postId: string) => `post:views:${postId}`,
   monthlyData: (year: number, month: number) => `monthly:${year}:${month}`,
 };
@@ -80,12 +85,12 @@ export async function withCache<T>(
   // Essayer de récupérer du cache d'abord
   const cached = statsCache.get(key);
   if (cached !== null) {
-    return cached;
+    return cached as T;
   }
 
   // Sinon, exécuter la requête et mettre en cache
   const data = await fetcher();
   statsCache.set(key, data, ttlMs);
-  
+
   return data;
 }

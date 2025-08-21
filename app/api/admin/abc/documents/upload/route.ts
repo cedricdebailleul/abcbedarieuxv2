@@ -60,7 +60,6 @@ export async function POST(request: Request) {
     // Créer un nom de fichier unique
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 15);
-    const extension = path.extname(file.name);
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const fileName = `${timestamp}_${randomSuffix}_${safeName}`;
 

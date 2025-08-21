@@ -15,14 +15,14 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Toujours afficher les cartes principales */}
       <UserSectionCards />
-      
+
       {/* Onglets pour les différentes vues */}
       <div className="px-4 lg:px-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <IconDashboard className="size-4" />
-              Vue d'ensemble
+              Vue d&apos;ensemble
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <IconEye className="size-4" />

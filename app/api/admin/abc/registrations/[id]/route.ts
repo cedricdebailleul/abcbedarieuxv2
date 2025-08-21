@@ -104,7 +104,27 @@ export async function PATCH(
     // Déterminer le type de mise à jour selon les champs présents
     const isStatusUpdate = body.status !== undefined;
     
-    let updateData: any = {};
+    let updateData: Partial<{
+      status: "PENDING" | "APPROVED" | "REJECTED" | "PROCESSED";
+      adminNotes: string;
+      processedAt: Date;
+      processedBy: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      birthDate: Date;
+      address: string;
+      city: string;
+      postalCode: string;
+      profession: string;
+      company: string;
+      siret: string;
+      membershipType: "ACTIF" | "ARTISAN" | "AUTO_ENTREPRENEUR" | "PARTENAIRE" | "BIENFAITEUR";
+      motivation: string;
+      interests: string;
+      updatedAt: Date;
+    }> = {};
     
     if (isStatusUpdate) {
       // Mise à jour du statut seulement
@@ -118,9 +138,10 @@ export async function PATCH(
     } else {
       // Mise à jour complète des données
       const validatedData = fullUpdateSchema.parse(body);
+      const { birthDate, ...restData } = validatedData;
       updateData = {
-        ...validatedData,
-        ...(validatedData.birthDate && { birthDate: new Date(validatedData.birthDate) }),
+        ...restData,
+        ...(birthDate ? { birthDate: new Date(birthDate as string) } : {}),
         updatedAt: new Date(),
       };
     }
@@ -164,7 +185,7 @@ export async function PATCH(
             data: {
               email: existingRegistration.email,
               name: `${existingRegistration.firstName} ${existingRegistration.lastName}`,
-              emailVerified: new Date(), // Considérer comme vérifié puisque approuvé par admin
+              emailVerified: true, // Considérer comme vérifié puisque approuvé par admin
             }
           });
         }
@@ -183,7 +204,7 @@ export async function PATCH(
           await prisma.abcMember.create({
             data: {
               userId: user.id,
-              type: existingRegistration.membershipType as any,
+              type: existingRegistration.membershipType as "ACTIF" | "ARTISAN" | "AUTO_ENTREPRENEUR" | "PARTENAIRE" | "BIENFAITEUR",
               memberNumber: memberNumber,
               membershipDate: new Date(),
               status: "ACTIVE",
@@ -285,7 +306,7 @@ export async function PATCH(
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { error: "Données invalides", details: error.issues },
         { status: 400 }
       );
     }

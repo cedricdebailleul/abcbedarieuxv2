@@ -6,69 +6,83 @@ export async function GET(request: NextRequest) {
   try {
     // Rate limiting pour le tracking (moins strict)
     const clientIP = getClientIP(request);
-    const rateLimitResult = await checkRateLimit(trackingLimit, clientIP, request);
-    
+    if (!trackingLimit) {
+      throw new Error("Tracking limit is not defined");
+    }
+    const rateLimitResult = await checkRateLimit(trackingLimit, clientIP);
+
     // Pour le tracking, on ne bloque pas complètement mais on log si limite dépassée
     if (!rateLimitResult.success) {
       console.warn(`🚨 Rate limit tracking dépassé pour IP ${clientIP}`);
     }
-    
+
     const { searchParams } = new URL(request.url);
-    const campaignId = searchParams.get('c');
-    const subscriberId = searchParams.get('s');
+    const campaignId = searchParams.get("c");
+    const subscriberId = searchParams.get("s");
 
     if (!campaignId || !subscriberId) {
       // Retourner une image transparente même en cas d'erreur
       return new NextResponse(
-        Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'),
+        Buffer.from(
+          "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "base64"
+        ),
         {
           headers: {
-            'Content-Type': 'image/gif',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
+            "Content-Type": "image/gif",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
         }
       );
     }
 
     try {
-      console.log(`🔍 Tentative de tracking - Campagne: ${campaignId}, Abonné: ${subscriberId}`);
-      
+      console.log(
+        `🔍 Tentative de tracking - Campagne: ${campaignId}, Abonné: ${subscriberId}`
+      );
+
       // Vérifier que la campagne et l'abonné existent
       const [campaign, subscriber] = await Promise.all([
         prisma.newsletterCampaign.findUnique({
-          where: { id: campaignId }
+          where: { id: campaignId },
         }),
         prisma.newsletterSubscriber.findUnique({
-          where: { id: subscriberId }
-        })
+          where: { id: subscriberId },
+        }),
       ]);
 
       if (!campaign || !subscriber) {
-        console.log(`❌ Campagne ou abonné non trouvé - Campagne: ${!!campaign}, Abonné: ${!!subscriber}`);
+        console.log(
+          `❌ Campagne ou abonné non trouvé - Campagne: ${!!campaign}, Abonné: ${!!subscriber}`
+        );
         return new NextResponse(
-          Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'),
-          { headers: { 'Content-Type': 'image/gif' } }
+          Buffer.from(
+            "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+            "base64"
+          ),
+          { headers: { "Content-Type": "image/gif" } }
         );
       }
 
-      console.log(`✅ Tracking pixel accessed - Campagne: ${campaign.title}, Abonné ID: ${subscriber.id}`);
+      console.log(
+        `✅ Tracking pixel accessed - Campagne: ${campaign.title}, Abonné ID: ${subscriber.id}`
+      );
 
       // Capturer les informations de l'utilisateur
-      const userAgent = request.headers.get('user-agent') || '';
-      const forwardedFor = request.headers.get('x-forwarded-for');
-      const realIp = request.headers.get('x-real-ip');
-      const clientIp = forwardedFor?.split(',')[0] || realIp || 'unknown';
+      const forwardedFor = request.headers.get("x-forwarded-for");
+      const realIp = request.headers.get("x-real-ip");
+      const clientIp = forwardedFor?.split(",")[0] || realIp || "unknown";
 
       // Vérifier si déjà ouvert pour éviter les doublons
       const existingOpen = await prisma.newsletterCampaignSent.findUnique({
         where: {
           campaignId_subscriberId: {
             campaignId,
-            subscriberId
-          }
-        }
+            subscriberId,
+          },
+        },
       });
 
       if (existingOpen && !existingOpen.openedAt) {
@@ -77,69 +91,77 @@ export async function GET(request: NextRequest) {
           where: {
             campaignId_subscriberId: {
               campaignId,
-              subscriberId
-            }
+              subscriberId,
+            },
           },
           data: {
             openedAt: new Date(),
-            status: 'OPENED'
-          }
+            status: "OPENED",
+          },
         });
 
         // Mettre à jour les statistiques de la campagne
         const openCount = await prisma.newsletterCampaignSent.count({
           where: {
             campaignId,
-            openedAt: { not: null }
-          }
+            openedAt: { not: null },
+          },
         });
 
         await prisma.newsletterCampaign.update({
           where: { id: campaignId },
-          data: { totalOpened: openCount }
+          data: { totalOpened: openCount },
         });
 
-        console.log(`📧 Nouvelle ouverture: Campagne ${campaignId}, Abonné ${subscriberId}, IP: ${clientIp}`);
+        console.log(
+          `📧 Nouvelle ouverture: Campagne ${campaignId}, Abonné ${subscriberId}, IP: ${clientIp}`
+        );
       } else if (!existingOpen) {
         // Enregistrement inexistant (cas rare), créer l'entrée
         await prisma.newsletterCampaignSent.create({
           data: {
             campaignId,
             subscriberId,
-            status: 'OPENED',
+            status: "OPENED",
             sentAt: new Date(),
             deliveredAt: new Date(),
             openedAt: new Date(),
-            messageId: `track-${Date.now()}`
-          }
+            messageId: `track-${Date.now()}`,
+          },
         });
 
-        console.log(`📧 Ouverture trackée (nouvel enregistrement): Campagne ${campaignId}, Abonné ${subscriberId}`);
+        console.log(
+          `📧 Ouverture trackée (nouvel enregistrement): Campagne ${campaignId}, Abonné ${subscriberId}`
+        );
       }
       // Si déjà ouvert, on ne fait rien (évite les multiples comptages)
-
     } catch (error) {
-      console.error('Erreur lors du tracking d\'ouverture:', error);
+      console.error("Erreur lors du tracking d'ouverture:", error);
     }
 
     // Retourner un pixel transparent 1x1
     return new NextResponse(
-      Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'),
+      Buffer.from(
+        "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        "base64"
+      ),
       {
         headers: {
-          'Content-Type': 'image/gif',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+          "Content-Type": "image/gif",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
       }
     );
-
   } catch (error) {
-    console.error('Erreur générale tracking ouverture:', error);
+    console.error("Erreur générale tracking ouverture:", error);
     return new NextResponse(
-      Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'),
-      { headers: { 'Content-Type': 'image/gif' } }
+      Buffer.from(
+        "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        "base64"
+      ),
+      { headers: { "Content-Type": "image/gif" } }
     );
   }
 }

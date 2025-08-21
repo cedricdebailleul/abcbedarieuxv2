@@ -19,11 +19,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { getBadgesAction } from "@/actions/badge";
-import { RARITY_COLORS, RARITY_LABELS } from "@/lib/validations/badge";
+import {
+  RARITY_COLORS,
+  RARITY_LABELS,
+  BadgeRarity,
+} from "@/lib/validations/badge";
+import { BadgeListItem } from "@/lib/types/badge";
+import Image from "next/image";
 
 export function BadgeDistributionTable() {
   const [data, setData] = useState<{
-    badges: any[];
+    badges: BadgeListItem[];
     total: number;
   } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,13 +44,19 @@ export function BadgeDistributionTable() {
           sortBy: "createdAt",
           sortOrder: "desc",
         });
-        
+
         if (result.success) {
-          setData(result.data!);
+          setData({
+            ...result.data!,
+            badges: result.data!.badges.map((badge) => ({
+              ...badge,
+              iconUrl: badge.iconUrl || null, // Ensure iconUrl is always present
+            })),
+          });
         } else {
           toast.error(result.error || "Erreur lors du chargement");
         }
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors du chargement des badges");
       }
       setLoading(false);
@@ -53,17 +65,20 @@ export function BadgeDistributionTable() {
     loadBadges();
   }, []);
 
-  const getRarityColor = (rarity: string) => {
-    return RARITY_COLORS[rarity as keyof typeof RARITY_COLORS] || RARITY_COLORS.COMMON;
+  const getRarityColor = (rarity: BadgeRarity): string => {
+    return RARITY_COLORS[rarity] || RARITY_COLORS.COMMON;
   };
 
   const renderBadgeIcon = (iconUrl: string | null) => {
     if (!iconUrl) return <Award className="w-5 h-5 text-muted-foreground" />;
-    
-    const isUrl = iconUrl.startsWith('http://') || iconUrl.startsWith('https://') || iconUrl.startsWith('/');
-    
+
+    const isUrl =
+      iconUrl.startsWith("http://") ||
+      iconUrl.startsWith("https://") ||
+      iconUrl.startsWith("/");
+
     if (isUrl) {
-      return <img src={iconUrl} alt="" className="w-5 h-5 object-contain" />;
+      return <Image src={iconUrl} alt="" className="w-5 h-5 object-contain" />;
     } else {
       return <span className="text-lg">{iconUrl}</span>;
     }
@@ -108,7 +123,9 @@ export function BadgeDistributionTable() {
   }
 
   // Trier les badges par nombre d'utilisateurs (décroissant)
-  const sortedBadges = [...data.badges].sort((a, b) => b._count.users - a._count.users);
+  const sortedBadges = [...data.badges].sort(
+    (a, b) => b._count.users - a._count.users
+  );
 
   return (
     <Card>
@@ -118,7 +135,7 @@ export function BadgeDistributionTable() {
           Distribution des badges
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Badges classés par nombre d'attributions
+          Badges classés par nombre d&apos;attributions
         </p>
       </CardHeader>
       <CardContent>
@@ -140,7 +157,9 @@ export function BadgeDistributionTable() {
                     <div className="flex items-center gap-3">
                       {renderBadgeIcon(badge.iconUrl)}
                       <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate">{badge.title}</div>
+                        <div className="font-medium truncate">
+                          {badge.title}
+                        </div>
                         <div className="text-sm text-muted-foreground truncate">
                           {badge.description}
                         </div>
@@ -148,14 +167,18 @@ export function BadgeDistributionTable() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge 
+                    <Badge
                       variant="outline"
-                      style={{ 
+                      style={{
                         borderColor: getRarityColor(badge.rarity),
-                        color: getRarityColor(badge.rarity)
+                        color: getRarityColor(badge.rarity),
                       }}
                     >
-                      {RARITY_LABELS[badge.rarity as keyof typeof RARITY_LABELS]}
+                      {
+                        RARITY_LABELS[
+                          badge.rarity as keyof typeof RARITY_LABELS
+                        ]
+                      }
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
@@ -181,13 +204,11 @@ export function BadgeDistributionTable() {
             </TableBody>
           </Table>
         </div>
-        
+
         {sortedBadges.length > 10 && (
           <div className="mt-4 text-center">
             <Button variant="outline" asChild>
-              <Link href="/dashboard/admin/badges">
-                Voir tous les badges
-              </Link>
+              <Link href="/dashboard/admin/badges">Voir tous les badges</Link>
             </Button>
           </div>
         )}

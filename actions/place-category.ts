@@ -58,10 +58,7 @@ export async function createPlaceCategoryAction(
     // Vérifier l'unicité du nom et du slug
     const existing = await prisma.placeCategory.findFirst({
       where: {
-        OR: [
-          { name: validatedData.name },
-          { slug: validatedData.slug },
-        ],
+        OR: [{ name: validatedData.name }, { slug: validatedData.slug }],
       },
       select: { id: true, name: true, slug: true },
     });
@@ -73,7 +70,7 @@ export async function createPlaceCategoryAction(
           [existing.name === validatedData.name ? "name" : "slug"]: [
             existing.name === validatedData.name
               ? "Une catégorie avec ce nom existe déjà"
-              : "Une catégorie avec ce slug existe déjà"
+              : "Une catégorie avec ce slug existe déjà",
           ],
         },
       };
@@ -130,9 +127,27 @@ export async function createPlaceCategoryAction(
 }
 
 // READ - Obtenir une catégorie par ID
-export async function getPlaceCategoryAction(
-  categoryId: string
-): Promise<ActionResult<any>> {
+export async function getPlaceCategoryAction(categoryId: string): Promise<
+  ActionResult<{
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    icon: string | null;
+    color: string | null;
+    bgColor: string | null;
+    textColor: string | null;
+    borderColor: string | null;
+    isActive: boolean;
+    sortOrder: number;
+    parentId: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    parent?: { id: string; name: string; slug: string } | null;
+    children: { id: string; name: string; slug: string; isActive: boolean }[];
+    _count: { children: number };
+  }>
+> {
   try {
     const category = await prisma.placeCategory.findUnique({
       where: { id: categoryId },
@@ -179,18 +194,31 @@ export async function getPlaceCategoryAction(
 // READ - Lister les catégories avec filtres et pagination
 export async function getPlaceCategoriesAction(
   filters: PlaceCategoryFilters
-): Promise<ActionResult<{ categories: any[]; total: number; pages: number }>> {
+): Promise<
+  ActionResult<{
+    categories: {
+      id: string;
+      name: string;
+      slug: string;
+      description: string | null;
+      icon: string | null;
+      color: string | null;
+      bgColor: string | null;
+      textColor: string | null;
+      borderColor: string | null;
+      sortOrder: number;
+      isActive: boolean;
+      parent?: { id: string; name: string; slug: string } | null;
+      _count: { children: number };
+    }[];
+    total: number;
+    pages: number;
+  }>
+> {
   try {
     const validatedFilters = placeCategoryFiltersSchema.parse(filters);
-    const {
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-      search,
-      isActive,
-      parentId,
-    } = validatedFilters;
+    const { page, limit, sortBy, sortOrder, search, isActive, parentId } =
+      validatedFilters;
 
     // Construire les conditions de filtre
     const whereClause: Prisma.PlaceCategoryWhereInput = {};
@@ -310,7 +338,7 @@ export async function updatePlaceCategoryAction(
             [existing.name === validatedData.name ? "name" : "slug"]: [
               existing.name === validatedData.name
                 ? "Une catégorie avec ce nom existe déjà"
-                : "Une catégorie avec ce slug existe déjà"
+                : "Une catégorie avec ce slug existe déjà",
             ],
           },
         };
@@ -384,7 +412,9 @@ export async function updatePlaceCategoryAction(
 }
 
 // DELETE - Supprimer une catégorie
-export async function deletePlaceCategoryAction(categoryId: string): Promise<ActionResult> {
+export async function deletePlaceCategoryAction(
+  categoryId: string
+): Promise<ActionResult> {
   try {
     await checkAdminPermissions();
 
@@ -456,24 +486,19 @@ export async function getPlaceCategoryStatsAction(): Promise<
 > {
   try {
     // Exécuter les requêtes en parallèle
-    const [
-      total,
-      active,
-      inactive,
-      rootCategories,
-      subCategories,
-    ] = await Promise.all([
-      // Total des catégories
-      prisma.placeCategory.count(),
-      // Catégories actives
-      prisma.placeCategory.count({ where: { isActive: true } }),
-      // Catégories inactives
-      prisma.placeCategory.count({ where: { isActive: false } }),
-      // Catégories racines (sans parent)
-      prisma.placeCategory.count({ where: { parentId: null } }),
-      // Sous-catégories (avec parent)
-      prisma.placeCategory.count({ where: { parentId: { not: null } } }),
-    ]);
+    const [total, active, inactive, rootCategories, subCategories] =
+      await Promise.all([
+        // Total des catégories
+        prisma.placeCategory.count(),
+        // Catégories actives
+        prisma.placeCategory.count({ where: { isActive: true } }),
+        // Catégories inactives
+        prisma.placeCategory.count({ where: { isActive: false } }),
+        // Catégories racines (sans parent)
+        prisma.placeCategory.count({ where: { parentId: null } }),
+        // Sous-catégories (avec parent)
+        prisma.placeCategory.count({ where: { parentId: { not: null } } }),
+      ]);
 
     return {
       success: true,
@@ -503,7 +528,21 @@ export async function getPlaceCategoryStatsAction(): Promise<
 }
 
 // GET HIERARCHICAL - Obtenir toutes les catégories en arbre hiérarchique
-export async function getPlaceCategoriesHierarchyAction(): Promise<ActionResult<any[]>> {
+export async function getPlaceCategoriesHierarchyAction(): Promise<
+  ActionResult<
+    {
+      id: string;
+      name: string;
+      slug: string;
+      description: string | null;
+      icon: string | null;
+      color: string | null;
+      sortOrder: number;
+      isActive: boolean;
+      children: { id: string; name: string; slug: string; description: string | null; icon: string | null; color: string | null; sortOrder: number; isActive: boolean }[];
+    }[]
+  >
+> {
   try {
     // Récupérer toutes les catégories actives
     const categories = await prisma.placeCategory.findMany({
@@ -518,7 +557,7 @@ export async function getPlaceCategoriesHierarchyAction(): Promise<ActionResult<
     });
 
     // Filtrer pour ne garder que les catégories racines (sans parent)
-    const rootCategories = categories.filter(cat => !cat.parentId);
+    const rootCategories = categories.filter((cat) => !cat.parentId);
 
     return {
       success: true,

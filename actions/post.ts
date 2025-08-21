@@ -77,22 +77,22 @@ async function checkPostPermissions(postId?: string, requireAdmin = false) {
 }
 
 // CREATE - Créer un nouveau post
-export async function createPostAction(
-  input: CreatePostInput
-): Promise<ActionResult<{ 
-  id: string; 
-  slug: string; 
-  newBadges?: Array<{
-    badge: {
-      title: string;
-      description: string;
-      iconUrl?: string | null;
-      color?: string | null;
-      rarity: string;
-    };
-    reason: string;
-  }>;
-}>> {
+export async function createPostAction(input: CreatePostInput): Promise<
+  ActionResult<{
+    id: string;
+    slug: string;
+    newBadges?: Array<{
+      badge: {
+        title: string;
+        description: string;
+        iconUrl?: string | null;
+        color?: string | null;
+        rarity: string;
+      };
+      reason: string;
+    }>;
+  }>
+> {
   try {
     const { user } = await checkPostPermissions();
 
@@ -199,7 +199,17 @@ export async function createPostAction(
 export async function getPostAction(
   identifier: string,
   includeUnpublished = false
-): Promise<ActionResult<any>> {
+): Promise<
+  ActionResult<{
+    id: string;
+    slug: string;
+    author: { id: string; name: string; email: string; image: string | null };
+    category: { id: string; name: string; slug: string; color: string | null } | null;
+    tags: Array<{
+      tag: { id: string; name: string; slug: string; color: string | null };
+    }>;
+  }>
+> {
   try {
     const whereClause: Prisma.PostWhereInput = {
       OR: [{ id: identifier }, { slug: identifier }],
@@ -264,7 +274,17 @@ export async function getPostAction(
 
     return {
       success: true,
-      data: post,
+      data: {
+        ...post,
+        category: post.category
+          ? {
+              id: post.category.id,
+              name: post.category.name,
+              slug: post.category.slug,
+              color: post.category.color,
+            }
+          : null,
+      },
     };
   } catch (error) {
     console.error("Erreur lors de la récupération du post:", error);
@@ -279,7 +299,20 @@ export async function getPostAction(
 // READ - Lister les posts avec filtres et pagination
 export async function getPostsAction(
   filters: PostFilters
-): Promise<ActionResult<{ posts: any[]; total: number; pages: number }>> {
+): Promise<
+  ActionResult<{
+    posts: Array<{
+      id: string;
+      title: string;
+      slug: string;
+      author: { id: string; name: string };
+      category?: { id: string; name: string };
+      tags: Array<{ tag: { id: string; name: string } }>;
+    }>;
+    total: number;
+    pages: number;
+  }>
+> {
   try {
     // Vérifier l'authentification et les permissions
     const session = await auth.api.getSession({ headers: await headers() });
@@ -416,7 +449,20 @@ export async function getPostsAction(
     return {
       success: true,
       data: {
-        posts,
+        posts: posts.map((post) => ({
+          ...post,
+          category: post.category
+            ? {
+                id: post.category.id,
+                name: post.category.name,
+                slug: post.category.slug,
+                color: post.category.color,
+              }
+            : undefined,
+          tags: post.tags.map((tag) => ({
+            tag: { id: tag.tag.id, name: tag.tag.name },
+          })),
+        })),
         total,
         pages,
       },
@@ -750,7 +796,26 @@ export async function getPostsStatsAction(): Promise<
 // GET PUBLIC POSTS - Obtenir les articles publiés avec filtres (pour page articles publique)
 export async function getPublicPostsAction(
   filters: Partial<PostFilters>
-): Promise<ActionResult<{ posts: any[]; total: number; pages: number }>> {
+): Promise<
+  ActionResult<{
+    posts: Array<{
+      id: string;
+      title: string;
+      slug: string;
+      excerpt?: string | null;
+      content?: string | null;
+      published: boolean;
+      publishedAt?: Date | null;
+      createdAt: Date;
+      updatedAt: Date;
+      author: { id: string; name: string };
+      category?: { id: string; name: string; slug: string; color?: string | null } | null;
+      tags: Array<{ tag: { id: string; name: string; slug: string; color?: string | null } }>;
+    }>;
+    total: number;
+    pages: number;
+  }>
+> {
   try {
     const validatedFilters = postFiltersSchema.parse({
       ...filters,
@@ -841,7 +906,25 @@ export async function getPublicPostsAction(
     return {
       success: true,
       data: {
-        posts,
+        posts: posts.map((post) => ({
+          ...post,
+          category: post.category
+            ? { 
+                id: post.category.id, 
+                name: post.category.name, 
+                slug: post.category.slug, 
+                color: post.category.color 
+              }
+            : null,
+          tags: post.tags.map((tag) => ({
+            tag: { 
+              id: tag.tag.id, 
+              name: tag.tag.name, 
+              slug: tag.tag.slug, 
+              color: tag.tag.color 
+            },
+          })),
+        })),
         total,
         pages,
       },
@@ -859,7 +942,17 @@ export async function getPublicPostsAction(
 // GET LATEST POSTS - Obtenir les derniers articles publiés (pour page d'accueil)
 export async function getLatestPostsAction(
   limit: number = 6
-): Promise<ActionResult<any[]>> {
+): Promise<
+  ActionResult<
+    {
+      id: string;
+      name: string;
+      slug: string;
+      color: string | null;
+      _count: { posts: number };
+    }[]
+  >
+> {
   try {
     const posts = await prisma.post.findMany({
       where: {
@@ -904,7 +997,15 @@ export async function getLatestPostsAction(
 
     return {
       success: true,
-      data: posts,
+      data: posts.map((post) => ({
+        id: post.id,
+        name: post.title,
+        slug: post.slug,
+        color: post.category?.color || null,
+        _count: {
+          posts: post.tags.length,
+        },
+      })),
     };
   } catch (error) {
     console.error("Erreur lors de la récupération des derniers posts:", error);
@@ -917,7 +1018,17 @@ export async function getLatestPostsAction(
 }
 
 // Actions utilitaires
-export async function getCategoriesAction(): Promise<ActionResult<any[]>> {
+export async function getCategoriesAction(): Promise<
+  ActionResult<
+    {
+      id: string;
+      name: string;
+      slug: string;
+      color: string | null;
+      _count: { posts: number };
+    }[]
+  >
+> {
   try {
     const categories = await prisma.category.findMany({
       select: {
@@ -952,7 +1063,15 @@ export async function getCategoriesAction(): Promise<ActionResult<any[]>> {
 
 // GET PUBLIC CATEGORIES - Obtenir les catégories avec nombre d'articles publiés
 export async function getPublicCategoriesAction(): Promise<
-  ActionResult<any[]>
+  ActionResult<
+    {
+      id: string;
+      name: string;
+      slug: string;
+      color: string | null;
+      _count: { posts: number };
+    }[]
+  >
 > {
   try {
     const categories = await prisma.category.findMany({
@@ -999,7 +1118,17 @@ export async function getPublicCategoriesAction(): Promise<
   }
 }
 
-export async function getTagsAction(): Promise<ActionResult<any[]>> {
+export async function getTagsAction(): Promise<
+  ActionResult<
+    {
+      id: string;
+      name: string;
+      slug: string;
+      color: string | null;
+      _count: { posts: number };
+    }[]
+  >
+> {
   try {
     const tags = await prisma.tag.findMany({
       select: {
@@ -1033,7 +1162,17 @@ export async function getTagsAction(): Promise<ActionResult<any[]>> {
 }
 
 // GET PUBLIC TAGS - Obtenir les tags avec nombre d'articles publiés
-export async function getPublicTagsAction(): Promise<ActionResult<any[]>> {
+export async function getPublicTagsAction(): Promise<
+  ActionResult<
+    {
+      id: string;
+      name: string;
+      slug: string;
+      color: string | null;
+      _count: { posts: number };
+    }[]
+  >
+> {
   try {
     const tags = await prisma.tag.findMany({
       select: {
@@ -1166,7 +1305,22 @@ export async function createCategoryAction(
 export async function createTagsAction(input: {
   names: string;
   color?: string;
-}): Promise<ActionResult<{ created: any[]; existing: any[] }>> {
+}): Promise<
+  ActionResult<{
+    created: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      color?: string | null;
+    }>;
+    existing: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      color?: string | null;
+    }>;
+  }>
+> {
   try {
     // Vérifier les permissions
     const session = await auth.api.getSession({ headers: await headers() });

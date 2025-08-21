@@ -2,13 +2,27 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { AbcMemberType, AbcMemberRole, AbcMemberStatus } from "@/lib/generated/prisma";
 
 const updateMemberSchema = z.object({
-  type: z.enum(['ACTIF', 'ARTISAN', 'AUTO_ENTREPRENEUR', 'PARTENAIRE', 'BIENFAITEUR']).optional(),
-  role: z.enum(['MEMBRE', 'SECRETAIRE', 'TRESORIER', 'PRESIDENT', 'VICE_PRESIDENT']).optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'EXPIRED']).optional(),
+  type: z
+    .enum([
+      "ACTIF",
+      "ARTISAN",
+      "AUTO_ENTREPRENEUR",
+      "PARTENAIRE",
+      "BIENFAITEUR",
+    ])
+    .optional(),
+  role: z
+    .enum(["MEMBRE", "SECRETAIRE", "TRESORIER", "PRESIDENT", "VICE_PRESIDENT"])
+    .optional(),
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "EXPIRED"]).optional(),
   memberNumber: z.string().optional(),
-  membershipDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  membershipDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   renewedAt: z.string().datetime().optional(),
   expiresAt: z.string().datetime().optional(),
 });
@@ -24,7 +38,11 @@ export async function GET(
     });
     const { memberId } = await params;
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -43,7 +61,7 @@ export async function GET(
           },
         },
         payments: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
         },
         meetings: {
           include: {
@@ -58,7 +76,7 @@ export async function GET(
           },
           orderBy: {
             meeting: {
-              scheduledAt: 'desc',
+              scheduledAt: "desc",
             },
           },
           take: 10,
@@ -67,14 +85,10 @@ export async function GET(
     });
 
     if (!member) {
-      return NextResponse.json(
-        { error: "Membre non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Membre non trouvé" }, { status: 404 });
     }
 
     return NextResponse.json({ member });
-
   } catch (error) {
     console.error("Erreur lors de la récupération du membre:", error);
     return NextResponse.json(
@@ -111,18 +125,18 @@ export async function PUT(
     });
 
     if (!existingMember) {
-      return NextResponse.json(
-        { error: "Membre non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Membre non trouvé" }, { status: 404 });
     }
 
     // Vérifier l'unicité du numéro de membre si modifié
-    if (data.memberNumber && data.memberNumber !== existingMember.memberNumber) {
+    if (
+      data.memberNumber &&
+      data.memberNumber !== existingMember.memberNumber
+    ) {
       const existingNumber = await prisma.abcMember.findUnique({
         where: { memberNumber: data.memberNumber },
       });
-      
+
       if (existingNumber) {
         return NextResponse.json(
           { error: "Ce numéro de membre est déjà utilisé" },
@@ -131,11 +145,19 @@ export async function PUT(
       }
     }
 
-    const updateData: any = {};
-    if (data.type) updateData.type = data.type;
-    if (data.role) updateData.role = data.role;
-    if (data.status) updateData.status = data.status;
-    if (data.memberNumber !== undefined) updateData.memberNumber = data.memberNumber;
+    const updateData: Partial<{
+      type: AbcMemberType;
+      role: AbcMemberRole;
+      status: AbcMemberStatus;
+      memberNumber: string;
+      renewedAt: Date;
+      expiresAt: Date;
+    }> = {};
+    if (data.type) updateData.type = data.type as AbcMemberType;
+    if (data.role) updateData.role = data.role as AbcMemberRole;
+    if (data.status) updateData.status = data.status as AbcMemberStatus;
+    if (data.memberNumber !== undefined)
+      updateData.memberNumber = data.memberNumber;
     if (data.renewedAt) updateData.renewedAt = new Date(data.renewedAt);
     if (data.expiresAt) updateData.expiresAt = new Date(data.expiresAt);
 
@@ -157,7 +179,6 @@ export async function PUT(
       member,
       message: "Membre modifié avec succès",
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -205,17 +226,15 @@ export async function DELETE(
     });
 
     if (!member) {
-      return NextResponse.json(
-        { error: "Membre non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Membre non trouvé" }, { status: 404 });
     }
 
     // Empêcher la suppression s'il y a des paiements ou participations
     if (member._count.payments > 0 || member._count.meetings > 0) {
       return NextResponse.json(
-        { 
-          error: "Impossible de supprimer ce membre car il a des paiements ou participations enregistrés. Vous pouvez le désactiver à la place." 
+        {
+          error:
+            "Impossible de supprimer ce membre car il a des paiements ou participations enregistrés. Vous pouvez le désactiver à la place.",
         },
         { status: 400 }
       );
@@ -228,7 +247,6 @@ export async function DELETE(
     return NextResponse.json({
       message: "Membre supprimé avec succès",
     });
-
   } catch (error) {
     console.error("Erreur lors de la suppression du membre:", error);
     return NextResponse.json(

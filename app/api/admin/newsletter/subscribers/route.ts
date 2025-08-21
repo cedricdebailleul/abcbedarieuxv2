@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import { Prisma } from "@/lib/generated/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +23,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -34,7 +38,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Construire les filtres
-    const where: any = {};
+    const where: Prisma.NewsletterSubscriberWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -85,8 +89,7 @@ export async function GET(request: NextRequest) {
           hasPrevPage: page > 1,
         },
       });
-
-    } catch (error) {
+    } catch {
       // Si les modèles n'existent pas encore
       return NextResponse.json({
         success: true,
@@ -102,7 +105,6 @@ export async function GET(request: NextRequest) {
         migrationRequired: true,
       });
     }
-
   } catch (error) {
     console.error("Erreur lors de la récupération des abonnés:", error);
     return NextResponse.json(
@@ -130,7 +132,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -138,7 +143,10 @@ export async function POST(request: NextRequest) {
 
     // Validation
     if (!email) {
-      return NextResponse.json({ error: "L'email est requis" }, { status: 400 });
+      return NextResponse.json(
+        { error: "L'email est requis" },
+        { status: 400 }
+      );
     }
 
     // Vérifier si l'email existe déjà
@@ -155,8 +163,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Créer les tokens
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-      const unsubscribeToken = crypto.randomBytes(32).toString('hex');
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      const unsubscribeToken = crypto.randomBytes(32).toString("hex");
 
       // Créer l'abonné
       const subscriber = await prisma.newsletterSubscriber.create({
@@ -188,20 +196,23 @@ export async function POST(request: NextRequest) {
         subscriber,
         message: "Abonné ajouté avec succès",
       });
-
     } catch (prismaError) {
-      if (prismaError.message?.includes("newsletterSubscriber")) {
+      if (
+        prismaError instanceof Error &&
+        typeof prismaError.message === "string" &&
+        prismaError.message.includes("newsletterSubscriber")
+      ) {
         return NextResponse.json(
-          { 
-            error: "Les tables de newsletter ne sont pas encore créées. Veuillez exécuter la migration.",
-            migrationRequired: true
+          {
+            error:
+              "Les tables de newsletter ne sont pas encore créées. Veuillez exécuter la migration.",
+            migrationRequired: true,
           },
           { status: 500 }
         );
       }
       throw prismaError;
     }
-
   } catch (error) {
     console.error("Erreur lors de l'ajout de l'abonné:", error);
     return NextResponse.json(

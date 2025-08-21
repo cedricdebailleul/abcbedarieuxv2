@@ -15,13 +15,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { IconLoader2 } from "@tabler/icons-react";
 
-interface Bulletin {
+// Définir un type local compatible avec page.tsx
+type BulletinData = {
   id: string;
   title: string;
   content: string;
-  status: string;
-  scheduledAt: string | null;
-  sentAt: string | null;
+  // Propriétés de page.tsx
+  isPublished?: boolean;
+  publishedAt?: string | null;
+  // Propriétés étendues pour l'édition
+  status?: string;
+  scheduledAt?: string | null;
+  sentAt?: string | null;
   createdAt: string;
   createdBy: {
     name: string;
@@ -30,10 +35,10 @@ interface Bulletin {
   _count?: {
     recipients: number;
   };
-}
+};
 
 interface EditBulletinDialogProps {
-  bulletin: Bulletin;
+  bulletin: BulletinData;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -46,13 +51,22 @@ const statusLabels = {
   FAILED: "Échec",
 };
 
-export function EditBulletinDialog({ bulletin, onSuccess, onCancel }: EditBulletinDialogProps) {
+export function EditBulletinDialog({
+  bulletin,
+  onSuccess,
+  onCancel,
+}: EditBulletinDialogProps) {
   const [title, setTitle] = useState(bulletin.title);
   const [content, setContent] = useState(bulletin.content);
-  const [status, setStatus] = useState(bulletin.status);
+  const [status, setStatus] = useState(
+    bulletin.status || (bulletin.isPublished ? "SENT" : "DRAFT")
+  );
   const [scheduledAt, setScheduledAt] = useState(() => {
     if (bulletin.scheduledAt) {
       return new Date(bulletin.scheduledAt).toISOString().slice(0, 16);
+    }
+    if (bulletin.publishedAt) {
+      return new Date(bulletin.publishedAt).toISOString().slice(0, 16);
     }
     return "";
   });
@@ -61,7 +75,7 @@ export function EditBulletinDialog({ bulletin, onSuccess, onCancel }: EditBullet
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title || !content) {
       setError("Veuillez remplir tous les champs obligatoires");
       return;
@@ -76,7 +90,7 @@ export function EditBulletinDialog({ bulletin, onSuccess, onCancel }: EditBullet
       setLoading(true);
       setError("");
 
-      const updateData: any = {
+      const updateData: Partial<BulletinData> = {
         title,
         content,
         status,
@@ -110,12 +124,14 @@ export function EditBulletinDialog({ bulletin, onSuccess, onCancel }: EditBullet
   };
 
   // Générer une date minimale (maintenant + 1 heure)
-  const minDate = new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16);
+  const minDate = new Date(Date.now() + 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 16);
 
   // Détermine quels statuts sont modifiables
   const getAvailableStatuses = () => {
     const statuses: Record<string, string> = {};
-    
+
     if (bulletin.status === "DRAFT") {
       statuses.DRAFT = statusLabels.DRAFT;
       statuses.SCHEDULED = statusLabels.SCHEDULED;
@@ -124,14 +140,19 @@ export function EditBulletinDialog({ bulletin, onSuccess, onCancel }: EditBullet
       statuses.DRAFT = statusLabels.DRAFT;
     } else {
       // Pour les bulletins envoyés, en cours d'envoi ou en échec, on ne peut plus modifier le statut
-      statuses[bulletin.status] = statusLabels[bulletin.status];
+      if (bulletin.status && bulletin.status in statusLabels) {
+        if (bulletin.status && bulletin.status in statusLabels) {
+          statuses[bulletin.status] =
+            statusLabels[bulletin.status as keyof typeof statusLabels];
+        }
+      }
     }
-    
+
     return statuses;
   };
 
   const availableStatuses = getAvailableStatuses();
-  const canEdit = ["DRAFT", "SCHEDULED"].includes(bulletin.status);
+  const canEdit = ["DRAFT", "SCHEDULED"].includes(bulletin.status || "");
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -144,7 +165,8 @@ export function EditBulletinDialog({ bulletin, onSuccess, onCancel }: EditBullet
       {!canEdit && (
         <Alert>
           <AlertDescription>
-            Ce bulletin ne peut plus être modifié car il a été envoyé ou est en cours d'envoi.
+            Ce bulletin ne peut plus être modifié car il a été envoyé ou est en
+            cours d&apos;envoi.
           </AlertDescription>
         </Alert>
       )}
@@ -154,11 +176,18 @@ export function EditBulletinDialog({ bulletin, onSuccess, onCancel }: EditBullet
         <Label>Informations</Label>
         <div className="text-sm text-muted-foreground bg-muted p-2 rounded-md space-y-1">
           <div>Créé par: {bulletin.createdBy.name}</div>
-          <div>Date de création: {new Date(bulletin.createdAt).toLocaleDateString("fr-FR")}</div>
+          <div>
+            Date de création:{" "}
+            {new Date(bulletin.createdAt).toLocaleDateString("fr-FR")}
+          </div>
           {bulletin.sentAt && (
-            <div>Envoyé le: {new Date(bulletin.sentAt).toLocaleDateString("fr-FR")}</div>
+            <div>
+              Envoyé le: {new Date(bulletin.sentAt).toLocaleDateString("fr-FR")}
+            </div>
           )}
-          <div>Destinataires: {bulletin._count?.recipients || 'N/A'} membre(s)</div>
+          <div>
+            Destinataires: {bulletin._count?.recipients || "N/A"} membre(s)
+          </div>
           <div>ID: {bulletin.id}</div>
         </div>
       </div>

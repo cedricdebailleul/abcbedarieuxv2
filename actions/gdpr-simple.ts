@@ -86,7 +86,7 @@ export async function updateConsentAction(formData: FormData) {
         consentDate: new Date(),
         ipAddress,
         history: existing?.history
-          ? [...(existing.history as any[]), historyEntry]
+          ? [...(existing.history as Array<typeof historyEntry>), historyEntry]
           : [historyEntry],
       },
       create: {

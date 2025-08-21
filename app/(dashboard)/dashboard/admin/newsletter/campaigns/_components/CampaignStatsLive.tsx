@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,7 @@ import {
   Eye, 
   MousePointer, 
   Mail, 
-  MailCheck,
   MailX,
-  UserMinus,
   Activity,
   RefreshCw,
   TrendingUp,
@@ -68,7 +66,7 @@ export function CampaignStatsLive({
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchStats = async (showLoader = false) => {
+  const fetchStats = useCallback(async (showLoader = false) => {
     try {
       if (showLoader) setIsRefreshing(true);
       setError(null);
@@ -95,18 +93,18 @@ export function CampaignStatsLive({
       setLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [campaignId]);
 
   useEffect(() => {
     fetchStats();
-  }, [campaignId]);
+  }, [campaignId, fetchStats]);
 
   useEffect(() => {
     if (autoRefresh && campaignId && refreshInterval > 0) {
       const interval = setInterval(() => fetchStats(false), refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, campaignId, refreshInterval]);
+  }, [autoRefresh, campaignId, refreshInterval, fetchStats]);
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('fr-FR', {
@@ -353,7 +351,7 @@ export function CampaignStatsLive({
               <span className="font-medium ml-2">{stats.stats.rates.delivery}%</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Taux d'ouverture:</span>
+              <span className="text-muted-foreground">Taux d&apos;ouverture:</span>
               <span className="font-medium ml-2">{stats.stats.rates.open}%</span>
             </div>
             <div>
@@ -361,7 +359,7 @@ export function CampaignStatsLive({
               <span className="font-medium ml-2">{stats.stats.rates.click}%</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Taux d'échec:</span>
+              <span className="text-muted-foreground">Taux d&apos;échec:</span>
               <span className="font-medium ml-2">{stats.stats.rates.failure}%</span>
             </div>
           </div>

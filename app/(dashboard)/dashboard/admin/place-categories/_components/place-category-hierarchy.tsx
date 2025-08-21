@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Edit, Eye, Plus, ChevronRight, ChevronDown, GripVertical } from "lucide-react";
+import {
+  Edit,
+  Eye,
+  Plus,
+  ChevronRight,
+  ChevronDown,
+  GripVertical,
+} from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import * as LucideIcons from "lucide-react";
@@ -19,7 +26,19 @@ import { getPlaceCategoriesHierarchyAction } from "@/actions/place-category";
 import { cn } from "@/lib/utils";
 
 export function PlaceCategoryHierarchy() {
-  const [categories, setCategories] = useState<any[]>([]);
+  interface Category {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    isActive: boolean;
+    sortOrder: number;
+    color: string | null;
+    icon: string | null;
+    children?: Category[];
+  }
+
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
 
@@ -28,16 +47,39 @@ export function PlaceCategoryHierarchy() {
       try {
         const result = await getPlaceCategoriesHierarchyAction();
         if (result.success) {
-          setCategories(result.data!);
+          setCategories(
+            result.data!.map((cat: Category) => ({
+              id: cat.id,
+              name: cat.name,
+              slug: cat.slug,
+              description: cat.description,
+              isActive: cat.isActive,
+              sortOrder: cat.sortOrder,
+              color: cat.color,
+              icon: cat.icon,
+              children:
+                cat.children?.map((child: Category) => ({
+                  ...child,
+                  children:
+                    child.children?.map((grandChild: Category) => ({
+                      ...grandChild,
+                      children: grandChild.children || [],
+                    })) || [],
+                })) || [],
+            }))
+          );
           // Ouvrir automatiquement les catégories qui ont des enfants
-          const itemsWithChildren = result.data!
-            .filter((cat: any) => cat.children?.length > 0)
-            .map((cat: any) => cat.id);
+          const itemsWithChildren = result
+            .data!.filter(
+              (cat: Category) =>
+                Array.isArray(cat.children) && cat.children.length > 0
+            )
+            .map((cat: Category) => cat.id);
           setOpenItems(new Set(itemsWithChildren));
         } else {
           toast.error(result.error || "Erreur lors du chargement");
         }
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors du chargement de la hiérarchie");
       }
       setLoading(false);
@@ -60,23 +102,34 @@ export function PlaceCategoryHierarchy() {
   // Rendu de l'icône de catégorie
   const renderCategoryIcon = (icon: string | null, color: string | null) => {
     if (!icon) return null;
-    
+
     // Vérifier si c'est un emoji
-    if (icon.length <= 4 && /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon)) {
+    if (
+      icon.length <= 4 &&
+      /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(
+        icon
+      )
+    ) {
       return <span className="text-lg">{icon}</span>;
     }
-    
+
     // Vérifier si c'est une icône Lucide
-    const IconComponent = (LucideIcons as any)[icon];
+    const IconComponent = (
+      LucideIcons as unknown as Record<string, React.FC<{ className?: string }>>
+    )[icon];
     if (IconComponent) {
-      return <IconComponent className="w-5 h-5" style={{ color: color || undefined }} />;
+      return (
+        <span style={{ color: color || undefined }}>
+          <IconComponent className="w-5 h-5" />
+        </span>
+      );
     }
-    
+
     return null;
   };
 
   // Rendu d'une catégorie avec ses enfants
-  const renderCategory = (category: any, level: number = 0) => {
+  const renderCategory = (category: Category, level: number = 0) => {
     const hasChildren = category.children && category.children.length > 0;
     const isOpen = openItems.has(category.id);
     const indentClass = level > 0 ? `ml-${level * 6}` : "";
@@ -84,14 +137,19 @@ export function PlaceCategoryHierarchy() {
     return (
       <div key={category.id} className="space-y-1">
         {/* Catégorie principale */}
-        <Collapsible open={isOpen} onOpenChange={() => hasChildren && toggleItem(category.id)}>
-          <div className={cn(
-            "flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors",
-            indentClass
-          )}>
+        <Collapsible
+          open={isOpen}
+          onOpenChange={() => hasChildren && toggleItem(category.id)}
+        >
+          <div
+            className={cn(
+              "flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors",
+              indentClass
+            )}
+          >
             {/* Handle de drag (pour futur drag & drop) */}
             <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
-            
+
             {/* Icône expand/collapse */}
             {hasChildren ? (
               <CollapsibleTrigger asChild>
@@ -128,7 +186,7 @@ export function PlaceCategoryHierarchy() {
               <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                 <span>Ordre: {category.sortOrder}</span>
                 {hasChildren && (
-                  <span>{category.children.length} sous-catégorie(s)</span>
+                  <span>{category.children?.length || 0} sous-catégorie(s)</span>
                 )}
               </div>
             </div>
@@ -150,12 +208,16 @@ export function PlaceCategoryHierarchy() {
                 </Link>
               </Button>
               <Button variant="ghost" size="sm" asChild>
-                <Link href={`/dashboard/admin/place-categories/${category.id}/edit`}>
+                <Link
+                  href={`/dashboard/admin/place-categories/${category.id}/edit`}
+                >
                   <Edit className="h-4 w-4" />
                 </Link>
               </Button>
               <Button variant="ghost" size="sm" asChild>
-                <Link href={`/dashboard/admin/place-categories/new?parentId=${category.id}`}>
+                <Link
+                  href={`/dashboard/admin/place-categories/new?parentId=${category.id}`}
+                >
                   <Plus className="h-4 w-4" />
                 </Link>
               </Button>
@@ -166,7 +228,9 @@ export function PlaceCategoryHierarchy() {
           {hasChildren && (
             <CollapsibleContent className="space-y-1">
               <div className="ml-6 border-l-2 border-muted pl-4 space-y-1">
-                {category.children.map((child: any) => renderCategory(child, level + 1))}
+                {category.children?.map((child: Category) =>
+                  renderCategory(child, level + 1)
+                )}
               </div>
             </CollapsibleContent>
           )}
@@ -210,7 +274,9 @@ export function PlaceCategoryHierarchy() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setOpenItems(new Set(categories.map(cat => cat.id)))}
+            onClick={() =>
+              setOpenItems(new Set(categories.map((cat) => cat.id)))
+            }
           >
             Tout développer
           </Button>

@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
   Loader2,
   RefreshCw,
   Users,
-  Mail
+  Mail,
 } from "lucide-react";
 
 interface QueueStatusData {
@@ -27,10 +27,10 @@ interface QueueStatusProps {
   refreshInterval?: number;
 }
 
-export function QueueStatus({ 
-  className = "", 
-  autoRefresh = false, 
-  refreshInterval = 5000 
+export function QueueStatus({
+  className = "",
+  autoRefresh = false,
+  refreshInterval = 5000,
 }: QueueStatusProps) {
   const [status, setStatus] = useState<QueueStatusData>({});
   const [loading, setLoading] = useState(true);
@@ -40,8 +40,8 @@ export function QueueStatus({
   const fetchStatus = async () => {
     try {
       setError(null);
-      const response = await fetch('/api/admin/newsletter/queue/status', {
-        credentials: 'include'
+      const response = await fetch("/api/admin/newsletter/queue/status", {
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -53,10 +53,10 @@ export function QueueStatus({
         setStatus(data.status || {});
         setLastUpdated(new Date());
       } else {
-        throw new Error(data.error || 'Erreur inconnue');
+        throw new Error(data.error || "Erreur inconnue");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,10 @@ export function QueueStatus({
     }
   }, [autoRefresh, refreshInterval]);
 
-  const totalJobs = Object.values(status).reduce((sum, count) => sum + (count || 0), 0);
+  const totalJobs = Object.values(status).reduce(
+    (sum, count) => sum + (count || 0),
+    0
+  );
   const activeJobs = (status.pending || 0) + (status.processing || 0);
 
   if (error) {
@@ -87,13 +90,15 @@ export function QueueStatus({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-red-600 mb-3">{error}</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={fetchStatus}
             disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
             Réessayer
           </Button>
         </CardContent>
@@ -107,15 +112,15 @@ export function QueueStatus({
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Mail className="w-5 h-5" />
-            File d'attente
+            File d&apos;attente
           </span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={fetchStatus}
             disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </CardTitle>
       </CardHeader>
@@ -145,7 +150,10 @@ export function QueueStatus({
                   <Clock className="w-4 h-4 text-orange-500" />
                   <span className="text-xs">En attente</span>
                 </div>
-                <Badge variant="outline" className="text-orange-600 border-orange-200">
+                <Badge
+                  variant="outline"
+                  className="text-orange-600 border-orange-200"
+                >
                   {status.pending || 0}
                 </Badge>
               </div>
@@ -156,7 +164,10 @@ export function QueueStatus({
                   <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
                   <span className="text-xs">En cours</span>
                 </div>
-                <Badge variant="outline" className="text-blue-600 border-blue-200">
+                <Badge
+                  variant="outline"
+                  className="text-blue-600 border-blue-200"
+                >
                   {status.processing || 0}
                 </Badge>
               </div>
@@ -167,7 +178,10 @@ export function QueueStatus({
                   <CheckCircle className="w-4 h-4 text-green-500" />
                   <span className="text-xs">Envoyés</span>
                 </div>
-                <Badge variant="outline" className="text-green-600 border-green-200">
+                <Badge
+                  variant="outline"
+                  className="text-green-600 border-green-200"
+                >
                   {status.completed || 0}
                 </Badge>
               </div>
@@ -178,7 +192,10 @@ export function QueueStatus({
                   <XCircle className="w-4 h-4 text-red-500" />
                   <span className="text-xs">Échecs</span>
                 </div>
-                <Badge variant="outline" className="text-red-600 border-red-200">
+                <Badge
+                  variant="outline"
+                  className="text-red-600 border-red-200"
+                >
                   {status.failed || 0}
                 </Badge>
               </div>
@@ -192,7 +209,7 @@ export function QueueStatus({
               </div>
               {lastUpdated && (
                 <div className="mt-1">
-                  Mis à jour: {lastUpdated.toLocaleTimeString('fr-FR')}
+                  Mis à jour: {lastUpdated.toLocaleTimeString("fr-FR")}
                 </div>
               )}
             </div>
@@ -202,14 +219,14 @@ export function QueueStatus({
               <div className="flex items-center gap-2 p-2 bg-blue-50 border border-blue-200 rounded">
                 <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
                 <span className="text-sm text-blue-700">
-                  {activeJobs} email{activeJobs > 1 ? 's' : ''} en traitement
+                  {activeJobs} email{activeJobs > 1 ? "s" : ""} en traitement
                 </span>
               </div>
             ) : totalJobs > 0 ? (
               <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
                 <CheckCircle className="w-4 h-4 text-green-500" />
                 <span className="text-sm text-green-700">
-                  File d'attente vide
+                  File d&apos;attente vide
                 </span>
               </div>
             ) : (

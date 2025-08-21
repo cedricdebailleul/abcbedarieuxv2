@@ -1,4 +1,12 @@
-import { ArrowLeft, Calendar, Clock, Eye, Folder, Tag, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Eye,
+  Folder,
+  Tag,
+  User,
+} from "lucide-react";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,7 +23,7 @@ import { prisma } from "@/lib/prisma";
 import { generatePostShareData } from "@/lib/share-utils";
 
 // Force dynamic rendering
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface PostPageProps {
   params: Promise<{
@@ -120,21 +128,23 @@ export default async function PostPage({
   });
 
   // Estimation du temps de lecture (environ 200 mots par minute)
-  const wordCount = post.content ? post.content.replace(/<[^>]*>/g, "").split(/\s+/).length : 0;
+  const wordCount = post.content
+    ? post.content.replace(/<[^>]*>/g, "").split(/\s+/).length
+    : 0;
   const readingTime = Math.max(1, Math.round(wordCount / 200));
 
   return (
     <>
       {/* Données structurées pour SEO et réseaux sociaux */}
       <PostSchema post={post} />
-      
+
       {/* En-tête d'impression */}
-      <PrintHeader 
+      <PrintHeader
         title={post.title}
         subtitle={`Article - ${formattedDate}`}
         date={post.category?.name || "ABC Bédarieux"}
       />
-      
+
       {/* Mode aperçu */}
       {isPreview && (
         <div className="bg-orange-100 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800">
@@ -142,7 +152,9 @@ export default async function PostPage({
             <div className="flex items-center space-x-2 text-orange-800 dark:text-orange-200">
               <Eye className="h-4 w-4" />
               <span className="font-medium">Mode aperçu</span>
-              <span className="text-sm">- Cet article n'est peut-être pas encore publié</span>
+              <span className="text-sm">
+                - Cet article n&apos;est peut-être pas encore publié
+              </span>
             </div>
           </div>
         </div>
@@ -242,7 +254,9 @@ export default async function PostPage({
                   />
                 ) : (
                   <div className="text-center py-16 text-muted-foreground">
-                    <p className="text-lg">Aucun contenu disponible pour cet article.</p>
+                    <p className="text-lg">
+                      Aucun contenu disponible pour cet article.
+                    </p>
                   </div>
                 )}
               </div>
@@ -320,15 +334,21 @@ export default async function PostPage({
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Vues</span>
-                    <Badge variant="secondary">{(post.viewCount || 0).toLocaleString()}</Badge>
+                    <Badge variant="secondary">
+                      {(post.viewCount || 0).toLocaleString()}
+                    </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Temps de lecture</span>
+                    <span className="text-sm text-muted-foreground">
+                      Temps de lecture
+                    </span>
                     <Badge variant="secondary">{readingTime} min</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Mots</span>
-                    <Badge variant="secondary">~{wordCount.toLocaleString()}</Badge>
+                    <Badge variant="secondary">
+                      ~{wordCount.toLocaleString()}
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
@@ -339,7 +359,7 @@ export default async function PostPage({
                   <h3 className="text-lg font-semibold">Partager</h3>
                 </CardHeader>
                 <CardContent>
-                  <SocialShare 
+                  <SocialShare
                     data={generatePostShareData(post)}
                     variant="outline"
                     size="sm"
@@ -351,53 +371,55 @@ export default async function PostPage({
         </div>
       </div>
 
-
       {/* SEO Debug (only in development) */}
-      {process.env.NODE_ENV === "development" && (post.canonicalUrl || post.ogImage) && (
-        <div className="border-t bg-muted/30">
-          <div className="container mx-auto px-4 py-6">
-            <details className="text-xs">
-              <summary className="font-medium text-muted-foreground cursor-pointer">
-                Informations SEO (développement uniquement)
-              </summary>
-              <div className="mt-2 space-y-1 text-muted-foreground">
-                {post.canonicalUrl && (
-                  <div>
-                    <span className="font-medium">URL canonique:</span>{" "}
-                    <a
-                      href={post.canonicalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      {post.canonicalUrl}
-                    </a>
-                  </div>
-                )}
-                {post.ogImage && (
-                  <div>
-                    <span className="font-medium">Image OG:</span>{" "}
-                    <a
-                      href={post.ogImage}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      Voir l'image
-                    </a>
-                  </div>
-                )}
-              </div>
-            </details>
+      {process.env.NODE_ENV === "development" &&
+        (post.canonicalUrl || post.ogImage) && (
+          <div className="border-t bg-muted/30">
+            <div className="container mx-auto px-4 py-6">
+              <details className="text-xs">
+                <summary className="font-medium text-muted-foreground cursor-pointer">
+                  Informations SEO (développement uniquement)
+                </summary>
+                <div className="mt-2 space-y-1 text-muted-foreground">
+                  {post.canonicalUrl && (
+                    <div>
+                      <span className="font-medium">URL canonique:</span>{" "}
+                      <a
+                        href={post.canonicalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        {post.canonicalUrl}
+                      </a>
+                    </div>
+                  )}
+                  {post.ogImage && (
+                    <div>
+                      <span className="font-medium">Image OG:</span>{" "}
+                      <a
+                        href={post.ogImage}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        Voir l&apos;image
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </details>
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </>
   );
 }
 
 // Métadonnées dynamiques
-export async function generateMetadata({ params: paramsPromise }: PostPageProps) {
+export async function generateMetadata({
+  params: paramsPromise,
+}: PostPageProps) {
   const params = await paramsPromise;
   const post = await prisma.post.findUnique({
     where: { slug: params.slug },
@@ -432,26 +454,34 @@ export async function generateMetadata({ params: paramsPromise }: PostPageProps)
   }
 
   // URL absolue pour l'image
-  const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
   const ogImg = post.ogImage || post.coverImage;
-  const absoluteImageUrl = ogImg ? 
-    (ogImg.startsWith('http') ? ogImg : `${baseUrl}${ogImg}`) : 
-    `${baseUrl}/images/og-post-default.jpg`;
+  const absoluteImageUrl = ogImg
+    ? ogImg.startsWith("http")
+      ? ogImg
+      : `${baseUrl}${ogImg}`
+    : `${baseUrl}/images/og-post-default.jpg`;
 
   return {
     title: post.metaTitle || post.title,
-    description: post.metaDescription || post.excerpt || "Lisez cet article sur ABC Bédarieux",
+    description:
+      post.metaDescription ||
+      post.excerpt ||
+      "Lisez cet article sur ABC Bédarieux",
     openGraph: {
       title: post.title,
-      description: post.metaDescription || post.excerpt || "Article publié sur ABC Bédarieux",
+      description:
+        post.metaDescription ||
+        post.excerpt ||
+        "Article publié sur ABC Bédarieux",
       url: `${baseUrl}/posts/${params.slug}`,
-      siteName: 'ABC Bédarieux',
-      locale: 'fr_FR',
-      type: 'article',
+      siteName: "ABC Bédarieux",
+      locale: "fr_FR",
+      type: "article",
       publishedTime: post.publishedAt?.toISOString(),
-      authors: [post.author?.name || 'ABC Bédarieux'],
+      authors: [post.author?.name || "ABC Bédarieux"],
       section: post.category?.name,
-      tags: post.tags?.map(pt => pt.tag.name),
+      tags: post.tags?.map((pt) => pt.tag.name),
       images: [
         {
           url: absoluteImageUrl,
@@ -462,11 +492,14 @@ export async function generateMetadata({ params: paramsPromise }: PostPageProps)
       ],
     },
     twitter: {
-      card: 'summary_large_image',
+      card: "summary_large_image",
       title: post.title,
-      description: post.metaDescription || post.excerpt || "Article publié sur ABC Bédarieux",
+      description:
+        post.metaDescription ||
+        post.excerpt ||
+        "Article publié sur ABC Bédarieux",
       images: [absoluteImageUrl],
-      creator: '@abc_bedarieux',
+      creator: "@abc_bedarieux",
     },
     alternates: post.canonicalUrl
       ? {

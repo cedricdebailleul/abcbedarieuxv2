@@ -2,9 +2,6 @@
 
 import { FileText, User, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
 
@@ -16,49 +13,10 @@ interface ClaimPlaceButtonProps {
 }
 
 export function ClaimPlaceButton({
-  placeId,
-  placeName,
   placeSlug,
   className,
 }: ClaimPlaceButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const { data: session } = useSession();
-
-  const _handleClaim = async () => {
-    if (isLoading) return;
-
-    if (!confirm(`Voulez-vous revendiquer "${placeName}" ? Cette action est irréversible.`)) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(`/api/places/${placeId}/claim`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Erreur lors de la revendication");
-      }
-
-      toast.success(result.message);
-
-      // Rediriger vers la page d'édition de la place
-      router.push(`/dashboard/places/${placeId}/edit`);
-    } catch (error: any) {
-      console.error("Erreur revendication:", error);
-      toast.error(error.message || "Erreur lors de la revendication");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Si l'utilisateur est connecté, afficher les options de revendication
   if (session?.user) {
@@ -72,7 +30,8 @@ export function ClaimPlaceButton({
         </Link>
 
         <p className="text-xs text-muted-foreground">
-          Soumettez une demande avec justificatifs pour validation par un administrateur
+          Soumettez une demande avec justificatifs pour validation par un
+          administrateur
         </p>
       </div>
     );
@@ -86,14 +45,20 @@ export function ClaimPlaceButton({
       </p>
 
       <div className="space-y-2">
-        <Link href={`/login?callbackUrl=/places/${placeSlug}/claim`} className="block">
+        <Link
+          href={`/login?callbackUrl=/places/${placeSlug}/claim`}
+          className="block"
+        >
           <Button className={`w-full ${className}`} variant="default">
             <User className="w-4 h-4 mr-2" />
             Se connecter et revendiquer
           </Button>
         </Link>
 
-        <Link href={`/register?callbackUrl=/places/${placeSlug}/claim`} className="block">
+        <Link
+          href={`/register?callbackUrl=/places/${placeSlug}/claim`}
+          className="block"
+        >
           <Button className={`w-full ${className}`} variant="outline">
             <UserPlus className="w-4 h-4 mr-2" />
             Créer un compte pour revendiquer

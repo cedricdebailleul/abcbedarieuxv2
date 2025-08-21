@@ -92,7 +92,7 @@ function formatHm(t: string) {
   return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
 }
 
-function parseSocials(socialsJson: any): Record<string, string> {
+function parseSocials(socialsJson: string | Record<string, string> | null | undefined): Record<string, string> {
   if (!socialsJson) return {};
   try {
     if (typeof socialsJson === "string") {
@@ -563,11 +563,11 @@ export default async function PlacePage({ params }: PageProps) {
             {!place.ownerId && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Cette place n'a pas de propriétaire</CardTitle>
+                  <CardTitle>Cette place n&apos;a pas de propriétaire</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Cette fiche a été créée par l'administration et peut être
+                    Cette fiche a été créée par l&apos;administration et peut être
                     revendiquée. En la revendiquant, vous deviendrez
                     propriétaire et pourrez la gérer.
                   </p>
@@ -633,7 +633,7 @@ export default async function PlacePage({ params }: PageProps) {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="w-5 h-5" />
-                    Horaires d'ouverture
+                    Horaires d&apos;ouverture
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -835,7 +835,14 @@ export default async function PlacePage({ params }: PageProps) {
 
                   {/* Réseaux sociaux du propriétaire */}
                   {(() => {
-                    const socials = parseSocials(place.owner.profile.socials);
+                    const socials = parseSocials(
+                      typeof place.owner.profile.socials === "string" ||
+                      (typeof place.owner.profile.socials === "object" &&
+                        !Array.isArray(place.owner.profile.socials) &&
+                        place.owner.profile.socials !== null)
+                        ? (place.owner.profile.socials as Record<string, string>)
+                        : null
+                    );
                     const hasSocials = Object.keys(socials).some(
                       (key) => socials[key]
                     );

@@ -7,7 +7,6 @@ import { PlaceCard } from "./place-card";
 import { MobileMapFilters } from "./mobile-map-filters";
 import { Button } from "@/components/ui/button";
 import { Filter, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { calculateDistance } from "@/lib/map-utils";
 import { computeOpeningStatus } from "@/lib/opening-hours-utils";
 import { getPlaceTypeLabel } from "@/lib/share-utils";
@@ -83,7 +82,7 @@ export interface MapFilters {
   categories: string[];
   distance: number | null;
   userLocation: { lat: number; lng: number } | null;
-  sortBy: 'name' | 'distance' | 'featured';
+  sortBy: "name" | "distance" | "featured";
   showOpenOnly: boolean;
 }
 
@@ -94,17 +93,20 @@ interface InteractiveMapProps {
 
 export function InteractiveMap({ places, categories }: InteractiveMapProps) {
   const [filters, setFilters] = useState<MapFilters>({
-    search: '',
+    search: "",
     categories: [],
     distance: null,
     userLocation: null,
-    sortBy: 'featured',
-    showOpenOnly: false
+    sortBy: "featured",
+    showOpenOnly: false,
   });
 
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [mapKey, setMapKey] = useState(0);
 
   // Demander la géolocalisation au chargement
@@ -114,13 +116,13 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
         (position) => {
           const location = {
             lat: position.coords.latitude,
-            lng: position.coords.longitude
+            lng: position.coords.longitude,
           };
           setUserLocation(location);
-          setFilters(prev => ({ ...prev, userLocation: location }));
+          setFilters((prev) => ({ ...prev, userLocation: location }));
         },
         (error) => {
-          console.log('Géolocalisation non disponible:', error);
+          console.log("Géolocalisation non disponible:", error);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
       );
@@ -132,19 +134,19 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
     if (places.length > 0 && categories.length > 0) {
       // Premier re-rendu rapide
       const timer1 = setTimeout(() => {
-        setMapKey(prev => prev + 1);
+        setMapKey((prev) => prev + 1);
       }, 500);
-      
+
       // Deuxième re-rendu de sécurité
       const timer2 = setTimeout(() => {
-        setMapKey(prev => prev + 1);
+        setMapKey((prev) => prev + 1);
       }, 1500);
-      
+
       // Troisième re-rendu de sécurité
       const timer3 = setTimeout(() => {
-        setMapKey(prev => prev + 1);
+        setMapKey((prev) => prev + 1);
       }, 3000);
-      
+
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
@@ -155,19 +157,20 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
 
   // Forcer le re-rendu quand les filtres changent (mais seulement pour les catégories)
   const handleFiltersChange = (newFilters: MapFilters) => {
-    const categoriesChanged = newFilters.categories.length !== filters.categories.length || 
-      newFilters.categories.some(cat => !filters.categories.includes(cat));
-    
+    const categoriesChanged =
+      newFilters.categories.length !== filters.categories.length ||
+      newFilters.categories.some((cat) => !filters.categories.includes(cat));
+
     setFilters(newFilters);
-    
+
     if (categoriesChanged) {
-      setMapKey(prev => prev + 1);
+      setMapKey((prev) => prev + 1);
     }
   };
 
   // Filtrer les places
   const filteredPlaces = useMemo(() => {
-    let filtered = places.filter(place => {
+    const filtered = places.filter((place) => {
       // Vérifier que la place a des coordonnées
       if (!place.latitude || !place.longitude) return false;
 
@@ -175,25 +178,29 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase();
         const frenchTypeLabel = getPlaceTypeLabel(place.type).toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           place.name.toLowerCase().includes(searchTerm) ||
           place.summary?.toLowerCase().includes(searchTerm) ||
-          place.categories.some(pc => 
-            pc.category.name.toLowerCase().includes(searchTerm) ||
-            (pc.category.parent && pc.category.parent.name.toLowerCase().includes(searchTerm))
+          place.categories.some(
+            (pc) =>
+              pc.category.name.toLowerCase().includes(searchTerm) ||
+              (pc.category.parent &&
+                pc.category.parent.name.toLowerCase().includes(searchTerm))
           ) ||
           place.type.toLowerCase().includes(searchTerm) ||
           frenchTypeLabel.includes(searchTerm) ||
           `${place.street} ${place.city}`.toLowerCase().includes(searchTerm);
-        
+
         if (!matchesSearch) return false;
       }
 
       // Filtre par catégories
       if (filters.categories.length > 0) {
-        const hasCategory = place.categories.some(pc => 
-          filters.categories.includes(pc.category.id) ||
-          (pc.category.parent && filters.categories.includes(pc.category.parent.id))
+        const hasCategory = place.categories.some(
+          (pc) =>
+            filters.categories.includes(pc.category.id) ||
+            (pc.category.parent &&
+              filters.categories.includes(pc.category.parent.id))
         );
         if (!hasCategory) return false;
       }
@@ -221,18 +228,34 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
     // Tri
     filtered.sort((a, b) => {
       switch (filters.sortBy) {
-        case 'distance':
-          if (!filters.userLocation || !a.latitude || !a.longitude || !b.latitude || !b.longitude) {
+        case "distance":
+          if (
+            !filters.userLocation ||
+            !a.latitude ||
+            !a.longitude ||
+            !b.latitude ||
+            !b.longitude
+          ) {
             return 0;
           }
-          const distanceA = calculateDistance(filters.userLocation.lat, filters.userLocation.lng, a.latitude, a.longitude);
-          const distanceB = calculateDistance(filters.userLocation.lat, filters.userLocation.lng, b.latitude, b.longitude);
+          const distanceA = calculateDistance(
+            filters.userLocation.lat,
+            filters.userLocation.lng,
+            a.latitude,
+            a.longitude
+          );
+          const distanceB = calculateDistance(
+            filters.userLocation.lat,
+            filters.userLocation.lng,
+            b.latitude,
+            b.longitude
+          );
           return distanceA - distanceB;
-        
-        case 'name':
+
+        case "name":
           return a.name.localeCompare(b.name);
-        
-        case 'featured':
+
+        case "featured":
         default:
           if (a.isFeatured === b.isFeatured) {
             return a.name.localeCompare(b.name);
@@ -278,7 +301,10 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
           >
             <Filter className="w-4 h-4 mr-2" />
             Filtres
-            {(filters.categories.length > 0 || filters.search || filters.distance || filters.showOpenOnly) && (
+            {(filters.categories.length > 0 ||
+              filters.search ||
+              filters.distance ||
+              filters.showOpenOnly) && (
               <span className="ml-1 bg-primary-foreground text-primary rounded-full w-2 h-2 text-xs flex items-center justify-center">
                 •
               </span>

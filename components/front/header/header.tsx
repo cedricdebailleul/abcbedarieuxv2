@@ -1,13 +1,14 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Menu, Search, User, X } from "lucide-react";
+import { ChevronDown, Menu, User, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { NavUser } from "@/components/layout/nav_user";
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { SearchMenu } from "./search-menu";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -42,6 +43,10 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    label: "Nos Actions",
+    href: "/actions",
+  },
+  {
     label: "Contenu",
     href: "/articles",
     hasDropdown: true,
@@ -54,6 +59,7 @@ const navItems: NavItem[] = [
 
 const topBarLinks = [
   { label: "Nous Joindre", href: "/contact" },
+  { label: "Nos Actions", href: "/actions" },
   { label: "Actualités", href: "/articles" },
   { label: "Événements", href: "/events" },
   { label: "Carte Interactive", href: "/carte" },
@@ -316,12 +322,7 @@ export default function Header({ className }: HeaderProps) {
               >
                 <span className="font-medium">Les plus populaires</span>
               </Button>
-              <Button
-                size="icon"
-                className="bg-primary text-white bg-none size-10 rounded-full hover:bg-primary/90 sm:hover:bg-none transition-colors"
-              >
-                <Search className="size-6" />
-              </Button>
+              <SearchMenu />
               <ThemeToggle variant="navbar" />
               {/* User Icon */}
               <NavUser />

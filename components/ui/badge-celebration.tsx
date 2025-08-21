@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface BadgeCelebrationProps {
   isOpen: boolean;
@@ -19,7 +20,12 @@ interface BadgeCelebrationProps {
   reason: string;
 }
 
-export function BadgeCelebration({ isOpen, onClose, badge, reason }: BadgeCelebrationProps) {
+export function BadgeCelebration({
+  isOpen,
+  onClose,
+  badge,
+  reason,
+}: BadgeCelebrationProps) {
   const [showContent, setShowContent] = useState(false);
   const [fireworksActive, setFireworksActive] = useState(false);
 
@@ -60,10 +66,19 @@ export function BadgeCelebration({ isOpen, onClose, badge, reason }: BadgeCelebr
   const getBadgeIcon = () => {
     if (badge.iconUrl) {
       // Vérifier si c'est une URL (commence par http/https) ou un emoji
-      const isUrl = badge.iconUrl.startsWith('http://') || badge.iconUrl.startsWith('https://') || badge.iconUrl.startsWith('/');
-      
+      const isUrl =
+        badge.iconUrl.startsWith("http://") ||
+        badge.iconUrl.startsWith("https://") ||
+        badge.iconUrl.startsWith("/");
+
       if (isUrl) {
-        return <img src={badge.iconUrl} alt={badge.title} className="w-16 h-16 object-contain" />;
+        return (
+          <Image
+            src={badge.iconUrl}
+            alt={badge.title}
+            className="w-16 h-16 object-contain"
+          />
+        );
       } else {
         // C'est probablement un emoji ou un caractère spécial
         return <span className="text-6xl select-none">{badge.iconUrl}</span>;
@@ -158,24 +173,32 @@ export function BadgeCelebration({ isOpen, onClose, badge, reason }: BadgeCelebr
           <div
             className={cn(
               "transition-all duration-500 delay-300",
-              showContent ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              showContent
+                ? "translate-y-0 opacity-100"
+                : "translate-y-4 opacity-0"
             )}
           >
             <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-300 to-yellow-100 bg-clip-text text-transparent">
               🎉 Nouveau Badge !
             </h2>
-            <h3 className="text-xl font-semibold mt-2 text-white">{badge.title}</h3>
+            <h3 className="text-xl font-semibold mt-2 text-white">
+              {badge.title}
+            </h3>
           </div>
 
           {/* Description */}
           <div
             className={cn(
               "transition-all duration-500 delay-500",
-              showContent ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              showContent
+                ? "translate-y-0 opacity-100"
+                : "translate-y-4 opacity-0"
             )}
           >
             <p className="text-gray-300 mb-2">{badge.description}</p>
-            <p className="text-sm text-gray-400 italic">Obtenu pour : {reason}</p>
+            <p className="text-sm text-gray-400 italic">
+              Obtenu pour : {reason}
+            </p>
             <div
               className={cn(
                 "inline-block px-3 py-1 rounded-full text-xs font-medium mt-3 border",
@@ -199,7 +222,9 @@ export function BadgeCelebration({ isOpen, onClose, badge, reason }: BadgeCelebr
           <div
             className={cn(
               "transition-all duration-500 delay-700",
-              showContent ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              showContent
+                ? "translate-y-0 opacity-100"
+                : "translate-y-4 opacity-0"
             )}
           >
             <Button

@@ -26,7 +26,10 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     // Valider les données
@@ -34,7 +37,7 @@ export async function DELETE(request: NextRequest) {
     const { id } = deleteInvitationSchema.parse(body);
 
     // Supprimer l'invitation
-    const _deletedInvitation = await prisma.verification.delete({
+    await prisma.verification.delete({
       where: {
         id,
         type: "EMAIL",
@@ -55,6 +58,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

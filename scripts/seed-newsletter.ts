@@ -107,6 +107,8 @@ async function seedNewsletter() {
         data: {
           ...campaignData,
           createdById: admin.id,
+          type: campaignData.type as any,
+          status: campaignData.status as any,
         },
         include: {
           createdBy: {

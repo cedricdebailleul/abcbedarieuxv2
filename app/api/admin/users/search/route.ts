@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/lib/generated/prisma";
 
 export async function GET(request: Request) {
   try {
@@ -8,7 +9,11 @@ export async function GET(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -16,19 +21,20 @@ export async function GET(request: Request) {
     }
 
     const url = new URL(request.url);
-    const query = url.searchParams.get('q') || '';
-    const includeMembers = url.searchParams.get('includeMembers') === 'true';
-    const onlyNonMembers = url.searchParams.get('onlyNonMembers') === 'true';
+    const query = url.searchParams.get("q") || "";
+    const includeMembers = url.searchParams.get("includeMembers") === "true";
+    const onlyNonMembers = url.searchParams.get("onlyNonMembers") === "true";
 
     if (query.length < 2) {
       return NextResponse.json({ users: [] });
     }
 
     // Construire les conditions de filtre
-    const whereConditions: any = {
+
+    const whereConditions: Prisma.UserFindManyArgs["where"] = {
       OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { email: { contains: query, mode: 'insensitive' } },
+        { name: { contains: query, mode: "insensitive" } },
+        { email: { contains: query, mode: "insensitive" } },
       ],
     };
 
@@ -40,22 +46,24 @@ export async function GET(request: Request) {
     const users = await prisma.user.findMany({
       where: whereConditions,
       include: {
-        abcMember: includeMembers ? {
-          select: {
-            id: true,
-            memberNumber: true,
-            type: true,
-            status: true,
-            membershipDate: true,
-          },
-        } : false,
+        abcMember: includeMembers
+          ? {
+              select: {
+                id: true,
+                memberNumber: true,
+                type: true,
+                status: true,
+                membershipDate: true,
+              },
+            }
+          : false,
       },
       take: 20,
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
 
     // Formater les résultats
-    const formattedUsers = users.map(user => ({
+    const formattedUsers = users.map((user) => ({
       id: user.id,
       name: user.name,
       email: user.email,
@@ -69,7 +77,6 @@ export async function GET(request: Request) {
     }));
 
     return NextResponse.json({ users: formattedUsers });
-
   } catch (error) {
     console.error("Erreur lors de la recherche d'utilisateurs:", error);
     return NextResponse.json(

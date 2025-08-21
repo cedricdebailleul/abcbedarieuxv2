@@ -6,7 +6,8 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité - ABC Bédarieux",
-  description: "Politique de confidentialité et protection des données personnelles de l'Association Bédaricienne des Commerçants.",
+  description:
+    "Politique de confidentialité et protection des données personnelles de l'Association Bédaricienne des Commerçants.",
 };
 
 export default function PrivacyPage() {
@@ -17,15 +18,18 @@ export default function PrivacyPage() {
         <div className="flex justify-center mb-4">
           <Shield className="w-16 h-16 text-primary" />
         </div>
-        <h1 className="text-4xl font-bold mb-4">Politique de confidentialité</h1>
+        <h1 className="text-4xl font-bold mb-4">
+          Politique de confidentialité
+        </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Protection et utilisation de vos données personnelles
         </p>
         <p className="text-sm text-muted-foreground mt-2">
-          Dernière mise à jour : {new Date().toLocaleDateString("fr-FR", {
+          Dernière mise à jour :{" "}
+          {new Date().toLocaleDateString("fr-FR", {
             day: "numeric",
-            month: "long", 
-            year: "numeric"
+            month: "long",
+            year: "numeric",
           })}
         </p>
       </div>
@@ -33,21 +37,24 @@ export default function PrivacyPage() {
       <div className="grid lg:grid-cols-4 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-8">
-          
           <Card>
             <CardHeader>
               <CardTitle>1. Responsable du traitement</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-slate max-w-none">
               <p>
-                Le responsable du traitement des données personnelles est l'Association Bédaricienne des Commerçants (ABC), 
-                située à Bédarieux (34600), représentée par son président.
+                Le responsable du traitement des données personnelles est
+                l&apos;Association Bédaricienne des Commerçants (ABC), située à
+                Bédarieux (34600), représentée par son président.
               </p>
               <div className="bg-muted p-4 rounded-lg">
                 <h4 className="font-semibold mb-2">Contact :</h4>
                 <p>Email : contact@abc-bedarieux.fr</p>
                 <p>Téléphone : 04 67 95 XX XX</p>
-                <p>Adresse : Mairie de Bédarieux, 1 Avenue Abbé Tarroux, 34600 Bédarieux</p>
+                <p>
+                  Adresse : Mairie de Bédarieux, 1 Avenue Abbé Tarroux, 34600
+                  Bédarieux
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -58,7 +65,9 @@ export default function PrivacyPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-semibold mb-2">Données d'inscription :</h4>
+                <h4 className="font-semibold mb-2">
+                  Données d&apos;inscription :
+                </h4>
                 <ul className="list-disc list-inside text-muted-foreground space-y-1">
                   <li>Nom, prénom</li>
                   <li>Adresse email</li>
@@ -66,14 +75,16 @@ export default function PrivacyPage() {
                   <li>Mot de passe (chiffré)</li>
                 </ul>
               </div>
-              
+
               <div>
-                <h4 className="font-semibold mb-2">Données d'établissement :</h4>
+                <h4 className="font-semibold mb-2">
+                  Données d&apos;établissement :
+                </h4>
                 <ul className="list-disc list-inside text-muted-foreground space-y-1">
                   <li>Nom commercial</li>
-                  <li>Adresse de l'établissement</li>
-                  <li>Horaires d'ouverture</li>
-                  <li>Description de l'activité</li>
+                  <li>Adresse de l&apos;établissement</li>
+                  <li>Horaires d&apos;ouverture</li>
+                  <li>Description de l&apos;activité</li>
                   <li>Photos et documents</li>
                 </ul>
               </div>
@@ -84,7 +95,7 @@ export default function PrivacyPage() {
                   <li>Adresse IP</li>
                   <li>Cookies techniques</li>
                   <li>Données de géolocalisation (avec consentement)</li>
-                  <li>Statistiques d'utilisation</li>
+                  <li>Statistiques d&apos;utilisation</li>
                 </ul>
               </div>
             </CardContent>
@@ -97,30 +108,40 @@ export default function PrivacyPage() {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-semibold mb-2">Gestion des comptes utilisateurs</h4>
+                  <h4 className="font-semibold mb-2">
+                    Gestion des comptes utilisateurs
+                  </h4>
                   <p className="text-muted-foreground">
-                    Création, authentification et gestion de votre compte sur notre plateforme.
+                    Création, authentification et gestion de votre compte sur
+                    notre plateforme.
                   </p>
                 </div>
-                
+
                 <div>
-                  <h4 className="font-semibold mb-2">Annuaire des commerçants</h4>
+                  <h4 className="font-semibold mb-2">
+                    Annuaire des commerçants
+                  </h4>
                   <p className="text-muted-foreground">
-                    Publication et promotion des établissements membres de l'association.
+                    Publication et promotion des établissements membres de
+                    l&apos;association.
                   </p>
                 </div>
-                
+
                 <div>
                   <h4 className="font-semibold mb-2">Communication</h4>
                   <p className="text-muted-foreground">
-                    Envoi de newsletters, notifications d'événements et informations importantes.
+                    Envoi de newsletters, notifications d&apos;événements et
+                    informations importantes.
                   </p>
                 </div>
-                
+
                 <div>
-                  <h4 className="font-semibold mb-2">Amélioration des services</h4>
+                  <h4 className="font-semibold mb-2">
+                    Amélioration des services
+                  </h4>
                   <p className="text-muted-foreground">
-                    Analyse statistique pour améliorer l'expérience utilisateur et nos services.
+                    Analyse statistique pour améliorer l&apos;expérience
+                    utilisateur et nos services.
                   </p>
                 </div>
               </div>
@@ -138,27 +159,30 @@ export default function PrivacyPage() {
                   <div>
                     <p className="font-medium">Consentement</p>
                     <p className="text-sm text-muted-foreground">
-                      Pour l'inscription à la newsletter et la géolocalisation
+                      Pour l&apos;inscription à la newsletter et la
+                      géolocalisation
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
                   <div>
                     <p className="font-medium">Exécution du contrat</p>
                     <p className="text-sm text-muted-foreground">
-                      Pour la gestion de votre compte et les services d'annuaire
+                      Pour la gestion de votre compte et les services
+                      d&apos;annuaire
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
                   <div>
                     <p className="font-medium">Intérêt légitime</p>
                     <p className="text-sm text-muted-foreground">
-                      Pour l'amélioration de nos services et la sécurité de la plateforme
+                      Pour l&apos;amélioration de nos services et la sécurité de
+                      la plateforme
                     </p>
                   </div>
                 </div>
@@ -172,14 +196,21 @@ export default function PrivacyPage() {
             </CardHeader>
             <CardContent>
               <p className="mb-4">
-                Vos données personnelles ne sont jamais vendues ou transmises à des tiers commerciaux. 
-                Elles peuvent être partagées uniquement dans les cas suivants :
+                Vos données personnelles ne sont jamais vendues ou transmises à
+                des tiers commerciaux. Elles peuvent être partagées uniquement
+                dans les cas suivants :
               </p>
               <ul className="list-disc list-inside text-muted-foreground space-y-2">
                 <li>Avec votre consentement explicite</li>
                 <li>Pour répondre à une obligation légale</li>
-                <li>Avec nos prestataires techniques (hébergement, maintenance) sous contrat de confidentialité</li>
-                <li>Dans le cadre de la promotion de votre établissement (informations publiques)</li>
+                <li>
+                  Avec nos prestataires techniques (hébergement, maintenance)
+                  sous contrat de confidentialité
+                </li>
+                <li>
+                  Dans le cadre de la promotion de votre établissement
+                  (informations publiques)
+                </li>
               </ul>
             </CardContent>
           </Card>
@@ -192,11 +223,15 @@ export default function PrivacyPage() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span>Comptes actifs</span>
-                  <span className="text-muted-foreground">Tant que le compte est utilisé</span>
+                  <span className="text-muted-foreground">
+                    Tant que le compte est utilisé
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Comptes inactifs</span>
-                  <span className="text-muted-foreground">3 ans sans connexion</span>
+                  <span className="text-muted-foreground">
+                    3 ans sans connexion
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Données de navigation</span>
@@ -204,7 +239,9 @@ export default function PrivacyPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Newsletters</span>
-                  <span className="text-muted-foreground">Jusqu'à désinscription</span>
+                  <span className="text-muted-foreground">
+                    Jusqu&apos;à désinscription
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -215,10 +252,12 @@ export default function PrivacyPage() {
               <CardTitle>7. Vos droits</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="mb-4">Conformément au RGPD, vous disposez des droits suivants :</p>
+              <p className="mb-4">
+                Conformément au RGPD, vous disposez des droits suivants :
+              </p>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <h4 className="font-semibold">Droit d'accès</h4>
+                  <h4 className="font-semibold">Droit d&apos;accès</h4>
                   <p className="text-sm text-muted-foreground">
                     Obtenir une copie de vos données personnelles
                   </p>
@@ -230,7 +269,7 @@ export default function PrivacyPage() {
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="font-semibold">Droit à l'effacement</h4>
+                  <h4 className="font-semibold">Droit à l&apos;effacement</h4>
                   <p className="text-sm text-muted-foreground">
                     Demander la suppression de vos données
                   </p>
@@ -251,7 +290,8 @@ export default function PrivacyPage() {
             </CardHeader>
             <CardContent>
               <p className="mb-4">
-                Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données :
+                Nous mettons en œuvre des mesures techniques et
+                organisationnelles appropriées pour protéger vos données :
               </p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1">
                 <li>Chiffrement des données sensibles</li>
@@ -269,17 +309,15 @@ export default function PrivacyPage() {
             </CardHeader>
             <CardContent>
               <p className="mb-4">
-                Notre site utilise des cookies techniques nécessaires au fonctionnement de la plateforme. 
-                Vous pouvez gérer vos préférences via notre bandeau de cookies.
+                Notre site utilise des cookies techniques nécessaires au
+                fonctionnement de la plateforme. Vous pouvez gérer vos
+                préférences via notre bandeau de cookies.
               </p>
               <Button asChild variant="outline">
-                <Link href="/cookies">
-                  Gérer les cookies
-                </Link>
+                <Link href="/cookies">Gérer les cookies</Link>
               </Button>
             </CardContent>
           </Card>
-
         </div>
 
         {/* Sidebar */}
@@ -290,31 +328,34 @@ export default function PrivacyPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Pour exercer vos droits ou pour toute question relative à vos données personnelles :
+                Pour exercer vos droits ou pour toute question relative à vos
+                données personnelles :
               </p>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-primary" />
                   <div>
                     <p className="font-medium">Email</p>
-                    <p className="text-sm text-muted-foreground">dpo@abc-bedarieux.fr</p>
+                    <p className="text-sm text-muted-foreground">
+                      dpo@abc-bedarieux.fr
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-primary" />
                   <div>
                     <p className="font-medium">Téléphone</p>
-                    <p className="text-sm text-muted-foreground">04 67 95 XX XX</p>
+                    <p className="text-sm text-muted-foreground">
+                      04 67 95 XX XX
+                    </p>
                   </div>
                 </div>
               </div>
 
               <Button asChild className="w-full">
-                <Link href="/contact">
-                  Exercer mes droits
-                </Link>
+                <Link href="/contact">Exercer mes droits</Link>
               </Button>
             </CardContent>
           </Card>
@@ -325,10 +366,15 @@ export default function PrivacyPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la CNIL.
+                Si vous estimez que vos droits ne sont pas respectés, vous
+                pouvez saisir la CNIL.
               </p>
               <Button asChild variant="outline" className="w-full">
-                <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">
+                <a
+                  href="https://www.cnil.fr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Contacter la CNIL
                 </a>
               </Button>

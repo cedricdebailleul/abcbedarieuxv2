@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -12,12 +12,6 @@ import {
   Smartphone, 
   Mail,
   Download,
-  ExternalLink,
-  Calendar,
-  MapPin,
-  User,
-  Phone,
-  Globe
 } from "lucide-react";
 import { ContentItem } from "../_hooks/useAvailableContent";
 
@@ -41,7 +35,8 @@ export function NewsletterPreview({
   attachments = []
 }: NewsletterPreviewProps) {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
-  const [previewMode, setPreviewMode] = useState<'visual' | 'html'>('visual');
+  type PreviewMode = 'visual' | 'html';
+  const [previewMode, setPreviewMode] = useState<PreviewMode>('visual');
 
   const formatDate = (dateString: string, isAllDay?: boolean) => {
     const date = new Date(dateString);
@@ -366,7 +361,7 @@ export function NewsletterPreview({
         </DialogHeader>
 
         <div className="flex gap-4 mb-4">
-          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as any)}>
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'desktop' | 'mobile')}>
             <TabsList>
               <TabsTrigger value="desktop" className="flex items-center gap-2">
                 <Monitor className="w-4 h-4" />
@@ -378,8 +373,7 @@ export function NewsletterPreview({
               </TabsTrigger>
             </TabsList>
           </Tabs>
-
-          <Tabs value={previewMode} onValueChange={(value) => setPreviewMode(value as any)}>
+          <Tabs value={previewMode} onValueChange={(value) => setPreviewMode(value as PreviewMode)}>
             <TabsList>
               <TabsTrigger value="visual" className="flex items-center gap-2">
                 <Eye className="w-4 h-4" />

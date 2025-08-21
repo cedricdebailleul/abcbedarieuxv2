@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { HexColorPicker } from "react-colorful";
-import { Palette, Save, Eye, EyeOff } from "lucide-react";
+import { Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -34,9 +34,12 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 
-import { createBadgeAction, updateBadgeAction, getBadgeAction } from "@/actions/badge";
+import {
+  createBadgeAction,
+  updateBadgeAction,
+  getBadgeAction,
+} from "@/actions/badge";
 import {
   createBadgeSchema,
   updateBadgeSchema,
@@ -46,12 +49,14 @@ import {
   type CreateBadgeInput,
   type UpdateBadgeInput,
 } from "@/lib/validations/badge";
+import { BadgeFormData } from "@/lib/types/badge";
 import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
+import Image from "next/image";
 
 interface BadgeFormProps {
   mode: "create" | "edit";
   badgeId?: string;
-  initialData?: any;
+  initialData?: Partial<BadgeFormData>;
 }
 
 export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
@@ -61,10 +66,11 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
   const [loading, setLoading] = useState(mode === "edit" && !initialData);
 
   const schema = mode === "create" ? createBadgeSchema : updateBadgeSchema;
-  
-  const form = useForm<CreateBadgeInput | UpdateBadgeInput>({
-    resolver: zodResolver(schema as any), // Cast to any to handle conditional schema
+
+  const form = useForm({
+    resolver: zodResolver(schema),
     defaultValues: {
+      id: "", // Ensure 'id' is part of the default values and type definition
       title: "",
       description: "",
       category: BadgeCategory.ACHIEVEMENT,
@@ -72,7 +78,6 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
       color: RARITY_COLORS[BadgeRarity.COMMON],
       iconUrl: "",
       isActive: true,
-      ...(mode === "edit" && badgeId ? { id: badgeId } : {}),
       ...initialData,
     },
   });
@@ -86,20 +91,23 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
           if (result.success) {
             const badge = result.data;
             form.reset({
-              id: badge.id,
-              title: badge.title,
-              description: badge.description,
-              category: badge.category,
-              rarity: badge.rarity,
-              color: badge.color || RARITY_COLORS[badge.rarity as keyof typeof RARITY_COLORS],
-              iconUrl: badge.iconUrl || "",
-              isActive: badge.isActive,
+              ...form.getValues(), // Preserve existing values
+              ...(badge?.id ? { id: badge.id } : {}),
+              title: badge?.title ?? "",
+              description: badge?.description ?? "",
+              category: badge?.category ?? BadgeCategory.ACHIEVEMENT,
+              rarity: badge?.rarity ?? BadgeRarity.COMMON,
+              color:
+                RARITY_COLORS[badge?.rarity as keyof typeof RARITY_COLORS] ||
+                RARITY_COLORS[badge?.rarity as keyof typeof RARITY_COLORS],
+              iconUrl: "",
+              isActive: badge?.isActive,
             });
           } else {
             toast.error(result.error || "Erreur lors du chargement");
             router.push("/dashboard/admin/badges");
           }
-        } catch (error) {
+        } catch {
           toast.error("Erreur lors du chargement du badge");
           router.push("/dashboard/admin/badges");
         }
@@ -122,20 +130,24 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
   const previewData = form.watch();
   const renderBadgePreview = () => {
     const iconUrl = previewData.iconUrl;
-    const isUrl = iconUrl && (iconUrl.startsWith('http://') || iconUrl.startsWith('https://') || iconUrl.startsWith('/'));
-    
+    const isUrl =
+      iconUrl &&
+      (iconUrl.startsWith("http://") ||
+        iconUrl.startsWith("https://") ||
+        iconUrl.startsWith("/"));
+
     return (
       <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/50">
-        <div 
+        <div
           className="w-12 h-12 rounded-full border-2 flex items-center justify-center"
-          style={{ 
+          style={{
             borderColor: previewData.color || RARITY_COLORS.COMMON,
-            backgroundColor: `${previewData.color || RARITY_COLORS.COMMON}20`
+            backgroundColor: `${previewData.color || RARITY_COLORS.COMMON}20`,
           }}
         >
           {iconUrl ? (
             isUrl ? (
-              <img src={iconUrl} alt="" className="w-8 h-8 object-contain" />
+              <Image src={iconUrl} alt="" className="w-8 h-8 object-contain" />
             ) : (
               <span className="text-xl">{iconUrl}</span>
             )
@@ -144,16 +156,23 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
           )}
         </div>
         <div className="flex-1">
-          <div className="font-semibold">{previewData.title || "Titre du badge"}</div>
+          <div className="font-semibold">
+            {previewData.title || "Titre du badge"}
+          </div>
           <div className="text-sm text-muted-foreground">
             {previewData.description || "Description du badge"}
           </div>
           <div className="flex gap-2 mt-1">
-            <Badge variant="outline" style={{ borderColor: previewData.color || RARITY_COLORS.COMMON }}>
+            <Badge
+              variant="outline"
+              style={{ borderColor: previewData.color || RARITY_COLORS.COMMON }}
+            >
               {RARITY_LABELS[previewData.rarity] || "Commun"}
             </Badge>
             <Badge variant="outline">
-              {CATEGORY_LABELS[previewData.category as keyof typeof CATEGORY_LABELS] || "Accomplissement"}
+              {CATEGORY_LABELS[
+                previewData.category as keyof typeof CATEGORY_LABELS
+              ] || "Accomplissement"}
             </Badge>
           </div>
         </div>
@@ -164,26 +183,32 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
   const onSubmit = async (data: CreateBadgeInput | UpdateBadgeInput) => {
     startTransition(async () => {
       try {
-        const result = mode === "create" 
-          ? await createBadgeAction(data as CreateBadgeInput)
-          : await updateBadgeAction(data as UpdateBadgeInput);
+        const result =
+          mode === "create"
+            ? await createBadgeAction(data as CreateBadgeInput)
+            : await updateBadgeAction(data as UpdateBadgeInput);
 
         if (result.success) {
-          toast.success(`Badge ${mode === "create" ? "créé" : "mis à jour"} avec succès`);
+          toast.success(
+            `Badge ${mode === "create" ? "créé" : "mis à jour"} avec succès`
+          );
           router.push("/dashboard/admin/badges");
           router.refresh();
         } else {
           if (result.errors) {
             Object.entries(result.errors).forEach(([field, messages]) => {
-              form.setError(field as any, {
-                message: messages.join(", "),
-              });
+              form.setError(
+                field as Exclude<keyof CreateBadgeInput | keyof UpdateBadgeInput, "id">,
+                {
+                  message: messages.join(", "),
+                }
+              );
             });
           } else {
             toast.error(result.error || "Une erreur est survenue");
           }
         }
-      } catch (error) {
+      } catch {
         toast.error("Une erreur est survenue");
       }
     });
@@ -198,9 +223,7 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
       {/* Aperçu */}
       <div>
         <Label className="text-base font-medium">Aperçu</Label>
-        <div className="mt-2">
-          {renderBadgePreview()}
-        </div>
+        <div className="mt-2">{renderBadgePreview()}</div>
       </div>
 
       <FormProvider {...form}>
@@ -210,7 +233,7 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
               {/* Informations générales */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Informations générales</h3>
-                
+
                 {/* Titre */}
                 <FormField
                   control={form.control}
@@ -234,10 +257,10 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
                     <FormItem>
                       <FormLabel>Description *</FormLabel>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           placeholder="Description du badge..."
                           className="min-h-[100px]"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -253,14 +276,14 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
                     <FormItem>
                       <FormLabel>Icône</FormLabel>
                       <FormControl>
-                        <Input 
+                        <Input
                           placeholder="🏆 ou URL d'image..."
                           {...field}
                           value={field.value || ""}
                         />
                       </FormControl>
                       <div className="text-xs text-muted-foreground">
-                        Utilisez un emoji (🏆, 📝, ⭐) ou une URL d'image
+                        Utilisez un emoji (🏆, 📝, ⭐) ou une URL d&apos;image
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -279,18 +302,23 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Catégorie *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Sélectionner une catégorie" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                            <SelectItem key={key} value={key}>
-                              {label}
-                            </SelectItem>
-                          ))}
+                          {Object.entries(CATEGORY_LABELS).map(
+                            ([key, label]) => (
+                              <SelectItem key={key} value={key}>
+                                {label}
+                              </SelectItem>
+                            )
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -305,7 +333,10 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Rareté *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Sélectionner une rareté" />
@@ -315,9 +346,14 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
                           {Object.entries(RARITY_LABELS).map(([key, label]) => (
                             <SelectItem key={key} value={key}>
                               <div className="flex items-center gap-2">
-                                <div 
+                                <div
                                   className="w-3 h-3 rounded-full border"
-                                  style={{ backgroundColor: RARITY_COLORS[key as keyof typeof RARITY_COLORS] }}
+                                  style={{
+                                    backgroundColor:
+                                      RARITY_COLORS[
+                                        key as keyof typeof RARITY_COLORS
+                                      ],
+                                  }}
                                 />
                                 {label}
                               </div>
@@ -339,31 +375,37 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
                       <FormLabel>Couleur personnalisée</FormLabel>
                       <div className="flex gap-2">
                         <FormControl>
-                          <Input 
+                          <Input
                             placeholder="#FFFFFF"
                             {...field}
                             value={field.value || ""}
                           />
                         </FormControl>
-                        <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
+                        <Popover
+                          open={colorPickerOpen}
+                          onOpenChange={setColorPickerOpen}
+                        >
                           <PopoverTrigger asChild>
                             <Button variant="outline" size="icon" type="button">
-                              <div 
+                              <div
                                 className="w-4 h-4 rounded border"
-                                style={{ backgroundColor: field.value || "#000000" }}
+                                style={{
+                                  backgroundColor: field.value || "#000000",
+                                }}
                               />
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-3">
-                            <HexColorPicker 
-                              color={field.value || "#000000"} 
+                            <HexColorPicker
+                              color={field.value || "#000000"}
                               onChange={field.onChange}
                             />
                           </PopoverContent>
                         </Popover>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Laissez vide pour utiliser la couleur par défaut de la rareté
+                        Laissez vide pour utiliser la couleur par défaut de la
+                        rareté
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -379,7 +421,8 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
                       <div className="space-y-0.5">
                         <FormLabel className="text-base">Badge actif</FormLabel>
                         <div className="text-sm text-muted-foreground">
-                          Les badges inactifs ne peuvent pas être attribués automatiquement
+                          Les badges inactifs ne peuvent pas être attribués
+                          automatiquement
                         </div>
                       </div>
                       <FormControl>
@@ -396,9 +439,9 @@ export function BadgeForm({ mode, badgeId, initialData }: BadgeFormProps) {
 
             {/* Actions */}
             <div className="flex justify-end gap-4 pt-4 border-t">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => router.back()}
               >
                 Annuler

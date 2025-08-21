@@ -86,19 +86,17 @@ export async function POST(request: NextRequest) {
 
         case "anonymize":
           // Anonymiser les données en gardant seulement les statistiques
-          const anonymizedSubscriber = await prisma.newsletterSubscriber.update(
-            {
-              where: { id: subscriber.id },
-              data: {
-                email: `anonymized_${subscriber.id}@deleted.local`,
-                firstName: null,
-                lastName: null,
-                isActive: false,
-                verificationToken: null,
-                unsubscribeToken: null,
-              },
-            }
-          );
+          await prisma.newsletterSubscriber.update({
+            where: { id: subscriber.id },
+            data: {
+              email: `anonymized_${subscriber.id}@deleted.local`,
+              firstName: null,
+              lastName: null,
+              isActive: false,
+              verificationToken: null,
+              unsubscribeToken: null,
+            },
+          });
 
           return NextResponse.json({
             success: true,
@@ -115,8 +113,16 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
       }
-    } catch (prismaError: any) {
-      if (prismaError.message?.includes("newsletterSubscriber")) {
+    } catch (prismaError: unknown) {
+      if (
+        typeof prismaError === "object" &&
+        prismaError !== null &&
+        "message" in prismaError &&
+        typeof (prismaError as { message?: string }).message === "string" &&
+        (prismaError as { message: string }).message.includes(
+          "newsletterSubscriber"
+        )
+      ) {
         return NextResponse.json(
           {
             success: false,
@@ -140,7 +146,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   // Endpoint pour récupérer les informations de conformité RGPD
   return NextResponse.json({
     success: true,

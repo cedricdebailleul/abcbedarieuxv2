@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus, Prisma } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/admin/places - Liste des places pour admin
@@ -11,7 +11,10 @@ export async function GET(request: Request) {
     });
 
     if (!session?.user || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -23,9 +26,11 @@ export async function GET(request: Request) {
     const offset = (page - 1) * limit;
 
     // Construction de la requête
-    const where: any = {};
+    const where: Prisma.PlaceWhereInput = {};
 
-    if (status) where.status = status;
+    if (status && Object.values(PlaceStatus).includes(status as PlaceStatus)) {
+      where.status = status as PlaceStatus;
+    }
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -82,6 +87,9 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Erreur admin places:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

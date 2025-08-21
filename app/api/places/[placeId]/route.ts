@@ -57,7 +57,13 @@ type RawHour =
       closeTime?: string | null;
       slots?: { openTime: string; closeTime: string }[];
     }
-  | any;
+  | {
+      dayOfWeek: string;
+      isClosed?: boolean;
+      openTime?: string | null;
+      closeTime?: string | null;
+      slots?: { openTime: string; closeTime: string }[];
+    };
 
 function toOpeningRows(placeId: string, openingHours?: RawHour[]) {
   if (!openingHours?.length) return [];
@@ -80,7 +86,7 @@ function toOpeningRows(placeId: string, openingHours?: RawHour[]) {
         if (!closed && s?.openTime && s?.closeTime) {
           rows.push({
             placeId,
-            dayOfWeek: day as DayOfWeek, // Ensure day is cast to the DayOfWeek enum
+            dayOfWeek: day as DayOfWeek,
             openTime: s.openTime,
             closeTime: s.closeTime,
             isClosed: false,
@@ -107,7 +113,10 @@ function toOpeningRows(placeId: string, openingHours?: RawHour[]) {
 }
 
 // GET /api/places/[placeId] - Récupérer une place
-export async function GET(request: Request, { params }: { params: { placeId: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: { placeId: string } }
+) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -147,18 +156,27 @@ export async function GET(request: Request, { params }: { params: { placeId: str
       place.ownerId === session?.user?.id;
 
     if (!canView) {
-      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
     }
 
     return NextResponse.json({ place });
   } catch (error) {
     console.error("Erreur lors de la récupération de la place:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }
 
 // PUT /api/places/[placeId] - Modifier une place
-export async function PUT(request: Request, { params }: { params: { placeId: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: { placeId: string } }
+) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -166,7 +184,10 @@ export async function PUT(request: Request, { params }: { params: { placeId: str
     const { placeId } = await params;
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentification requise" },
+        { status: 401 }
+      );
     }
 
     // Vérifier que la place existe et les permissions
@@ -178,10 +199,15 @@ export async function PUT(request: Request, { params }: { params: { placeId: str
       return NextResponse.json({ error: "Place non trouvée" }, { status: 404 });
     }
 
-    const canEdit = session.user.role === "admin" || existingPlace.ownerId === session.user.id;
+    const canEdit =
+      session.user.role === "admin" ||
+      existingPlace.ownerId === session.user.id;
 
     if (!canEdit) {
-      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -189,31 +215,66 @@ export async function PUT(request: Request, { params }: { params: { placeId: str
 
     // Si l'utilisateur modifie et n'est pas admin, repasser en PENDING
     const shouldBePending =
-      session.user.role !== "admin" && existingPlace.status === PlaceStatus.ACTIVE;
+      session.user.role !== "admin" &&
+      existingPlace.status === PlaceStatus.ACTIVE;
 
     // Normaliser les photos (comme dans l'API de création)
-    const photos = (validatedData as any).photos || (validatedData as any).images || [];
-    const normalizedPhotos = Array.isArray(photos) ? photos : [];
+    const rawPhotos =
+      (validatedData as { photos?: string[]; images?: string[] }).photos ||
+      (validatedData as { photos?: string[]; images?: string[] }).images ||
+      [];
+    const normalizedPhotos = Array.isArray(rawPhotos) ? rawPhotos : [];
 
     // Préparer les données additionnelles
+    const { openingHours: newOpeningHours } = validatedData as z.infer<
+      typeof placeSchema
+    >;
     const googleBusinessData =
-      (validatedData.openingHours && validatedData.openingHours.length > 0) ||
+      (newOpeningHours && newOpeningHours.length > 0) ||
       normalizedPhotos.length > 0
         ? {
-            openingHours: validatedData.openingHours || [],
+            openingHours: newOpeningHours || [],
             images: normalizedPhotos,
           }
         : existingPlace.googleBusinessData;
 
     // Exclure les champs qui ne sont pas dans le modèle Prisma
-    const { openingHours, photos: _, ...placeData } = validatedData as any;
+    const { openingHours, ...placeData } = validatedData as z.infer<
+      typeof placeSchema
+    >;
 
     // Préparer les données à mettre à jour
-    const dataToUpdate: any = {
+    const dataToUpdate: Omit<
+      Partial<z.infer<typeof placeSchema>>,
+      "openingHours"
+    > & {
+      status: PlaceStatus;
+      images: string[];
+      openingHours?: {
+        deleteMany: Record<string, unknown>;
+        create: {
+          dayOfWeek: DayOfWeek;
+          openTime: string | null;
+          closeTime: string | null;
+          isClosed: boolean;
+        }[];
+      };
+      googleBusinessData?: { openingHours?: RawHour[]; images?: string[] };
+    } = {
       ...placeData,
       status: shouldBePending ? PlaceStatus.PENDING : existingPlace.status,
-      // Mettre à jour les images (même si array vide pour permettre la suppression)
       images: normalizedPhotos,
+      openingHours: openingHours
+        ? {
+            deleteMany: {},
+            create: openingHours.map((row: RawHour) => ({
+              dayOfWeek: String(row.dayOfWeek).toUpperCase() as DayOfWeek,
+              openTime: row.openTime ? String(row.openTime) : null,
+              closeTime: row.closeTime ? String(row.closeTime) : null,
+              isClosed: Boolean(row.isClosed),
+            })),
+          }
+        : undefined,
     };
 
     // Préserver logo et coverImage existants si pas fournis ou vides
@@ -230,7 +291,8 @@ export async function PUT(request: Request, { params }: { params: { placeId: str
         console.log("✅ Logo mis à jour depuis photos:", normalizedPhotos[0]);
       } else {
         // Préserver le logo existant
-        dataToUpdate.logo = existingPlace.logo;
+        dataToUpdate.logo =
+          existingPlace.logo !== null ? existingPlace.logo : undefined;
         console.log("✅ Logo préservé:", existingPlace.logo);
       }
     } else {
@@ -243,16 +305,27 @@ export async function PUT(request: Request, { params }: { params: { placeId: str
         console.log("✅ Cover mise à jour depuis photos:", normalizedPhotos[0]);
       } else {
         // Préserver la coverImage existante
-        dataToUpdate.coverImage = existingPlace.coverImage;
+        dataToUpdate.coverImage = existingPlace.coverImage ?? undefined;
         console.log("✅ Cover préservée:", existingPlace.coverImage);
       }
     } else {
-      console.log("✅ Cover fournie par le formulaire:", dataToUpdate.coverImage);
+      console.log(
+        "✅ Cover fournie par le formulaire:",
+        dataToUpdate.coverImage
+      );
     }
 
     // Ajouter les données Google Business
-    if (googleBusinessData) {
-      dataToUpdate.googleBusinessData = googleBusinessData;
+    if (
+      googleBusinessData &&
+      typeof googleBusinessData === "object" &&
+      !Array.isArray(googleBusinessData) &&
+      ("openingHours" in googleBusinessData || "images" in googleBusinessData)
+    ) {
+      dataToUpdate.googleBusinessData = googleBusinessData as {
+        openingHours?: RawHour[];
+        images?: string[];
+      };
     }
 
     const place = await prisma.place.update({
@@ -270,15 +343,20 @@ export async function PUT(request: Request, { params }: { params: { placeId: str
     //   await sendAdminNotification("place_updated", place);
     // }
 
-    if (Array.isArray(validatedData.openingHours)) {
+    if (Array.isArray(openingHours)) {
       await prisma.openingHours.deleteMany({ where: { placeId } });
       const openingRows = toOpeningRows(
         placeId,
-        validatedData.openingHours ?? (existingPlace.googleBusinessData as any)?.openingHours
+        openingHours ??
+          (existingPlace.googleBusinessData as { openingHours?: RawHour[] })
+            ?.openingHours
       );
       if (openingRows.length) {
         await prisma.openingHours.createMany({
-          data: openingRows.map((row) => ({ ...row, dayOfWeek: row.dayOfWeek as DayOfWeek })),
+          data: openingRows.map((row) => ({
+            ...row,
+            dayOfWeek: String(row.dayOfWeek).toUpperCase() as DayOfWeek,
+          })),
         });
       }
     }
@@ -293,12 +371,18 @@ export async function PUT(request: Request, { params }: { params: { placeId: str
     }
 
     console.error("Erreur lors de la modification de la place:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }
 
 // DELETE /api/places/[placeId] - Supprimer une place
-export async function DELETE(request: Request, { params }: { params: { placeId: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { placeId: string } }
+) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -306,7 +390,10 @@ export async function DELETE(request: Request, { params }: { params: { placeId: 
     const { placeId } = await params;
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentification requise" },
+        { status: 401 }
+      );
     }
 
     const existingPlace = await prisma.place.findUnique({
@@ -317,10 +404,15 @@ export async function DELETE(request: Request, { params }: { params: { placeId: 
       return NextResponse.json({ error: "Place non trouvée" }, { status: 404 });
     }
 
-    const canDelete = session.user.role === "admin" || existingPlace.ownerId === session.user.id;
+    const canDelete =
+      session.user.role === "admin" ||
+      existingPlace.ownerId === session.user.id;
 
     if (!canDelete) {
-      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
     }
 
     // Supprimer le dossier d'uploads de la place avant de supprimer en BDD
@@ -342,7 +434,10 @@ export async function DELETE(request: Request, { params }: { params: { placeId: 
         console.log(`Dossier supprimé: ${uploadDir}`);
       }
     } catch (error) {
-      console.error("Erreur lors de la suppression du dossier d'uploads:", error);
+      console.error(
+        "Erreur lors de la suppression du dossier d'uploads:",
+        error
+      );
       // Continuer même si la suppression du dossier échoue
     }
 
@@ -353,6 +448,9 @@ export async function DELETE(request: Request, { params }: { params: { placeId: 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Erreur lors de la suppression de la place:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

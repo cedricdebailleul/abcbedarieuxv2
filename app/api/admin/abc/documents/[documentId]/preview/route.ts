@@ -15,7 +15,11 @@ export async function GET(
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -54,7 +58,7 @@ export async function GET(
     }
 
     // Construire le chemin complet du fichier
-    const fullPath = path.join(process.cwd(), 'public', document.filePath);
+    const fullPath = path.join(process.cwd(), "public", document.filePath);
 
     // Vérifier que le fichier existe
     if (!existsSync(fullPath)) {
@@ -66,45 +70,52 @@ export async function GET(
 
     // Déterminer le type MIME basé sur l'extension
     const ext = path.extname(document.fileName).toLowerCase();
-    let mimeType = 'application/octet-stream';
-    
+    let mimeType = "application/octet-stream";
+
     switch (ext) {
-      case '.pdf':
-        mimeType = 'application/pdf';
+      case ".pdf":
+        mimeType = "application/pdf";
         break;
-      case '.jpg':
-      case '.jpeg':
-        mimeType = 'image/jpeg';
+      case ".jpg":
+      case ".jpeg":
+        mimeType = "image/jpeg";
         break;
-      case '.png':
-        mimeType = 'image/png';
+      case ".png":
+        mimeType = "image/png";
         break;
-      case '.gif':
-        mimeType = 'image/gif';
+      case ".gif":
+        mimeType = "image/gif";
         break;
-      case '.txt':
-        mimeType = 'text/plain';
+      case ".txt":
+        mimeType = "text/plain";
         break;
       default:
         // Pour les autres types, rediriger vers le téléchargement
-        return NextResponse.redirect(`/api/admin/abc/documents/${params.documentId}/download`);
+        return NextResponse.redirect(
+          `/api/admin/abc/documents/${params.documentId}/download`
+        );
     }
 
     // Lire le fichier
     const fileBuffer = await readFile(fullPath);
 
+    // Utiliser une vue ArrayBuffer (Uint8Array) pour assurer un type compatible avec BodyInit
+    const uint8Array = new Uint8Array(fileBuffer);
+
     // Créer la réponse avec le fichier pour affichage inline
-    const response = new NextResponse(fileBuffer);
-    response.headers.set('Content-Type', mimeType);
-    response.headers.set('Content-Disposition', `inline; filename="${encodeURIComponent(document.fileName)}"`);
-    response.headers.set('Content-Length', fileBuffer.length.toString());
-    
+    const response = new NextResponse(uint8Array);
+    response.headers.set("Content-Type", mimeType);
+    response.headers.set(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(document.fileName)}"`
+    );
+    response.headers.set("Content-Length", fileBuffer.length.toString());
+
     // Headers pour permettre l'affichage dans un iframe/nouvel onglet
-    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
-    response.headers.set('Content-Security-Policy', "frame-ancestors 'self'");
+    response.headers.set("X-Frame-Options", "SAMEORIGIN");
+    response.headers.set("Content-Security-Policy", "frame-ancestors 'self'");
 
     return response;
-
   } catch (error) {
     console.error("Erreur lors de l'aperçu du document:", error);
     return NextResponse.json(

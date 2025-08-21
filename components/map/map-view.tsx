@@ -6,8 +6,14 @@ import { MapPin, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { MapPlace, MapCategory } from "./interactive-map";
-import { DEFAULT_CENTER, getPlacesBounds, getCategoryColor, getPlaceTypeIcon } from "@/lib/map-utils";
+import {
+  DEFAULT_CENTER,
+  getPlacesBounds,
+  getCategoryColor,
+  getPlaceTypeIcon,
+} from "@/lib/map-utils";
 import { lucideIconToEmoji } from "@/lib/share-utils";
+import { env } from "@/lib/env";
 
 interface MapViewProps {
   places: MapPlace[];
@@ -22,41 +28,47 @@ export function MapView({
   selectedPlace,
   onPlaceSelect,
   userLocation,
-  categories
+  categories,
 }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<Map<string, google.maps.marker.AdvancedMarkerElement>>(new Map());
-  const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const markersRef = useRef<
+    Map<string, google.maps.marker.AdvancedMarkerElement>
+  >(new Map());
+  const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Créer un mapping des catégories pour les couleurs
-  const categoryMap = useRef<Map<string, { color: string; icon?: string }>>(new Map());
+  const categoryMap = useRef<Map<string, { color: string; icon?: string }>>(
+    new Map()
+  );
 
   const [categoriesReady, setCategoriesReady] = useState(false);
   const [forceRender, setForceRender] = useState(0);
 
   useEffect(() => {
-    categories.forEach(category => {
+    categories.forEach((category) => {
       categoryMap.current.set(category.id, {
         color: getCategoryColor(category),
-        icon: category.icon || undefined
+        icon: category.icon || undefined,
       });
-      
-      category.children.forEach(child => {
+
+      category.children.forEach((child) => {
         categoryMap.current.set(child.id, {
           color: getCategoryColor(child),
-          icon: child.icon || undefined
+          icon: child.icon || undefined,
         });
       });
     });
-    
+
     // Marquer les catégories comme prêtes
     setCategoriesReady(true);
-    
+
     // Forcer un re-rendu après que les catégories soient prêtes
-    setTimeout(() => setForceRender(prev => prev + 1), 200);
+    setTimeout(() => setForceRender((prev) => prev + 1), 200);
   }, [categories]);
 
   // Vérification de sécurité - si pas de markers après 2 secondes, forcer re-création
@@ -64,10 +76,10 @@ export function MapView({
     if (places.length > 0 && categoriesReady) {
       const checkTimer = setTimeout(() => {
         if (markersRef.current.size === 0) {
-          setForceRender(prev => prev + 1);
+          setForceRender((prev) => prev + 1);
         }
       }, 2000);
-      
+
       return () => clearTimeout(checkTimer);
     }
   }, [places.length, categoriesReady]);
@@ -79,40 +91,43 @@ export function MapView({
     const initMap = async () => {
       try {
         const loader = new Loader({
-          apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+          apiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
           version: "weekly",
-          libraries: ["marker", "geometry"]
+          libraries: ["marker", "geometry"],
         });
 
         await loader.load();
 
         const bounds = getPlacesBounds(places);
-        
+
         const mapConfig: google.maps.MapOptions = {
-          center: places.length > 0 ? { 
-            lat: (bounds.north + bounds.south) / 2, 
-            lng: (bounds.east + bounds.west) / 2 
-          } : DEFAULT_CENTER,
+          center:
+            places.length > 0
+              ? {
+                  lat: (bounds.north + bounds.south) / 2,
+                  lng: (bounds.east + bounds.west) / 2,
+                }
+              : DEFAULT_CENTER,
           zoom: places.length > 0 ? 12 : 13,
           mapTypeId: google.maps.MapTypeId.ROADMAP,
           styles: [
             {
               featureType: "poi",
               elementType: "labels",
-              stylers: [{ visibility: "off" }]
-            }
+              stylers: [{ visibility: "off" }],
+            },
           ],
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
           zoomControlOptions: {
-            position: google.maps.ControlPosition.RIGHT_CENTER
-          }
+            position: google.maps.ControlPosition.RIGHT_CENTER,
+          },
         };
 
         // Ajouter le Map ID si disponible
-        if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID) {
-          mapConfig.mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+        if (env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID) {
+          mapConfig.mapId = env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
         }
 
         const map = new google.maps.Map(mapRef.current!, mapConfig);
@@ -126,36 +141,42 @@ export function MapView({
             new google.maps.LatLng(bounds.south, bounds.west),
             new google.maps.LatLng(bounds.north, bounds.east)
           );
-          map.fitBounds(googleBounds, { top: 50, right: 50, bottom: 50, left: 50 });
+          map.fitBounds(googleBounds, {
+            top: 50,
+            right: 50,
+            bottom: 50,
+            left: 50,
+          });
         }
-
       } catch (error) {
-        console.error('Erreur lors du chargement de Google Maps:', error);
-        setError('Impossible de charger la carte. Vérifiez votre connexion internet.');
+        console.error("Erreur lors du chargement de Google Maps:", error);
+        setError(
+          "Impossible de charger la carte. Vérifiez votre connexion internet."
+        );
         setIsLoading(false);
       }
     };
 
     initMap();
-  }, []);
+  }, [places]);
 
   // Créer un marker personnalisé
   const createCustomMarker = (place: MapPlace): HTMLElement => {
-    const markerDiv = document.createElement('div');
-    markerDiv.className = 'custom-marker';
-    
+    const markerDiv = document.createElement("div");
+    markerDiv.className = "custom-marker";
+
     // Obtenir la couleur et l'icône de la première catégorie ou du type de place
-    let color = '#6366f1'; // Couleur par défaut
-    let icon = '📍'; // Icône par défaut
-    
+    let color = "#6366f1"; // Couleur par défaut
+    let icon = "📍"; // Icône par défaut
+
     // Logique pour obtenir l'icône depuis les catégories
     if (place.categories.length > 0) {
       const firstCategory = place.categories[0].category;
       const categoryInfo = categoryMap.current.get(firstCategory.id);
-      
+
       if (categoryInfo) {
         color = categoryInfo.color;
-        
+
         // Convertir l'icône Lucide en emoji si nécessaire
         if (categoryInfo.icon) {
           // Si l'icône commence par une lettre majuscule, c'est probablement un nom Lucide
@@ -196,7 +217,11 @@ export function MapView({
           justify-content: center;
           box-shadow: 0 2px 8px rgba(0,0,0,0.3);
           cursor: pointer;
-          ${place.isFeatured ? 'border: 3px solid #fbbf24;' : 'border: 2px solid white;'}
+          ${
+            place.isFeatured
+              ? "border: 3px solid #fbbf24;"
+              : "border: 2px solid white;"
+          }
         ">
           <span style="color: white; font-size: 16px; line-height: 1;">${icon}</span>
         </div>
@@ -226,28 +251,31 @@ export function MapView({
     // Attendre un petit délai pour s'assurer que la carte est complètement initialisée
     const timer = setTimeout(() => {
       // Supprimer les anciens markers
-      markersRef.current.forEach(marker => marker.map = null);
+      markersRef.current.forEach((marker) => (marker.map = null));
       markersRef.current.clear();
 
       // Créer les nouveaux markers
-      places.forEach(place => {
+      places.forEach((place) => {
         if (!place.latitude || !place.longitude) return;
 
         const markerContent = createCustomMarker(place);
-        
+
         const marker = new google.maps.marker.AdvancedMarkerElement({
           map: mapInstanceRef.current,
-          position: { lat: place.latitude, lng: place.longitude },
+          position: { lat: place.latitude ?? 0, lng: place.longitude ?? 0 },
           content: markerContent,
           title: place.name,
-          zIndex: place.isFeatured ? 1000 : 500
+          zIndex: place.isFeatured ? 1000 : 500,
         });
 
-        marker.addListener('click', () => {
+        marker.addListener("click", () => {
           onPlaceSelect(place);
-          
+
           // Animer vers le marker sélectionné
-          mapInstanceRef.current?.panTo({ lat: place.latitude!, lng: place.longitude! });
+          mapInstanceRef.current?.panTo({
+            lat: place.latitude ?? 0,
+            lng: place.longitude ?? 0,
+          });
         });
 
         markersRef.current.set(place.id, marker);
@@ -268,7 +296,7 @@ export function MapView({
 
     // Créer le nouveau marker utilisateur
     if (userLocation) {
-      const userMarkerDiv = document.createElement('div');
+      const userMarkerDiv = document.createElement("div");
       userMarkerDiv.innerHTML = `
         <div class="relative transform -translate-x-1/2 -translate-y-1/2">
           <div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
@@ -280,7 +308,7 @@ export function MapView({
         map: mapInstanceRef.current,
         position: { lat: userLocation.lat, lng: userLocation.lng },
         content: userMarkerDiv,
-        title: "Votre position"
+        title: "Votre position",
       });
 
       userMarkerRef.current = userMarker;
@@ -291,12 +319,24 @@ export function MapView({
   useEffect(() => {
     markersRef.current.forEach((marker, placeId) => {
       const markerElement = marker.content as HTMLElement;
-      const markerDiv = markerElement.querySelector('.custom-marker > div > div');
-      
+      const markerDiv = markerElement.querySelector(
+        ".custom-marker > div > div"
+      );
+
       if (selectedPlace?.id === placeId) {
-        markerDiv?.classList.add('ring-4', 'ring-primary', 'ring-offset-2', 'scale-110');
+        markerDiv?.classList.add(
+          "ring-4",
+          "ring-primary",
+          "ring-offset-2",
+          "scale-110"
+        );
       } else {
-        markerDiv?.classList.remove('ring-4', 'ring-primary', 'ring-offset-2', 'scale-110');
+        markerDiv?.classList.remove(
+          "ring-4",
+          "ring-primary",
+          "ring-offset-2",
+          "scale-110"
+        );
       }
     });
   }, [selectedPlace]);
@@ -308,7 +348,10 @@ export function MapView({
       return;
     }
 
-    mapInstanceRef.current.setCenter({ lat: userLocation.lat, lng: userLocation.lng });
+    mapInstanceRef.current.setCenter({
+      lat: userLocation.lat,
+      lng: userLocation.lng,
+    });
     mapInstanceRef.current.setZoom(15);
     toast.success("Carte recentrée sur votre position");
   };
@@ -319,7 +362,9 @@ export function MapView({
         <div className="text-center space-y-4">
           <MapPin className="w-12 h-12 mx-auto text-muted-foreground" />
           <div>
-            <p className="font-medium text-destructive mb-2">Erreur de chargement</p>
+            <p className="font-medium text-destructive mb-2">
+              Erreur de chargement
+            </p>
             <p className="text-sm text-muted-foreground">{error}</p>
           </div>
         </div>
@@ -330,12 +375,14 @@ export function MapView({
   return (
     <div className="h-full relative">
       <div ref={mapRef} className="h-full w-full" />
-      
+
       {isLoading && (
         <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
           <div className="text-center space-y-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="text-sm text-muted-foreground">Chargement de la carte...</p>
+            <p className="text-sm text-muted-foreground">
+              Chargement de la carte...
+            </p>
           </div>
         </div>
       )}
@@ -355,7 +402,7 @@ export function MapView({
       {/* Informations sur les résultats */}
       {!isLoading && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm border text-sm text-muted-foreground">
-          {places.length} établissement{places.length > 1 ? 's' : ''}
+          {places.length} établissement{places.length > 1 ? "s" : ""}
         </div>
       )}
 

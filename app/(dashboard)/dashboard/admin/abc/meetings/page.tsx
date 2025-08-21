@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,7 +121,7 @@ export default function AbcMeetingsPage() {
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [deletingMeeting, setDeletingMeeting] = useState<Meeting | null>(null);
 
-  const fetchMeetings = async () => {
+  const fetchMeetings = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -146,11 +146,11 @@ export default function AbcMeetingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, typeFilter, statusFilter]);
 
   useEffect(() => {
     fetchMeetings();
-  }, [page, search, typeFilter, statusFilter]);
+  }, [page, search, typeFilter, statusFilter, fetchMeetings]);
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -227,7 +227,7 @@ export default function AbcMeetingsPage() {
             <DialogHeader>
               <DialogTitle>Nouvelle réunion</DialogTitle>
               <DialogDescription>
-                Programmer une nouvelle réunion pour l'association
+                Programmer une nouvelle réunion pour l&apos;association
               </DialogDescription>
             </DialogHeader>
             <CreateMeetingDialog onSuccess={handleMeetingCreated} />
@@ -334,13 +334,18 @@ export default function AbcMeetingsPage() {
                       <TableCell>
                         <div className="text-sm">
                           <div>
-                            {new Date(meeting.scheduledAt).toLocaleDateString("fr-FR")}
+                            {new Date(meeting.scheduledAt).toLocaleDateString(
+                              "fr-FR"
+                            )}
                           </div>
                           <div className="text-muted-foreground">
-                            {new Date(meeting.scheduledAt).toLocaleTimeString("fr-FR", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {new Date(meeting.scheduledAt).toLocaleTimeString(
+                              "fr-FR",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
                             {meeting.duration && ` (${meeting.duration}min)`}
                           </div>
                         </div>
@@ -460,8 +465,9 @@ export default function AbcMeetingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la réunion</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer la réunion "{deletingMeeting?.title}" ? 
-              Cette action est irréversible et supprimera également toutes les participations enregistrées.
+              Êtes-vous sûr de vouloir supprimer la réunion &quot;
+              {deletingMeeting?.title}&quot; ? Cette action est irréversible et
+              supprimera également toutes les participations enregistrées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

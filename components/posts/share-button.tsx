@@ -33,8 +33,11 @@ export function ShareButton({ title, excerpt }: ShareButtonProps) {
           url: url,
         });
         return;
-      } catch (_error) {
+      } catch {
         // Fallback vers la copie si l'utilisateur annule le partage
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       }
     }
 
@@ -52,13 +55,18 @@ export function ShareButton({ title, excerpt }: ShareButtonProps) {
     return (
       <Button variant="outline" size="sm" disabled className="w-full">
         <Copy className="h-4 w-4 mr-2" />
-        Partager l'article
+        Partager l&apos;article
       </Button>
     );
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={handleShare} className="w-full">
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleShare}
+      className="w-full"
+    >
       {copied ? (
         <>
           <Check className="h-4 w-4 mr-2" />
@@ -66,7 +74,11 @@ export function ShareButton({ title, excerpt }: ShareButtonProps) {
         </>
       ) : (
         <>
-          {hasWebShare ? <Share2 className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+          {hasWebShare ? (
+            <Share2 className="h-4 w-4 mr-2" />
+          ) : (
+            <Copy className="h-4 w-4 mr-2" />
+          )}
           {hasWebShare ? "Partager l'article" : "Copier le lien"}
         </>
       )}

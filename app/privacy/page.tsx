@@ -1,4 +1,13 @@
-import { Clock, Database, Eye, FileText, Lock, Mail, Shield, Users } from "lucide-react";
+import {
+  Clock,
+  Database,
+  Eye,
+  FileText,
+  Lock,
+  Mail,
+  Shield,
+  Users,
+} from "lucide-react";
 import { headers } from "next/headers";
 import { PrivacyActions } from "@/components/rgpd/privacy-action";
 import { Badge } from "@/components/ui/badge";
@@ -47,16 +56,22 @@ export default async function PrivacyPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm font-medium">Email</p>
-                    <p className="text-muted-foreground">{session.user.email}</p>
+                    <p className="text-muted-foreground">
+                      {session.user.email}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Nom</p>
-                    <p className="text-muted-foreground">{session.user.name || "Non défini"}</p>
+                    <p className="text-muted-foreground">
+                      {session.user.name || "Non défini"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Membre depuis</p>
                     <p className="text-muted-foreground">
-                      {new Date(session.user.createdAt).toLocaleDateString("fr-FR")}
+                      {new Date(session.user.createdAt).toLocaleDateString(
+                        "fr-FR"
+                      )}
                     </p>
                   </div>
                   <div>
@@ -81,8 +96,14 @@ export default async function PrivacyPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-4 border rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium">Cookies de préférences</h4>
-                          <Badge variant={userConsent.cookies ? "default" : "secondary"}>
+                          <h4 className="font-medium">
+                            Cookies de préférences
+                          </h4>
+                          <Badge
+                            variant={
+                              userConsent.cookies ? "default" : "secondary"
+                            }
+                          >
                             {userConsent.cookies ? "Activé" : "Désactivé"}
                           </Badge>
                         </div>
@@ -93,18 +114,26 @@ export default async function PrivacyPage() {
                       <div className="p-4 border rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium">Analytics</h4>
-                          <Badge variant={userConsent.analytics ? "default" : "secondary"}>
+                          <Badge
+                            variant={
+                              userConsent.analytics ? "default" : "secondary"
+                            }
+                          >
                             {userConsent.analytics ? "Activé" : "Désactivé"}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Statistiques d'utilisation anonymisées
+                          Statistiques d&apos;utilisation anonymisées
                         </p>
                       </div>
                       <div className="p-4 border rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium">Marketing</h4>
-                          <Badge variant={userConsent.marketing ? "default" : "secondary"}>
+                          <Badge
+                            variant={
+                              userConsent.marketing ? "default" : "secondary"
+                            }
+                          >
                             {userConsent.marketing ? "Activé" : "Désactivé"}
                           </Badge>
                         </div>
@@ -116,20 +145,28 @@ export default async function PrivacyPage() {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground pt-4 border-t">
                       <Clock className="h-4 w-4" />
                       Dernière mise à jour :{" "}
-                      {new Date(userConsent.consentDate).toLocaleDateString("fr-FR")} à{" "}
-                      {new Date(userConsent.consentDate).toLocaleTimeString("fr-FR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {new Date(userConsent.consentDate).toLocaleDateString(
+                        "fr-FR"
+                      )}{" "}
+                      à{" "}
+                      {new Date(userConsent.consentDate).toLocaleTimeString(
+                        "fr-FR",
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )}
                     </div>
                   </div>
                 ) : (
                   <div className="text-center py-6">
                     <Eye className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground mb-2">Aucun consentement enregistré</p>
+                    <p className="text-muted-foreground mb-2">
+                      Aucun consentement enregistré
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      Le banner de cookies apparaîtra lors de votre prochaine visite pour définir
-                      vos préférences.
+                      Le banner de cookies apparaîtra lors de votre prochaine
+                      visite pour définir vos préférences.
                     </p>
                   </div>
                 )}
@@ -146,8 +183,8 @@ export default async function PrivacyPage() {
                 <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Accès restreint</h3>
                 <p className="text-muted-foreground mb-4">
-                  Pour gérer vos données personnelles et vos préférences de confidentialité, vous
-                  devez être connecté.
+                  Pour gérer vos données personnelles et vos préférences de
+                  confidentialité, vous devez être connecté.
                 </p>
                 <a
                   href="/login"
@@ -171,20 +208,30 @@ export default async function PrivacyPage() {
           <CardContent>
             <div className="space-y-6">
               <div>
-                <h4 className="font-medium mb-3">Types de données collectées :</h4>
+                <h4 className="font-medium mb-3">
+                  Types de données collectées :
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-3 bg-muted/50 rounded-lg">
-                    <h5 className="font-medium text-sm mb-1">Données d'identification</h5>
-                    <p className="text-xs text-muted-foreground">Email, nom, photo de profil</p>
+                    <h5 className="font-medium text-sm mb-1">
+                      Données d&apos;identification
+                    </h5>
+                    <p className="text-xs text-muted-foreground">
+                      Email, nom, photo de profil
+                    </p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
-                    <h5 className="font-medium text-sm mb-1">Données de navigation</h5>
+                    <h5 className="font-medium text-sm mb-1">
+                      Données de navigation
+                    </h5>
                     <p className="text-xs text-muted-foreground">
                       Pages visitées, temps de session
                     </p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
-                    <h5 className="font-medium text-sm mb-1">Données techniques</h5>
+                    <h5 className="font-medium text-sm mb-1">
+                      Données techniques
+                    </h5>
                     <p className="text-xs text-muted-foreground">
                       Adresse IP, navigateur, appareil
                     </p>
@@ -192,7 +239,7 @@ export default async function PrivacyPage() {
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <h5 className="font-medium text-sm mb-1">Préférences</h5>
                     <p className="text-xs text-muted-foreground">
-                      Consentements, paramètres d'affichage
+                      Consentements, paramètres d&apos;affichage
                     </p>
                   </div>
                 </div>
@@ -213,7 +260,8 @@ export default async function PrivacyPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="h-1.5 w-1.5 bg-primary rounded-full" />
-                    Analyse d'utilisation et statistiques (avec consentement)
+                    Analyse d&apos;utilisation et statistiques (avec
+                    consentement)
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="h-1.5 w-1.5 bg-primary rounded-full" />
@@ -237,33 +285,45 @@ export default async function PrivacyPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">📋 Droit d'accès</h4>
+                  <h4 className="font-medium mb-2">📋 Droit d&apos;accès</h4>
                   <p className="text-sm text-muted-foreground">
-                    Obtenez une copie de toutes vos données personnelles que nous détenons.
+                    Obtenez une copie de toutes vos données personnelles que
+                    nous détenons.
                   </p>
                 </div>
                 <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">✏️ Droit de rectification</h4>
+                  <h4 className="font-medium mb-2">
+                    ✏️ Droit de rectification
+                  </h4>
                   <p className="text-sm text-muted-foreground">
                     Demandez la correction de données inexactes ou incomplètes.
                   </p>
                 </div>
                 <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">🗑️ Droit à l'effacement</h4>
+                  <h4 className="font-medium mb-2">
+                    🗑️ Droit à l&apos;effacement
+                  </h4>
                   <p className="text-sm text-muted-foreground">
-                    Demandez la suppression de vos données dans certaines conditions.
+                    Demandez la suppression de vos données dans certaines
+                    conditions.
                   </p>
                 </div>
                 <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">📦 Droit à la portabilité</h4>
+                  <h4 className="font-medium mb-2">
+                    📦 Droit à la portabilité
+                  </h4>
                   <p className="text-sm text-muted-foreground">
-                    Récupérez vos données dans un format structuré et réutilisable.
+                    Récupérez vos données dans un format structuré et
+                    réutilisable.
                   </p>
                 </div>
                 <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">⛔ Droit d'opposition</h4>
+                  <h4 className="font-medium mb-2">
+                    ⛔ Droit d&apos;opposition
+                  </h4>
                   <p className="text-sm text-muted-foreground">
-                    Opposez-vous au traitement de vos données pour des raisons légitimes.
+                    Opposez-vous au traitement de vos données pour des raisons
+                    légitimes.
                   </p>
                 </div>
                 <div className="p-4 border rounded-lg">
@@ -280,10 +340,12 @@ export default async function PrivacyPage() {
                 <div className="flex items-start gap-3">
                   <Mail className="h-5 w-5 text-primary mt-0.5" />
                   <div>
-                    <h4 className="font-medium mb-1">Contact pour vos droits</h4>
+                    <h4 className="font-medium mb-1">
+                      Contact pour vos droits
+                    </h4>
                     <p className="text-sm text-muted-foreground mb-2">
-                      Pour exercer vos droits ou pour toute question relative à vos données
-                      personnelles :
+                      Pour exercer vos droits ou pour toute question relative à
+                      vos données personnelles :
                     </p>
                     <a
                       href="mailto:privacy@abcbedarieux.com"
@@ -313,9 +375,12 @@ export default async function PrivacyPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div>
-                  <h4 className="font-medium">Politique de confidentialité complète</h4>
+                  <h4 className="font-medium">
+                    Politique de confidentialité complète
+                  </h4>
                   <p className="text-sm text-muted-foreground">
-                    Version détaillée de notre politique de protection des données
+                    Version détaillée de notre politique de protection des
+                    données
                   </p>
                 </div>
                 <a
@@ -329,17 +394,25 @@ export default async function PrivacyPage() {
               </div>
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div>
-                  <h4 className="font-medium">Conditions générales d'utilisation</h4>
+                  <h4 className="font-medium">
+                    Conditions générales d&apos;utilisation
+                  </h4>
                   <p className="text-sm text-muted-foreground">
-                    Termes et conditions d'utilisation du service
+                    Termes et conditions d&apos;utilisation du service
                   </p>
                 </div>
-                <a href="/terms" className="text-primary hover:underline font-medium">
+                <a
+                  href="/terms"
+                  className="text-primary hover:underline font-medium"
+                >
                   Consulter
                 </a>
               </div>
               <div className="text-xs text-muted-foreground pt-2 border-t">
-                <p>Dernière mise à jour : {new Date().toLocaleDateString("fr-FR")}</p>
+                <p>
+                  Dernière mise à jour :{" "}
+                  {new Date().toLocaleDateString("fr-FR")}
+                </p>
                 <p>Responsable du traitement : {siteConfig.name}</p>
               </div>
             </div>

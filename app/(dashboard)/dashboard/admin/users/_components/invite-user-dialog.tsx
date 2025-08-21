@@ -72,7 +72,7 @@ export default function InviteUserDialog({ children }: InviteUserDialogProps) {
         if (data.details) {
           // Erreurs de validation Zod
           const newErrors: Record<string, string> = {};
-          data.details.forEach((error: any) => {
+          data.details.forEach((error: { path: string[]; message: string }) => {
             newErrors[error.path[0]] = error.message;
           });
           setErrors(newErrors);
@@ -123,17 +123,6 @@ export default function InviteUserDialog({ children }: InviteUserDialogProps) {
     }
   };
 
-  const _getRoleLabel = (role: string) => {
-    const labels = {
-      user: "Utilisateur",
-      admin: "Administrateur",
-      moderator: "Modérateur",
-      dpo: "Délégué à la protection des données",
-      editor: "Éditeur",
-    };
-    return labels[role as keyof typeof labels] || role;
-  };
-
   const getRoleDescription = (role: string) => {
     const descriptions = {
       user: "Accès basique à la plateforme",
@@ -152,11 +141,15 @@ export default function InviteUserDialog({ children }: InviteUserDialogProps) {
         <DialogContent className="sm:max-w-md">
           <div className="text-center py-6">
             <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
-            <DialogTitle className="text-xl mb-2">Invitation envoyée !</DialogTitle>
+            <DialogTitle className="text-xl mb-2">
+              Invitation envoyée !
+            </DialogTitle>
             <DialogDescription>
-              L'invitation a été envoyée à <strong>{formData.email}</strong>.
+              L&apos;invitation a été envoyée à{" "}
+              <strong>{formData.email}</strong>.
               <br />
-              L'utilisateur recevra un email avec un lien pour créer son compte.
+              L&apos;utilisateur recevra un email avec un lien pour créer son
+              compte.
             </DialogDescription>
           </div>
         </DialogContent>
@@ -171,8 +164,8 @@ export default function InviteUserDialog({ children }: InviteUserDialogProps) {
         <DialogHeader>
           <DialogTitle>Inviter un utilisateur</DialogTitle>
           <DialogDescription>
-            Envoyez une invitation par email pour qu'un nouvel utilisateur puisse rejoindre la
-            plateforme.
+            Envoyez une invitation par email pour qu&apos;un nouvel utilisateur
+            puisse rejoindre la plateforme.
           </DialogDescription>
         </DialogHeader>
 
@@ -185,21 +178,27 @@ export default function InviteUserDialog({ children }: InviteUserDialogProps) {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="utilisateur@exemple.com"
                 className={errors.email ? "border-red-500 pl-10" : "pl-10"}
                 disabled={loading}
                 required
               />
             </div>
-            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="role">Rôle *</Label>
             <Select
               value={formData.role}
-              onValueChange={(value) => setFormData({ ...formData, role: value as any })}
+              onValueChange={(
+                value: "user" | "admin" | "moderator" | "dpo" | "editor"
+              ) => setFormData({ ...formData, role: value })}
             >
               <SelectTrigger className={errors.role ? "border-red-500" : ""}>
                 <SelectValue placeholder="Sélectionnez un rôle" />
@@ -208,13 +207,17 @@ export default function InviteUserDialog({ children }: InviteUserDialogProps) {
                 <SelectItem value="user">
                   <div>
                     <div className="font-medium">Utilisateur</div>
-                    <div className="text-xs text-gray-500">Accès basique à la plateforme</div>
+                    <div className="text-xs text-gray-500">
+                      Accès basique à la plateforme
+                    </div>
                   </div>
                 </SelectItem>
                 <SelectItem value="editor">
                   <div>
                     <div className="font-medium">Éditeur</div>
-                    <div className="text-xs text-gray-500">Création et édition de contenu</div>
+                    <div className="text-xs text-gray-500">
+                      Création et édition de contenu
+                    </div>
                   </div>
                 </SelectItem>
                 <SelectItem value="moderator">
@@ -236,14 +239,20 @@ export default function InviteUserDialog({ children }: InviteUserDialogProps) {
                 <SelectItem value="admin">
                   <div>
                     <div className="font-medium">Administrateur</div>
-                    <div className="text-xs text-gray-500">Accès complet à l'administration</div>
+                    <div className="text-xs text-gray-500">
+                      Accès complet à l&apos;administration
+                    </div>
                   </div>
                 </SelectItem>
               </SelectContent>
             </Select>
-            {errors.role && <p className="text-sm text-red-500">{errors.role}</p>}
+            {errors.role && (
+              <p className="text-sm text-red-500">{errors.role}</p>
+            )}
             {formData.role && (
-              <p className="text-xs text-gray-600">{getRoleDescription(formData.role)}</p>
+              <p className="text-xs text-gray-600">
+                {getRoleDescription(formData.role)}
+              </p>
             )}
           </div>
 
@@ -252,13 +261,15 @@ export default function InviteUserDialog({ children }: InviteUserDialogProps) {
             <Textarea
               id="message"
               value={formData.message}
-              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, message: e.target.value })
+              }
               placeholder="Ajoutez un message personnalisé à l'invitation..."
               rows={3}
               disabled={loading}
             />
             <p className="text-xs text-gray-500">
-              Ce message sera inclus dans l'email d'invitation.
+              Ce message sera inclus dans l&apos;email d&apos;invitation.
             </p>
           </div>
 
@@ -285,8 +296,8 @@ export default function InviteUserDialog({ children }: InviteUserDialogProps) {
 
         <div className="text-xs text-gray-500 border-t pt-4">
           <p>
-            <strong>Note :</strong> L'invitation expirera dans 7 jours. L'utilisateur devra créer
-            son compte avant cette date.
+            <strong>Note :</strong> L&apos;invitation expirera dans 7 jours.
+            L&apos;utilisateur devra créer son compte avant cette date.
           </p>
         </div>
       </DialogContent>

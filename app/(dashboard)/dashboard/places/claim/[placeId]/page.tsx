@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,9 +27,13 @@ interface Place {
   ownerId?: string;
 }
 
-export default async function ClaimPlacePage({ params }: { params: Promise<{ placeId: string }> }) {
+export default function ClaimPlacePage({
+  params,
+}: {
+  params: { placeId: string };
+}) {
   const router = useRouter();
-  const { data: session } = useSession();
+  useSession(); // Keep the hook call if it has side effects or can be used later
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -33,7 +43,7 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
   useEffect(() => {
     const fetchPlace = async () => {
       try {
-        const { placeId } = await params;
+        const { placeId } = params;
         const response = await fetch(`/api/places/${placeId}`);
 
         if (!response.ok) {
@@ -47,9 +57,13 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
 
         const data = await response.json();
         setPlace(data.place);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Erreur:", error);
-        toast.error(error.message || "Erreur lors du chargement");
+        if (error instanceof Error) {
+          toast.error(error.message || "Erreur lors du chargement");
+        } else {
+          toast.error("Erreur inconnue lors du chargement");
+        }
         router.push("/places");
       } finally {
         setLoading(false);
@@ -63,7 +77,9 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
     e.preventDefault();
 
     if (!message.trim()) {
-      toast.error("Veuillez expliquer pourquoi vous revendiquez cet établissement");
+      toast.error(
+        "Veuillez expliquer pourquoi vous revendiquez cet établissement"
+      );
       return;
     }
 
@@ -91,9 +107,15 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
         "Revendication envoyée avec succès! Un administrateur la traitera dans les plus brefs délais."
       );
       router.push("/dashboard/places");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur:", error);
-      toast.error(error.message || "Erreur lors de l'envoi de la revendication");
+      if (error instanceof Error) {
+        toast.error(
+          error.message || "Erreur lors de l'envoi de la revendication"
+        );
+      } else {
+        toast.error("Erreur inconnue lors de l'envoi de la revendication");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -110,7 +132,9 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
   if (status === "unauthenticated") {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Connexion requise</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          Connexion requise
+        </h1>
         <p className="text-gray-600 mb-6">
           Vous devez être connecté pour revendiquer un établissement.
         </p>
@@ -132,7 +156,7 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <Link
-          href={`/places/${(await params).placeId}`}
+          href={`/places/${params.placeId}`}
           className="inline-flex items-center text-blue-600 hover:text-blue-800"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -142,12 +166,15 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
         <Card>
           <CardHeader>
             <CardTitle>Établissement déjà revendiqué</CardTitle>
-            <CardDescription>Cet établissement a déjà un propriétaire</CardDescription>
+            <CardDescription>
+              Cet établissement a déjà un propriétaire
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600">
-              L'établissement "{place.name}" est déjà géré par son propriétaire. Si vous pensez
-              qu'il y a une erreur, contactez notre équipe.
+              L&apos;établissement &quot;{place.name}&quot; est déjà géré par
+              son propriétaire. Si vous pensez qu&apos;il y a une erreur,
+              contactez notre équipe.
             </p>
           </CardContent>
         </Card>
@@ -158,7 +185,7 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Link
-        href={`/places/${(await params).placeId}`}
+        href={`/places/${params.placeId}`}
         className="inline-flex items-center text-blue-600 hover:text-blue-800"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
@@ -169,12 +196,15 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
         <CardHeader>
           <CardTitle>Revendiquer cet établissement</CardTitle>
           <CardDescription>
-            Vous pouvez revendiquer "{place.name}" si vous en êtes le propriétaire
+            Vous pouvez revendiquer &quot;{place.name}&quot; si vous en êtes le
+            propriétaire
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h3 className="font-medium text-blue-900 mb-2">Informations sur l'établissement</h3>
+            <h3 className="font-medium text-blue-900 mb-2">
+              Informations sur l&apos;établissement
+            </h3>
             <div className="space-y-1 text-sm text-blue-800">
               <p>
                 <strong>Nom:</strong> {place.name}
@@ -215,8 +245,8 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
                 placeholder="https://... (lien vers un document, photo, site web, etc.)"
               />
               <p className="text-xs text-gray-500">
-                Vous pouvez fournir un lien vers une preuve (document officiel, photo, site web de
-                l'établissement, etc.)
+                Vous pouvez fournir un lien vers une preuve (document officiel,
+                photo, site web de l&apos;établissement, etc.)
               </p>
             </div>
 
@@ -224,20 +254,30 @@ export default async function ClaimPlacePage({ params }: { params: Promise<{ pla
               <h4 className="font-medium text-yellow-900 mb-2">À savoir</h4>
               <ul className="text-sm text-yellow-800 space-y-1">
                 <li>• Votre demande sera examinée par notre équipe</li>
-                <li>• Vous recevrez un email une fois la validation effectuée</li>
                 <li>
-                  • En cas d'approbation, vous pourrez gérer toutes les informations de votre
-                  établissement
+                  • Vous recevrez un email une fois la validation effectuée
+                </li>
+                <li>
+                  • En cas d&apos;approbation, vous pourrez gérer toutes les
+                  informations de votre établissement
                 </li>
                 <li>• Les demandes sont généralement traitées sous 48h</li>
               </ul>
             </div>
 
             <div className="flex gap-3">
-              <Button type="submit" disabled={submitting || !message.trim()} className="flex-1">
+              <Button
+                type="submit"
+                disabled={submitting || !message.trim()}
+                className="flex-1"
+              >
                 {submitting ? "Envoi en cours..." : "Envoyer la revendication"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => router.back()}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+              >
                 Annuler
               </Button>
             </div>

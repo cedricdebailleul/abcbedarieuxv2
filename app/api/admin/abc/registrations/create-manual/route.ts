@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
             data: {
               email: userEmail,
               name: `${userFirstName} ${userLastName}`,
-              emailVerified: new Date(), // Considérer comme vérifié puisque créé par admin
+              emailVerified: true, // Considérer comme vérifié puisque créé par admin
             }
           });
         }
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
           await prisma.abcMember.create({
             data: {
               userId: user.id,
-              type: validatedData.membershipType as any,
+              type: validatedData.membershipType as "ACTIF" | "ARTISAN" | "AUTO_ENTREPRENEUR" | "PARTENAIRE" | "BIENFAITEUR",
               memberNumber: memberNumber,
               membershipDate: new Date(),
               status: "ACTIVE",
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { error: "Données invalides", details: error.issues },
         { status: 400 }
       );
     }

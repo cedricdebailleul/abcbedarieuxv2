@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import * as LucideIcons from "lucide-react";
 import { lucideIconToEmoji } from "@/lib/share-utils";
 
 interface PlaceCategory {

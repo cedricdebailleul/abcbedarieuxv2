@@ -39,10 +39,10 @@ interface EditMemberDialogProps {
 
 const typeLabels = {
   ACTIF: "Actif",
-  ARTISAN: "Artisan", 
+  ARTISAN: "Artisan",
   AUTO_ENTREPRENEUR: "Auto-entrepreneur",
   PARTENAIRE: "Partenaire",
-  BIENFAITEUR: "Bienfaiteur"
+  BIENFAITEUR: "Bienfaiteur",
 };
 
 const roleLabels = {
@@ -50,17 +50,21 @@ const roleLabels = {
   SECRETAIRE: "Secrétaire",
   TRESORIER: "Trésorier",
   PRESIDENT: "Président",
-  VICE_PRESIDENT: "Vice-président"
+  VICE_PRESIDENT: "Vice-président",
 };
 
 const statusLabels = {
   ACTIVE: "Actif",
   INACTIVE: "Inactif",
   SUSPENDED: "Suspendu",
-  EXPIRED: "Expiré"
+  EXPIRED: "Expiré",
 };
 
-export function EditMemberDialog({ member, onSuccess, onCancel }: EditMemberDialogProps) {
+export function EditMemberDialog({
+  member,
+  onSuccess,
+  onCancel,
+}: EditMemberDialogProps) {
   const [type, setType] = useState(member.type);
   const [role, setRole] = useState(member.role);
   const [status, setStatus] = useState(member.status);
@@ -76,7 +80,7 @@ export function EditMemberDialog({ member, onSuccess, onCancel }: EditMemberDial
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError("");
@@ -85,7 +89,7 @@ export function EditMemberDialog({ member, onSuccess, onCancel }: EditMemberDial
       const renewedAt = new Date(`${renewalYear}-01-01`);
       const expiresAt = new Date(`${renewalYear}-12-31`);
 
-      const updateData: any = {
+      const updateData: Partial<Omit<Member, "id" | "user" | "joinedAt">> = {
         type,
         role,
         status,
@@ -98,21 +102,21 @@ export function EditMemberDialog({ member, onSuccess, onCancel }: EditMemberDial
       }
 
       const response = await fetch(`/api/admin/abc/members/${member.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la modification');
+        throw new Error(errorData.error || "Erreur lors de la modification");
       }
 
       onSuccess();
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Erreur inconnue');
+      setError(error instanceof Error ? error.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
@@ -131,7 +135,9 @@ export function EditMemberDialog({ member, onSuccess, onCancel }: EditMemberDial
         <Label>Utilisateur</Label>
         <div className="p-2 bg-muted rounded-md">
           <div className="font-medium">{member.user.name}</div>
-          <div className="text-sm text-muted-foreground">{member.user.email}</div>
+          <div className="text-sm text-muted-foreground">
+            {member.user.email}
+          </div>
         </div>
       </div>
 
@@ -221,12 +227,21 @@ export function EditMemberDialog({ member, onSuccess, onCancel }: EditMemberDial
       <div className="space-y-2">
         <Label>Informations adhésion</Label>
         <div className="text-sm text-muted-foreground space-y-1">
-          <div>Première adhésion: {new Date(member.joinedAt).toLocaleDateString('fr-FR')}</div>
+          <div>
+            Première adhésion:{" "}
+            {new Date(member.joinedAt).toLocaleDateString("fr-FR")}
+          </div>
           {member.renewedAt && (
-            <div>Dernier renouvellement: {new Date(member.renewedAt).toLocaleDateString('fr-FR')}</div>
+            <div>
+              Dernier renouvellement:{" "}
+              {new Date(member.renewedAt).toLocaleDateString("fr-FR")}
+            </div>
           )}
           {member.expiresAt && (
-            <div>Expire le: {new Date(member.expiresAt).toLocaleDateString('fr-FR')}</div>
+            <div>
+              Expire le:{" "}
+              {new Date(member.expiresAt).toLocaleDateString("fr-FR")}
+            </div>
           )}
         </div>
       </div>

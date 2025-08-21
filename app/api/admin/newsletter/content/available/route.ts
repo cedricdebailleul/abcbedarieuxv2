@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Vérifier l'authentification
     const session = await auth.api.getSession({
@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     // Récupérer les contenus disponibles en parallèle
@@ -31,11 +34,11 @@ export async function GET(request: NextRequest) {
         where: {
           OR: [
             { startDate: { gte: new Date() } }, // Événements futurs
-            { 
-              startDate: { 
-                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Événements des 30 derniers jours
-              } 
-            }
+            {
+              startDate: {
+                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Événements des 30 derniers jours
+              },
+            },
           ],
           isPublished: true,
           isActive: true,
@@ -58,17 +61,17 @@ export async function GET(request: NextRequest) {
             select: {
               name: true,
               slug: true,
-            }
-          }
+            },
+          },
         },
-        orderBy: { startDate: 'asc' },
-        take: 20
+        orderBy: { startDate: "asc" },
+        take: 20,
       }),
 
       // Places actives et vérifiées
       prisma.place.findMany({
         where: {
-          status: 'ACTIVE',
+          status: "ACTIVE",
           isVerified: true,
           isActive: true,
         },
@@ -91,23 +94,23 @@ export async function GET(request: NextRequest) {
                 select: {
                   name: true,
                   icon: true,
-                  color: true
-                }
-              }
+                  color: true,
+                },
+              },
             },
-            take: 1
-          }
+            take: 1,
+          },
         },
-        orderBy: { createdAt: 'desc' },
-        take: 20
+        orderBy: { createdAt: "desc" },
+        take: 20,
       }),
 
       // Articles récents publiés
       prisma.post.findMany({
         where: {
           published: true,
-          status: 'PUBLISHED',
-          publishedAt: { not: null }
+          status: "PUBLISHED",
+          publishedAt: { not: null },
         },
         select: {
           id: true,
@@ -120,42 +123,43 @@ export async function GET(request: NextRequest) {
           author: {
             select: {
               name: true,
-            }
+            },
           },
           category: {
             select: {
               name: true,
-              color: true
-            }
-          }
+              color: true,
+            },
+          },
         },
-        orderBy: { publishedAt: 'desc' },
-        take: 20
-      })
+        orderBy: { publishedAt: "desc" },
+        take: 20,
+      }),
     ]);
 
     // Formatter les données pour l'interface
-    const formattedEvents = events.map(event => ({
+    const formattedEvents = events.map((event) => ({
       id: event.id,
-      type: 'event' as const,
+      type: "event" as const,
       title: event.title,
       slug: event.slug,
       description: event.summary || event.description,
       startDate: event.startDate,
       endDate: event.endDate,
       isAllDay: event.isAllDay,
-      location: [event.locationName, event.locationAddress, event.locationCity]
-        .filter(Boolean)
-        .join(', ') || (event.place ? event.place.name : null),
+      location:
+        [event.locationName, event.locationAddress, event.locationCity]
+          .filter(Boolean)
+          .join(", ") || (event.place ? event.place.name : null),
       coverImage: event.coverImage,
       category: event.category,
       placeSlug: event.place?.slug,
-      url: `/events/${event.slug}` // URL vers la page de l'événement
+      url: `/events/${event.slug}`, // URL vers la page de l'événement
     }));
 
-    const formattedPlaces = places.map(place => ({
+    const formattedPlaces = places.map((place) => ({
       id: place.id,
-      type: 'place' as const,
+      type: "place" as const,
       title: place.name,
       slug: place.slug,
       description: place.summary || place.description,
@@ -165,12 +169,12 @@ export async function GET(request: NextRequest) {
       logo: place.logo,
       coverImage: place.coverImage,
       category: place.categories[0]?.category || null,
-      url: `/places/${place.slug}` // URL vers la page de la place
+      url: `/places/${place.slug}`, // URL vers la page de la place
     }));
 
-    const formattedPosts = posts.map(post => ({
+    const formattedPosts = posts.map((post) => ({
       id: post.id,
-      type: 'post' as const,
+      type: "post" as const,
       title: post.title,
       slug: post.slug,
       description: post.excerpt,
@@ -178,7 +182,7 @@ export async function GET(request: NextRequest) {
       coverImage: post.coverImage,
       author: post.author?.name,
       category: post.category,
-      url: `/posts/${post.slug}` // URL vers l'article
+      url: `/posts/${post.slug}`, // URL vers l'article
     }));
 
     return NextResponse.json({
@@ -186,18 +190,17 @@ export async function GET(request: NextRequest) {
       content: {
         events: formattedEvents,
         places: formattedPlaces,
-        posts: formattedPosts
+        posts: formattedPosts,
       },
       stats: {
         eventsCount: events.length,
         placesCount: places.length,
         postsCount: posts.length,
         totalSubscribers: await prisma.newsletterSubscriber.count({
-          where: { isActive: true, isVerified: true }
-        })
-      }
+          where: { isActive: true, isVerified: true },
+        }),
+      },
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération du contenu:", error);
     return NextResponse.json(

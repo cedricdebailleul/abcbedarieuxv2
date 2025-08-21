@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +69,8 @@ interface Payment {
   notes: string | null;
   paidAt: string | null;
   createdAt: string;
+  transferReference: string | null;
+  dueDate: string | null;
   member: {
     id: string;
     type: string;
@@ -128,7 +130,7 @@ export default function AbcPaymentsPage() {
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [deletingPayment, setDeletingPayment] = useState<Payment | null>(null);
 
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -154,11 +156,11 @@ export default function AbcPaymentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, statusFilter, modeFilter, yearFilter]);
 
   useEffect(() => {
     fetchPayments();
-  }, [page, search, statusFilter, modeFilter, yearFilter]);
+  }, [page, search, statusFilter, modeFilter, yearFilter, fetchPayments]);
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -227,7 +229,9 @@ export default function AbcPaymentsPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `paiements-abc-${new Date().toISOString().split("T")[0]}.csv`;
+      a.download = `paiements-abc-${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -316,7 +320,10 @@ export default function AbcPaymentsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={modeFilter || "all"} onValueChange={handleModeFilter}>
+            <Select
+              value={modeFilter || "all"}
+              onValueChange={handleModeFilter}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Mode" />
               </SelectTrigger>
@@ -329,7 +336,10 @@ export default function AbcPaymentsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={yearFilter || "all"} onValueChange={handleYearFilter}>
+            <Select
+              value={yearFilter || "all"}
+              onValueChange={handleYearFilter}
+            >
               <SelectTrigger className="w-28">
                 <SelectValue placeholder="Année" />
               </SelectTrigger>
@@ -412,9 +422,7 @@ export default function AbcPaymentsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {payment.checkNumber ||
-                            payment.reference ||
-                            "-"}
+                          {payment.checkNumber || payment.reference || "-"}
                         </div>
                       </TableCell>
                       <TableCell>

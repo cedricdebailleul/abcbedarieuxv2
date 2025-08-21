@@ -119,7 +119,15 @@ export async function PUT(
       }
     }
 
-    const updateData: any = {};
+    const updateData: Partial<{
+      title: string;
+      description: string | null;
+      type: 'GENERAL' | 'BUREAU' | 'EXTRAORDINAIRE' | 'COMMISSION';
+      scheduledAt: Date;
+      duration: number | null;
+      location: string | null;
+      status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    }> = {};
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description || null;
     if (data.type) updateData.type = data.type;
@@ -209,7 +217,7 @@ export async function DELETE(
 
     // Supprimer d'abord les participations, puis la réunion
     await prisma.$transaction([
-      prisma.abcMeetingAttendance.deleteMany({
+      prisma.abcMeetingAttendee.deleteMany({
         where: { meetingId },
       }),
       prisma.abcMeeting.delete({

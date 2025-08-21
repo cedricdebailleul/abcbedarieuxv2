@@ -2,17 +2,17 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  Eye, 
-  EyeOff, 
-  Edit, 
-  Trash2, 
-  FolderTree, 
-  ChevronLeft, 
+import {
+  Eye,
+  EyeOff,
+  Edit,
+  Trash2,
+  FolderTree,
+  ChevronLeft,
   ChevronRight,
   MoreHorizontal,
   Palette,
-  Hash
+  Hash,
 } from "lucide-react";
 import { toast } from "sonner";
 import * as LucideIcons from "lucide-react";
@@ -46,7 +46,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { getPlaceCategoriesAction, deletePlaceCategoryAction } from "@/actions/place-category";
+import {
+  getPlaceCategoriesAction,
+  deletePlaceCategoryAction,
+} from "@/actions/place-category";
 import { type PlaceCategoryFilters } from "@/lib/validations/place-category";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +61,18 @@ export function PlaceCategoriesTable({ filters }: PlaceCategoriesTableProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [data, setData] = useState<{
-    categories: any[];
+    categories: {
+      id: string;
+      name: string;
+      slug: string;
+      description?: string; // Optional description property
+      sortOrder: number;
+      icon: string | null;
+      color: string | null;
+      parent?: { id: string; name: string; slug: string } | null;
+      _count: { children: number };
+      isActive: boolean;
+    }[];
     total: number;
     pages: number;
   } | null>(null);
@@ -73,16 +87,37 @@ export function PlaceCategoriesTable({ filters }: PlaceCategoriesTableProps) {
         // Convertir parentId "null" en null pour l'API
         const apiFilters = {
           ...filters,
-          parentId: filters.parentId === "null" ? null : filters.parentId === "all" ? undefined : filters.parentId,
+          parentId:
+            filters.parentId === "null"
+              ? null
+              : filters.parentId === "all"
+              ? undefined
+              : filters.parentId,
         };
-        
+
         const result = await getPlaceCategoriesAction(apiFilters);
         if (result.success) {
-          setData(result.data!);
+          setData({
+            ...result.data!,
+            categories: result.data!.categories.map((category) => ({
+              ...category,
+              description: category.description || "",
+              sortOrder: category.sortOrder || 0,
+              icon: category.icon || null,
+              color: category.color || null,
+              parent: category.parent
+                ? {
+                    id: category.parent.id,
+                    name: category.parent.name,
+                    slug: category.parent.slug || "",
+                  }
+                : null,
+            })),
+          });
         } else {
           toast.error(result.error || "Erreur lors du chargement");
         }
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors du chargement des catégories");
       }
       setLoading(false);
@@ -101,12 +136,28 @@ export function PlaceCategoriesTable({ filters }: PlaceCategoriesTableProps) {
           // Recharger les données
           const refreshResult = await getPlaceCategoriesAction(filters);
           if (refreshResult.success) {
-            setData(refreshResult.data!);
+            setData({
+              ...refreshResult.data!,
+              categories: refreshResult.data!.categories.map((category) => ({
+                ...category,
+                description: category.description || "",
+                sortOrder: category.sortOrder || 0,
+                icon: category.icon || null,
+                color: category.color || null,
+                parent: category.parent
+                  ? {
+                      id: category.parent.id,
+                      name: category.parent.name,
+                      slug: category.parent.slug || "",
+                    }
+                  : null,
+              })),
+            });
           }
         } else {
           toast.error(result.error || "Erreur lors de la suppression");
         }
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors de la suppression de la catégorie");
       }
       setDeleteId(null);
@@ -123,24 +174,40 @@ export function PlaceCategoriesTable({ filters }: PlaceCategoriesTableProps) {
   // Rendu de l'icône de catégorie
   const renderCategoryIcon = (icon: string | null, color: string | null) => {
     if (!icon) return <Hash className="w-5 h-5 text-muted-foreground" />;
-    
+
     // Vérifier si c'est un emoji
-    if (icon.length <= 4 && /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon)) {
+    if (
+      icon.length <= 4 &&
+      /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(
+        icon
+      )
+    ) {
       return <span className="text-lg">{icon}</span>;
     }
-    
+
     // Vérifier si c'est une icône Lucide
-    const IconComponent = (LucideIcons as any)[icon];
+    const IconComponent = (
+      LucideIcons as unknown as Record<string, React.FC<{ className?: string }>>
+    )[icon];
     if (IconComponent) {
-      return <IconComponent className="w-5 h-5" style={{ color: color || undefined }} />;
+      return (
+        <span style={{ color: color || undefined }}>
+          <IconComponent className="w-5 h-5" />
+        </span>
+      );
     }
-    
+
     // Fallback
     return <Hash className="w-5 h-5 text-muted-foreground" />;
   };
 
   // Rendu du badge de couleur
-  const renderColorBadge = (category: any) => {
+  const renderColorBadge = (category: {
+    bgColor?: string;
+    textColor?: string;
+    borderColor?: string;
+    color?: string;
+  }) => {
     const style = {
       backgroundColor: category.bgColor ? undefined : `${category.color}20`,
       color: category.textColor ? undefined : category.color,
@@ -204,7 +271,9 @@ export function PlaceCategoriesTable({ filters }: PlaceCategoriesTableProps) {
                   <div className="flex items-center gap-3">
                     {renderCategoryIcon(category.icon, category.color)}
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate">{category.name}</div>
+                      <div className="font-medium truncate">
+                        {category.name}
+                      </div>
                       <div className="text-sm text-muted-foreground truncate">
                         {category.description || "Aucune description"}
                       </div>
@@ -216,20 +285,25 @@ export function PlaceCategoriesTable({ filters }: PlaceCategoriesTableProps) {
                 </TableCell>
                 <TableCell>
                   {category.parent ? (
-                    <Badge variant="outline">
-                      {category.parent.name}
-                    </Badge>
+                    <Badge variant="outline">{category.parent.name}</Badge>
                   ) : (
-                    <span className="text-sm text-muted-foreground">Racine</span>
+                    <span className="text-sm text-muted-foreground">
+                      Racine
+                    </span>
                   )}
                 </TableCell>
                 <TableCell>
-                  {renderColorBadge(category)}
+                  {renderColorBadge({
+                    ...category,
+                    color: category.color || undefined,
+                  })}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <FolderTree className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{category._count.children}</span>
+                    <span className="font-medium">
+                      {category._count.children}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -255,20 +329,28 @@ export function PlaceCategoriesTable({ filters }: PlaceCategoriesTableProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem 
-                        onClick={() => router.push(`/dashboard/admin/place-categories/${category.id}`)}
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/admin/place-categories/${category.id}`
+                          )
+                        }
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         Voir détails
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => router.push(`/dashboard/admin/place-categories/${category.id}/edit`)}
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/admin/place-categories/${category.id}/edit`
+                          )
+                        }
                       >
                         <Edit className="mr-2 h-4 w-4" />
                         Modifier
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={() => setDeleteId(category.id)}
                         className="text-destructive"
                         disabled={category._count.children > 0}
@@ -289,8 +371,9 @@ export function PlaceCategoriesTable({ filters }: PlaceCategoriesTableProps) {
       {data.pages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            {((filters.page - 1) * filters.limit) + 1} à{" "}
-            {Math.min(filters.page * filters.limit, data.total)} sur {data.total} catégories
+            {(filters.page - 1) * filters.limit + 1} à{" "}
+            {Math.min(filters.page * filters.limit, data.total)} sur{" "}
+            {data.total} catégories
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -324,8 +407,9 @@ export function PlaceCategoriesTable({ filters }: PlaceCategoriesTableProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la catégorie</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.
-              Les catégories avec des sous-catégories ne peuvent pas être supprimées.
+              Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action
+              est irréversible. Les catégories avec des sous-catégories ne
+              peuvent pas être supprimées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

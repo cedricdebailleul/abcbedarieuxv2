@@ -35,11 +35,30 @@ export default function BadgesPage({ searchParams }: BadgesPageProps) {
     page: Number.parseInt(searchParams.page || "1"),
     limit: Number.parseInt(searchParams.limit || "10"),
     search: searchParams.search || "",
-    category: searchParams.category as any,
-    rarity: searchParams.rarity as any,
-    isActive: searchParams.isActive ? searchParams.isActive === "true" : undefined,
-    sortBy: (searchParams.sortBy as any) || "createdAt",
-    sortOrder: (searchParams.sortOrder as any) || "desc",
+    category: searchParams.category?.toUpperCase() as
+      | "GENERAL"
+      | "ACHIEVEMENT"
+      | "PARTICIPATION"
+      | "SPECIAL"
+      | "ANNIVERSARY"
+      | undefined,
+    rarity: searchParams.rarity?.toUpperCase() as
+      | "COMMON"
+      | "RARE"
+      | "EPIC"
+      | "LEGENDARY"
+      | undefined,
+    isActive: searchParams.isActive
+      ? searchParams.isActive === "true"
+      : undefined,
+    sortBy:
+      (searchParams.sortBy as
+        | "createdAt"
+        | "title"
+        | "category"
+        | "rarity"
+        | undefined) || "createdAt",
+    sortOrder: (searchParams.sortOrder as "asc" | "desc" | undefined) || "desc",
   };
 
   return (
@@ -49,7 +68,9 @@ export default function BadgesPage({ searchParams }: BadgesPageProps) {
         <div className="flex items-center gap-2">
           <Award className="h-6 w-6 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Gestion des badges</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Gestion des badges
+            </h1>
             <p className="text-muted-foreground">
               Créez, modifiez et gérez les badges de récompense
             </p>

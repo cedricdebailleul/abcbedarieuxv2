@@ -18,7 +18,11 @@ export async function GET(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -33,7 +37,10 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: {
+      title?: { contains: string; mode: "insensitive" };
+      isPublished?: boolean;
+    } = {};
 
     if (search) {
       where.title = {
@@ -51,7 +58,7 @@ export async function GET(request: Request) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           createdBy: {
             select: {
@@ -76,7 +83,6 @@ export async function GET(request: Request) {
         pages,
       },
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération des bulletins:", error);
     return NextResponse.json(
@@ -93,7 +99,11 @@ export async function POST(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -151,7 +161,6 @@ export async function POST(request: Request) {
       bulletin,
       message: "Bulletin créé avec succès",
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

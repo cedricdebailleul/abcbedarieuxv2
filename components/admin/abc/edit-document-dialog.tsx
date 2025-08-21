@@ -48,7 +48,11 @@ const typeLabels = {
   OTHER: "Autres",
 };
 
-export function EditDocumentDialog({ document, onSuccess, onCancel }: EditDocumentDialogProps) {
+export function EditDocumentDialog({
+  document,
+  onSuccess,
+  onCancel,
+}: EditDocumentDialogProps) {
   const [title, setTitle] = useState(document.title);
   const [description, setDescription] = useState(document.description || "");
   const [type, setType] = useState(document.type);
@@ -58,7 +62,7 @@ export function EditDocumentDialog({ document, onSuccess, onCancel }: EditDocume
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title || !type) {
       setError("Veuillez remplir tous les champs obligatoires");
       return;
@@ -107,7 +111,8 @@ export function EditDocumentDialog({ document, onSuccess, onCancel }: EditDocume
   const getFileIcon = (mimeType: string) => {
     if (mimeType.includes("pdf")) return "📄";
     if (mimeType.includes("word")) return "📝";
-    if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "📊";
+    if (mimeType.includes("excel") || mimeType.includes("spreadsheet"))
+      return "📊";
     if (mimeType.includes("image")) return "🖼️";
     return "📁";
   };
@@ -180,7 +185,7 @@ export function EditDocumentDialog({ document, onSuccess, onCancel }: EditDocume
         <Checkbox
           id="is-public"
           checked={isPublic}
-          onCheckedChange={setIsPublic}
+          onCheckedChange={(checked) => setIsPublic(checked === true)}
         />
         <Label htmlFor="is-public" className="text-sm">
           Document public (accessible à tous les membres)
@@ -192,7 +197,10 @@ export function EditDocumentDialog({ document, onSuccess, onCancel }: EditDocume
         <Label>Informations</Label>
         <div className="text-sm text-muted-foreground bg-muted p-2 rounded-md space-y-1">
           <div>Uploadé par: {document.uploadedBy.name}</div>
-          <div>Date d'upload: {new Date(document.uploadedAt).toLocaleDateString("fr-FR")}</div>
+          <div>
+            Date d&apos;upload:{" "}
+            {new Date(document.uploadedAt).toLocaleDateString("fr-FR")}
+          </div>
           <div>ID: {document.id}</div>
         </div>
       </div>

@@ -7,23 +7,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Save,
   ArrowLeft,
   AlertTriangle,
   RefreshCw,
   Users,
   Calendar,
-  Edit3
+  Edit3,
 } from "lucide-react";
 import { useAvailableContent } from "../../_hooks/useAvailableContent";
 import { ContentSelector } from "../../_components/ContentSelector";
-import { AttachmentManager, type Attachment } from "../../_components/AttachmentManager";
+import {
+  AttachmentManager,
+  type Attachment,
+} from "../../_components/AttachmentManager";
 import { NewsletterPreview } from "../../_components/NewsletterPreview";
 
 interface CampaignData {
@@ -53,24 +62,42 @@ interface EditCampaignPageProps {
 export default function EditCampaignPage({ params }: EditCampaignPageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [campaign, setCampaign] = useState<CampaignData | null>(null);
   const [campaignLoading, setCampaignLoading] = useState(true);
-  
+
   // Utiliser le hook pour récupérer le contenu dynamique
-  const { content, stats, loading: contentLoading, error: contentError, refetch } = useAvailableContent();
-  
-  const [formData, setFormData] = useState({
+  const {
+    content,
+    loading: contentLoading,
+    error: contentError,
+    refetch,
+  } = useAvailableContent();
+
+  const [formData, setFormData] = useState<{
+    title: string;
+    subject: string;
+    type:
+      | "NEWSLETTER"
+      | "ANNOUNCEMENT"
+      | "EVENT_DIGEST"
+      | "PLACE_UPDATE"
+      | "PROMOTIONAL";
+    content: string;
+    includedEvents: string[];
+    includedPlaces: string[];
+    includedPosts: string[];
+    scheduledAt: string;
+  }>({
     title: "",
     subject: "",
-    type: "NEWSLETTER" as const,
+    type: "NEWSLETTER",
     content: "",
-    includedEvents: [] as string[],
-    includedPlaces: [] as string[],
-    includedPosts: [] as string[],
-    scheduledAt: ""
+    includedEvents: [],
+    includedPlaces: [],
+    includedPosts: [],
+    scheduledAt: "",
   });
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -97,12 +124,15 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
             includedEvents: data.campaign.includedEvents || [],
             includedPlaces: data.campaign.includedPlaces || [],
             includedPosts: data.campaign.includedPosts || [],
-            scheduledAt: data.campaign.scheduledAt ? 
-              new Date(data.campaign.scheduledAt).toISOString().slice(0, 16) : ""
+            scheduledAt: data.campaign.scheduledAt
+              ? new Date(data.campaign.scheduledAt).toISOString().slice(0, 16)
+              : "",
           });
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur lors du chargement");
+        setError(
+          err instanceof Error ? err.message : "Erreur lors du chargement"
+        );
       } finally {
         setCampaignLoading(false);
       }
@@ -125,8 +155,8 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
         },
         body: JSON.stringify({
           ...formData,
-          attachments: attachments.filter(a => a.uploaded),
-          scheduledAt: formData.scheduledAt || null
+          attachments: attachments.filter((a) => a.uploaded),
+          scheduledAt: formData.scheduledAt || null,
         }),
       });
 
@@ -138,7 +168,6 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
 
       // Rediriger vers la page de détails
       router.push(`/dashboard/admin/newsletter/campaigns/${id}`);
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
@@ -147,29 +176,29 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
   };
 
   const toggleEvent = (eventId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       includedEvents: prev.includedEvents.includes(eventId)
-        ? prev.includedEvents.filter(id => id !== eventId)
-        : [...prev.includedEvents, eventId]
+        ? prev.includedEvents.filter((id) => id !== eventId)
+        : [...prev.includedEvents, eventId],
     }));
   };
 
   const togglePlace = (placeId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       includedPlaces: prev.includedPlaces.includes(placeId)
-        ? prev.includedPlaces.filter(id => id !== placeId)
-        : [...prev.includedPlaces, placeId]
+        ? prev.includedPlaces.filter((id) => id !== placeId)
+        : [...prev.includedPlaces, placeId],
     }));
   };
 
   const togglePost = (postId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       includedPosts: prev.includedPosts.includes(postId)
-        ? prev.includedPosts.filter(id => id !== postId)
-        : [...prev.includedPosts, postId]
+        ? prev.includedPosts.filter((id) => id !== postId)
+        : [...prev.includedPosts, postId],
     }));
   };
 
@@ -215,8 +244,9 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Seules les campagnes en brouillon peuvent être modifiées. 
-            Cette campagne a le statut : <Badge variant="outline">{campaign.status}</Badge>
+            Seules les campagnes en brouillon peuvent être modifiées. Cette
+            campagne a le statut :{" "}
+            <Badge variant="outline">{campaign.status}</Badge>
           </AlertDescription>
         </Alert>
         <Button onClick={() => router.back()} variant="outline">
@@ -233,9 +263,9 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => router.back()}
               className="p-1"
             >
@@ -244,11 +274,14 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
             <h1 className="text-3xl font-bold">Modifier la campagne</h1>
           </div>
           <p className="text-muted-foreground">
-            {campaign.title} • Créée le {new Date(campaign.createdAt).toLocaleDateString('fr-FR')}
+            {campaign.title} • Créée le{" "}
+            {new Date(campaign.createdAt).toLocaleDateString("fr-FR")}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant={campaign.status === "DRAFT" ? "secondary" : "default"}>
+          <Badge
+            variant={campaign.status === "DRAFT" ? "secondary" : "default"}
+          >
             {campaign.status}
           </Badge>
           <Button onClick={handleSave} disabled={saving}>
@@ -270,9 +303,9 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             Erreur lors du chargement du contenu: {contentError}
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={refetch}
               className="ml-2"
             >
@@ -301,18 +334,28 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
                   <Input
                     id="title"
                     value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
                     placeholder="Newsletter du mois de septembre"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="subject">Objet de l'email *</Label>
+                  <Label htmlFor="subject">Objet de l&apos;email *</Label>
                   <Input
                     id="subject"
                     value={formData.subject}
-                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        subject: e.target.value,
+                      }))
+                    }
                     placeholder="🎉 Découvrez les nouveautés de Bédarieux"
                     required
                   />
@@ -322,16 +365,31 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
                   <Label htmlFor="type">Type de campagne</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value: any) => setFormData(prev => ({ ...prev, type: value }))}
+                    onValueChange={(
+                      value:
+                        | "NEWSLETTER"
+                        | "ANNOUNCEMENT"
+                        | "EVENT_DIGEST"
+                        | "PLACE_UPDATE"
+                        | "PROMOTIONAL"
+                    ) => setFormData((prev) => ({ ...prev, type: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="NEWSLETTER">Newsletter régulière</SelectItem>
-                      <SelectItem value="ANNOUNCEMENT">Annonce spéciale</SelectItem>
-                      <SelectItem value="EVENT_DIGEST">Digest d'événements</SelectItem>
-                      <SelectItem value="PLACE_UPDATE">Nouveaux commerces</SelectItem>
+                      <SelectItem value="NEWSLETTER">
+                        Newsletter régulière
+                      </SelectItem>
+                      <SelectItem value="ANNOUNCEMENT">
+                        Annonce spéciale
+                      </SelectItem>
+                      <SelectItem value="EVENT_DIGEST">
+                        Digest d&apos;événements
+                      </SelectItem>
+                      <SelectItem value="PLACE_UPDATE">
+                        Nouveaux commerces
+                      </SelectItem>
                       <SelectItem value="PROMOTIONAL">Promotionnel</SelectItem>
                     </SelectContent>
                   </Select>
@@ -374,7 +432,7 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
                         Articles ({content.posts.length})
                       </TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="events" className="mt-6">
                       <ContentSelector
                         items={content.events}
@@ -383,7 +441,7 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
                         type="event"
                       />
                     </TabsContent>
-                    
+
                     <TabsContent value="places" className="mt-6">
                       <ContentSelector
                         items={content.places}
@@ -392,7 +450,7 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
                         type="place"
                       />
                     </TabsContent>
-                    
+
                     <TabsContent value="posts" className="mt-6">
                       <ContentSelector
                         items={content.posts}
@@ -413,11 +471,18 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Label htmlFor="content">Message personnalisé (optionnel)</Label>
+                  <Label htmlFor="content">
+                    Message personnalisé (optionnel)
+                  </Label>
                   <Textarea
                     id="content"
                     value={formData.content}
-                    onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        content: e.target.value,
+                      }))
+                    }
                     placeholder="Ajoutez un message personnalisé qui apparaîtra en introduction de votre newsletter..."
                     className="min-h-32"
                   />
@@ -444,9 +509,15 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
                   campaignTitle={formData.title || campaign.title}
                   subject={formData.subject || campaign.subject}
                   content={formData.content}
-                  selectedEvents={content.events.filter(e => formData.includedEvents.includes(e.id))}
-                  selectedPlaces={content.places.filter(p => formData.includedPlaces.includes(p.id))}
-                  selectedPosts={content.posts.filter(p => formData.includedPosts.includes(p.id))}
+                  selectedEvents={content.events.filter((e) =>
+                    formData.includedEvents.includes(e.id)
+                  )}
+                  selectedPlaces={content.places.filter((p) =>
+                    formData.includedPlaces.includes(p.id)
+                  )}
+                  selectedPosts={content.posts.filter((p) =>
+                    formData.includedPosts.includes(p.id)
+                  )}
                   attachments={attachments}
                 />
               </CardContent>
@@ -462,12 +533,19 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="scheduledAt">Date d'envoi (optionnel)</Label>
+                  <Label htmlFor="scheduledAt">
+                    Date d&apos;envoi (optionnel)
+                  </Label>
                   <Input
                     id="scheduledAt"
                     type="datetime-local"
                     value={formData.scheduledAt}
-                    onChange={(e) => setFormData(prev => ({ ...prev, scheduledAt: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        scheduledAt: e.target.value,
+                      }))
+                    }
                     min={new Date().toISOString().slice(0, 16)}
                   />
                   <p className="text-xs text-muted-foreground">
@@ -493,13 +571,13 @@ export default function EditCampaignPage({ params }: EditCampaignPageProps) {
                 <div className="flex justify-between text-sm">
                   <span>Créée le :</span>
                   <span className="font-medium">
-                    {new Date(campaign.createdAt).toLocaleDateString('fr-FR')}
+                    {new Date(campaign.createdAt).toLocaleDateString("fr-FR")}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Modifiée le :</span>
                   <span className="font-medium">
-                    {new Date(campaign.updatedAt).toLocaleDateString('fr-FR')}
+                    {new Date(campaign.updatedAt).toLocaleDateString("fr-FR")}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">

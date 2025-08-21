@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { withCache, getCacheKey } from "@/lib/cache";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
-      headers: await import("next/headers").then((mod) => mod.headers())
+      headers: await import("next/headers").then((mod) => mod.headers()),
     });
 
     if (!session?.user) {
@@ -22,24 +22,24 @@ export async function GET(request: NextRequest) {
           // Places de l'utilisateur
           userPlaces,
           userPlacesCount,
-          
+
           // Articles de l'utilisateur
           userPosts,
           userPostsCount,
-          
+
           // Événements de l'utilisateur
           userEvents,
           userEventsCount,
-          
+
           // Favoris de l'utilisateur
           userFavoritesCount,
-          
+
           // Badges de l'utilisateur
           userBadges,
-          
+
           // Statistiques d'engagement
           totalViews,
-          totalLikes
+          totalLikes,
         ] = await Promise.all([
           // Places créées par l'utilisateur (avec reviews et favoris)
           prisma.place.findMany({
@@ -50,42 +50,42 @@ export async function GET(request: NextRequest) {
               _count: {
                 select: {
                   reviews: true,
-                  favorites: true
-                }
-              }
+                  favorites: true,
+                },
+              },
             },
             take: 5,
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: "desc" },
           }),
-          
+
           prisma.place.count({
-            where: { ownerId: userId }
+            where: { ownerId: userId },
           }),
-          
+
           // Articles publiés par l'utilisateur
           prisma.post.findMany({
-            where: { 
+            where: {
               authorId: userId,
-              published: true 
+              published: true,
             },
             select: {
               id: true,
               title: true,
               viewCount: true,
               likeCount: true,
-              createdAt: true
+              createdAt: true,
             },
             take: 5,
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: "desc" },
           }),
-          
+
           prisma.post.count({
-            where: { 
+            where: {
               authorId: userId,
-              published: true 
-            }
+              published: true,
+            },
           }),
-          
+
           // Événements organisés par l'utilisateur
           prisma.event.findMany({
             where: { organizerId: userId },
@@ -93,21 +93,21 @@ export async function GET(request: NextRequest) {
               id: true,
               title: true,
               participantCount: true,
-              startDate: true
+              startDate: true,
             },
             take: 5,
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: "desc" },
           }),
-          
+
           prisma.event.count({
-            where: { organizerId: userId }
+            where: { organizerId: userId },
           }),
-          
+
           // Favoris de l'utilisateur
           prisma.favorite.count({
-            where: { userId }
+            where: { userId },
           }),
-          
+
           // Badges obtenus par l'utilisateur
           prisma.userBadge.findMany({
             where: { userId },
@@ -118,49 +118,61 @@ export async function GET(request: NextRequest) {
                   title: true,
                   iconUrl: true,
                   category: true,
-                  rarity: true
-                }
-              }
+                  rarity: true,
+                },
+              },
             },
-            orderBy: { earnedAt: 'desc' }
+            orderBy: { earnedAt: "desc" },
           }),
-          
+
           // Total des vues sur les articles de l'utilisateur
-          prisma.post.aggregate({
-            where: { 
-              authorId: userId,
-              published: true 
-            },
-            _sum: {
-              viewCount: true
-            }
-          }).then(result => result._sum.viewCount || 0),
-          
+          prisma.post
+            .aggregate({
+              where: {
+                authorId: userId,
+                published: true,
+              },
+              _sum: {
+                viewCount: true,
+              },
+            })
+            .then((result) => result._sum.viewCount || 0),
+
           // Total des likes sur les articles de l'utilisateur
-          prisma.post.aggregate({
-            where: { 
-              authorId: userId,
-              published: true 
-            },
-            _sum: {
-              likeCount: true
-            }
-          }).then(result => result._sum.likeCount || 0)
+          prisma.post
+            .aggregate({
+              where: {
+                authorId: userId,
+                published: true,
+              },
+              _sum: {
+                likeCount: true,
+              },
+            })
+            .then((result) => result._sum.likeCount || 0),
         ]);
 
         // Calculs des statistiques dérivées
-        const totalPlaceViews = userPlaces.reduce((sum, place) => sum + (place._count.reviews * 10), 0); // Estimation
-        const totalPlaceFavorites = userPlaces.reduce((sum, place) => sum + place._count.favorites, 0);
-        const totalEventParticipants = userEvents.reduce((sum, event) => sum + event.participantCount, 0);
+        const totalPlaceFavorites = userPlaces.reduce(
+          (sum, place) => sum + place._count.favorites,
+          0
+        );
+        const totalEventParticipants = userEvents.reduce(
+          (sum, event) => sum + event.participantCount,
+          0
+        );
 
         // Calcul du score d'activité (0-100)
-        const activityScore = Math.min(100, Math.round(
-          (userPlacesCount * 10) + 
-          (userPostsCount * 5) + 
-          (userEventsCount * 8) + 
-          (userBadges.length * 3) + 
-          (Math.min(totalViews / 100, 20))
-        ));
+        const activityScore = Math.min(
+          100,
+          Math.round(
+            userPlacesCount * 10 +
+              userPostsCount * 5 +
+              userEventsCount * 8 +
+              userBadges.length * 3 +
+              Math.min(totalViews / 100, 20)
+          )
+        );
 
         return {
           // Métriques principales
@@ -169,36 +181,38 @@ export async function GET(request: NextRequest) {
           totalEvents: userEventsCount,
           totalFavorites: userFavoritesCount,
           totalBadges: userBadges.length,
-          
+
           // Métriques d'engagement
           totalViews,
           totalLikes,
           totalPlaceFavorites,
           totalEventParticipants,
           activityScore,
-          
+
           // Données détaillées (pour affichage)
           recentPlaces: userPlaces,
           recentPosts: userPosts,
           recentEvents: userEvents,
           recentBadges: userBadges.slice(0, 3), // 3 derniers badges
-          
+
           // Croissance (simulée pour l'instant - à améliorer avec des données historiques)
           growth: {
             places: userPlacesCount > 0 ? 10 : 0,
             posts: userPostsCount > 0 ? 15 : 0,
             events: userEventsCount > 0 ? 8 : 0,
-            views: totalViews > 0 ? 25 : 0
-          }
+            views: totalViews > 0 ? 25 : 0,
+          },
         };
       },
       5 * 60 * 1000 // Cache 5 minutes
     );
 
     return NextResponse.json(stats);
-
   } catch (error) {
-    console.error('Erreur lors de la récupération des statistiques utilisateur:', error);
+    console.error(
+      "Erreur lors de la récupération des statistiques utilisateur:",
+      error
+    );
     return NextResponse.json(
       { error: "Erreur lors de la récupération des statistiques utilisateur" },
       { status: 500 }

@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { getCategoriesAction, getTagsAction } from "@/actions/post";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,8 +54,26 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
   const [sortOrder, setSortOrder] = useState(searchParams.sortOrder || "desc");
 
   // Données pour les sélecteurs
-  const [categories, setCategories] = useState<any[]>([]);
-  const [tags, setTags] = useState<any[]>([]);
+  interface Category {
+    id: string;
+    name: string;
+    color?: string;
+    _count: {
+      posts: number;
+    };
+  }
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  interface Tag {
+    id: string;
+    name: string;
+    color?: string;
+    _count: {
+      posts: number;
+    };
+  }
+
+  const [tags, setTags] = useState<Tag[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -70,11 +88,21 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
         ]);
 
         if (categoriesResult.success && categoriesResult.data) {
-          setCategories(categoriesResult.data);
+          setCategories(
+            categoriesResult.data.map((category) => ({
+              ...category,
+              color: category.color ?? undefined,
+            }))
+          );
         }
 
         if (tagsResult.success && tagsResult.data) {
-          setTags(tagsResult.data);
+          setTags(
+            tagsResult.data.map((tag) => ({
+              ...tag,
+              color: tag.color ?? undefined,
+            }))
+          );
         }
       } catch (error) {
         console.error("Erreur lors du chargement des données de filtrage:", error);
@@ -99,30 +127,33 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
   }, [status, categoryId, tagId, published, sortBy, sortOrder]);
 
   // Fonction pour mettre à jour l'URL
-  const updateFilters = (newFilters: Record<string, string>) => {
-    startTransition(() => {
-      const params = new URLSearchParams(currentSearchParams);
+  const updateFilters = useCallback(
+    (newFilters: Record<string, string>) => {
+      startTransition(() => {
+        const params = new URLSearchParams(currentSearchParams);
 
-      // Supprimer les paramètres vides ou avec valeurs par défaut
-      Object.keys(newFilters).forEach((key) => {
-        const value = newFilters[key];
-        // Traiter "all" et "none" comme des valeurs vides
-        if (value && value !== "all" && value !== "none") {
-          params.set(key, value);
-        } else {
-          params.delete(key);
-        }
+        // Supprimer les paramètres vides ou avec valeurs par défaut
+        Object.keys(newFilters).forEach((key) => {
+          const value = newFilters[key];
+          // Traiter "all" et "none" comme des valeurs vides
+          if (value && value !== "all" && value !== "none") {
+            params.set(key, value);
+          } else {
+            params.delete(key);
+          }
+        });
+
+        // Toujours revenir à la page 1 lors d'un changement de filtre
+        params.delete("page");
+
+        const queryString = params.toString();
+        const newUrl = queryString ? `?${queryString}` : "";
+
+        router.push(`/dashboard/posts${newUrl}`);
       });
-
-      // Toujours revenir à la page 1 lors d'un changement de filtre
-      params.delete("page");
-
-      const queryString = params.toString();
-      const newUrl = queryString ? `?${queryString}` : "";
-
-      router.push(`/dashboard/posts${newUrl}`);
-    });
-  };
+    },
+    [currentSearchParams, router]
+  );
 
   // Appliquer les filtres
   const handleApplyFilters = () => {
@@ -167,7 +198,7 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [search]); // Seulement pour la recherche
+  }, [search, status, categoryId, tagId, published, sortBy, sortOrder, updateFilters]); // Seulement pour la recherche
 
   // Compter les filtres actifs
   const activeFiltersCount = [
@@ -432,7 +463,7 @@ export function PostsFilters({ searchParams }: PostsFiltersProps) {
             {search && (
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Search className="h-3 w-3" />
-                Recherche: "{search}"
+                Recherche: &quot;{search}&quot;
                 <Button
                   variant="ghost"
                   size="sm"

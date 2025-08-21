@@ -52,13 +52,15 @@ export function RegisterForm() {
         if (field === "general") {
           toast.error(messages[0]);
         } else {
-          form.setError(field as any, {
+          form.setError(field as keyof z.infer<typeof CreateUserSchema>, {
             message: messages[0],
           });
         }
       });
     } else {
-      toast.success("Compte créé. Vérifiez votre email pour activer votre compte.");
+      toast.success(
+        "Compte créé. Vérifiez votre email pour activer votre compte."
+      );
     }
 
     setIsLoading(false);
@@ -80,16 +82,22 @@ export function RegisterForm() {
             <Input type="password" placeholder="••••••••" />
           </FormFieldWrapper>
 
-          <FormFieldWrapper form={form} name="consentGiven" label="Accepter les conditions">
+          <FormFieldWrapper
+            form={form}
+            name="consentGiven"
+            label="Accepter les conditions"
+          >
             <div className="flex items-center space-x-2">
               <Checkbox
                 checked={form.watch("consentGiven")}
-                onCheckedChange={(checked) => form.setValue("consentGiven", checked as boolean)}
+                onCheckedChange={(checked) =>
+                  form.setValue("consentGiven", checked as boolean)
+                }
               />
               <label className="text-sm">
-                J'accepte les{" "}
+                J&apos;accepte les{" "}
                 <a href="/terms" className="underline">
-                  conditions d'utilisation
+                  conditions d&apos;utilisation
                 </a>{" "}
                 et la{" "}
                 <a href="/privacy" className="underline">
@@ -137,7 +145,9 @@ export function LoginForm() {
         console.log("LoginForm - Erreur:", result.error);
         toast.error("Email ou mot de passe incorrect");
       } else {
-        console.log("LoginForm - Connexion réussie, redirection vers dashboard");
+        console.log(
+          "LoginForm - Connexion réussie, redirection vers dashboard"
+        );
         toast.success("Connexion réussie");
         router.push("/dashboard");
       }
@@ -160,7 +170,11 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="john@example.com" {...field} />
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

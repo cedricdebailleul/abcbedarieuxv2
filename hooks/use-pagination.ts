@@ -1,6 +1,6 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 export function usePagination(defaultPage = 1, defaultSize = 20) {
   const params = useSearchParams();
@@ -9,18 +9,27 @@ export function usePagination(defaultPage = 1, defaultSize = 20) {
   const page = Number(params.get("page") ?? defaultPage);
   const size = Number(params.get("size") ?? defaultSize);
 
-  function setPage(next: number) {
-    const q = new URLSearchParams(params);
-    q.set("page", String(Math.max(1, next)));
-    router.push(`?${q.toString()}`);
-  }
+  const setPage = useCallback(
+    (next: number) => {
+      const q = new URLSearchParams(params);
+      q.set("page", String(Math.max(1, next)));
+      router.push(`?${q.toString()}`);
+    },
+    [params, router]
+  );
 
-  function setSize(next: number) {
-    const q = new URLSearchParams(params);
-    q.set("size", String(Math.max(1, next)));
-    q.set("page", "1");
-    router.push(`?${q.toString()}`);
-  }
+  const setSize = useCallback(
+    (next: number) => {
+      const q = new URLSearchParams(params);
+      q.set("size", String(Math.max(1, next)));
+      q.set("page", "1");
+      router.push(`?${q.toString()}`);
+    },
+    [params, router]
+  );
 
-  return useMemo(() => ({ page, size, setPage, setSize }), [page, size]);
+  return useMemo(
+    () => ({ page, size, setPage, setSize }),
+    [page, size, setPage, setSize]
+  );
 }

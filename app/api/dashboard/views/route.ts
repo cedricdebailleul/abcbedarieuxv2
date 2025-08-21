@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
-      headers: await import("next/headers").then((mod) => mod.headers())
+      headers: await import("next/headers").then((mod) => mod.headers()),
     });
 
     if (!session?.user) {
@@ -13,26 +13,26 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get('period') || '7d'; // 7d, 30d, 90d, 1y
+    const period = searchParams.get("period") || "7d"; // 7d, 30d, 90d, 1y
 
     // Calculer la date de début selon la période
     const now = new Date();
     let startDate: Date;
-    
+
     switch (period) {
-      case '24h':
+      case "24h":
         startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         break;
-      case '7d':
+      case "7d":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
-      case '30d':
+      case "30d":
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
-      case '90d':
+      case "90d":
         startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
         break;
-      case '1y':
+      case "1y":
         startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         break;
       default:
@@ -40,32 +40,41 @@ export async function GET(request: NextRequest) {
     }
 
     // Statistiques générales des vues
-    const [totalViews, periodViews, uniqueViewers, topPosts, viewsOverTime, viewsByReferer] = await Promise.all([
+    const [
+      totalViews,
+      periodViews,
+      uniqueViewers,
+      topPosts,
+      viewsOverTime,
+      viewsByReferer,
+    ] = await Promise.all([
       // Total des vues
       prisma.postView.count(),
-      
+
       // Vues de la période
       prisma.postView.count({
         where: {
           createdAt: {
-            gte: startDate
-          }
-        }
-      }),
-      
-      // Visiteurs uniques de la période (par IP)
-      prisma.postView.groupBy({
-        by: ['ipAddress'],
-        where: {
-          createdAt: {
-            gte: startDate
-          }
+            gte: startDate,
+          },
         },
-        _count: {
-          ipAddress: true
-        }
-      }).then(results => results.length),
-      
+      }),
+
+      // Visiteurs uniques de la période (par IP)
+      prisma.postView
+        .groupBy({
+          by: ["ipAddress"],
+          where: {
+            createdAt: {
+              gte: startDate,
+            },
+          },
+          _count: {
+            ipAddress: true,
+          },
+        })
+        .then((results) => results.length),
+
       // Top articles les plus vus
       prisma.post.findMany({
         select: {
@@ -76,27 +85,27 @@ export async function GET(request: NextRequest) {
           author: {
             select: {
               name: true,
-              email: true
-            }
+              email: true,
+            },
           },
           _count: {
             select: {
               views: {
                 where: {
                   createdAt: {
-                    gte: startDate
-                  }
-                }
-              }
-            }
-          }
+                    gte: startDate,
+                  },
+                },
+              },
+            },
+          },
         },
         orderBy: {
-          viewCount: 'desc'
+          viewCount: "desc",
         },
-        take: 10
+        take: 10,
       }),
-      
+
       // Évolution des vues dans le temps
       prisma.$queryRaw`
         SELECT 
@@ -108,53 +117,67 @@ export async function GET(request: NextRequest) {
         GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
-      
+
       // Top referrers
       prisma.postView.groupBy({
-        by: ['referer'],
+        by: ["referer"],
         where: {
           createdAt: {
-            gte: startDate
+            gte: startDate,
           },
           referer: {
-            not: ""
-          }
+            not: "",
+          },
         },
         _count: {
-          referer: true
+          referer: true,
         },
         orderBy: {
           _count: {
-            referer: 'desc'
-          }
+            referer: "desc",
+          },
         },
-        take: 10
-      })
+        take: 10,
+      }),
     ]);
 
     // Calculer les statistiques de croissance
     const previousPeriodViews = await prisma.postView.count({
       where: {
         createdAt: {
-          gte: new Date(startDate.getTime() - (now.getTime() - startDate.getTime())),
-          lt: startDate
-        }
-      }
+          gte: new Date(
+            startDate.getTime() - (now.getTime() - startDate.getTime())
+          ),
+          lt: startDate,
+        },
+      },
     });
 
-    const growthRate = previousPeriodViews > 0 
-      ? ((periodViews - previousPeriodViews) / previousPeriodViews) * 100 
-      : 0;
+    const growthRate =
+      previousPeriodViews > 0
+        ? ((periodViews - previousPeriodViews) / previousPeriodViews) * 100
+        : 0;
 
     // Formater les données temporelles
-    const formattedViewsOverTime = (viewsOverTime as any[]).map(row => ({
-      date: row.date.toISOString().split('T')[0],
-      views: parseInt(row.views.toString()),
-      uniqueVisitors: parseInt(row.unique_visitors.toString())
-    }));
+    type ViewsOverTimeRow = {
+      date: Date;
+      views: number | string;
+      unique_visitors: number | string;
+    };
+
+    const formattedViewsOverTime = (viewsOverTime as ViewsOverTimeRow[]).map(
+      (row) => ({
+        date:
+          row.date instanceof Date
+            ? row.date.toISOString().split("T")[0]
+            : row.date,
+        views: parseInt(row.views.toString()),
+        uniqueVisitors: parseInt(row.unique_visitors.toString()),
+      })
+    );
 
     // Nettoyer et formater les referrers
-    const formattedReferrers = viewsByReferer.map(ref => {
+    const formattedReferrers = viewsByReferer.map((ref) => {
       let domain = ref.referer;
       try {
         const url = new URL(ref.referer);
@@ -162,10 +185,10 @@ export async function GET(request: NextRequest) {
       } catch {
         // Garder la valeur originale si ce n'est pas une URL valide
       }
-      
+
       return {
         domain,
-        count: ref._count.referer
+        count: ref._count.referer,
       };
     });
 
@@ -175,9 +198,9 @@ export async function GET(request: NextRequest) {
       periodViews,
       uniqueViewers,
       growthRate: Math.round(growthRate * 100) / 100,
-      
+
       // Données détaillées
-      topPosts: topPosts.map(post => ({
+      topPosts: topPosts.map((post) => ({
         id: post.id,
         title: post.title,
         slug: post.slug,
@@ -185,25 +208,27 @@ export async function GET(request: NextRequest) {
         periodViews: post._count.views,
         author: {
           name: post.author.name,
-          email: post.author.email?.replace(/(.{3}).*@/, '$1***@')
-        }
+          email: post.author.email?.replace(/(.{3}).*@/, "$1***@"),
+        },
       })),
-      
+
       // Données temporelles
       viewsOverTime: formattedViewsOverTime,
-      
+
       // Sources de trafic
       topReferrers: formattedReferrers,
-      
+
       // Métadonnées
       period,
       startDate: startDate.toISOString(),
       endDate: now.toISOString(),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     });
-
   } catch (error) {
-    console.error('Erreur lors de la récupération des statistiques de vues:', error);
+    console.error(
+      "Erreur lors de la récupération des statistiques de vues:",
+      error
+    );
     return NextResponse.json(
       { error: "Erreur lors de la récupération des statistiques de vues" },
       { status: 500 }

@@ -2,16 +2,21 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { AbcMeetingStatus, Prisma } from "@/lib/generated/prisma";
 
 const createMeetingSchema = z.object({
   title: z.string().min(1, "Le titre est obligatoire"),
   description: z.string().nullable().optional(),
-  type: z.enum(['GENERAL', 'BUREAU', 'EXTRAORDINAIRE', 'COMMISSION']),
+  type: z.enum(["GENERAL", "BUREAU", "EXTRAORDINAIRE", "COMMISSION"]),
   scheduledAt: z.string().datetime(),
   duration: z.number().positive().nullable().optional(),
   location: z.string().nullable().optional(),
-  status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).default('SCHEDULED'),
+  status: z
+    .enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"])
+    .default("SCHEDULED"),
 });
+
+type AbcMeetingType = z.infer<typeof createMeetingSchema.shape.type>;
 
 // GET /api/admin/abc/meetings - Liste des réunions
 export async function GET(request: Request) {
@@ -20,7 +25,11 @@ export async function GET(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -36,7 +45,7 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Prisma.AbcMeetingWhereInput = {};
 
     if (search) {
       where.title = {
@@ -46,11 +55,11 @@ export async function GET(request: Request) {
     }
 
     if (type) {
-      where.type = type;
+      where.type = type as AbcMeetingType;
     }
 
     if (status) {
-      where.status = status;
+      where.status = status as AbcMeetingStatus;
     }
 
     const [meetings, total] = await Promise.all([
@@ -58,7 +67,7 @@ export async function GET(request: Request) {
         where,
         skip,
         take: limit,
-        orderBy: { scheduledAt: 'desc' },
+        orderBy: { scheduledAt: "desc" },
         include: {
           _count: {
             select: {
@@ -81,7 +90,6 @@ export async function GET(request: Request) {
         pages,
       },
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération des réunions:", error);
     return NextResponse.json(
@@ -98,7 +106,11 @@ export async function POST(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -141,7 +153,6 @@ export async function POST(request: Request) {
       meeting,
       message: "Réunion créée avec succès",
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

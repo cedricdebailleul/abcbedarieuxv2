@@ -14,7 +14,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Send, 
   Save,
-  Eye,
   AlertTriangle,
   RefreshCw,
   Users
@@ -35,7 +34,7 @@ export default function NewCampaignPage() {
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
-    type: "NEWSLETTER" as const,
+    type: "NEWSLETTER",
     content: "",
     includedEvents: [] as string[],
     includedPlaces: [] as string[],
@@ -125,7 +124,7 @@ export default function NewCampaignPage() {
       <div>
         <h1 className="text-3xl font-bold">Nouvelle campagne</h1>
         <p className="text-muted-foreground">
-          Créez une nouvelle campagne d'email pour vos abonnés
+          Créez une nouvelle campagne d&apos;email pour vos abonnés
         </p>
       </div>
 
@@ -176,7 +175,7 @@ export default function NewCampaignPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="subject">Objet de l'email *</Label>
+                  <Label htmlFor="subject">Objet de l&apos;email *</Label>
                   <Input
                     id="subject"
                     value={formData.subject}
@@ -190,7 +189,7 @@ export default function NewCampaignPage() {
                   <Label htmlFor="type">Type de campagne</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value: any) => setFormData(prev => ({ ...prev, type: value }))}
+                    onValueChange={(value: "NEWSLETTER" | "ANNOUNCEMENT" | "EVENT_DIGEST" | "PLACE_UPDATE" | "PROMOTIONAL") => setFormData(prev => ({ ...prev, type: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -198,7 +197,7 @@ export default function NewCampaignPage() {
                     <SelectContent>
                       <SelectItem value="NEWSLETTER">Newsletter régulière</SelectItem>
                       <SelectItem value="ANNOUNCEMENT">Annonce spéciale</SelectItem>
-                      <SelectItem value="EVENT_DIGEST">Digest d'événements</SelectItem>
+                      <SelectItem value="EVENT_DIGEST">Digest d&apos;événements</SelectItem>
                       <SelectItem value="PLACE_UPDATE">Nouveaux commerces</SelectItem>
                       <SelectItem value="PROMOTIONAL">Promotionnel</SelectItem>
                     </SelectContent>
@@ -338,7 +337,7 @@ export default function NewCampaignPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="scheduledAt">Date d'envoi (optionnel)</Label>
+                  <Label htmlFor="scheduledAt">Date d&apos;envoi (optionnel)</Label>
                   <Input
                     id="scheduledAt"
                     type="datetime-local"

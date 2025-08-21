@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,6 @@ import {
   IconDotsVertical,
   IconDownload,
   IconEye,
-  IconFile,
 } from "@tabler/icons-react";
 import { CreateDocumentDialog } from "@/components/admin/abc/create-document-dialog";
 import { EditDocumentDialog } from "@/components/admin/abc/edit-document-dialog";
@@ -67,7 +66,7 @@ interface Document {
   fileName: string;
   filePath: string;
   fileSize: number;
-  mimeType?: string;
+  mimeType: string;
   createdAt: string;
   uploadedBy: {
     name: string;
@@ -78,6 +77,8 @@ interface Document {
     title: string;
     scheduledAt: string;
   };
+  isPublic: boolean;
+  uploadedAt: string;
 }
 
 interface DocumentsResponse {
@@ -103,7 +104,8 @@ const getFileIcon = (mimeType: string | undefined) => {
   if (!mimeType) return "📁";
   if (mimeType.includes("pdf")) return "📄";
   if (mimeType.includes("word")) return "📝";
-  if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "📊";
+  if (mimeType.includes("excel") || mimeType.includes("spreadsheet"))
+    return "📊";
   if (mimeType.includes("image")) return "🖼️";
   return "📁";
 };
@@ -121,7 +123,7 @@ export default function AbcDocumentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
-  const [accessFilter, setAccessFilter] = useState("");
+  // Removed unused accessFilter state
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -131,9 +133,11 @@ export default function AbcDocumentsPage() {
   });
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
-  const [deletingDocument, setDeletingDocument] = useState<Document | null>(null);
+  const [deletingDocument, setDeletingDocument] = useState<Document | null>(
+    null
+  );
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -157,11 +161,11 @@ export default function AbcDocumentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, typeFilter]);
 
   useEffect(() => {
     fetchDocuments();
-  }, [page, search, typeFilter, accessFilter]);
+  }, [page, search, typeFilter, fetchDocuments]);
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -170,11 +174,6 @@ export default function AbcDocumentsPage() {
 
   const handleTypeFilter = (value: string) => {
     setTypeFilter(value === "all" ? "" : value);
-    setPage(1);
-  };
-
-  const handleAccessFilter = (value: string) => {
-    setAccessFilter(value === "all" ? "" : value);
     setPage(1);
   };
 
@@ -208,9 +207,11 @@ export default function AbcDocumentsPage() {
     }
   };
 
-  const handleDownload = async (document: Document) => {
+  const handleDownload = async (doc: Document) => {
     try {
-      const response = await fetch(`/api/admin/abc/documents/${document.id}/download`);
+      const response = await fetch(
+        `/api/admin/abc/documents/${doc.id}/download`
+      );
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Erreur de téléchargement");
@@ -220,20 +221,22 @@ export default function AbcDocumentsPage() {
       const url = window.URL.createObjectURL(blob);
       const a = window.document.createElement("a");
       a.href = url;
-      a.download = document.fileName;
-      document.body.appendChild(a);
+      a.download = doc.fileName;
+      window.document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
     } catch (error) {
       console.error("Erreur lors du téléchargement:", error);
-      alert(error instanceof Error ? error.message : "Erreur lors du téléchargement");
+      alert(
+        error instanceof Error ? error.message : "Erreur lors du téléchargement"
+      );
     }
   };
 
   const handlePreview = (document: Document) => {
     const previewUrl = `/api/admin/abc/documents/${document.id}/preview`;
-    window.open(previewUrl, '_blank');
+    window.open(previewUrl, "_blank");
   };
 
   if (loading && documents.length === 0) {
@@ -374,9 +377,7 @@ export default function AbcDocumentsPage() {
                               Lié à: {document.meeting.title}
                             </Badge>
                           ) : (
-                            <Badge variant="secondary">
-                              Général
-                            </Badge>
+                            <Badge variant="secondary">Général</Badge>
                           )}
                         </div>
                       </TableCell>
@@ -387,7 +388,9 @@ export default function AbcDocumentsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(document.createdAt).toLocaleDateString("fr-FR")}
+                          {new Date(document.createdAt).toLocaleDateString(
+                            "fr-FR"
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -494,8 +497,9 @@ export default function AbcDocumentsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer le document</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer le document "{deletingDocument?.title}" ? 
-              Cette action est irréversible et supprimera également le fichier du serveur.
+              Êtes-vous sûr de vouloir supprimer le document &quot;
+              {deletingDocument?.title}&quot; ? Cette action est irréversible et
+              supprimera également le fichier du serveur.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

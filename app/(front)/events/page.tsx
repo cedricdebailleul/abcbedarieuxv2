@@ -1,100 +1,211 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Calendar, Clock, MapPin, Users, Filter, Search } from "lucide-react";
+import { Calendar, Users, Filter, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
+
 import { EventCalendar } from "@/components/events/event-calendar";
 import { EventCard } from "@/components/events/event-card";
-import { SafeImage } from "@/components/safe-image";
 
 import { getPublicEventsAction } from "@/actions/event";
+import type { Event } from "@/lib/generated/prisma";
 import { EVENT_CATEGORIES_LABELS } from "@/lib/validations/event";
 import { EventCategory } from "@/lib/generated/prisma";
 
+/** =========================
+ * Types locaux utiles
+ * ========================= */
+
+type PublicEventsResult = Awaited<ReturnType<typeof getPublicEventsAction>>;
+type PublicEvent = NonNullable<PublicEventsResult["data"]>[number];
+
+// Event enrichi pour les composants UI (card/calendrier)
+type EventWithCount = Event & {
+  _count: { participants: number };
+  occurrenceId?: string;
+};
+
+type SearchParams = {
+  view?: string | string[];
+  category?: string | string[];
+  city?: string | string[];
+  search?: string | string[];
+  date?: string | string[]; // YYYY-MM-DD
+};
+
 interface EventsPageProps {
-  searchParams: Promise<{
-    view?: string;
-    category?: string;
-    city?: string;
-    search?: string;
-    date?: string; // YYYY-MM-DD
-  }>;
+  searchParams?: SearchParams;
 }
+
+/** =========================
+ * Metadata
+ * ========================= */
 
 export const metadata: Metadata = {
   title: "Événements à Bédarieux - Agenda local",
-  description: "Découvrez tous les événements, concerts, festivals et activités à Bédarieux et ses environs. Agenda complet avec dates et détails.",
+  description:
+    "Découvrez tous les événements, concerts, festivals et activités à Bédarieux et ses environs. Agenda complet avec dates et détails.",
   openGraph: {
     title: "Événements à Bédarieux - Agenda local",
-    description: "Découvrez tous les événements, concerts, festivals et activités à Bédarieux et ses environs. Agenda complet avec dates et détails.",
-    type: "website"
-  }
+    description:
+      "Découvrez tous les événements, concerts, festivals et activités à Bédarieux et ses environs. Agenda complet avec dates et détails.",
+    type: "website",
+  },
 };
 
-// Fonction utilitaire pour normaliser les chemins d'images
-function normalizeImagePath(path?: string | null): string | undefined {
-  if (!path) return undefined;
-  return path.startsWith("/") ? path : `/${path}`;
+/** =========================
+ * Helpers
+ * ========================= */
+
+function firstOf(v?: string | string[]): string | undefined {
+  if (Array.isArray(v)) return v[0];
+  return v;
 }
 
-export default async function EventsPage({ searchParams }: EventsPageProps) {
-  const params = await searchParams;
-  const view = params.view || "calendar";
-  const selectedCategory = params.category;
-  const selectedCity = params.city;
-  const searchQuery = params.search;
-  const selectedDate = params.date;
+function buildQueryString(
+  base: SearchParams,
+  patch: Record<string, string | undefined>
+) {
+  const obj: Record<string, string> = {};
+  // On ne garde que les champs connus
+  const keys: (keyof SearchParams)[] = [
+    "view",
+    "category",
+    "city",
+    "search",
+    "date",
+  ];
+  for (const k of keys) {
+    const val = firstOf(base?.[k]);
+    if (val) obj[k] = val;
+  }
+  // Patch
+  for (const [k, v] of Object.entries(patch)) {
+    if (v == null || v === "") delete obj[k];
+    else obj[k] = v;
+  }
+  return new URLSearchParams(obj).toString();
+}
 
-  console.log("Search params received:", params); // Debug log
+/** =========================
+ * Page
+ * ========================= */
 
-  // Calculer la plage de dates pour les événements récurrents (3 mois par défaut)
+export default async function EventsPage({
+  searchParams = {},
+}: EventsPageProps) {
+  const view = firstOf(searchParams.view) || "calendar";
+  const selectedCategory = firstOf(searchParams.category);
+  const selectedCity = firstOf(searchParams.city);
+  const searchQuery = firstOf(searchParams.search);
+  const selectedDate = firstOf(searchParams.date);
+
+  // Période par défaut : du 1er du mois précédent à la fin du 3e mois suivant
   const today = new Date();
-  const startOfPeriod = new Date(today.getFullYear(), today.getMonth() - 1, 1); // Mois précédent
-  const endOfPeriod = new Date(today.getFullYear(), today.getMonth() + 3, 0); // 3 mois suivants
+  const startOfPeriod = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const endOfPeriod = new Date(today.getFullYear(), today.getMonth() + 3, 0);
 
-  // Si une date spécifique est sélectionnée, charger les événements pour cette journée
-  let startDate = startOfPeriod.toISOString().split('T')[0];
-  let endDate = endOfPeriod.toISOString().split('T')[0];
-  
+  let startDate = startOfPeriod.toISOString().split("T")[0];
+  let endDate = endOfPeriod.toISOString().split("T")[0];
   if (selectedDate) {
     startDate = selectedDate;
     endDate = selectedDate;
   }
 
-  // Charger les événements
+  // Catégorie -> on tolère la valeur enum comme "slug" si c’est ton design
+  const categorySlug =
+    selectedCategory &&
+    selectedCategory !== "all" &&
+    (Object.values(EventCategory) as string[]).includes(selectedCategory)
+      ? selectedCategory
+      : undefined;
+
+  // Chargement des événements
   const eventsResult = await getPublicEventsAction({
     startDate,
     endDate,
-    category: selectedCategory && selectedCategory !== "all" && Object.values(EventCategory).includes(selectedCategory as EventCategory) 
-      ? selectedCategory as EventCategory 
-      : undefined,
+    categorySlug,
     city: selectedCity && selectedCity !== "all" ? selectedCity : undefined,
-    limit: view === "calendar" ? 200 : 24
+    limit: view === "calendar" ? 200 : 24,
   });
 
-  const events = eventsResult.success ? eventsResult.data! : [];
+  const events: PublicEvent[] = eventsResult.success ? eventsResult.data! : [];
 
-  // Filtrer par recherche textuelle côté client (simple pour le MVP)
-  const filteredEvents = searchQuery
-    ? events.filter(event => 
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.summary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.locationCity?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : events;
+  // Adaptation pour l’UI : dates en Date, slug fallback, _count présent
+  const uiEvents: EventWithCount[] = events.map((e) => {
+    const start =
+      typeof e.startDate === "string"
+        ? new Date(e.startDate)
+        : new Date(e.startDate);
+    const end =
+      typeof e.endDate === "string" ? new Date(e.endDate) : new Date(e.endDate);
 
-  // Obtenir les villes uniques pour le filtre
-  const cities = [...new Set(events.map(e => e.locationCity || e.place?.city).filter(Boolean))];
+    // Extract place data with proper typing
+    const place = (e as { place?: { id: string; name: string; slug: string; city: string } | null }).place;
+
+    const slug = (e as { slug?: string }).slug || place?.slug || e.id;
+
+    // Par défaut, on alimente un _count minimal (participants)
+    const count =
+      (e as { _count?: { participants?: number } })._count?.participants ??
+      (e as { participantCount?: number }).participantCount ??
+      0;
+
+    // On fabrique un objet compatible avec Event + _count (on ne met ici que les champs utilisés par le front)
+    const base = {
+      id: e.id,
+      title: e.title,
+      slug,
+      startDate: start,
+      endDate: end,
+      // champs fréquents utilisés par UI
+      isAllDay: (e as { isAllDay?: boolean }).isAllDay ?? false,
+      isFeatured: (e as { isFeatured?: boolean }).isFeatured ?? false,
+      isFree: (e as { isFree?: boolean }).isFree ?? true,
+      // place (souvent lu par EventCard)
+      place,
+      // occurrences
+      occurrenceId: (e as { occurrenceId?: string }).occurrenceId,
+      // compteur
+      _count: { participants: count },
+    } as Partial<EventWithCount>;
+
+    return base as EventWithCount;
+  });
+
+  // Filtrage texte côté client (MVP)
+  const filteredEvents: EventWithCount[] = searchQuery
+    ? uiEvents.filter((ev) => {
+        const q = searchQuery.toLowerCase();
+        const title = ev.title?.toLowerCase() ?? "";
+        const place = (
+          ev as unknown as { place?: { name?: string; city?: string } }
+        ).place;
+        const placeName = place?.name?.toLowerCase() ?? "";
+        const placeCity = place?.city?.toLowerCase() ?? "";
+        return (
+          title.includes(q) || placeName.includes(q) || placeCity.includes(q)
+        );
+      })
+    : uiEvents;
+
+  // Villes uniques
+  const cities = Array.from(
+    new Set(
+      events
+        .map((e) => (e as { place?: { city?: string } }).place?.city)
+        .filter(Boolean)
+    )
+  ) as string[];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -102,10 +213,13 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <Calendar className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">Agenda des événements</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Agenda des événements
+          </h1>
         </div>
         <p className="text-muted-foreground">
-          Découvrez tous les événements, concerts, festivals et activités à Bédarieux et ses environs
+          Découvrez tous les événements, concerts, festivals et activités à
+          Bédarieux et ses environs
         </p>
       </div>
 
@@ -121,7 +235,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {/* Recherche textuelle */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Rechercher un événement..."
                 defaultValue={searchQuery}
@@ -137,11 +251,13 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes les catégories</SelectItem>
-                {Object.entries(EVENT_CATEGORIES_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
+                {Object.entries(EVENT_CATEGORIES_LABELS).map(
+                  ([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  )
+                )}
               </SelectContent>
             </Select>
 
@@ -153,7 +269,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
               <SelectContent>
                 <SelectItem value="all">Toutes les villes</SelectItem>
                 {cities.map((city) => (
-                  <SelectItem key={city} value={city!}>
+                  <SelectItem key={city} value={city}>
                     {city}
                   </SelectItem>
                 ))}
@@ -163,14 +279,12 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
             {/* Sélecteur de vue */}
             <div className="flex rounded-lg border p-1">
               <Link
-                href={`?${new URLSearchParams(
-                  Object.fromEntries(
-                    Object.entries({ ...params, view: "calendar" }).filter(([, v]) => v != null)
-                  )
-                ).toString()}`}
+                href={`?${buildQueryString(searchParams, {
+                  view: "calendar",
+                })}`}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  view === "calendar" 
-                    ? "bg-primary text-primary-foreground" 
+                  view === "calendar"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -178,14 +292,10 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 Calendrier
               </Link>
               <Link
-                href={`?${new URLSearchParams(
-                  Object.fromEntries(
-                    Object.entries({ ...params, view: "list" }).filter(([, v]) => v != null)
-                  )
-                ).toString()}`}
+                href={`?${buildQueryString(searchParams, { view: "list" })}`}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  view === "list" 
-                    ? "bg-primary text-primary-foreground" 
+                  view === "list"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -198,7 +308,9 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
           {/* Statistiques */}
           <div className="flex items-center justify-between text-sm text-muted-foreground pt-4 border-t">
             <span>
-              {filteredEvents.length} événement{filteredEvents.length > 1 ? 's' : ''} trouvé{filteredEvents.length > 1 ? 's' : ''}
+              {filteredEvents.length} événement
+              {filteredEvents.length > 1 ? "s" : ""} trouvé
+              {filteredEvents.length > 1 ? "s" : ""}
             </span>
             <div className="flex items-center gap-4">
               <span>• Gratuit</span>
@@ -208,14 +320,13 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Contenu principal */}
       {view === "calendar" ? (
-        <EventCalendar events={filteredEvents} />
+        // Le calendrier a souvent besoin de Date : on a converti ci-dessus
+        <EventCalendar events={filteredEvents as EventWithCount[]} />
       ) : (
         <div className="space-y-6">
           {/* Events à la une */}
-          {filteredEvents.some(e => e.isFeatured) && (
+          {filteredEvents.some((e) => e.isFeatured) && (
             <Card>
               <CardHeader>
                 <CardTitle>Événements à la une</CardTitle>
@@ -223,10 +334,18 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredEvents
-                    .filter(event => event.isFeatured)
+                    .filter((event) => event.isFeatured)
                     .slice(0, 3)
-                    .map((event, index) => (
-                      <EventCard key={event.occurrenceId || `${event.id}-featured-${index}`} event={event} />
+                    .map((event) => (
+                      <EventCard
+                        key={
+                          event.occurrenceId ||
+                          `${
+                            event.id
+                          }-${event.startDate.toISOString()}-featured`
+                        }
+                        event={event}
+                      />
                     ))}
                 </div>
               </CardContent>
@@ -239,7 +358,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
               <CardTitle>Prochains événements</CardTitle>
             </CardHeader>
             <CardContent>
-              {filteredEvents.length === 0 ? (
+              {filteredEvents.filter((e) => !e.isFeatured).length === 0 ? (
                 <div className="text-center py-12">
                   <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-medium text-muted-foreground mb-2">
@@ -252,16 +371,23 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                   </p>
                   <Button asChild>
                     <Link href="/dashboard/events/new">
-                      Organiser un événement
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Créer un événement
                     </Link>
                   </Button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredEvents
-                    .filter(event => !event.isFeatured)
-                    .map((event, index) => (
-                      <EventCard key={event.occurrenceId || `${event.id}-regular-${index}`} event={event} />
+                    .filter((event) => !event.isFeatured)
+                    .map((event) => (
+                      <EventCard
+                        key={
+                          event.occurrenceId ||
+                          `${event.id}-${event.startDate.toISOString()}`
+                        }
+                        event={event}
+                      />
                     ))}
                 </div>
               )}

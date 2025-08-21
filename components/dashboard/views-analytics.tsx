@@ -1,11 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { IconEye, IconTrendingUp, IconTrendingDown, IconUsers, IconExternalLink } from "@tabler/icons-react";
+import {
+  IconEye,
+  IconTrendingUp,
+  IconTrendingDown,
+  IconUsers,
+  IconExternalLink,
+} from "@tabler/icons-react";
 
 interface ViewsData {
   totalViews: number;
@@ -37,29 +66,39 @@ interface ViewsData {
   endDate: string;
 }
 
-const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316'];
+const COLORS = [
+  "#3b82f6",
+  "#22c55e",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+  "#f97316",
+];
 
 export function ViewsAnalytics() {
   const [data, setData] = useState<ViewsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState('7d');
+  const [period, setPeriod] = useState("7d");
 
   const fetchData = async (selectedPeriod: string) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await fetch(`/api/dashboard/views?period=${selectedPeriod}`);
-      
+
+      const response = await fetch(
+        `/api/dashboard/views?period=${selectedPeriod}`
+      );
+
       if (!response.ok) {
         throw new Error(`Erreur ${response.status}`);
       }
-      
+
       const result = await response.json();
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
@@ -110,8 +149,12 @@ export function ViewsAnalytics() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-destructive">Erreur de chargement</CardTitle>
-          <CardDescription>{error || "Impossible de charger les statistiques de vues"}</CardDescription>
+          <CardTitle className="text-destructive">
+            Erreur de chargement
+          </CardTitle>
+          <CardDescription>
+            {error || "Impossible de charger les statistiques de vues"}
+          </CardDescription>
         </CardHeader>
       </Card>
     );
@@ -125,7 +168,9 @@ export function ViewsAnalytics() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-semibold">Analytique des Vues</h2>
-          <p className="text-muted-foreground">Statistiques détaillées du trafic des articles</p>
+          <p className="text-muted-foreground">
+            Statistiques détaillées du trafic des articles
+          </p>
         </div>
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-32">
@@ -153,11 +198,20 @@ export function ViewsAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <GrowthIcon className={`size-4 ${getGrowthColor(data.growthRate)}`} />
-              <span className={`text-sm font-medium ${getGrowthColor(data.growthRate)}`}>
-                {data.growthRate > 0 ? '+' : ''}{data.growthRate}%
+              <GrowthIcon
+                className={`size-4 ${getGrowthColor(data.growthRate)}`}
+              />
+              <span
+                className={`text-sm font-medium ${getGrowthColor(
+                  data.growthRate
+                )}`}
+              >
+                {data.growthRate > 0 ? "+" : ""}
+                {data.growthRate}%
               </span>
-              <span className="text-sm text-muted-foreground">vs période précédente</span>
+              <span className="text-sm text-muted-foreground">
+                vs période précédente
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -172,7 +226,10 @@ export function ViewsAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreforeground">
-              Taux de pages/visiteur: {data.uniqueViewers > 0 ? (data.periodViews / data.uniqueViewers).toFixed(1) : '0'}
+              Taux de pages/visiteur:{" "}
+              {data.uniqueViewers > 0
+                ? (data.periodViews / data.uniqueViewers).toFixed(1)
+                : "0"}
             </div>
           </CardContent>
         </Card>
@@ -196,25 +253,34 @@ export function ViewsAnalytics() {
       <Card>
         <CardHeader>
           <CardTitle>Évolution des Vues</CardTitle>
-          <CardDescription>Vues et visiteurs uniques dans le temps</CardDescription>
+          <CardDescription>
+            Vues et visiteurs uniques dans le temps
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={data.viewsOverTime}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis 
-                dataKey="date" 
+              <XAxis
+                dataKey="date"
                 className="text-muted-foreground text-sm"
-                tickFormatter={(date) => new Date(date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })}
+                tickFormatter={(date) =>
+                  new Date(date).toLocaleDateString("fr-FR", {
+                    month: "short",
+                    day: "numeric",
+                  })
+                }
               />
               <YAxis className="text-muted-foreground text-sm" />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '6px'
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "6px",
                 }}
-                labelFormatter={(date) => new Date(date).toLocaleDateString('fr-FR')}
+                labelFormatter={(date) =>
+                  new Date(date).toLocaleDateString("fr-FR")
+                }
               />
               <Line
                 type="monotone"
@@ -240,24 +306,36 @@ export function ViewsAnalytics() {
         <Card>
           <CardHeader>
             <CardTitle>Articles les Plus Vus</CardTitle>
-            <CardDescription>Classement pour la période sélectionnée</CardDescription>
+            <CardDescription>
+              Classement pour la période sélectionnée
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {data.topPosts.map((post, index) => (
-                <div key={post.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <div
+                  key={post.id}
+                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="w-8 h-8 rounded-full flex items-center justify-center p-0">
+                    <Badge
+                      variant="outline"
+                      className="w-8 h-8 rounded-full flex items-center justify-center p-0"
+                    >
                       {index + 1}
                     </Badge>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{post.title}</p>
-                      <p className="text-sm text-muted-foreground">par {post.author.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        par {post.author.name}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">{post.periodViews}</p>
-                    <p className="text-xs text-muted-foreground">{post.totalViews} total</p>
+                    <p className="text-xs text-muted-foreground">
+                      {post.totalViews} total
+                    </p>
                   </div>
                 </div>
               ))}
@@ -285,7 +363,10 @@ export function ViewsAnalytics() {
                     fill="#8884d8"
                   >
                     {data.topReferrers.slice(0, 7).map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -296,7 +377,9 @@ export function ViewsAnalytics() {
                 <div className="text-center">
                   <IconExternalLink className="size-12 mx-auto mb-2" />
                   <p>Aucune source de trafic externe</p>
-                  <p className="text-sm">Le trafic provient principalement du site</p>
+                  <p className="text-sm">
+                    Le trafic provient principalement du site
+                  </p>
                 </div>
               </div>
             )}

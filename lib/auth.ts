@@ -17,10 +17,13 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async (
-      { user, url, token }: { user: any; url: string; token: string },
-      _request?: Request
-    ) => {
+    sendVerificationEmail: async ({
+      user,
+      url,
+    }: {
+      user: { email: string; name?: string };
+      url: string;
+    }) => {
       // Vérifier si on doit ignorer l'envoi d'email (pour les invitations)
       if (process.env.SKIP_VERIFICATION_EMAIL === "true") {
         console.log("🔧 [BETTER AUTH] Envoi d'email ignoré pour invitation:", {
@@ -29,10 +32,13 @@ export const auth = betterAuth({
         return;
       }
 
-      console.log("🔧 [BETTER AUTH] Tentative d'envoi d'email de vérification:", {
-        email: user.email,
-        url,
-      });
+      console.log(
+        "🔧 [BETTER AUTH] Tentative d'envoi d'email de vérification:",
+        {
+          email: user.email,
+          url,
+        }
+      );
 
       try {
         await sendEmail({
@@ -49,7 +55,9 @@ export const auth = betterAuth({
             <p>Si vous n'avez pas créé de compte sur ABC Bédarieux, ignorez ce message.</p>
           `,
         });
-        console.log("✅ [BETTER AUTH] Email de vérification envoyé avec succès");
+        console.log(
+          "✅ [BETTER AUTH] Email de vérification envoyé avec succès"
+        );
       } catch (error) {
         console.error("❌ [BETTER AUTH] Erreur lors de l'envoi:", error);
         throw error;

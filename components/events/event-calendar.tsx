@@ -25,17 +25,17 @@ interface Event {
   id: string;
   title: string;
   slug: string;
-  startDate: string;
-  endDate: string;
+  startDate: string | Date;
+  endDate: string | Date;
   isAllDay: boolean;
-  category?: string;
+  category?: string | null | { id: string; name: string; slug: string; color?: string | null };
   isFeatured: boolean;
   isFree: boolean;
-  price?: number;
-  currency?: string;
-  locationName?: string;
-  locationCity?: string;
-  maxParticipants?: number;
+  price?: number | null;
+  currency?: string | null;
+  locationName?: string | null;
+  locationCity?: string | null;
+  maxParticipants?: number | null;
   participantCount: number;
   place?: {
     name: string;
@@ -163,7 +163,7 @@ function EventThumbnail({
               )}
               {event.category && (
                 <Badge variant="outline" className="text-xs">
-                  {event.category}
+                  {typeof event.category === "string" ? event.category : event.category.name}
                 </Badge>
               )}
             </div>
@@ -254,7 +254,7 @@ function EventThumbnail({
           </div>
 
           <Button asChild className="w-full" size="sm">
-            <Link href={`/events/${event.slug}`}>Voir l'événement</Link>
+            <Link href={`/events/${event.slug}`}>Voir l&apos;événement</Link>
           </Button>
         </div>
       </PopoverContent>
@@ -271,6 +271,9 @@ export function EventCalendar({ events }: EventCalendarProps) {
 
   // Grouper les événements par date
   const eventsByDate = events.reduce((acc, event) => {
+    // Skip events that don't have the required date fields
+    if (!event.startDate || !event.endDate) return acc;
+
     const startDate = new Date(event.startDate);
     const endDate = new Date(event.endDate);
 
@@ -279,7 +282,7 @@ export function EventCalendar({ events }: EventCalendarProps) {
     while (current <= endDate) {
       const dateKey = `${current.getFullYear()}-${current.getMonth()}-${current.getDate()}`;
       if (!acc[dateKey]) acc[dateKey] = [];
-      acc[dateKey].push(event);
+      acc[dateKey].push(event as Event);
       current.setDate(current.getDate() + 1);
     }
 
@@ -304,7 +307,7 @@ export function EventCalendar({ events }: EventCalendarProps) {
           </h2>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={goToToday}>
-              Aujourd'hui
+              Aujourd&apos;hui
             </Button>
             <Button
               variant="outline"

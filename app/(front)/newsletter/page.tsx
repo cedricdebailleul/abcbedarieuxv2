@@ -7,7 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, CheckCircle, AlertCircle, Users, Calendar, MapPin } from "lucide-react";
+import {
+  Mail,
+  CheckCircle,
+  AlertCircle,
+  Users,
+  Calendar,
+  MapPin,
+} from "lucide-react";
 
 export default function NewsletterPage() {
   const [email, setEmail] = useState("");
@@ -17,7 +24,7 @@ export default function NewsletterPage() {
     events: true,
     places: true,
     offers: false,
-    news: true
+    news: true,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -25,7 +32,7 @@ export default function NewsletterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch("/api/newsletter/subscribe", {
         method: "POST",
@@ -36,7 +43,7 @@ export default function NewsletterPage() {
           email,
           firstName,
           lastName,
-          preferences
+          preferences,
         }),
       });
 
@@ -48,7 +55,7 @@ export default function NewsletterPage() {
       } else {
         setStatus("error");
       }
-    } catch (error) {
+    } catch {
       setStatus("error");
     } finally {
       setIsSubmitting(false);
@@ -64,7 +71,8 @@ export default function NewsletterPage() {
         </div>
         <h1 className="text-4xl font-bold mb-4">Newsletter ABC Bédarieux</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Restez informé de l'actualité commerciale de Bédarieux et ne manquez aucun événement !
+          Restez informé de l&apos;actualité commerciale de Bédarieux et ne
+          manquez aucun événement !
         </p>
       </div>
 
@@ -80,7 +88,8 @@ export default function NewsletterPage() {
                 <Alert className="mb-6 border-green-200 bg-green-50">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <AlertDescription className="text-green-800">
-                    Merci ! Votre inscription a été prise en compte. Vous allez recevoir un email de confirmation.
+                    Merci ! Votre inscription a été prise en compte. Vous allez
+                    recevoir un email de confirmation.
                   </AlertDescription>
                 </Alert>
               )}
@@ -89,7 +98,8 @@ export default function NewsletterPage() {
                 <Alert className="mb-6 border-red-200 bg-red-50">
                   <AlertCircle className="h-4 w-4 text-red-600" />
                   <AlertDescription className="text-red-800">
-                    Une erreur s'est produite. Veuillez réessayer plus tard.
+                    Une erreur s&apos;est produite. Veuillez réessayer plus
+                    tard.
                   </AlertDescription>
                 </Alert>
               )}
@@ -130,62 +140,85 @@ export default function NewsletterPage() {
 
                 {/* Preferences */}
                 <div className="space-y-4">
-                  <Label className="text-base font-medium">Que souhaitez-vous recevoir ?</Label>
-                  
+                  <Label className="text-base font-medium">
+                    Que souhaitez-vous recevoir ?
+                  </Label>
+
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="events"
                         checked={preferences.events}
-                        onCheckedChange={(checked) => 
-                          setPreferences(prev => ({ ...prev, events: checked as boolean }))
+                        onCheckedChange={(checked) =>
+                          setPreferences((prev) => ({
+                            ...prev,
+                            events: checked as boolean,
+                          }))
                         }
                       />
-                      <Label htmlFor="events" className="flex items-center gap-2">
+                      <Label
+                        htmlFor="events"
+                        className="flex items-center gap-2"
+                      >
                         <Calendar className="w-4 h-4" />
                         Événements et animations
                       </Label>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="places"
                         checked={preferences.places}
-                        onCheckedChange={(checked) => 
-                          setPreferences(prev => ({ ...prev, places: checked as boolean }))
+                        onCheckedChange={(checked) =>
+                          setPreferences((prev) => ({
+                            ...prev,
+                            places: checked as boolean,
+                          }))
                         }
                       />
-                      <Label htmlFor="places" className="flex items-center gap-2">
+                      <Label
+                        htmlFor="places"
+                        className="flex items-center gap-2"
+                      >
                         <MapPin className="w-4 h-4" />
                         Nouveaux commerces et services
                       </Label>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="offers"
                         checked={preferences.offers}
-                        onCheckedChange={(checked) => 
-                          setPreferences(prev => ({ ...prev, offers: checked as boolean }))
+                        onCheckedChange={(checked) =>
+                          setPreferences((prev) => ({
+                            ...prev,
+                            offers: checked as boolean,
+                          }))
                         }
                       />
-                      <Label htmlFor="offers" className="flex items-center gap-2">
+                      <Label
+                        htmlFor="offers"
+                        className="flex items-center gap-2"
+                      >
                         <Users className="w-4 h-4" />
                         Offres et promotions des membres
                       </Label>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="news"
                         checked={preferences.news}
-                        onCheckedChange={(checked) => 
-                          setPreferences(prev => ({ ...prev, news: checked as boolean }))
+                        onCheckedChange={(checked) =>
+                          setPreferences((prev) => ({
+                            ...prev,
+                            news: checked as boolean,
+                          }))
                         }
                       />
                       <Label htmlFor="news" className="flex items-center gap-2">
                         <Mail className="w-4 h-4" />
-                        Actualités de l'association
+                        Actualités de l&apos;association
                       </Label>
                     </div>
                   </div>
@@ -194,17 +227,23 @@ export default function NewsletterPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox id="consent" required />
                   <Label htmlFor="consent" className="text-sm">
-                    J'accepte de recevoir la newsletter et que mes données soient utilisées 
-                    conformément à la <a href="/privacy" className="text-primary underline">politique de confidentialité</a>.
+                    J&apos;accepte de recevoir la newsletter et que mes données
+                    soient utilisées conformément à la{" "}
+                    <a href="/privacy" className="text-primary underline">
+                      politique de confidentialité
+                    </a>
+                    .
                   </Label>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Inscription en cours..." : "S'abonner à la newsletter"}
+                  {isSubmitting
+                    ? "Inscription en cours..."
+                    : "S'abonner à la newsletter"}
                 </Button>
               </form>
             </CardContent>
@@ -215,7 +254,7 @@ export default function NewsletterPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Pourquoi s'abonner ?</CardTitle>
+              <CardTitle>Pourquoi s&apos;abonner ?</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-3">
@@ -227,7 +266,7 @@ export default function NewsletterPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-primary mt-1" />
                 <div>
@@ -237,17 +276,17 @@ export default function NewsletterPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-3">
                 <Users className="w-5 h-5 text-primary mt-1" />
                 <div>
                   <p className="font-medium">Profitez</p>
                   <p className="text-sm text-muted-foreground">
-                    D'offres exclusives de nos commerçants partenaires
+                    D&apos;offres exclusives de nos commerçants partenaires
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-3">
                 <Mail className="w-5 h-5 text-primary mt-1" />
                 <div>
@@ -262,7 +301,7 @@ export default function NewsletterPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Fréquence d'envoi</CardTitle>
+              <CardTitle>Fréquence d&apos;envoi</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -279,9 +318,10 @@ export default function NewsletterPage() {
                   <span className="text-muted-foreground">2x / mois max</span>
                 </div>
               </div>
-              
+
               <p className="text-xs text-muted-foreground mt-4">
-                Vous pouvez vous désabonner à tout moment en cliquant sur le lien de désinscription en bas de nos emails.
+                Vous pouvez vous désabonner à tout moment en cliquant sur le
+                lien de désinscription en bas de nos emails.
               </p>
             </CardContent>
           </Card>

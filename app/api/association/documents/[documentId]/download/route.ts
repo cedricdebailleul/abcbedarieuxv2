@@ -50,22 +50,34 @@ export async function GET(
       // Construire le chemin du fichier
       // filePath contient le chemin relatif complet, on extrait juste le nom de fichier
       const fileName = path.basename(document.filePath);
-      const uploadsPath = path.join(process.cwd(), "public", "uploads", "documents");
+      const uploadsPath = path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "documents"
+      );
       const fullPath = path.join(uploadsPath, fileName);
 
       // Lire le fichier
       const fileBuffer = await readFile(fullPath);
 
+      // Convertir correctement le Buffer Node.js en ArrayBuffer (copie pour garantir un ArrayBuffer)
+      const uint8 = new Uint8Array(fileBuffer.byteLength);
+      uint8.set(fileBuffer, 0);
+      const arrayBuffer = uint8.buffer;
+
       // Préparer la réponse avec le fichier
-      const response = new NextResponse(fileBuffer);
-      
+      const response = new NextResponse(arrayBuffer);
+
       // Définir les en-têtes appropriés
-      response.headers.set('Content-Type', 'application/octet-stream');
-      response.headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(document.fileName)}"`);
-      response.headers.set('Content-Length', document.fileSize.toString());
+      response.headers.set("Content-Type", "application/octet-stream");
+      response.headers.set(
+        "Content-Disposition",
+        `attachment; filename="${encodeURIComponent(document.fileName)}"`
+      );
+      response.headers.set("Content-Length", document.fileSize.toString());
 
       return response;
-
     } catch (fileError) {
       console.error("Erreur lors de la lecture du fichier:", fileError);
       return NextResponse.json(
@@ -73,7 +85,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
   } catch (error) {
     console.error("Erreur lors du téléchargement du document:", error);
     return NextResponse.json(

@@ -55,7 +55,9 @@ export default function EmailVerification({
       startCountdown();
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error(error instanceof Error ? error.message : "Erreur lors de l'envoi");
+      toast.error(
+        error instanceof Error ? error.message : "Erreur lors de l'envoi"
+      );
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,9 @@ export default function EmailVerification({
       onEmailVerified?.();
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error(error instanceof Error ? error.message : "Code invalide ou expiré");
+      toast.error(
+        error instanceof Error ? error.message : "Code invalide ou expiré"
+      );
     } finally {
       setLoading(false);
     }
@@ -129,7 +133,8 @@ export default function EmailVerification({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-green-600">
-            Votre adresse email <strong>{email}</strong> a été vérifiée avec succès.
+            Votre adresse email <strong>{email}</strong> a été vérifiée avec
+            succès.
           </p>
         </CardContent>
       </Card>
@@ -146,7 +151,8 @@ export default function EmailVerification({
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-orange-600">
-          Votre adresse email <strong>{email}</strong> n'est pas encore vérifiée.
+          Votre adresse email <strong>{email}</strong> n&apos;est pas encore
+          vérifiée.
         </p>
 
         <Dialog
@@ -173,7 +179,8 @@ export default function EmailVerification({
                 <DialogHeader>
                   <DialogTitle>Vérifier votre email</DialogTitle>
                   <DialogDescription>
-                    Nous allons vous envoyer un code de vérification à votre adresse email.
+                    Nous allons vous envoyer un code de vérification à votre
+                    adresse email.
                   </DialogDescription>
                 </DialogHeader>
 
@@ -190,8 +197,14 @@ export default function EmailVerification({
                 </div>
 
                 <DialogFooter>
-                  <Button onClick={handleSendCode} disabled={loading} className="w-full">
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button
+                    onClick={handleSendCode}
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    {loading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     {loading ? "Envoi..." : "Envoyer le code"}
                   </Button>
                 </DialogFooter>
@@ -214,7 +227,9 @@ export default function EmailVerification({
                       maxLength={6}
                       placeholder="123456"
                       value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                      onChange={(e) =>
+                        setOtpCode(e.target.value.replace(/\D/g, ""))
+                      }
                       className="text-center text-lg tracking-widest font-mono"
                       disabled={loading}
                     />
@@ -248,8 +263,13 @@ export default function EmailVerification({
                   >
                     Retour
                   </Button>
-                  <Button type="submit" disabled={loading || otpCode.length !== 6}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button
+                    type="submit"
+                    disabled={loading || otpCode.length !== 6}
+                  >
+                    {loading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     {loading ? "Vérification..." : "Vérifier"}
                   </Button>
                 </DialogFooter>

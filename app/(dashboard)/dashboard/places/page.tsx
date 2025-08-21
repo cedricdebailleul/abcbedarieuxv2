@@ -49,7 +49,7 @@ interface ApiResponse {
 }
 
 export default function MyPlacesPage() {
-  const { data: session, status } = useSession();
+  const { data: status } = useSession();
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,7 +63,7 @@ export default function MyPlacesPage() {
     if (now - lastFetchTime < 500) {
       return;
     }
-    
+
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -91,7 +91,7 @@ export default function MyPlacesPage() {
   }, [currentPage, statusFilter, lastFetchTime]);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status && status.user) {
       fetchPlaces();
     }
   }, [status, fetchPlaces]);
@@ -118,7 +118,7 @@ export default function MyPlacesPage() {
     }
   };
 
-  const getStatusBadge = (status: string, _isVerified: boolean) => {
+  function getStatusBadge(status: string) {
     const baseClasses = "px-2 py-1 text-xs font-medium rounded-full";
 
     switch (status) {
@@ -133,7 +133,7 @@ export default function MyPlacesPage() {
       default:
         return `${baseClasses} bg-gray-100 text-gray-800`;
     }
-  };
+  }
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -150,7 +150,7 @@ export default function MyPlacesPage() {
     }
   };
 
-  if (status === "loading") {
+  if (!status) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -158,11 +158,15 @@ export default function MyPlacesPage() {
     );
   }
 
-  if (status === "unauthenticated") {
+  if (status?.user === undefined) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Connexion requise</h1>
-        <p className="text-gray-600">Vous devez être connecté pour voir vos places.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          Connexion requise
+        </h1>
+        <p className="text-gray-600">
+          Vous devez être connecté pour voir vos places.
+        </p>
       </div>
     );
   }
@@ -173,14 +177,21 @@ export default function MyPlacesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Mes Places</h1>
-          <p className="text-gray-600">Gérez vos établissements et lieux d'affaires</p>
+          <p className="text-gray-600">
+            Gérez vos établissements et lieux d&apos;affaires
+          </p>
         </div>
 
         <Link
           href="/dashboard/places/new"
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
-          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -214,7 +225,10 @@ export default function MyPlacesPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
+            <div
+              key={i}
+              className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse"
+            >
               <div className="h-4 bg-gray-200 rounded mb-4"></div>
               <div className="h-3 bg-gray-200 rounded mb-2"></div>
               <div className="h-3 bg-gray-200 rounded mb-4"></div>
@@ -240,7 +254,9 @@ export default function MyPlacesPage() {
               d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
             />
           </svg>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">Aucune place trouvée</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            Aucune place trouvée
+          </h3>
           <p className="text-gray-600 mb-6">
             {statusFilter === "all"
               ? "Vous n'avez pas encore créé de place."
@@ -262,8 +278,12 @@ export default function MyPlacesPage() {
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{place.name}</h3>
-                  <span className={getStatusBadge(place.status, place.isVerified)}>
+                  <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                    {place.name}
+                  </h3>
+                  <span
+                    className={getStatusBadge(place.status)}
+                  >
                     {getStatusText(place.status)}
                   </span>
                 </div>
@@ -277,7 +297,10 @@ export default function MyPlacesPage() {
                 {/* Badges des catégories */}
                 {place.categories && place.categories.length > 0 && (
                   <div className="mb-3">
-                    <PlaceCategoriesBadges categories={place.categories} maxDisplay={2} />
+                    <PlaceCategoriesBadges
+                      categories={place.categories}
+                      maxDisplay={2}
+                    />
                   </div>
                 )}
 
@@ -336,7 +359,9 @@ export default function MyPlacesPage() {
               Précédent
             </button>
             <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              onClick={() =>
+                setCurrentPage(Math.min(totalPages, currentPage + 1))
+              }
               disabled={currentPage === totalPages}
               className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
@@ -361,7 +386,11 @@ export default function MyPlacesPage() {
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
                   <span className="sr-only">Précédent</span>
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
@@ -387,12 +416,18 @@ export default function MyPlacesPage() {
                   ))}
 
                 <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
                   <span className="sr-only">Suivant</span>
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"

@@ -7,15 +7,11 @@ import {
   Instagram,
   Linkedin,
   Mail,
-  MapPin,
   Phone,
-  Star,
   Twitter,
   User,
   Users,
   Euro,
-  Share2,
-  Heart,
   Ticket,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -27,7 +23,6 @@ import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { EventParticipationButton } from "@/components/events/event-participation-button";
 import { SocialShare } from "@/components/shared/social-share";
 import { EventSchema } from "@/components/structured-data/event-schema";
@@ -38,18 +33,12 @@ import { EventCategory, EventStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
 // Force dynamic rendering
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 import { EVENT_CATEGORIES_LABELS } from "@/lib/validations/event";
 import { getEventBySlugAction } from "@/actions/event";
 import { generateEventShareData } from "@/lib/share-utils";
-import {
-  JSXElementConstructor,
-  Key,
-  ReactElement,
-  ReactNode,
-  ReactPortal,
-} from "react";
+import { Key } from "react";
 
 // Types d'aide
 function toArray(val: unknown): string[] {
@@ -242,13 +231,12 @@ export default async function EventPage({ params }: PageProps) {
   const videos = toArray(event.videos);
   const tags = toArray(event.tags);
   const cover = normalizeImagePath(event.coverImage || gallery[0]);
-  const logo = normalizeImagePath(event.logo);
 
   const dateInfo = formatEventDateTime(
     new Date(event.startDate),
     new Date(event.endDate),
-    event.isAllDay,
-    event.timezone
+    event.isAllDay || false,
+    event.timezone || "Europe/Paris"
   );
 
   const isUpcoming = new Date(event.startDate) > new Date();
@@ -328,7 +316,46 @@ export default async function EventPage({ params }: PageProps) {
           {/* Bouton de partage en haut à droite */}
           <div className="absolute top-8 right-8">
             <SocialShare
-              data={generateEventShareData(event)}
+              data={(() => {
+                // typed normalization of tags to string[]
+                const normalizeTag = (t: unknown): string => {
+                  if (typeof t === "string") return t;
+                  if (t && typeof t === "object") {
+                    const maybeTag = t as {
+                      tag?: { name?: string; label?: string };
+                    };
+                    return (
+                      maybeTag.tag?.name ?? maybeTag.tag?.label ?? String(t)
+                    );
+                  }
+                  return String(t);
+                };
+
+                const extractTags = (raw: unknown): string[] => {
+                  if (Array.isArray(raw)) {
+                    return raw.map(normalizeTag);
+                  }
+                  if (typeof raw === "string") {
+                    try {
+                      const parsed = JSON.parse(raw);
+                      if (Array.isArray(parsed))
+                        return parsed.map(normalizeTag);
+                    } catch {
+                      // fallthrough to empty
+                    }
+                  }
+                  return [];
+                };
+
+                const tags = extractTags(event.tags);
+
+                return generateEventShareData({
+                  ...event,
+                  startDate: new Date(event.startDate),
+                  endDate: new Date(event.endDate),
+                  tags,
+                });
+              })()}
               variant="outline"
               className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20"
               showLabel={false}
@@ -382,7 +409,7 @@ export default async function EventPage({ params }: PageProps) {
             {event.description && (
               <Card>
                 <CardHeader>
-                  <CardTitle>À propos de l'événement</CardTitle>
+                  <CardTitle>À propos de l&apos;événement</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div
@@ -443,89 +470,87 @@ export default async function EventPage({ params }: PageProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {event.occurrences
-                        .slice(0, 8)
-                        .map(
-                          (
-                            occurrence: {
-                              startDate: string | number | Date;
-                              endDate: string | number | Date;
-                              isOriginal: any;
-                            },
-                            index: Key | null | undefined
-                          ) => {
-                            const startDate = new Date(occurrence.startDate);
-                            const endDate = new Date(occurrence.endDate);
-                            const isToday =
-                              startDate.toDateString() ===
-                              new Date().toDateString();
-                            const isPast = endDate < new Date();
+                      {event.occurrences.slice(0, 8).map(
+                        (
+                          occurrence: {
+                            startDate: string | number | Date;
+                            endDate: string | number | Date;
+                            isOriginal: boolean;
+                          },
+                          index: Key | null | undefined
+                        ) => {
+                          const startDate = new Date(occurrence.startDate);
+                          const endDate = new Date(occurrence.endDate);
+                          const isToday =
+                            startDate.toDateString() ===
+                            new Date().toDateString();
+                          const isPast = endDate < new Date();
 
-                            return (
-                              <div
-                                key={index}
-                                className={`flex items-center justify-between p-3 rounded-lg border ${
-                                  isToday
-                                    ? "bg-primary/5 border-primary/20"
-                                    : isPast
-                                    ? "bg-muted/50 border-muted"
-                                    : "bg-background border-border"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <Clock className="w-4 h-4 text-muted-foreground" />
-                                  <div>
-                                    <p
-                                      className={`font-medium ${
-                                        isPast
-                                          ? "text-muted-foreground line-through"
-                                          : ""
-                                      }`}
-                                    >
-                                      {startDate.toLocaleDateString("fr-FR", {
-                                        weekday: "long",
-                                        day: "numeric",
-                                        month: "long",
-                                        year:
-                                          startDate.getFullYear() !==
-                                          new Date().getFullYear()
-                                            ? "numeric"
-                                            : undefined,
-                                      })}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {event.isAllDay
-                                        ? "Toute la journée"
-                                        : `${startDate.toLocaleTimeString(
-                                            "fr-FR",
-                                            {
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                            }
-                                          )} - ${endDate.toLocaleTimeString(
-                                            "fr-FR",
-                                            {
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                            }
-                                          )}`}
-                                    </p>
-                                  </div>
+                          return (
+                            <div
+                              key={index}
+                              className={`flex items-center justify-between p-3 rounded-lg border ${
+                                isToday
+                                  ? "bg-primary/5 border-primary/20"
+                                  : isPast
+                                  ? "bg-muted/50 border-muted"
+                                  : "bg-background border-border"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <Clock className="w-4 h-4 text-muted-foreground" />
+                                <div>
+                                  <p
+                                    className={`font-medium ${
+                                      isPast
+                                        ? "text-muted-foreground line-through"
+                                        : ""
+                                    }`}
+                                  >
+                                    {startDate.toLocaleDateString("fr-FR", {
+                                      weekday: "long",
+                                      day: "numeric",
+                                      month: "long",
+                                      year:
+                                        startDate.getFullYear() !==
+                                        new Date().getFullYear()
+                                          ? "numeric"
+                                          : undefined,
+                                    })}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {event.isAllDay
+                                      ? "Toute la journée"
+                                      : `${startDate.toLocaleTimeString(
+                                          "fr-FR",
+                                          {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          }
+                                        )} - ${endDate.toLocaleTimeString(
+                                          "fr-FR",
+                                          {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          }
+                                        )}`}
+                                  </p>
                                 </div>
-                                {isToday && (
-                                  <Badge variant="default" className="text-xs">
-                                    Aujourd'hui
-                                  </Badge>
-                                )}
-                                {occurrence.isOriginal && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Original
-                                  </Badge>
-                                )}
                               </div>
-                            );
-                          }
-                        )}
+                              {isToday && (
+                                <Badge variant="default" className="text-xs">
+                                  Aujourd&apos;hui
+                                </Badge>
+                              )}
+                              {occurrence.isOriginal && (
+                                <Badge variant="outline" className="text-xs">
+                                  Original
+                                </Badge>
+                              )}
+                            </div>
+                          );
+                        }
+                      )}
 
                       {event.occurrences.length > 8 && (
                         <p className="text-sm text-muted-foreground text-center pt-2 border-t">
@@ -551,84 +576,29 @@ export default async function EventPage({ params }: PageProps) {
                     {event.participants
                       .slice(0, 10)
                       .map(
-                        (participant: {
-                          id: Key | null | undefined;
-                          user: {
-                            slug: any;
-                            name:
-                              | string
-                              | number
-                              | bigint
-                              | boolean
-                              | ReactElement<
-                                  unknown,
-                                  string | JSXElementConstructor<any>
-                                >
-                              | Iterable<ReactNode>
-                              | ReactPortal
-                              | Promise<
-                                  | string
-                                  | number
-                                  | bigint
-                                  | boolean
-                                  | ReactPortal
-                                  | ReactElement<
-                                      unknown,
-                                      string | JSXElementConstructor<any>
-                                    >
-                                  | Iterable<ReactNode>
-                                  | null
-                                  | undefined
-                                >
-                              | null
-                              | undefined;
-                          };
-                          registeredAt: {
-                            toLocaleDateString: (
-                              arg0: string
-                            ) =>
-                              | string
-                              | number
-                              | bigint
-                              | boolean
-                              | ReactElement<
-                                  unknown,
-                                  string | JSXElementConstructor<any>
-                                >
-                              | Iterable<ReactNode>
-                              | ReactPortal
-                              | Promise<
-                                  | string
-                                  | number
-                                  | bigint
-                                  | boolean
-                                  | ReactPortal
-                                  | ReactElement<
-                                      unknown,
-                                      string | JSXElementConstructor<any>
-                                    >
-                                  | Iterable<ReactNode>
-                                  | null
-                                  | undefined
-                                >
-                              | null
-                              | undefined;
-                          };
-                        }) => (
+                        (
+                          participant: {
+                            registeredAt?: string | number | Date | null;
+                            user?: { slug?: string; name?: string };
+                          },
+                          index
+                        ) => (
                           <div
-                            key={participant.id}
+                            key={participant.user?.slug ?? index}
                             className="flex items-center justify-between"
                           >
                             <Link
-                              href={`/profil/${participant.user.slug}`}
+                              href={`/profil/${participant.user?.slug ?? ""}`}
                               className="font-medium text-primary hover:underline"
                             >
-                              {participant.user.name}
+                              {participant.user?.name ?? "Utilisateur"}
                             </Link>
                             <span className="text-sm text-muted-foreground">
-                              {participant.registeredAt.toLocaleDateString(
-                                "fr-FR"
-                              )}
+                              {participant.registeredAt
+                                ? new Date(
+                                    participant.registeredAt
+                                  ).toLocaleDateString("fr-FR")
+                                : "Date inconnue"}
                             </span>
                           </div>
                         )
@@ -726,7 +696,7 @@ export default async function EventPage({ params }: PageProps) {
                     eventId={event.id}
                     eventTitle={event.title}
                     isFull={isFull || false}
-                    waitingListEnabled={event.waitingList}
+                    waitingListEnabled={event.waitingList || false}
                   />
                 )}
 
@@ -897,7 +867,7 @@ export default async function EventPage({ params }: PageProps) {
               event.linkedin) && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Suivez l'événement</CardTitle>
+                  <CardTitle>Suivez l&apos;événement</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {event.facebook && (

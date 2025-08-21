@@ -58,14 +58,20 @@ const statusLabels = {
   CANCELLED: "Annulé",
 };
 
-export function EditPaymentDialog({ payment, onSuccess, onCancel }: EditPaymentDialogProps) {
+export function EditPaymentDialog({
+  payment,
+  onSuccess,
+  onCancel,
+}: EditPaymentDialogProps) {
   const [amount, setAmount] = useState(payment.amount.toString());
   const [mode, setMode] = useState(payment.mode);
   const [status, setStatus] = useState(payment.status);
   const [year, setYear] = useState(payment.year.toString());
   const [quarter, setQuarter] = useState(payment.quarter?.toString() || "");
   const [checkNumber, setCheckNumber] = useState(payment.checkNumber || "");
-  const [transferReference, setTransferReference] = useState(payment.transferReference || "");
+  const [transferReference, setTransferReference] = useState(
+    payment.transferReference || ""
+  );
   const [notes, setNotes] = useState(payment.notes || "");
   const [dueDate, setDueDate] = useState(() => {
     if (payment.dueDate) {
@@ -84,7 +90,7 @@ export function EditPaymentDialog({ payment, onSuccess, onCancel }: EditPaymentD
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!amount || !mode || !year) {
       setError("Veuillez remplir tous les champs obligatoires");
       return;
@@ -96,7 +102,9 @@ export function EditPaymentDialog({ payment, onSuccess, onCancel }: EditPaymentD
     }
 
     if (mode === "TRANSFER" && !transferReference) {
-      setError("La référence de virement est obligatoire pour ce mode de paiement");
+      setError(
+        "La référence de virement est obligatoire pour ce mode de paiement"
+      );
       return;
     }
 
@@ -104,7 +112,20 @@ export function EditPaymentDialog({ payment, onSuccess, onCancel }: EditPaymentD
       setLoading(true);
       setError("");
 
-      const updateData: any = {
+      interface UpdateData {
+        amount: number;
+        mode: string;
+        status: string;
+        year: number;
+        notes: string | null;
+        dueDate: string | null;
+        paidAt: string | null;
+        quarter?: number | null;
+        checkNumber?: string | null;
+        transferReference?: string | null;
+      }
+
+      const updateData: UpdateData = {
         amount: parseFloat(amount),
         mode,
         status,
@@ -284,7 +305,7 @@ export function EditPaymentDialog({ payment, onSuccess, onCancel }: EditPaymentD
 
       {/* Date d'échéance */}
       <div className="space-y-2">
-        <Label htmlFor="due-date">Date d'échéance (optionnel)</Label>
+        <Label htmlFor="due-date">Date d&apos;échéance (optionnel)</Label>
         <Input
           id="due-date"
           type="date"

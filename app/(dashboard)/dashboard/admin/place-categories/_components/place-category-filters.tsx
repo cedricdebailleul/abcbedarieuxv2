@@ -36,7 +36,12 @@ export function PlaceCategoryFilters({
     sortOrder: initialFilters.sortOrder || "asc",
   });
 
-  const [parentCategories, setParentCategories] = useState<any[]>([]);
+  interface ParentCategory {
+    id: string;
+    name: string;
+  }
+
+  const [parentCategories, setParentCategories] = useState<ParentCategory[]>([]);
 
   // Charger les catégories parent pour le filtre
   useEffect(() => {
