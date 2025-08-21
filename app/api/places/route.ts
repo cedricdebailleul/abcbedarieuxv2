@@ -300,7 +300,8 @@ export async function POST(request: Request) {
 
     // Préparer les données additionnelles
     // Exclure les champs qui ne sont pas dans le modèle Prisma
-    const { openingHours, categories, ...placeData } = validatedData;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { openingHours, categories, photos: _photos, images: _images, ...placeData } = validatedData;
 
     const openingHoursCreate =
       Array.isArray(openingHours) && openingHours.length > 0

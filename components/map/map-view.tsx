@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader } from "@googlemaps/js-api-loader";
 import { MapPin, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -13,6 +12,7 @@ import {
   getPlaceTypeIcon,
 } from "@/lib/map-utils";
 import { lucideIconToEmoji } from "@/lib/share-utils";
+import { useGoogleMapsLoader } from "@/hooks/use-google-maps-loader";
 import { env } from "@/lib/env";
 
 interface MapViewProps {
@@ -84,20 +84,23 @@ export function MapView({
     }
   }, [places.length, categoriesReady]);
 
+  // Utiliser le loader centralisé
+  const { isLoaded, loadError, google } = useGoogleMapsLoader();
+
+  // Gérer les erreurs de chargement de l'API
+  useEffect(() => {
+    if (loadError) {
+      setError("Erreur lors du chargement de Google Maps");
+      setIsLoading(false);
+    }
+  }, [loadError]);
+
   // Initialiser Google Maps
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !isLoaded || !google) return;
 
     const initMap = async () => {
       try {
-        const loader = new Loader({
-          apiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-          version: "weekly",
-          libraries: ["marker", "geometry"],
-        });
-
-        await loader.load();
-
         const bounds = getPlacesBounds(places);
 
         const mapConfig: google.maps.MapOptions = {
@@ -158,7 +161,7 @@ export function MapView({
     };
 
     initMap();
-  }, [places]);
+  }, [places, isLoaded, google]);
 
   // Créer un marker personnalisé
   const createCustomMarker = (place: MapPlace): HTMLElement => {
@@ -260,7 +263,7 @@ export function MapView({
 
         const markerContent = createCustomMarker(place);
 
-        const marker = new google.maps.marker.AdvancedMarkerElement({
+        const marker = new window.google.maps.marker.AdvancedMarkerElement({
           map: mapInstanceRef.current,
           position: { lat: place.latitude ?? 0, lng: place.longitude ?? 0 },
           content: markerContent,
@@ -304,7 +307,7 @@ export function MapView({
         </div>
       `;
 
-      const userMarker = new google.maps.marker.AdvancedMarkerElement({
+      const userMarker = new window.google.maps.marker.AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: { lat: userLocation.lat, lng: userLocation.lng },
         content: userMarkerDiv,

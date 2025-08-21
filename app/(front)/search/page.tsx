@@ -217,6 +217,8 @@ function SearchContent() {
                 <Image
                   src={result.coverImage}
                   alt={result.title}
+                  width={80}
+                  height={80}
                   className="w-full h-full object-cover rounded-md"
                 />
               </div>

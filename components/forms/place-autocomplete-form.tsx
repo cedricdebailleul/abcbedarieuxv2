@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import { type FormattedPlaceData, useGooglePlaces } from "@/hooks/use-google-places";
+import { useEffect, useRef, useState } from "react";
+import {
+  type FormattedPlaceData,
+  useGooglePlaces,
+} from "@/hooks/use-google-places";
 
 export const PlaceAutocompleteInput: React.FC<{
   onPlaceSelected: (place: FormattedPlaceData) => void;
@@ -17,11 +20,18 @@ export const PlaceAutocompleteInput: React.FC<{
   } = useGooglePlaces({
     apiKey,
     onPlaceSelected,
-  });
+  } as Parameters<typeof useGooglePlaces>[0]);
 
   const [showDropdown, setShowDropdown] = useState(false);
+  const isSelectingPrediction = useRef(false);
 
   useEffect(() => {
+    // Skip search if we're currently selecting a prediction
+    if (isSelectingPrediction.current) {
+      isSelectingPrediction.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => {
       if (inputValue) {
         searchPlaces(inputValue);
@@ -32,7 +42,10 @@ export const PlaceAutocompleteInput: React.FC<{
     return () => clearTimeout(timer);
   }, [inputValue, searchPlaces]);
 
-  const handleSelectPrediction = (prediction: google.maps.places.AutocompletePrediction) => {
+  const handleSelectPrediction = (
+    prediction: google.maps.places.AutocompletePrediction
+  ) => {
+    isSelectingPrediction.current = true;
     setInputValue(prediction.description);
     getPlaceDetails(prediction.place_id);
     setShowDropdown(false);
@@ -45,7 +58,9 @@ export const PlaceAutocompleteInput: React.FC<{
 
   return (
     <div className="relative">
-      <label className="block text-sm font-medium mb-2">Rechercher un établissement</label>
+      <label className="block text-sm font-medium mb-2">
+        Rechercher un établissement
+      </label>
 
       <div className="relative">
         <input
@@ -123,7 +138,10 @@ export const PlaceAutocompleteInput: React.FC<{
 
       {/* Overlay pour fermer le dropdown */}
       {showDropdown && (
-        <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowDropdown(false)}
+        />
       )}
     </div>
   );

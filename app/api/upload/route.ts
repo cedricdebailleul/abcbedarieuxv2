@@ -155,23 +155,8 @@ export async function POST(request: NextRequest) {
       try {
         const { unlink } = await import("node:fs/promises");
         const oldFullPath = path.join(process.cwd(), "public", oldImagePath);
-        const oldThumbnailPath = path.join(
-          path.dirname(oldFullPath),
-          `thumb_${path.basename(oldFullPath)}`
-        );
-        const oldSocialPath = path.join(
-          path.dirname(oldFullPath),
-          `social_${path.basename(oldFullPath)}`
-        );
-
         if (existsSync(oldFullPath)) {
           await unlink(oldFullPath);
-        }
-        if (existsSync(oldThumbnailPath)) {
-          await unlink(oldThumbnailPath);
-        }
-        if (existsSync(oldSocialPath)) {
-          await unlink(oldSocialPath);
         }
       } catch (error) {
         console.error(
@@ -185,52 +170,15 @@ export async function POST(request: NextRequest) {
     // Sauvegarder le fichier
     await writeFile(filePath, optimizedBuffer);
 
-    // Créer également une version thumbnail
-    const thumbnailName = `thumb_${fileName.replace(fileExtension, ".jpg")}`;
-    const thumbnailPath = path.join(uploadDir, thumbnailName);
-
-    // presets selon le type d'image
-    const isGallery = subfolder === "gallery";
-    const isLogo = imageType === "logo";
-    const isCover = imageType === "cover";
-
-    const thumbW = isLogo ? 400 : isCover ? 1200 : isGallery ? 600 : 1080;
-    const thumbH = isLogo ? 400 : isCover ? 630 : isGallery ? 600 : 600;
-
-    const thumbnailBuffer = await sharp(optimizedBuffer)
-      .resize(thumbW, thumbH, {
-        fit: "cover",
-        position: "center",
-      })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-
-    await writeFile(thumbnailPath, thumbnailBuffer);
-
-    // Créer une version optimisée pour les réseaux sociaux (1200x630 - ratio 1.91:1)
-    const socialName = `social_${fileName.replace(fileExtension, ".jpg")}`;
-    const socialPath = path.join(uploadDir, socialName);
-
-    const socialBuffer = await sharp(optimizedBuffer)
-      .resize(1200, 630, {
-        fit: "cover",
-        position: "center",
-      })
-      .jpeg({
-        quality: 85,
-        progressive: true,
-      })
-      .toBuffer();
-
-    await writeFile(socialPath, socialBuffer);
+    // Ne créer qu'une seule image - pas de versions multiples
+    const thumbnailUrl = null;
+    const socialUrl = null;
 
     // Retourner les URLs
     const baseUrl = `/uploads/${type}/${slug || "general"}${
       subfolder ? `/${subfolder}` : ""
     }`;
     const fileUrl = `${baseUrl}/${fileName}`;
-    const thumbnailUrl = `${baseUrl}/${thumbnailName}`;
-    const socialUrl = `${baseUrl}/${socialName}`;
 
     return NextResponse.json({
       success: true,
@@ -293,16 +241,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     const fullPath = path.join(process.cwd(), "public", filePath);
-    const thumbnailPath = path.join(
-      path.dirname(fullPath),
-      `thumb_${path.basename(fullPath)}`
-    );
-    const socialPath = path.join(
-      path.dirname(fullPath),
-      `social_${path.basename(fullPath)}`
-    );
 
-    // Supprimer les fichiers s'ils existent
+    // Supprimer le fichier s'il existe
     try {
       const { unlink } = await import("node:fs/promises");
       let deletedCount = 0;
@@ -311,16 +251,6 @@ export async function DELETE(request: NextRequest) {
         await unlink(fullPath);
         deletedCount++;
         console.log(`Fichier supprimé: ${fullPath}`);
-      }
-      if (existsSync(thumbnailPath)) {
-        await unlink(thumbnailPath);
-        deletedCount++;
-        console.log(`Thumbnail supprimé: ${thumbnailPath}`);
-      }
-      if (existsSync(socialPath)) {
-        await unlink(socialPath);
-        deletedCount++;
-        console.log(`Social supprimé: ${socialPath}`);
       }
 
       console.log(`Total fichiers supprimés: ${deletedCount}`);

@@ -60,6 +60,43 @@ export function ImageUpload({
   showPreview = true,
   showCrop = true,
 }: ImageUploadProps) {
+  // Configuration par défaut basée sur imageType
+  const getDefaultConfig = () => {
+    switch (imageType) {
+      case "logo":
+        return {
+          aspectRatios: [{ label: "Carré 1:1", value: 1 }],
+          showCrop: false, // Sera activé avec un bouton
+          autoOpenCrop: false,
+        };
+      case "cover":
+        return {
+          aspectRatios: [{ label: "Facebook Cover 1.91:1", value: 1.91 }],
+          showCrop: true,
+          autoOpenCrop: true,
+        };
+      case "gallery":
+        return {
+          aspectRatios: [{ label: "Instagram 1:1", value: 1 }],
+          showCrop: true,
+          autoOpenCrop: true,
+        };
+      default:
+        return {
+          aspectRatios: aspectRatios || [
+            { label: "Libre", value: undefined },
+            { label: "Carré (1:1)", value: 1 },
+            { label: "Paysage (16:9)", value: 16 / 9 },
+          ],
+          showCrop: true,
+          autoOpenCrop: false,
+        };
+    }
+  };
+
+  const config = getDefaultConfig();
+  const finalAspectRatios = aspectRatios || config.aspectRatios;
+  const finalShowCrop = showCrop && config.showCrop;
   const [state, setState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
@@ -157,16 +194,19 @@ export function ImageUpload({
         }));
         setOriginalFile(file);
 
-        // Ouvrir le cropper si activé
-        if (showCrop) {
+        // Ouvrir le cropper si activé et selon la configuration
+        if (finalShowCrop && config.autoOpenCrop) {
           setShowCropper(true);
+        } else if (finalShowCrop && !config.autoOpenCrop) {
+          // Pour le logo, on ne montre pas automatiquement le cropper
+          uploadImage(file);
         } else {
           uploadImage(file);
         }
       };
       reader.readAsDataURL(file);
     },
-    [maxSize, showCrop, uploadImage]
+    [maxSize, finalShowCrop, config.autoOpenCrop, uploadImage]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -312,11 +352,13 @@ export function ImageUpload({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-start space-x-4">
-              <div className="relative">
+              <div className="relative w-24 h-24">
                 <Image
                   src={value}
                   alt="Image uploadée"
-                  className="w-24 h-24 object-cover rounded-lg"
+                  className="object-cover rounded-lg"
+                  fill
+                  unoptimized={value.startsWith("data:")}
                 />
                 <div className="absolute -top-2 -right-2">
                   <div className="bg-green-100 text-green-600 p-1 rounded-full">
@@ -353,7 +395,8 @@ export function ImageUpload({
                     </a>
                   </Button>
 
-                  {showCrop && originalFile && (
+                  {/* Bouton recadrer pour le logo ou si showCrop est activé */}
+                  {((imageType === "logo" && originalFile) || (finalShowCrop && originalFile)) && (
                     <Button
                       type="button"
                       variant="outline"
@@ -365,7 +408,7 @@ export function ImageUpload({
                       }}
                     >
                       <Crop className="h-4 w-4 mr-2" />
-                      Recadrer
+                      {imageType === "logo" ? "Recadrer en carré" : "Recadrer"}
                     </Button>
                   )}
                 </div>
@@ -382,7 +425,7 @@ export function ImageUpload({
           isOpen={showCropper}
           onClose={() => setShowCropper(false)}
           onCropComplete={handleCropComplete}
-          aspectRatios={aspectRatios}
+          aspectRatios={finalAspectRatios}
         />
       )}
     </div>

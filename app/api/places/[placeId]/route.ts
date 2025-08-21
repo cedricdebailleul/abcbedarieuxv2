@@ -219,10 +219,20 @@ export async function PUT(
       existingPlace.status === PlaceStatus.ACTIVE;
 
     // Normaliser les photos (comme dans l'API de création)
+    const photosFromForm = (
+      validatedData as { photos?: string[]; images?: string[] }
+    ).photos;
+    const imagesFromState = (
+      validatedData as { photos?: string[]; images?: string[] }
+    ).images;
+
+    // Prioriser images (state) si photos est vide, sinon prendre photos
     const rawPhotos =
-      (validatedData as { photos?: string[]; images?: string[] }).photos ||
-      (validatedData as { photos?: string[]; images?: string[] }).images ||
-      [];
+      Array.isArray(imagesFromState) && imagesFromState.length > 0
+        ? imagesFromState
+        : Array.isArray(photosFromForm) && photosFromForm.length > 0
+        ? photosFromForm
+        : [];
     const normalizedPhotos = Array.isArray(rawPhotos) ? rawPhotos : [];
 
     // Préparer les données additionnelles
@@ -238,10 +248,14 @@ export async function PUT(
           }
         : existingPlace.googleBusinessData;
 
-    // Exclure les champs qui ne sont pas dans le modèle Prisma
-    const { openingHours, ...placeData } = validatedData as z.infer<
-      typeof placeSchema
-    >;
+    const {
+      openingHours,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      photos: _photos,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      images: _images,
+      ...placeData
+    } = validatedData as z.infer<typeof placeSchema>;
 
     // Préparer les données à mettre à jour
     const dataToUpdate: Omit<
@@ -267,12 +281,66 @@ export async function PUT(
       openingHours: openingHours
         ? {
             deleteMany: {},
-            create: openingHours.map((row: RawHour) => ({
-              dayOfWeek: String(row.dayOfWeek).toUpperCase() as DayOfWeek,
-              openTime: row.openTime ? String(row.openTime) : null,
-              closeTime: row.closeTime ? String(row.closeTime) : null,
-              isClosed: Boolean(row.isClosed),
-            })),
+            create: openingHours.flatMap(
+              (
+                row: RawHour
+              ): {
+                dayOfWeek: DayOfWeek;
+                isClosed: boolean;
+                openTime: string | null;
+                closeTime: string | null;
+              }[] => {
+                const dayOfWeek = String(
+                  row.dayOfWeek
+                ).toUpperCase() as DayOfWeek;
+
+                // Vérifier que c'est un jour valide
+                const validDays = [
+                  "MONDAY",
+                  "TUESDAY",
+                  "WEDNESDAY",
+                  "THURSDAY",
+                  "FRIDAY",
+                  "SATURDAY",
+                  "SUNDAY",
+                ];
+                if (!validDays.includes(dayOfWeek)) {
+                  console.warn(`Jour invalide ignoré: ${row.dayOfWeek}`);
+                  return [];
+                }
+
+                if (row.isClosed) {
+                  return [
+                    {
+                      dayOfWeek,
+                      isClosed: true,
+                      openTime: null,
+                      closeTime: null,
+                    },
+                  ];
+                }
+
+                // Gestion des créneaux multiples (pause midi)
+                if (Array.isArray(row.slots) && row.slots.length > 0) {
+                  return row.slots.map((slot) => ({
+                    dayOfWeek,
+                    isClosed: false,
+                    openTime: slot.openTime ? String(slot.openTime) : null,
+                    closeTime: slot.closeTime ? String(slot.closeTime) : null,
+                  }));
+                }
+
+                // Créneau simple
+                return [
+                  {
+                    dayOfWeek,
+                    isClosed: false,
+                    openTime: row.openTime ? String(row.openTime) : null,
+                    closeTime: row.closeTime ? String(row.closeTime) : null,
+                  },
+                ];
+              }
+            ),
           }
         : undefined,
     };
