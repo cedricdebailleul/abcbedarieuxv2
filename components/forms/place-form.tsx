@@ -11,11 +11,10 @@ import {
   RefreshCw,
   Settings,
 } from "lucide-react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { env } from "@/lib/env";
 import { ImageUpload } from "@/components/media/image-upload";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -153,6 +152,7 @@ export function PlaceForm({
   const [images, setImages] = useState<string[]>([]);
   const [showGoogleSearch, setShowGoogleSearch] = useState(mode === "create");
   const [showDropdown, setShowDropdown] = useState(false);
+  const isSelectingPrediction = useRef(false);
   const [createForClaim, setCreateForClaim] = useState(false);
   const [placeCategories, setPlaceCategories] = useState<
     { value: string; label: string; level: number }[]
@@ -280,7 +280,6 @@ export function PlaceForm({
     setInputValue,
     clearPredictions,
   } = useGooglePlaces({
-    apiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     onPlaceSelected: (place: FormattedPlaceData) => {
       fillFormWithGoogleData(place);
     },
@@ -289,6 +288,13 @@ export function PlaceForm({
   // Debounce recherche Google
   useEffect(() => {
     if (!showGoogleSearch) return;
+
+    // Skip search if we're currently selecting a prediction
+    if (isSelectingPrediction.current) {
+      isSelectingPrediction.current = false;
+      return;
+    }
+
     const t = setTimeout(() => {
       if (inputValue && inputValue.length >= 3) {
         searchPlaces(inputValue);
@@ -428,6 +434,7 @@ export function PlaceForm({
   const handleSelectPrediction = (
     prediction: google.maps.places.AutocompletePrediction
   ) => {
+    isSelectingPrediction.current = true;
     setInputValue(prediction.description);
     getPlaceDetails(prediction.place_id);
     setShowDropdown(false);
@@ -866,6 +873,10 @@ export function PlaceForm({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Image de couverture</FormLabel>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Format Facebook (1.91:1) recommandé. Le recadrage
+                          s&apos;ouvrira automatiquement.
+                        </p>
                         <FormControl>
                           <ImageUpload
                             value={field.value || ""}
@@ -874,15 +885,6 @@ export function PlaceForm({
                             type="places"
                             slug={uploadSlug}
                             imageType="cover"
-                            aspectRatios={[
-                              {
-                                label: "Réseaux sociaux 1.91:1 (optimal)",
-                                value: 1.91,
-                              },
-                              { label: "Paysage 16:9", value: 16 / 9 },
-                              { label: "Paysage 4:3", value: 4 / 3 },
-                              { label: "Carré 1:1", value: 1 },
-                            ]}
                             className="max-w-md"
                           />
                         </FormControl>
@@ -896,6 +898,10 @@ export function PlaceForm({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Image du logo</FormLabel>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Format carré (1:1) recommandé. Utilisez le bouton
+                          &quot;Recadrer&quot; pour ajuster si besoin.
+                        </p>
                         <FormControl>
                           <ImageUpload
                             value={field.value || ""}
@@ -904,11 +910,6 @@ export function PlaceForm({
                             type="places"
                             slug={uploadSlug}
                             imageType="logo"
-                            aspectRatios={[
-                              { label: "Carré 1:1 (recommandé)", value: 1 },
-                              { label: "Paysage 4:3", value: 4 / 3 },
-                              { label: "Paysage 16:9", value: 16 / 9 },
-                            ]}
                             className="max-w-md"
                           />
                         </FormControl>
@@ -1013,6 +1014,10 @@ export function PlaceForm({
                       <h5 className="text-sm font-medium text-muted-foreground">
                         Ajouter une image à la galerie
                       </h5>
+                      <p className="text-xs text-muted-foreground">
+                        Format carré 1080x1080px (Instagram). Le recadrage
+                        s&apos;ouvrira automatiquement.
+                      </p>
                       <ImageUpload
                         value=""
                         onChange={(url) => setImages((prev) => [...prev, url])}
@@ -1021,12 +1026,6 @@ export function PlaceForm({
                         subFolder="gallery"
                         imageType="gallery"
                         showPreview={false}
-                        aspectRatios={[
-                          { label: "Paysage 16:9", value: 16 / 9 },
-                          { label: "Paysage 4:3", value: 4 / 3 },
-                          { label: "Carré 1:1", value: 1 },
-                          { label: "Portrait 3:4", value: 3 / 4 },
-                        ]}
                         className="max-w-md"
                       />
                     </div>
@@ -1040,7 +1039,7 @@ export function PlaceForm({
                               src={src}
                               alt={`Photo ${i + 1}`}
                               className="h-full w-full rounded-lg object-cover border"
-                              layout="fill"
+                              fill
                             />
                             {/* Indicateur du type d'image */}
                             <div className="absolute left-2 top-2">

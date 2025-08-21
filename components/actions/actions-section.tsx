@@ -161,8 +161,7 @@ function ActionCard({
                 src={action.coverImage}
                 alt={action.title}
                 className="w-full md:h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                layout="fill"
-                objectFit="cover"
+                fill
               />
               {action.isFeatured && (
                 <Badge className="absolute top-3 left-3 bg-yellow-500 text-yellow-900 border-yellow-400">

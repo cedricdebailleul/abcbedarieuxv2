@@ -19,6 +19,10 @@ function isExternal(url: string) {
   return /^https?:\/\//i.test(url);
 }
 
+function isDataUrl(url: string) {
+  return /^data:/i.test(url);
+}
+
 export function SafeImage({
   src,
   alt,
@@ -45,7 +49,7 @@ export function SafeImage({
       width={width}
       height={height}
       className={className}
-      unoptimized={unoptimized ?? isExternal(src)}
+      unoptimized={unoptimized ?? (isExternal(src) || isDataUrl(src))}
       sizes={sizes}
       onError={() => {
         setHasError(true);

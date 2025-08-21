@@ -1,9 +1,8 @@
 // hooks/useGooglePlaces.ts
 
-import { useLoadScript } from "@react-google-maps/api";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner"; // ou votre système de toast
-
+import { useGoogleMapsLoader } from "./use-google-maps-loader";
 
 type OpeningSlot = { openTime: string; closeTime: string };
 
@@ -66,11 +65,7 @@ export interface FormattedPlaceData {
   googleMapsUrl?: string;
 }
 
-// Configuration des libraries Google
-const libraries: ("places" | "geometry")[] = ["places"];
-
 interface UseGooglePlacesOptions {
-  apiKey: string;
   defaultCountry?: string;
   language?: string;
   onPlaceSelected?: (place: FormattedPlaceData) => void;
@@ -78,7 +73,6 @@ interface UseGooglePlacesOptions {
 }
 
 export const useGooglePlaces = ({
-  apiKey,
   defaultCountry = "FR",
   language = "fr",
   onPlaceSelected,
@@ -98,16 +92,12 @@ export const useGooglePlaces = ({
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
 
-  // Charger l'API Google Maps
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: apiKey,
-    libraries,
-    language,
-  });
+  // Utiliser le loader centralisé
+  const { isLoaded, loadError, google } = useGoogleMapsLoader();
 
   // Initialiser les services Google
   useEffect(() => {
-    if (isLoaded && window.google) {
+    if (isLoaded && google) {
       autocompleteService.current =
         new google.maps.places.AutocompleteService();
 
@@ -130,49 +120,53 @@ export const useGooglePlaces = ({
         mapRef.current.parentNode.removeChild(mapRef.current);
       }
     };
-  }, [isLoaded]);
+  }, [isLoaded, google]);
 
   // Mapper les types Google vers vos types
-  const mapGoogleTypeToPlaceType = useCallback((googleTypes: string[]): string => {
-    const typeMapping: Record<string, string> = {
-      restaurant: "RESTAURANT",
-      cafe: "RESTAURANT",
-      bar: "RESTAURANT",
-      store: "COMMERCE",
-      shopping_mall: "COMMERCE",
-      doctor: "HEALTH",
-      hospital: "HEALTH",
-      pharmacy: "HEALTH",
-      school: "EDUCATION",
-      university: "EDUCATION",
-      museum: "MUSEUM",
-      park: "PARK",
-      lodging: "ACCOMMODATION",
-      hotel: "ACCOMMODATION",
-      local_government_office: "ADMINISTRATION",
-      post_office: "ADMINISTRATION",
-      church: "TOURISM",
-      tourist_attraction: "TOURISM",
-    };
+  const mapGoogleTypeToPlaceType = useCallback(
+    (googleTypes: string[]): string => {
+      const typeMapping: Record<string, string> = {
+        restaurant: "RESTAURANT",
+        cafe: "RESTAURANT",
+        bar: "RESTAURANT",
+        store: "COMMERCE",
+        shopping_mall: "COMMERCE",
+        doctor: "HEALTH",
+        hospital: "HEALTH",
+        pharmacy: "HEALTH",
+        school: "EDUCATION",
+        university: "EDUCATION",
+        museum: "MUSEUM",
+        park: "PARK",
+        lodging: "ACCOMMODATION",
+        hotel: "ACCOMMODATION",
+        local_government_office: "ADMINISTRATION",
+        post_office: "ADMINISTRATION",
+        church: "TOURISM",
+        tourist_attraction: "TOURISM",
+      };
 
-    for (const googleType of googleTypes) {
-      if (typeMapping[googleType]) {
-        return typeMapping[googleType];
+      for (const googleType of googleTypes) {
+        if (typeMapping[googleType]) {
+          return typeMapping[googleType];
+        }
       }
-    }
-    return "OTHER";
-  }, []);
+      return "OTHER";
+    },
+    []
+  );
 
   const DAYS = useMemo(
-    () => [
-      "SUNDAY",
-      "MONDAY",
-      "TUESDAY",
-      "WEDNESDAY",
-      "THURSDAY",
-      "FRIDAY",
-      "SATURDAY",
-    ] as const,
+    () =>
+      [
+        "SUNDAY",
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+      ] as const,
     []
   );
   const toHHMM = useCallback(
@@ -265,21 +259,24 @@ export const useGooglePlaces = ({
   );
 
   // Extraire les composants d'adresse
-  const extractAddressComponents = useCallback((components: google.maps.GeocoderAddressComponent[]) => {
-    const getComponent = (types: string[]): string | undefined => {
-      const component = components.find((c) =>
-        types.some((type) => c.types.includes(type))
-      );
-      return component?.long_name;
-    };
+  const extractAddressComponents = useCallback(
+    (components: google.maps.GeocoderAddressComponent[]) => {
+      const getComponent = (types: string[]): string | undefined => {
+        const component = components.find((c) =>
+          types.some((type) => c.types.includes(type))
+        );
+        return component?.long_name;
+      };
 
-    return {
-      streetNumber: getComponent(["street_number"]),
-      street: getComponent(["route"]) || "",
-      postalCode: getComponent(["postal_code"]) || "",
-      city: getComponent(["locality", "administrative_area_level_2"]) || "",
-    };
-  }, []);
+      return {
+        streetNumber: getComponent(["street_number"]),
+        street: getComponent(["route"]) || "",
+        postalCode: getComponent(["postal_code"]) || "",
+        city: getComponent(["locality", "administrative_area_level_2"]) || "",
+      };
+    },
+    []
+  );
 
   // Rechercher des prédictions
   const searchPlaces = useCallback(
@@ -291,14 +288,19 @@ export const useGooglePlaces = ({
 
       setIsSearching(true);
 
+      // Construire la location bias uniquement si l'objet google est disponible
+      let locationBias: google.maps.LatLng | undefined;
+      if (google) {
+        locationBias = new google.maps.LatLng(43.6158, 3.1303);
+      }
+
       const request = {
         input,
         componentRestrictions: { country: defaultCountry },
         types,
         language,
-        // Bias vers Bédarieux
-        location: new google.maps.LatLng(43.6158, 3.1303),
-        radius: 50000, // 50km autour de Bédarieux
+        // Bias vers Bédarieux si google chargé
+        ...(locationBias ? { location: locationBias, radius: 50000 } : {}),
       };
 
       autocompleteService.current.getPlacePredictions(
@@ -306,15 +308,17 @@ export const useGooglePlaces = ({
         (predictions, status) => {
           setIsSearching(false);
 
+          const g = google;
           if (
-            status === google.maps.places.PlacesServiceStatus.OK &&
+            g &&
+            status === g.maps.places.PlacesServiceStatus.OK &&
             predictions
           ) {
             setPredictions(predictions);
           } else {
             setPredictions([]);
             if (
-              status !== google.maps.places.PlacesServiceStatus.ZERO_RESULTS
+              !(g && status === g.maps.places.PlacesServiceStatus.ZERO_RESULTS)
             ) {
               console.error("Erreur recherche Google Places:", status);
             }
@@ -322,7 +326,7 @@ export const useGooglePlaces = ({
         }
       );
     },
-    [defaultCountry, language, types]
+    [defaultCountry, language, types, google]
   );
 
   // Récupérer les détails d'un lieu
@@ -364,7 +368,8 @@ export const useGooglePlaces = ({
       placesService.current.getDetails(request, (place, status) => {
         setIsSearching(false);
 
-        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+        const g = google;
+        if (g && status === g.maps.places.PlacesServiceStatus.OK && place) {
           const addressComponents = extractAddressComponents(
             place.address_components || []
           );
@@ -378,7 +383,9 @@ export const useGooglePlaces = ({
           interface EditorialSummary {
             overview?: string;
           }
-          const googleDescription = (place as { editorial_summary?: EditorialSummary }).editorial_summary?.overview;
+          const googleDescription = (
+            place as { editorial_summary?: EditorialSummary }
+          ).editorial_summary?.overview;
 
           // Alternative: utiliser le premier avis comme description si pas de description officielle
           const fallbackDescription =
@@ -467,6 +474,7 @@ export const useGooglePlaces = ({
       extractAddressComponents,
       formatOpeningHours,
       mapGoogleTypeToPlaceType,
+      google,
     ]
   );
 

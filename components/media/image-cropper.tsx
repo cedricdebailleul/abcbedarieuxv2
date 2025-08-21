@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import "react-image-crop/dist/ReactCrop.css";
-import Image from "next/image";
 
 interface ImageCropperProps {
   src: string;
@@ -260,7 +259,8 @@ export function ImageCropper({
               minHeight={50}
               className="max-w-full"
             >
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 ref={imgRef}
                 src={src}
                 alt="Image à rogner"

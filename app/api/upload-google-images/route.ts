@@ -96,45 +96,8 @@ export async function POST(request: NextRequest) {
           })
           .toBuffer();
 
-        // Sauvegarder le fichier
+        // Sauvegarder seulement le fichier principal - pas de versions multiples
         await writeFile(filePath, optimizedBuffer);
-
-        // Créer une version thumbnail avec dimensions adaptées
-        const thumbnailName = `thumb_${fileName}`;
-        const thumbnailPath = path.join(uploadDir, thumbnailName);
-
-        // Dimensions selon le type
-        const isLogo = imageType === "logo";
-        const isCover = imageType === "cover";
-        const thumbW = isLogo ? 400 : isCover ? 1200 : 600;
-        const thumbH = isLogo ? 400 : isCover ? 630 : 600;
-
-        const thumbnailBuffer = await sharp(optimizedBuffer)
-          .resize(thumbW, thumbH, {
-            fit: "cover",
-            position: "center",
-          })
-          .jpeg({ quality: 80 })
-          .toBuffer();
-
-        await writeFile(thumbnailPath, thumbnailBuffer);
-
-        // Créer une version social
-        const socialName = `social_${fileName}`;
-        const socialPath = path.join(uploadDir, socialName);
-
-        const socialBuffer = await sharp(optimizedBuffer)
-          .resize(1200, 630, {
-            fit: "cover",
-            position: "center",
-          })
-          .jpeg({
-            quality: 85,
-            progressive: true,
-          })
-          .toBuffer();
-
-        await writeFile(socialPath, socialBuffer);
 
         // URL relative pour la base de données
         const galleryPath = isGalleryImage ? "/gallery" : "";
