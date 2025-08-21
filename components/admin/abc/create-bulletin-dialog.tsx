@@ -49,7 +49,7 @@ export function CreateBulletinDialog({ onSuccess }: CreateBulletinDialogProps) {
       setLoading(true);
       setError("");
 
-      const bulletinData: any = {
+      const bulletinData: { title: string; content: string; status: string; scheduledAt?: string } = {
         title,
         content,
         status,
@@ -164,7 +164,7 @@ Le contenu sera envoyé par email à tous les membres actifs."
       <div className="bg-blue-50 p-4 rounded-md">
         <h4 className="font-medium text-sm mb-2">📧 Destinataires</h4>
         <p className="text-xs text-muted-foreground">
-          Ce bulletin sera envoyé à tous les membres actifs de l'association ABC.
+          Ce bulletin sera envoyé à tous les membres actifs de l&apos;association ABC.
           Les membres inactifs, suspendus ou expirés ne recevront pas le bulletin.
         </p>
       </div>

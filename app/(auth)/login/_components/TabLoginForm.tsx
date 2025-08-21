@@ -60,7 +60,7 @@ export function TabLoginForm() {
             toast.success("Lien de connexion envoyé ! Vérifiez votre boîte email.");
             setMagicLinkSent(true);
           },
-          onError: (context: any) => {
+          onError: (context: { error: { message: string } }) => {
             toast.error(`Erreur lors de l'envoi du lien : ${context.error.message}`);
           },
         },

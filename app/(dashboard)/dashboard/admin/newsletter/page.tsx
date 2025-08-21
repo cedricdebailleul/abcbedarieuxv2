@@ -3,16 +3,15 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Mail, 
-  Users, 
-  Send, 
-  BarChart3, 
+import {
+  Mail,
+  Users,
+  Send,
+  BarChart3,
   Calendar,
   Plus,
   Eye,
   Edit,
-  Trash2
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
@@ -30,25 +29,33 @@ async function getNewsletterStats() {
       totalCampaigns,
       draftCampaigns,
       sentCampaigns,
-      recentSubscribers
+      recentSubscribers,
     ] = await Promise.all([
       prisma.newsletterSubscriber.count().catch(() => 0),
-      prisma.newsletterSubscriber.count({ where: { isActive: true } }).catch(() => 0),
+      prisma.newsletterSubscriber
+        .count({ where: { isActive: true } })
+        .catch(() => 0),
       prisma.newsletterCampaign.count().catch(() => 0),
-      prisma.newsletterCampaign.count({ where: { status: "DRAFT" } }).catch(() => 0),
-      prisma.newsletterCampaign.count({ where: { status: "SENT" } }).catch(() => 0),
-      prisma.newsletterSubscriber.findMany({
-        take: 5,
-        orderBy: { subscribedAt: "desc" },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          subscribedAt: true,
-          isVerified: true
-        }
-      }).catch(() => [])
+      prisma.newsletterCampaign
+        .count({ where: { status: "DRAFT" } })
+        .catch(() => 0),
+      prisma.newsletterCampaign
+        .count({ where: { status: "SENT" } })
+        .catch(() => 0),
+      prisma.newsletterSubscriber
+        .findMany({
+          take: 5,
+          orderBy: { subscribedAt: "desc" },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            subscribedAt: true,
+            isVerified: true,
+          },
+        })
+        .catch(() => []),
     ]);
 
     return {
@@ -57,9 +64,9 @@ async function getNewsletterStats() {
       totalCampaigns,
       draftCampaigns,
       sentCampaigns,
-      recentSubscribers
+      recentSubscribers,
     };
-  } catch (error) {
+  } catch {
     // Si les modèles n'existent pas encore, retourner des valeurs par défaut
     return {
       totalSubscribers: 0,
@@ -67,7 +74,7 @@ async function getNewsletterStats() {
       totalCampaigns: 0,
       draftCampaigns: 0,
       sentCampaigns: 0,
-      recentSubscribers: []
+      recentSubscribers: [],
     };
   }
 }
@@ -81,12 +88,12 @@ async function getRecentCampaigns() {
         createdBy: {
           select: {
             name: true,
-            email: true
-          }
-        }
-      }
+            email: true,
+          },
+        },
+      },
     });
-  } catch (error) {
+  } catch {
     // Si les modèles n'existent pas encore, retourner un tableau vide
     return [];
   }
@@ -101,25 +108,39 @@ export default async function NewsletterAdminPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "DRAFT": return "bg-gray-100 text-gray-800";
-      case "SCHEDULED": return "bg-blue-100 text-blue-800";
-      case "SENDING": return "bg-orange-100 text-orange-800";
-      case "SENT": return "bg-green-100 text-green-800";
-      case "CANCELLED": return "bg-red-100 text-red-800";
-      case "ERROR": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "DRAFT":
+        return "bg-gray-100 text-gray-800";
+      case "SCHEDULED":
+        return "bg-blue-100 text-blue-800";
+      case "SENDING":
+        return "bg-orange-100 text-orange-800";
+      case "SENT":
+        return "bg-green-100 text-green-800";
+      case "CANCELLED":
+        return "bg-red-100 text-red-800";
+      case "ERROR":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "DRAFT": return "Brouillon";
-      case "SCHEDULED": return "Programmée";
-      case "SENDING": return "En cours d'envoi";
-      case "SENT": return "Envoyée";
-      case "CANCELLED": return "Annulée";
-      case "ERROR": return "Erreur";
-      default: return status;
+      case "DRAFT":
+        return "Brouillon";
+      case "SCHEDULED":
+        return "Programmée";
+      case "SENDING":
+        return "En cours d'envoi";
+      case "SENT":
+        return "Envoyée";
+      case "CANCELLED":
+        return "Annulée";
+      case "ERROR":
+        return "Erreur";
+      default:
+        return status;
     }
   };
 
@@ -130,7 +151,7 @@ export default async function NewsletterAdminPage() {
         <div>
           <h1 className="text-3xl font-bold">Newsletter</h1>
           <p className="text-muted-foreground">
-            Gérez vos abonnés et créez des campagnes d'email
+            Gérez vos abonnés et créez des campagnes d&apos;email
           </p>
         </div>
         <Button asChild>
@@ -152,16 +173,20 @@ export default async function NewsletterAdminPage() {
           </CardHeader>
           <CardContent>
             <p className="text-orange-700 mb-4">
-              Les tables de newsletter ne sont pas encore créées dans votre base de données. 
-              Veuillez exécuter la migration pour utiliser cette fonctionnalité.
+              Les tables de newsletter ne sont pas encore créées dans votre base
+              de données. Veuillez exécuter la migration pour utiliser cette
+              fonctionnalité.
             </p>
             <div className="bg-orange-100 p-4 rounded-lg">
-              <p className="text-sm font-medium mb-2 text-orange-800">Commande recommandée :</p>
+              <p className="text-sm font-medium mb-2 text-orange-800">
+                Commande recommandée :
+              </p>
               <p className="text-sm font-mono text-orange-800 mb-3">
                 pnpm newsletter:migrate
               </p>
               <p className="text-xs text-orange-600">
-                Ou manuellement : <code className="bg-orange-200 px-1 rounded">pnpm db:push</code>
+                Ou manuellement :{" "}
+                <code className="bg-orange-200 px-1 rounded">pnpm db:push</code>
               </p>
             </div>
           </CardContent>
@@ -211,7 +236,9 @@ export default async function NewsletterAdminPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taux d'ouverture</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Taux d&apos;ouverture
+            </CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -242,11 +269,17 @@ export default async function NewsletterAdminPage() {
                 </p>
               ) : (
                 recentCampaigns.map((campaign) => (
-                  <div key={campaign.id} className="flex items-center justify-between">
+                  <div
+                    key={campaign.id}
+                    className="flex items-center justify-between"
+                  >
                     <div className="space-y-1">
                       <p className="font-medium">{campaign.title}</p>
                       <p className="text-sm text-muted-foreground">
-                        Par {campaign.createdBy.name} • {new Date(campaign.createdAt).toLocaleDateString("fr-FR")}
+                        Par {campaign.createdBy.name} •{" "}
+                        {new Date(campaign.createdAt).toLocaleDateString(
+                          "fr-FR"
+                        )}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -255,13 +288,17 @@ export default async function NewsletterAdminPage() {
                       </Badge>
                       <div className="flex gap-1">
                         <Button asChild variant="ghost" size="sm">
-                          <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}`}>
+                          <Link
+                            href={`/dashboard/admin/newsletter/campaigns/${campaign.id}`}
+                          >
                             <Eye className="w-4 h-4" />
                           </Link>
                         </Button>
                         {campaign.status === "DRAFT" && (
                           <Button asChild variant="ghost" size="sm">
-                            <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/edit`}>
+                            <Link
+                              href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/edit`}
+                            >
                               <Edit className="w-4 h-4" />
                             </Link>
                           </Button>
@@ -293,7 +330,10 @@ export default async function NewsletterAdminPage() {
                 </p>
               ) : (
                 stats.recentSubscribers.map((subscriber) => (
-                  <div key={subscriber.id} className="flex items-center justify-between">
+                  <div
+                    key={subscriber.id}
+                    className="flex items-center justify-between"
+                  >
                     <div className="space-y-1">
                       <p className="font-medium">
                         {subscriber.firstName && subscriber.lastName
@@ -301,10 +341,15 @@ export default async function NewsletterAdminPage() {
                           : subscriber.email}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {subscriber.email} • {new Date(subscriber.subscribedAt).toLocaleDateString("fr-FR")}
+                        {subscriber.email} •{" "}
+                        {new Date(subscriber.subscribedAt).toLocaleDateString(
+                          "fr-FR"
+                        )}
                       </p>
                     </div>
-                    <Badge variant={subscriber.isVerified ? "default" : "secondary"}>
+                    <Badge
+                      variant={subscriber.isVerified ? "default" : "secondary"}
+                    >
                       {subscriber.isVerified ? "Vérifié" : "En attente"}
                     </Badge>
                   </div>
@@ -326,7 +371,7 @@ export default async function NewsletterAdminPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Créez et gérez vos campagnes d'email marketing
+              Créez et gérez vos campagnes d&apos;email marketing
             </p>
             <div className="space-y-2">
               <Button asChild className="w-full">
@@ -352,7 +397,7 @@ export default async function NewsletterAdminPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Consultez et gérez votre liste d'abonnés
+              Consultez et gérez votre liste d&apos;abonnés
             </p>
             <div className="space-y-2">
               <Button asChild className="w-full">

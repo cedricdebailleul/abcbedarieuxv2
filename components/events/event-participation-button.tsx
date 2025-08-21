@@ -5,24 +5,24 @@ import { Users, UserPlus, UserMinus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
-  DialogTrigger 
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 
 import { useSession } from "@/hooks/use-session";
@@ -44,16 +44,16 @@ const PARTICIPATION_STATUS_LABELS: Record<ParticipationStatus, string> = {
   [ParticipationStatus.MAYBE]: "Peut-être",
   [ParticipationStatus.NOT_GOING]: "Je ne participe pas",
   [ParticipationStatus.CANCELLED]: "Annulé",
-  [ParticipationStatus.WAITLISTED]: "Liste d'attente"
+  [ParticipationStatus.WAITLISTED]: "Liste d'attente",
 };
 
 const PARTICIPATION_STATUS_COLORS: Record<ParticipationStatus, string> = {
   [ParticipationStatus.INTERESTED]: "text-blue-600",
-  [ParticipationStatus.GOING]: "text-green-600", 
+  [ParticipationStatus.GOING]: "text-green-600",
   [ParticipationStatus.MAYBE]: "text-yellow-600",
   [ParticipationStatus.NOT_GOING]: "text-red-600",
   [ParticipationStatus.CANCELLED]: "text-gray-600",
-  [ParticipationStatus.WAITLISTED]: "text-orange-600"
+  [ParticipationStatus.WAITLISTED]: "text-orange-600",
 };
 
 export function EventParticipationButton({
@@ -62,7 +62,7 @@ export function EventParticipationButton({
   isFull,
   waitingListEnabled,
   currentStatus = null,
-  className
+  className,
 }: EventParticipationButtonProps) {
   const { data: session, status } = useSession();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -89,12 +89,13 @@ export function EventParticipationButton({
         );
 
         if (result.success) {
-          const statusLabel = PARTICIPATION_STATUS_LABELS[selectedStatus].toLowerCase();
+          const statusLabel =
+            PARTICIPATION_STATUS_LABELS[selectedStatus].toLowerCase();
           toast.success(
             `Votre participation à "${eventTitle}" a été mise à jour : ${statusLabel}`
           );
           setIsDialogOpen(false);
-          
+
           // Recharger la page pour voir les changements
           window.location.reload();
         } else {
@@ -131,8 +132,10 @@ export function EventParticipationButton({
 
   const getButtonIcon = () => {
     if (isPending) return <Loader2 className="w-4 h-4 animate-spin" />;
-    if (currentStatus === ParticipationStatus.GOING) return <Users className="w-4 h-4" />;
-    if (currentStatus === ParticipationStatus.NOT_GOING) return <UserMinus className="w-4 h-4" />;
+    if (currentStatus === ParticipationStatus.GOING)
+      return <Users className="w-4 h-4" />;
+    if (currentStatus === ParticipationStatus.NOT_GOING)
+      return <UserMinus className="w-4 h-4" />;
     return <UserPlus className="w-4 h-4" />;
   };
 
@@ -181,11 +184,11 @@ export function EventParticipationButton({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {currentStatus ? "Modifier ma participation" : "Participer à l'événement"}
+            {currentStatus
+              ? "Modifier ma participation"
+              : "Participer à l'événement"}
           </DialogTitle>
-          <DialogDescription>
-            {eventTitle}
-          </DialogDescription>
+          <DialogDescription>{eventTitle}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -194,7 +197,9 @@ export function EventParticipationButton({
             <Label htmlFor="status">Votre participation</Label>
             <Select
               value={selectedStatus}
-              onValueChange={(value) => setSelectedStatus(value as ParticipationStatus)}
+              onValueChange={(value) =>
+                setSelectedStatus(value as ParticipationStatus)
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -214,7 +219,7 @@ export function EventParticipationButton({
                 </SelectItem>
                 {isFull && waitingListEnabled && (
                   <SelectItem value={ParticipationStatus.WAITLISTED}>
-                    Liste d'attente
+                    Liste d&apos;attente
                   </SelectItem>
                 )}
               </SelectContent>
@@ -222,10 +227,10 @@ export function EventParticipationButton({
           </div>
 
           {/* Nombre d'invités */}
-          {(selectedStatus === ParticipationStatus.GOING || 
+          {(selectedStatus === ParticipationStatus.GOING ||
             selectedStatus === ParticipationStatus.WAITLISTED) && (
             <div className="space-y-2">
-              <Label htmlFor="guests">Nombre d'accompagnants</Label>
+              <Label htmlFor="guests">Nombre d&apos;accompagnants</Label>
               <Input
                 id="guests"
                 type="number"
@@ -242,7 +247,7 @@ export function EventParticipationButton({
           )}
 
           {/* Besoins spéciaux */}
-          {(selectedStatus === ParticipationStatus.GOING || 
+          {(selectedStatus === ParticipationStatus.GOING ||
             selectedStatus === ParticipationStatus.WAITLISTED) && (
             <div className="space-y-2">
               <Label htmlFor="special-needs">
@@ -262,7 +267,8 @@ export function EventParticipationButton({
           {isFull && selectedStatus === ParticipationStatus.GOING && (
             <div className="p-3 bg-orange-50 border border-orange-200 rounded-md">
               <p className="text-sm text-orange-800">
-                ⚠️ Cet événement est complet. Vous serez ajouté à la liste d'attente.
+                ⚠️ Cet événement est complet. Vous serez ajouté à la liste
+                d&apos;attente.
               </p>
             </div>
           )}
@@ -270,24 +276,22 @@ export function EventParticipationButton({
           {selectedStatus === ParticipationStatus.NOT_GOING && (
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
               <p className="text-sm text-gray-600">
-                Vous ne participez plus à cet événement. Vous pourrez changer d'avis plus tard.
+                Vous ne participez plus à cet événement. Vous pourrez changer
+                d&apos;avis plus tard.
               </p>
             </div>
           )}
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setIsDialogOpen(false)}
             disabled={isPending}
           >
             Annuler
           </Button>
-          <Button 
-            onClick={handleParticipation}
-            disabled={isPending}
-          >
+          <Button onClick={handleParticipation} disabled={isPending}>
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -85,8 +85,8 @@ function AcceptInvitationContent() {
           <CardContent className="pt-6">
             <Alert variant="destructive">
               <AlertDescription>
-                Lien d'invitation invalide. Veuillez vérifier votre email ou
-                contactez un administrateur.
+                Lien d&apos;invitation invalide. Veuillez vérifier votre email
+                ou contactez un administrateur.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -124,7 +124,7 @@ function AcceptInvitationContent() {
         if (data.details) {
           // Erreurs de validation Zod
           const newErrors: Record<string, string> = {};
-          data.details.forEach((error: any) => {
+          data.details.forEach((error: { path: string[]; message: string }) => {
             newErrors[error.path[0]] = error.message;
           });
           setErrors(newErrors);

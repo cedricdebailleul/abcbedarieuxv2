@@ -19,8 +19,6 @@ import { toast } from "sonner";
 export default function VerifyClient() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-
-  const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [verificationFailed, setVerificationFailed] = useState(false);
@@ -29,33 +27,33 @@ export default function VerifyClient() {
 
   // Vérifier le token au chargement de la page
   useEffect(() => {
+    const verifyToken = async () => {
+      if (!token) return;
+
+      setVerifying(true);
+      try {
+        const response = await fetch(`/api/newsletter/verify?token=${token}`);
+        const data = await response.json();
+
+        if (data.success) {
+          setIsVerified(true);
+          toast.success(data.message);
+        } else {
+          setVerificationFailed(true);
+          toast.error(data.error || "Erreur lors de la vérification");
+        }
+      } catch {
+        setVerificationFailed(true);
+        toast.error("Erreur lors de la vérification");
+      } finally {
+        setVerifying(false);
+      }
+    };
+
     if (token) {
       verifyToken();
     }
   }, [token]);
-
-  const verifyToken = async () => {
-    if (!token) return;
-
-    setVerifying(true);
-    try {
-      const response = await fetch(`/api/newsletter/verify?token=${token}`);
-      const data = await response.json();
-
-      if (data.success) {
-        setIsVerified(true);
-        toast.success(data.message);
-      } else {
-        setVerificationFailed(true);
-        toast.error(data.error || "Erreur lors de la vérification");
-      }
-    } catch (error) {
-      setVerificationFailed(true);
-      toast.error("Erreur lors de la vérification");
-    } finally {
-      setVerifying(false);
-    }
-  };
 
   const handleResendVerification = async () => {
     if (!email.trim()) {
@@ -78,7 +76,7 @@ export default function VerifyClient() {
       } else {
         toast.error(data.error || "Erreur lors du renvoi");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors du renvoi de l'email");
     } finally {
       setResendLoading(false);
@@ -119,15 +117,15 @@ export default function VerifyClient() {
             <CardContent className="space-y-4">
               <div className="text-center space-y-2">
                 <p className="text-sm text-gray-600">
-                  Merci d'avoir confirmé votre adresse email. Vous recevrez
+                  Merci d&apos;avoir confirmé votre adresse email. Vous recevrez
                   bientôt nos newsletters avec les dernières actualités de
-                  l'association.
+                  l&apos;association.
                 </p>
               </div>
 
               <div className="space-y-3">
                 <Button asChild className="w-full">
-                  <Link href="/">Retour à l'accueil</Link>
+                  <Link href="/">Retour à l&apos;accueil</Link>
                 </Button>
 
                 <Button asChild variant="outline" className="w-full">
@@ -195,7 +193,7 @@ export default function VerifyClient() {
                 </Button>
 
                 <Button asChild variant="outline" className="w-full">
-                  <Link href="/">Retour à l'accueil</Link>
+                  <Link href="/">Retour à l&apos;accueil</Link>
                 </Button>
               </div>
 

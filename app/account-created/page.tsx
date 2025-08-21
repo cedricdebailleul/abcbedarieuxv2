@@ -195,7 +195,7 @@ function AccountCreatedContent() {
                     <Trophy className="h-4 w-4 text-white" />
                   </div>
                   <span className="text-blue-700 font-medium">
-                    Badge "Bienvenue"
+                    Badge &quot;Bienvenue&quot;
                   </span>
                 </div>
                 <p className="text-blue-600 text-xs mt-1">

@@ -3,7 +3,10 @@
 import { Download, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { deleteUserDataAction, exportUserDataAction } from "@/actions/gdpr-simple";
+import {
+  deleteUserDataAction,
+  exportUserDataAction,
+} from "@/actions/gdpr-simple";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -27,14 +30,16 @@ export function PrivacyActions() {
 
         const link = document.createElement("a");
         link.href = url;
-        link.download = `mes-donnees-${new Date().toISOString().split("T")[0]}.json`;
+        link.download = `mes-donnees-${
+          new Date().toISOString().split("T")[0]
+        }.json`;
         link.click();
 
         URL.revokeObjectURL(url);
 
         toast.success("Données exportées avec succès");
       }
-    } catch (_error) {
+    } catch {
       toast.error("Une erreur s'est produite lors de l'export des données");
     }
 
@@ -51,7 +56,9 @@ export function PrivacyActions() {
     }
 
     if (
-      !confirm("ATTENTION : Toutes vos données seront supprimées définitivement. Confirmez-vous ?")
+      !confirm(
+        "ATTENTION : Toutes vos données seront supprimées définitivement. Confirmez-vous ?"
+      )
     ) {
       return;
     }
@@ -71,7 +78,7 @@ export function PrivacyActions() {
           window.location.href = "/";
         }, 2000);
       }
-    } catch (_error) {
+    } catch {
       toast.error("Une erreur s'est produite lors de la suppression du compte");
     }
 
@@ -91,7 +98,11 @@ export function PrivacyActions() {
           <p className="text-sm text-muted-foreground mb-4">
             Téléchargez toutes vos données dans un fichier JSON.
           </p>
-          <Button onClick={handleExportData} disabled={isExporting} className="w-full">
+          <Button
+            onClick={handleExportData}
+            disabled={isExporting}
+            className="w-full"
+          >
             {isExporting ? "Export en cours..." : "Télécharger mes données"}
           </Button>
         </CardContent>
@@ -106,7 +117,8 @@ export function PrivacyActions() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Supprimez définitivement votre compte et toutes vos données associées.
+            Supprimez définitivement votre compte et toutes vos données
+            associées.
           </p>
           <Button
             onClick={handleDeleteAccount}

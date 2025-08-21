@@ -37,7 +37,11 @@ interface EditUserDialogProps {
   children: React.ReactNode;
 }
 
-export default function EditUserDialog({ user, onSuccess, children }: EditUserDialogProps) {
+export default function EditUserDialog({
+  user,
+  onSuccess,
+  children,
+}: EditUserDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -76,7 +80,11 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
       onSuccess();
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error(error instanceof Error ? error.message : "Erreur lors de la modification");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la modification"
+      );
     } finally {
       setLoading(false);
     }
@@ -103,9 +111,9 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Modifier l'utilisateur</DialogTitle>
+            <DialogTitle>Modifier l&apos;utilisateur</DialogTitle>
             <DialogDescription>
-              Modifiez les informations de l'utilisateur {user.name}.
+              Modifiez les informations de l&apos;utilisateur {user.name}.
             </DialogDescription>
           </DialogHeader>
 
@@ -116,7 +124,9 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
                 id="name"
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 disabled={loading}
                 required
               />
@@ -128,7 +138,9 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 disabled={loading}
                 required
               />
@@ -138,7 +150,9 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
               <Label htmlFor="role">Rôle</Label>
               <Select
                 value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value })}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, role: value })
+                }
                 disabled={loading}
               >
                 <SelectTrigger>
@@ -158,7 +172,9 @@ export default function EditUserDialog({ user, onSuccess, children }: EditUserDi
               <Label htmlFor="status">Statut</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, status: value })
+                }
                 disabled={loading}
               >
                 <SelectTrigger>

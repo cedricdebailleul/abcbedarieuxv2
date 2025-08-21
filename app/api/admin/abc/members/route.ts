@@ -2,22 +2,22 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma, AbcMemberType, AbcMemberStatus } from "@/lib/generated/prisma";
 
 const createMemberSchema = z.object({
   userId: z.string().min(1),
-  type: z.enum(['ACTIF', 'ARTISAN', 'AUTO_ENTREPRENEUR', 'PARTENAIRE', 'BIENFAITEUR']),
-  role: z.enum(['MEMBRE', 'SECRETAIRE', 'TRESORIER', 'PRESIDENT', 'VICE_PRESIDENT']).optional(),
+  type: z.enum([
+    "ACTIF",
+    "ARTISAN",
+    "AUTO_ENTREPRENEUR",
+    "PARTENAIRE",
+    "BIENFAITEUR",
+  ]),
+  role: z
+    .enum(["MEMBRE", "SECRETAIRE", "TRESORIER", "PRESIDENT", "VICE_PRESIDENT"])
+    .optional(),
   membershipDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   memberNumber: z.string().optional(),
-});
-
-const updateMemberSchema = z.object({
-  type: z.enum(['ACTIF', 'ARTISAN', 'AUTO_ENTREPRENEUR', 'PARTENAIRE', 'BIENFAITEUR']).optional(),
-  role: z.enum(['MEMBRE', 'SECRETAIRE', 'TRESORIER', 'PRESIDENT', 'VICE_PRESIDENT']).optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'EXPIRED']).optional(),
-  memberNumber: z.string().optional(),
-  renewedAt: z.string().datetime().optional(),
-  expiresAt: z.string().datetime().optional(),
 });
 
 // GET /api/admin/abc/members - Liste des membres
@@ -27,7 +27,11 @@ export async function GET(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -35,31 +39,44 @@ export async function GET(request: Request) {
     }
 
     const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
-    const search = url.searchParams.get('search') || '';
-    const type = url.searchParams.get('type') || '';
-    const status = url.searchParams.get('status') || '';
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const limit = parseInt(url.searchParams.get("limit") || "10");
+    const search: string = url.searchParams.get("search") || "";
+    const type = url.searchParams.get("type") || "";
+    const status = url.searchParams.get("status") || "";
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
-    
+    const where: Prisma.AbcMemberWhereInput = {};
+
     if (search) {
       where.user = {
         OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
         ],
       };
     }
-    
+
     if (type) {
-      where.type = type;
+      if (
+        [
+          "ACTIF",
+          "ARTISAN",
+          "AUTO_ENTREPRENEUR",
+          "PARTENAIRE",
+          "BIENFAITEUR",
+        ].includes(type)
+      ) {
+        where.type = type as AbcMemberType;
+      }
     }
-    
+
     if (status) {
-      where.status = status;
+      const validStatuses = ["ACTIVE", "INACTIVE", "SUSPENDED", "EXPIRED"];
+      if (validStatuses.includes(status)) {
+        where.status = status as AbcMemberStatus;
+      }
     }
 
     const [members, total] = await Promise.all([
@@ -84,7 +101,7 @@ export async function GET(request: Request) {
               quarter: true,
               createdAt: true,
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
             take: 3,
           },
           _count: {
@@ -93,7 +110,7 @@ export async function GET(request: Request) {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       prisma.abcMember.count({ where }),
     ]);
@@ -107,7 +124,6 @@ export async function GET(request: Request) {
         pages: Math.ceil(total / limit),
       },
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération des membres:", error);
     return NextResponse.json(
@@ -132,7 +148,8 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { userId, type, role, membershipDate, memberNumber } = createMemberSchema.parse(body);
+    const { userId, type, role, membershipDate, memberNumber } =
+      createMemberSchema.parse(body);
 
     // Vérifier que l'utilisateur existe
     const user = await prisma.user.findUnique({
@@ -164,7 +181,7 @@ export async function POST(request: Request) {
       const existingNumber = await prisma.abcMember.findUnique({
         where: { memberNumber },
       });
-      
+
       if (existingNumber) {
         return NextResponse.json(
           { error: "Ce numéro de membre est déjà utilisé" },
@@ -182,7 +199,7 @@ export async function POST(request: Request) {
       data: {
         userId,
         type,
-        role: role || 'MEMBRE',
+        role: role || "MEMBRE",
         memberNumber,
         membershipDate: membershipDateParsed,
         joinedAt: new Date(), // Date de création sur le site
@@ -204,7 +221,6 @@ export async function POST(request: Request) {
       member,
       message: "Membre créé avec succès",
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -6,7 +6,8 @@ import Hero from "@/components/front/hero";
 import { PostCard } from "@/components/posts/post-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { RegistrationForm } from "@/components/abc/registration-form";
+import { ActionsSection } from "@/components/actions/actions-section";
+import { CTASection } from "@/components/sections/cta-section";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -14,17 +15,69 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   // Récupérer les derniers articles
   const latestPostsResult = await getLatestPostsAction(6);
-  const latestPosts = latestPostsResult.success ? latestPostsResult.data! : [];
+  const latestPosts = latestPostsResult.success
+    ? latestPostsResult.data!.map(
+        (post: {
+          id: string;
+          name: string;
+          slug: string;
+          color: string | null;
+          _count: { posts: number };
+        }) => ({
+          id: post.id,
+          title: post.name, // Map 'name' to 'title'
+          slug: post.slug,
+          excerpt: null,
+          content: null,
+          published: true, // Default value
+          publishedAt: new Date(), // Default value
+          createdAt: new Date(), // Default value
+          author: { id: "default-id", name: "Unknown", avatar: null }, // Default author with id
+          tags: [], // Default empty tags
+        })
+      )
+    : [];
 
   // Récupérer les événements à venir
   const upcomingEventsResult = await getUpcomingEventsAction(5);
   const upcomingEvents = upcomingEventsResult.success
-    ? upcomingEventsResult.data!
+    ? upcomingEventsResult.data!.map(
+        (event: {
+          id: string;
+          title: string;
+          startDate: Date;
+          endDate: Date;
+          place?: { name: string; street: string; city: string };
+          slug?: string;
+          category?: string;
+          additionalInfo?: string;
+          price?: number;
+          maxParticipants?: number;
+        }) => ({
+          ...event,
+          description: "", // Default value since 'description' does not exist on the event type
+          slug: event.slug || "",
+          location: event.place?.name || "",
+          category: event.category || "",
+          additionalInfo: event.additionalInfo || "",
+          price: event.price || 0,
+          maxParticipants: event.maxParticipants || 0,
+        })
+      )
     : [];
 
   return (
     <>
       <Hero upcomingEvents={upcomingEvents} />
+
+      {/* Section des actions */}
+      <ActionsSection
+        featuredOnly={true}
+        limit={4}
+        layout="columns"
+        title="Nos Actions Phares"
+        description="Découvrez nos principales initiatives pour soutenir et dynamiser le commerce local à Bédarieux"
+      />
 
       {/* Section des derniers articles */}
       {latestPosts.length > 0 && (
@@ -82,19 +135,8 @@ export default async function Home() {
         </section>
       )}
 
-      {/* Section d'inscription à l'association */}
-      <section className="py-16 bg-muted/30">
-        <div className="mx-auto px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Rejoignez l'Association ABC Bédarieux</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Soutenez le commerce local et l'artisanat bédaricien en devenant membre de notre association.
-              Remplissez le formulaire ci-dessous pour faire votre demande d'adhésion.
-            </p>
-          </div>
-          <RegistrationForm />
-        </div>
-      </section>
+      {/* Section call-to-action */}
+      <CTASection />
     </>
   );
 }

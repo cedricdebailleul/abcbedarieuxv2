@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { IconLoader2 } from "@tabler/icons-react";
+import z from "zod";
 
 interface Member {
   id: string;
@@ -32,7 +33,7 @@ interface CreatePaymentDialogProps {
 
 const modeLabels = {
   CHEQUE: "Chèque",
-  ESPECE: "Espèces", 
+  ESPECE: "Espèces",
   VIREMENT: "Virement",
 };
 
@@ -66,7 +67,9 @@ export function CreatePaymentDialog({ onSuccess }: CreatePaymentDialogProps) {
   const fetchMembers = async () => {
     try {
       setLoadingMembers(true);
-      const response = await fetch("/api/admin/abc/members?limit=100&status=ACTIVE");
+      const response = await fetch(
+        "/api/admin/abc/members?limit=100&status=ACTIVE"
+      );
       if (response.ok) {
         const data = await response.json();
         setMembers(data.members);
@@ -80,7 +83,7 @@ export function CreatePaymentDialog({ onSuccess }: CreatePaymentDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!memberId || !amount || !mode || !year) {
       setError("Veuillez remplir tous les champs obligatoires");
       return;
@@ -92,12 +95,16 @@ export function CreatePaymentDialog({ onSuccess }: CreatePaymentDialogProps) {
     }
 
     if (mode === "VIREMENT" && !reference) {
-      setError("La référence de virement est obligatoire pour ce mode de paiement");
+      setError(
+        "La référence de virement est obligatoire pour ce mode de paiement"
+      );
       return;
     }
 
     if (status === "PAID" && !paidAt) {
-      setError("La date de paiement est obligatoire pour un paiement marqué comme payé");
+      setError(
+        "La date de paiement est obligatoire pour un paiement marqué comme payé"
+      );
       return;
     }
 
@@ -105,7 +112,20 @@ export function CreatePaymentDialog({ onSuccess }: CreatePaymentDialogProps) {
       setLoading(true);
       setError("");
 
-      const paymentData: any = {
+      interface PaymentData {
+        memberId: string;
+        amount: number;
+        mode: string;
+        status: string;
+        year: number;
+        notes: string | null;
+        paidAt: string | null;
+        quarter?: number;
+        checkNumber?: string;
+        reference?: string;
+      }
+
+      const paymentData: PaymentData = {
         memberId,
         amount: parseFloat(amount),
         mode,
@@ -140,15 +160,18 @@ export function CreatePaymentDialog({ onSuccess }: CreatePaymentDialogProps) {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("API Error:", errorData);
-        
+
         // Si c'est une erreur de validation Zod, afficher les détails
         if (errorData.details && Array.isArray(errorData.details)) {
-          const validationErrors = errorData.details.map((detail: any) => 
-            `${detail.path.join('.')}: ${detail.message}`
-          ).join(', ');
+          const validationErrors = errorData.details
+            .map(
+              (detail: z.core.$ZodIssue) =>
+                `${detail.path.join(".")}: ${detail.message}`
+            )
+            .join(", ");
           throw new Error(`Erreur de validation: ${validationErrors}`);
         }
-        
+
         throw new Error(errorData.error || "Erreur lors de la création");
       }
 
@@ -175,7 +198,9 @@ export function CreatePaymentDialog({ onSuccess }: CreatePaymentDialogProps) {
       <div className="space-y-2">
         <Label>Membre *</Label>
         {loadingMembers ? (
-          <div className="text-sm text-muted-foreground">Chargement des membres...</div>
+          <div className="text-sm text-muted-foreground">
+            Chargement des membres...
+          </div>
         ) : (
           <Select value={memberId} onValueChange={setMemberId}>
             <SelectTrigger>
@@ -184,7 +209,7 @@ export function CreatePaymentDialog({ onSuccess }: CreatePaymentDialogProps) {
             <SelectContent>
               {members.map((member) => (
                 <SelectItem key={member.id} value={member.id}>
-                  {member.user.name} - {member.type} 
+                  {member.user.name} - {member.type}
                   {member.memberNumber && ` (${member.memberNumber})`}
                 </SelectItem>
               ))}

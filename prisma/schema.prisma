@@ -36,6 +36,7 @@ model User {
   posts        Post[] // Ajout pour le contenu utilisateur
   notifications UserNotificationStatus[] @relation("UserNotifications")
   processedRegistrations AbcRegistration[] @relation("AbcRegistrationProcessor")
+  actions       Action[] // Actions créées par l'utilisateur
 
   // Modération améliorée
   role       Role       @default(user) // Enum en majuscules
@@ -701,6 +702,55 @@ model PlaceClaim {
   @@index([userId])
   @@index([status])
   @@map("place_claims")
+}
+
+// ============================================================
+//                    ACTIONS DE L'ASSOCIATION
+// ============================================================
+
+model Action {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String?  @db.Text
+  content     String?  @db.Text
+  summary     String?  @db.VarChar(280) // Pour partage social
+  
+  // Images
+  coverImage  String? // Image de couverture principale
+  gallery     String[] // Galerie d'images
+  
+  // Statut et visibilité
+  status      ActionStatus @default(DRAFT)
+  isActive    Boolean      @default(true)
+  isFeatured  Boolean      @default(false) // Mis en avant sur l'accueil
+  
+  // Dates
+  startDate   DateTime? // Date de début de l'action
+  endDate     DateTime? // Date de fin de l'action
+  
+  // Métadonnées SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  // Ordre d'affichage
+  sortOrder   Int      @default(0)
+  
+  // Relations
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+  
+  @@index([status])
+  @@index([isActive])
+  @@index([isFeatured])
+  @@index([sortOrder])
+  @@index([publishedAt])
+  @@map("actions")
 }
 
 // ============================================================
@@ -1651,4 +1701,11 @@ enum AbcRegistrationStatus {
   APPROVED    // Approuvée
   REJECTED    // Rejetée
   PROCESSED   // Traitée (membre créé)
+}
+
+enum ActionStatus {
+  DRAFT       // Brouillon
+  PUBLISHED   // Publié
+  SCHEDULED   // Programmé
+  ARCHIVED    // Archivé
 }

@@ -1,55 +1,9 @@
 // hooks/useGooglePlaces.ts
 
 import { useLoadScript } from "@react-google-maps/api";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner"; // ou votre système de toast
 
-// Types pour Google Places
-interface PlaceResult {
-  place_id: string;
-  name: string;
-  formatted_address: string;
-  formatted_phone_number?: string;
-  website?: string;
-  geometry: {
-    location: {
-      lat: () => number;
-      lng: () => number;
-    };
-  };
-  address_components: Array<{
-    long_name: string;
-    short_name: string;
-    types: string[];
-  }>;
-  photos?: Array<{
-    getUrl: (opts: { maxWidth: number; maxHeight: number }) => string;
-  }>;
-  opening_hours?: {
-    weekday_text: string[];
-    periods: Array<{
-      open: { day: number; time: string };
-      close?: { day: number; time: string };
-    }>;
-  };
-  rating?: number;
-  user_ratings_total?: number;
-  reviews?: Array<{
-    author_name: string;
-    rating: number;
-    text: string;
-    time: number;
-  }>;
-  types?: string[];
-  business_status?: string;
-  url?: string; // URL Google Maps
-  editorial_summary?: {
-    overview?: string;
-    language?: string;
-  };
-  vicinity?: string;
-  adr_address?: string;
-}
 
 type OpeningSlot = { openTime: string; closeTime: string };
 
@@ -57,7 +11,7 @@ type OpeningSlot = { openTime: string; closeTime: string };
 export interface FormattedPlaceData {
   // Identifiants Google
   googlePlaceId: string;
-  googleBusinessData: any; // Données brutes pour backup
+  googleBusinessData: google.maps.places.PlaceResult; // Données brutes pour backup
 
   // Informations de base
   name: string;
@@ -179,7 +133,7 @@ export const useGooglePlaces = ({
   }, [isLoaded]);
 
   // Mapper les types Google vers vos types
-  const mapGoogleTypeToPlaceType = (googleTypes: string[]): string => {
+  const mapGoogleTypeToPlaceType = useCallback((googleTypes: string[]): string => {
     const typeMapping: Record<string, string> = {
       restaurant: "RESTAURANT",
       cafe: "RESTAURANT",
@@ -207,23 +161,10 @@ export const useGooglePlaces = ({
       }
     }
     return "OTHER";
-  };
+  }, []);
 
-  const DAYS = [
-    "SUNDAY",
-    "MONDAY",
-    "TUESDAY",
-    "WEDNESDAY",
-    "THURSDAY",
-    "FRIDAY",
-    "SATURDAY",
-  ] as const;
-  const toHHMM = (t?: string) =>
-    t && t.length === 4 ? `${t.slice(0, 2)}:${t.slice(2)}` : t ?? "";
-
-  // Convertir les jours Google (0-6, dimanche=0) vers votre enum
-  const _mapDayToEnum = (day: number): string => {
-    const days = [
+  const DAYS = useMemo(
+    () => [
       "SUNDAY",
       "MONDAY",
       "TUESDAY",
@@ -231,92 +172,100 @@ export const useGooglePlaces = ({
       "THURSDAY",
       "FRIDAY",
       "SATURDAY",
-    ];
-    return days[day];
-  };
+    ] as const,
+    []
+  );
+  const toHHMM = useCallback(
+    (t?: string) =>
+      t && t.length === 4 ? `${t.slice(0, 2)}:${t.slice(2)}` : t ?? "",
+    []
+  );
 
   /**
    * Construit des "slots" (matin/après-midi) par jour depuis Google periods.
    * - Gère plusieurs créneaux le même jour
    * - Gère les périodes qui passent minuit (split sur 2 jours)
    */
-  const formatOpeningHours = (
-    periods?: Array<{
-      open: { day: number; time: string };
-      close?: { day: number; time: string };
-    }>
-  ): FormattedPlaceData["openingHours"] => {
-    if (!periods || periods.length === 0) {
-      // retourne 7 jours "fermés"
-      return DAYS.map((d) => ({
-        dayOfWeek: d,
-        isClosed: true,
-        openTime: null,
-        closeTime: null,
-        slots: [],
-      }));
-    }
-
-    // Accumulateur par jour
-    const byDay: Record<
-      string,
-      { slots: { openTime: string; closeTime: string }[] }
-    > = {};
-
-    const pushSlot = (dayIdx: number, open: string, close: string) => {
-      const key = DAYS[dayIdx];
-      (byDay[key] ||= { slots: [] }).slots.push({
-        openTime: open,
-        closeTime: close,
-      });
-    };
-
-    for (const p of periods) {
-      const oDay = p.open?.day ?? 0;
-      const cDay = p.close?.day ?? oDay; // si close absent, on considère même jour (et on met 23:59)
-      const o = toHHMM(p.open?.time) || "00:00";
-      const c = toHHMM(p.close?.time) || "23:59";
-
-      if (oDay === cDay) {
-        // Période dans la même journée (classique : 09:00–12:00, 14:00–19:00)
-        pushSlot(oDay, o, c);
-      } else {
-        // Période qui dépasse minuit (ex: 22:00–02:00)
-        pushSlot(oDay, o, "23:59");
-        pushSlot(cDay, "00:00", c);
-      }
-    }
-
-    // Tri des créneaux par heure d’ouverture
-    for (const k of Object.keys(byDay)) {
-      byDay[k].slots.sort((a, b) => a.openTime.localeCompare(b.openTime));
-    }
-
-    // Construire les 7 jours, fermés si aucun slot
-    return DAYS.map((d) => {
-      const slots = byDay[d]?.slots ?? [];
-      if (slots.length === 0) {
-        return {
+  const formatOpeningHours = useCallback(
+    (
+      periods?: Array<{
+        open: { day: number; time: string };
+        close?: { day: number; time: string };
+      }>
+    ): FormattedPlaceData["openingHours"] => {
+      if (!periods || periods.length === 0) {
+        // retourne 7 jours "fermés"
+        return DAYS.map((d) => ({
           dayOfWeek: d,
           isClosed: true,
           openTime: null,
           closeTime: null,
           slots: [],
-        };
+        }));
       }
-      // Compat : on renseigne aussi openTime/closeTime sur le 1er slot
-      return {
-        dayOfWeek: d,
-        isClosed: false,
-        openTime: slots[0].openTime,
-        closeTime: slots[slots.length - 1].closeTime,
-        slots,
+
+      // Accumulateur par jour
+      const byDay: Record<
+        string,
+        { slots: { openTime: string; closeTime: string }[] }
+      > = {};
+
+      const pushSlot = (dayIdx: number, open: string, close: string) => {
+        const key = DAYS[dayIdx];
+        (byDay[key] ||= { slots: [] }).slots.push({
+          openTime: open,
+          closeTime: close,
+        });
       };
-    });
-  };
+
+      for (const p of periods) {
+        const oDay = p.open?.day ?? 0;
+        const cDay = p.close?.day ?? oDay; // si close absent, on considère même jour (et on met 23:59)
+        const o = toHHMM(p.open?.time) || "00:00";
+        const c = toHHMM(p.close?.time) || "23:59";
+
+        if (oDay === cDay) {
+          // Période dans la même journée (classique : 09:00–12:00, 14:00–19:00)
+          pushSlot(oDay, o, c);
+        } else {
+          // Période qui dépasse minuit (ex: 22:00–02:00)
+          pushSlot(oDay, o, "23:59");
+          pushSlot(cDay, "00:00", c);
+        }
+      }
+
+      // Tri des créneaux par heure d’ouverture
+      for (const k of Object.keys(byDay)) {
+        byDay[k].slots.sort((a, b) => a.openTime.localeCompare(b.openTime));
+      }
+
+      // Construire les 7 jours, fermés si aucun slot
+      return DAYS.map((d) => {
+        const slots = byDay[d]?.slots ?? [];
+        if (slots.length === 0) {
+          return {
+            dayOfWeek: d,
+            isClosed: true,
+            openTime: null,
+            closeTime: null,
+            slots: [],
+          };
+        }
+        // Compat : on renseigne aussi openTime/closeTime sur le 1er slot
+        return {
+          dayOfWeek: d,
+          isClosed: false,
+          openTime: slots[0].openTime,
+          closeTime: slots[slots.length - 1].closeTime,
+          slots,
+        };
+      });
+    },
+    [DAYS, toHHMM]
+  );
 
   // Extraire les composants d'adresse
-  const extractAddressComponents = (components: any[]) => {
+  const extractAddressComponents = useCallback((components: google.maps.GeocoderAddressComponent[]) => {
     const getComponent = (types: string[]): string | undefined => {
       const component = components.find((c) =>
         types.some((type) => c.types.includes(type))
@@ -330,7 +279,7 @@ export const useGooglePlaces = ({
       postalCode: getComponent(["postal_code"]) || "",
       city: getComponent(["locality", "administrative_area_level_2"]) || "",
     };
-  };
+  }, []);
 
   // Rechercher des prédictions
   const searchPlaces = useCallback(
@@ -426,7 +375,10 @@ export const useGooglePlaces = ({
             .map((photo) => photo.getUrl({ maxWidth: 1200, maxHeight: 800 }));
 
           // Récupérer la description Google Business si disponible
-          const googleDescription = (place as any).editorial_summary?.overview;
+          interface EditorialSummary {
+            overview?: string;
+          }
+          const googleDescription = (place as { editorial_summary?: EditorialSummary }).editorial_summary?.overview;
 
           // Alternative: utiliser le premier avis comme description si pas de description officielle
           const fallbackDescription =
@@ -456,7 +408,7 @@ export const useGooglePlaces = ({
             name: place.name || "",
             type: mapGoogleTypeToPlaceType(place.types || []),
             category: place.types?.[0],
-            description: googleDescription || fallbackDescription, // Description Google Business ou premier avis
+            description: googleDescription || fallbackDescription || undefined, // Description Google Business ou premier avis
 
             // Adresse
             street: addressComponents.street,

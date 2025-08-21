@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, XCircle, Mail, Loader, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-
+import { useCallback } from "react";
 interface Subscriber {
   email: string;
   firstName?: string;
@@ -36,13 +36,8 @@ export default function UnsubscribeClient() {
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
 
   // Vérifier le token au chargement de la page
-  useEffect(() => {
-    if (token) {
-      verifyToken();
-    }
-  }, [token]);
 
-  const verifyToken = async () => {
+  const verifyToken = useCallback(async () => {
     if (!token) return;
 
     setVerifying(true);
@@ -62,13 +57,19 @@ export default function UnsubscribeClient() {
         setTokenValid(false);
         toast.error(data.error || "Token invalide");
       }
-    } catch (error) {
+    } catch {
       setTokenValid(false);
       toast.error("Erreur lors de la vérification du token");
     } finally {
       setVerifying(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      verifyToken();
+    }
+  }, [token, verifyToken]);
 
   const handleUnsubscribe = async (useToken = false) => {
     setLoading(true);
@@ -91,7 +92,7 @@ export default function UnsubscribeClient() {
       } else {
         toast.error(data.error || "Erreur lors du désabonnement");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors du désabonnement");
     } finally {
       setLoading(false);
@@ -144,7 +145,7 @@ export default function UnsubscribeClient() {
 
               <div className="space-y-3">
                 <Button asChild className="w-full">
-                  <Link href="/">Retour à l'accueil</Link>
+                  <Link href="/">Retour à l&apos;accueil</Link>
                 </Button>
 
                 <p className="text-xs text-gray-500 text-center">
@@ -199,7 +200,7 @@ export default function UnsubscribeClient() {
               </Button>
 
               <Button asChild variant="outline" className="w-full">
-                <Link href="/">Retour à l'accueil</Link>
+                <Link href="/">Retour à l&apos;accueil</Link>
               </Button>
             </CardContent>
           </Card>
@@ -249,7 +250,7 @@ export default function UnsubscribeClient() {
                     <p>
                       En vous désabonnant, vous ne recevrez plus nos
                       informations sur les événements, nouveaux commerces et
-                      actualités de l'association.
+                      actualités de l&apos;association.
                     </p>
                   </div>
                 </div>
@@ -264,7 +265,7 @@ export default function UnsubscribeClient() {
                 </Button>
 
                 <Button asChild variant="outline" className="w-full">
-                  <Link href="/">Annuler et retourner à l'accueil</Link>
+                  <Link href="/">Annuler et retourner à l&apos;accueil</Link>
                 </Button>
               </div>
             ) : (
@@ -290,7 +291,7 @@ export default function UnsubscribeClient() {
                 </Button>
 
                 <Button asChild variant="outline" className="w-full">
-                  <Link href="/">Retour à l'accueil</Link>
+                  <Link href="/">Retour à l&apos;accueil</Link>
                 </Button>
               </div>
             )}

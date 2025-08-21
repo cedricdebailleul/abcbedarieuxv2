@@ -6,8 +6,6 @@ import { useRef } from "react";
 import Logo from "@/components/logo";
 import FooterNewsletter from "./footer-newsletter";
 
-import { Button } from "@/components/ui/button";
-
 export default function FooterSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });

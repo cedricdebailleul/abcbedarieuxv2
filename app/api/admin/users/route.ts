@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/lib/generated/prisma";
 
 const getUsersSchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -10,9 +11,18 @@ const getUsersSchema = z.object({
   search: z.string().optional(),
   role: z.enum(["user", "admin", "moderator", "dpo", "editor"]).optional(),
   status: z
-    .enum(["ACTIVE", "INACTIVE", "SUSPENDED", "BANNED", "PENDING_VERIFICATION", "DELETED"])
+    .enum([
+      "ACTIVE",
+      "INACTIVE",
+      "SUSPENDED",
+      "BANNED",
+      "PENDING_VERIFICATION",
+      "DELETED",
+    ])
     .optional(),
-  sortBy: z.enum(["createdAt", "name", "email", "lastLoginAt"]).default("createdAt"),
+  sortBy: z
+    .enum(["createdAt", "name", "email", "lastLoginAt"])
+    .default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
@@ -34,16 +44,20 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     // Parser les paramètres de requête
     const url = new URL(request.url);
     const params = Object.fromEntries(url.searchParams.entries());
-    const { page, limit, search, role, status, sortBy, sortOrder } = getUsersSchema.parse(params);
+    const { page, limit, search, role, status, sortBy, sortOrder } =
+      getUsersSchema.parse(params);
 
     // Construire les filtres
-    const where: any = {
+    const where: Prisma.UserWhereInput = {
       // Exclure les utilisateurs supprimés par défaut
       deletedAt: null,
     };
@@ -155,6 +169,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

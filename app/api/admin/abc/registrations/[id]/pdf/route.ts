@@ -5,53 +5,81 @@ import { jsPDF } from "jspdf";
 import { headers } from "next/headers";
 
 // Fonction pour générer le PDF d'inscription
-function generateRegistrationPDF(data: any): Buffer {
+interface RegistrationData {
+  lastName: string;
+  firstName: string;
+  email: string;
+  phone?: string;
+  birthDate?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  profession?: string;
+  company?: string;
+  siret?: string;
+  membershipType: string;
+  interests?: string;
+  motivation?: string;
+  status: string;
+  processedAt?: string;
+  processorUser?: { name: string };
+  adminNotes?: string;
+  createdAt: string;
+}
+
+function generateRegistrationPDF(data: RegistrationData): Buffer {
   const doc = new jsPDF();
-  
+
   // En-tête
   doc.setFontSize(20);
-  doc.text('Association ABC Bédarieux', 105, 20, { align: 'center' });
+  doc.text("Association ABC Bédarieux", 105, 20, { align: "center" });
   doc.setFontSize(16);
-  doc.text('Bulletin d\'Inscription', 105, 30, { align: 'center' });
+  doc.text("Bulletin d'Inscription", 105, 30, { align: "center" });
 
   let yPosition = 50;
 
   // Informations personnelles
   doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('INFORMATIONS PERSONNELLES', 20, yPosition);
+  doc.setFont("helvetica", "bold");
+  doc.text("INFORMATIONS PERSONNELLES", 20, yPosition);
   yPosition += 10;
 
   doc.setFontSize(12);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont("helvetica", "normal");
   doc.text(`Nom: ${data.lastName}`, 20, yPosition);
   yPosition += 7;
   doc.text(`Prénom: ${data.firstName}`, 20, yPosition);
   yPosition += 7;
   doc.text(`Email: ${data.email}`, 20, yPosition);
   yPosition += 7;
-  
+
   if (data.phone) {
     doc.text(`Téléphone: ${data.phone}`, 20, yPosition);
     yPosition += 7;
   }
-  
+
   if (data.birthDate) {
-    doc.text(`Date de naissance: ${new Date(data.birthDate).toLocaleDateString('fr-FR')}`, 20, yPosition);
+    doc.text(
+      `Date de naissance: ${new Date(data.birthDate).toLocaleDateString(
+        "fr-FR"
+      )}`,
+      20,
+      yPosition
+    );
     yPosition += 7;
   }
-  
+
   yPosition += 10;
 
   // Adresse
   if (data.address || data.city || data.postalCode) {
     doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ADRESSE', 20, yPosition);
+    doc.setFont("helvetica", "bold");
+    doc.text("ADRESSE", 20, yPosition);
     yPosition += 10;
 
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     if (data.address) {
       doc.text(`Adresse: ${data.address}`, 20, yPosition);
       yPosition += 7;
@@ -70,12 +98,12 @@ function generateRegistrationPDF(data: any): Buffer {
   // Informations professionnelles
   if (data.profession || data.company || data.siret) {
     doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('INFORMATIONS PROFESSIONNELLES', 20, yPosition);
+    doc.setFont("helvetica", "bold");
+    doc.text("INFORMATIONS PROFESSIONNELLES", 20, yPosition);
     yPosition += 10;
 
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     if (data.profession) {
       doc.text(`Profession: ${data.profession}`, 20, yPosition);
       yPosition += 7;
@@ -93,31 +121,37 @@ function generateRegistrationPDF(data: any): Buffer {
 
   // Type d'adhésion
   doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('TYPE D\'ADHÉSION', 20, yPosition);
+  doc.setFont("helvetica", "bold");
+  doc.text("TYPE D'ADHÉSION", 20, yPosition);
   yPosition += 10;
 
   doc.setFontSize(12);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont("helvetica", "normal");
   const membershipTypes = {
     ACTIF: "Membre Actif",
     ARTISAN: "Artisan",
     AUTO_ENTREPRENEUR: "Auto-Entrepreneur",
     PARTENAIRE: "Partenaire",
-    BIENFAITEUR: "Bienfaiteur"
+    BIENFAITEUR: "Bienfaiteur",
   };
-  doc.text(`Type d'adhésion: ${membershipTypes[data.membershipType as keyof typeof membershipTypes]}`, 20, yPosition);
+  doc.text(
+    `Type d'adhésion: ${
+      membershipTypes[data.membershipType as keyof typeof membershipTypes]
+    }`,
+    20,
+    yPosition
+  );
   yPosition += 10;
 
   // Centres d'intérêt
   if (data.interests) {
     doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CENTRES D\'INTÉRÊT', 20, yPosition);
+    doc.setFont("helvetica", "bold");
+    doc.text("CENTRES D'INTÉRÊT", 20, yPosition);
     yPosition += 10;
 
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     doc.text(`Centres d'intérêt: ${data.interests}`, 20, yPosition);
     yPosition += 10;
   }
@@ -125,12 +159,12 @@ function generateRegistrationPDF(data: any): Buffer {
   // Motivation
   if (data.motivation) {
     doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('MOTIVATION', 20, yPosition);
+    doc.setFont("helvetica", "bold");
+    doc.text("MOTIVATION", 20, yPosition);
     yPosition += 10;
 
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     const lines = doc.splitTextToSize(data.motivation, 170);
     doc.text(lines, 20, yPosition);
     yPosition += lines.length * 7 + 10;
@@ -138,37 +172,45 @@ function generateRegistrationPDF(data: any): Buffer {
 
   // Statut et notes admin
   doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('STATUT DE LA DEMANDE', 20, yPosition);
+  doc.setFont("helvetica", "bold");
+  doc.text("STATUT DE LA DEMANDE", 20, yPosition);
   yPosition += 10;
 
   doc.setFontSize(12);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont("helvetica", "normal");
   const statusLabels = {
     PENDING: "En attente",
     APPROVED: "Approuvé",
     REJECTED: "Rejeté",
-    PROCESSED: "Traité"
+    PROCESSED: "Traité",
   };
-  doc.text(`Statut: ${statusLabels[data.status as keyof typeof statusLabels]}`, 20, yPosition);
+  doc.text(
+    `Statut: ${statusLabels[data.status as keyof typeof statusLabels]}`,
+    20,
+    yPosition
+  );
   yPosition += 7;
-  
+
   if (data.processedAt) {
-    doc.text(`Traité le: ${new Date(data.processedAt).toLocaleDateString('fr-FR')}`, 20, yPosition);
+    doc.text(
+      `Traité le: ${new Date(data.processedAt).toLocaleDateString("fr-FR")}`,
+      20,
+      yPosition
+    );
     yPosition += 7;
   }
-  
+
   if (data.processorUser?.name) {
     doc.text(`Traité par: ${data.processorUser.name}`, 20, yPosition);
     yPosition += 7;
   }
-  
+
   if (data.adminNotes) {
     yPosition += 5;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Notes administratives:', 20, yPosition);
+    doc.setFont("helvetica", "bold");
+    doc.text("Notes administratives:", 20, yPosition);
     yPosition += 7;
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     const notesLines = doc.splitTextToSize(data.adminNotes, 170);
     doc.text(notesLines, 20, yPosition);
     yPosition += notesLines.length * 7;
@@ -177,12 +219,22 @@ function generateRegistrationPDF(data: any): Buffer {
   // Pied de page
   yPosition += 20;
   doc.setFontSize(10);
-  doc.text(`Date de demande: ${new Date(data.createdAt).toLocaleDateString('fr-FR')}`, 105, yPosition, { align: 'center' });
+  doc.text(
+    `Date de demande: ${new Date(data.createdAt).toLocaleDateString("fr-FR")}`,
+    105,
+    yPosition,
+    { align: "center" }
+  );
   yPosition += 7;
-  doc.text('Association ABC Bédarieux - Commerce Local et Artisanat', 105, yPosition, { align: 'center' });
+  doc.text(
+    "Association ABC Bédarieux - Commerce Local et Artisanat",
+    105,
+    yPosition,
+    { align: "center" }
+  );
 
   // Retourner le PDF en tant que Buffer
-  const pdfOutput = doc.output('arraybuffer');
+  const pdfOutput = doc.output("arraybuffer");
   return Buffer.from(pdfOutput);
 }
 
@@ -192,10 +244,14 @@ export async function GET(
 ) {
   try {
     const session = await auth.api.getSession({
-      headers: await headers()
+      headers: await headers(),
     });
-    
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+
+    if (
+      !session?.user ||
+      !session.user.role ||
+      !["admin", "moderator"].includes(session.user.role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -221,16 +277,35 @@ export async function GET(
     }
 
     // Générer le PDF
-    const pdfBuffer = generateRegistrationPDF(registration);
-
-    // Retourner le PDF
-    return new NextResponse(pdfBuffer, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="inscription-abc-${registration.lastName}-${registration.firstName}.pdf"`,
-      },
+    const pdfBuffer = generateRegistrationPDF({
+      ...registration,
+      phone: registration.phone ?? undefined,
+      birthDate: registration.birthDate
+        ? registration.birthDate.toISOString()
+        : undefined,
+      address: registration.address ?? undefined,
+      city: registration.city ?? undefined,
+      postalCode: registration.postalCode ?? undefined,
+      profession: registration.profession ?? undefined,
+      company: registration.company ?? undefined,
+      siret: registration.siret ?? undefined,
+      interests: registration.interests ?? undefined,
+      motivation: registration.motivation ?? undefined,
+      processedAt: registration.processedAt
+        ? registration.processedAt.toISOString()
+        : undefined,
+      processorUser: registration.processorUser ?? undefined,
+      adminNotes: registration.adminNotes ?? undefined,
+      createdAt: registration.createdAt.toISOString(),
     });
 
+    // Retourner le PDF
+    return new NextResponse(new Uint8Array(pdfBuffer), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="inscription-abc-${registration.lastName}-${registration.firstName}.pdf"`,
+      },
+    });
   } catch (error) {
     console.error("Erreur lors de la génération du PDF:", error);
     return NextResponse.json(

@@ -19,7 +19,7 @@ async function testNewsletterModels() {
     console.log("✅ Migration réussie - Le système newsletter est prêt !");
     
   } catch (error) {
-    console.error("❌ Erreur lors du test des modèles:", error.message);
+    console.error("❌ Erreur lors du test des modèles:", error instanceof Error ? error.message : error);
     console.log("\n🔧 Solutions possibles:");
     console.log("1. Vérifiez que 'pnpm db:push' a été exécuté");
     console.log("2. Redémarrez votre serveur de développement");

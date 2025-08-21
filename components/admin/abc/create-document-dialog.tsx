@@ -61,13 +61,15 @@ export function CreateDocumentDialog({ onSuccess }: CreateDocumentDialogProps) {
       ];
 
       if (!allowedTypes.includes(selectedFile.type)) {
-        setError("Type de fichier non autorisé. Formats acceptés: PDF, Word, Excel, images, texte");
+        setError(
+          "Type de fichier non autorisé. Formats acceptés: PDF, Word, Excel, images, texte"
+        );
         return;
       }
 
       setFile(selectedFile);
       setError("");
-      
+
       // Auto-compléter le titre si vide
       if (!title) {
         setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
@@ -77,9 +79,11 @@ export function CreateDocumentDialog({ onSuccess }: CreateDocumentDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title || !type || !file) {
-      setError("Veuillez remplir tous les champs obligatoires et sélectionner un fichier");
+      setError(
+        "Veuillez remplir tous les champs obligatoires et sélectionner un fichier"
+      );
       return;
     }
 
@@ -188,7 +192,9 @@ export function CreateDocumentDialog({ onSuccess }: CreateDocumentDialogProps) {
             <div className="mt-4 p-3 bg-gray-50 rounded-md">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {file.name}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
@@ -212,7 +218,7 @@ export function CreateDocumentDialog({ onSuccess }: CreateDocumentDialogProps) {
         <Checkbox
           id="is-public"
           checked={isPublic}
-          onCheckedChange={setIsPublic}
+          onCheckedChange={(checked) => setIsPublic(checked === true)}
         />
         <Label htmlFor="is-public" className="text-sm">
           Document public (accessible à tous les membres)

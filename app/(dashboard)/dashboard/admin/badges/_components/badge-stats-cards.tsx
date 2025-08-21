@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { getBadgeStatsAction } from "@/actions/badge";
+import { BadgeStats } from "@/lib/types/badge";
 
 export function BadgeStatsCards() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<BadgeStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,11 +19,13 @@ export function BadgeStatsCards() {
       try {
         const result = await getBadgeStatsAction();
         if (result.success) {
-          setStats(result.data);
+          setStats(result.data || null);
         } else {
-          toast.error(result.error || "Erreur lors du chargement des statistiques");
+          toast.error(
+            result.error || "Erreur lors du chargement des statistiques"
+          );
         }
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors du chargement des statistiques");
       }
       setLoading(false);
@@ -64,9 +67,7 @@ export function BadgeStatsCards() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.total}</div>
-          <p className="text-xs text-muted-foreground">
-            Badges disponibles
-          </p>
+          <p className="text-xs text-muted-foreground">Badges disponibles</p>
         </CardContent>
       </Card>
 
@@ -77,12 +78,13 @@ export function BadgeStatsCards() {
           <Eye className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+          <div className="text-2xl font-bold text-green-600">
+            {stats.active}
+          </div>
           <p className="text-xs text-muted-foreground">
-            {stats.total > 0 
+            {stats.total > 0
               ? `${Math.round((stats.active / stats.total) * 100)}% du total`
-              : "0% du total"
-            }
+              : "0% du total"}
           </p>
         </CardContent>
       </Card>
@@ -94,12 +96,13 @@ export function BadgeStatsCards() {
           <EyeOff className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-orange-600">{stats.inactive}</div>
+          <div className="text-2xl font-bold text-orange-600">
+            {stats.inactive}
+          </div>
           <p className="text-xs text-muted-foreground">
-            {stats.total > 0 
+            {stats.total > 0
               ? `${Math.round((stats.inactive / stats.total) * 100)}% du total`
-              : "0% du total"
-            }
+              : "0% du total"}
           </p>
         </CardContent>
       </Card>
@@ -111,10 +114,10 @@ export function BadgeStatsCards() {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">{stats.totalAwarded}</div>
-          <p className="text-xs text-muted-foreground">
-            Badges attribués
-          </p>
+          <div className="text-2xl font-bold text-blue-600">
+            {stats.totalAwarded}
+          </div>
+          <p className="text-xs text-muted-foreground">Badges attribués</p>
         </CardContent>
       </Card>
     </div>

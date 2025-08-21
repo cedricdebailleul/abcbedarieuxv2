@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MapPin, Clock, SlidersHorizontal, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, MapPin, Clock, X, ChevronDown, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import type { MapFilters as IMapFilters, MapCategory } from "./interactive-map";
 import { DISTANCE_OPTIONS } from "@/lib/map-utils";
@@ -110,7 +109,7 @@ export function MapFilters({
           {/* Tri */}
           <div className="space-y-2">
             <Label>Trier par</Label>
-            <Select value={filters.sortBy} onValueChange={(value: any) => updateFilters({ sortBy: value })}>
+            <Select value={filters.sortBy} onValueChange={(value: "featured" | "name" | "distance") => updateFilters({ sortBy: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

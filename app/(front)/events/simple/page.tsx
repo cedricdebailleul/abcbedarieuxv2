@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,17 +9,18 @@ import { EventCard } from "@/components/events/event-card";
 import { getPublicEventsAction } from "@/actions/event";
 
 // Force dynamic rendering
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Événements à Bédarieux - Agenda local",
-  description: "Découvrez tous les événements, concerts, festivals et activités à Bédarieux et ses environs.",
+  description:
+    "Découvrez tous les événements, concerts, festivals et activités à Bédarieux et ses environs.",
 };
 
 export default async function SimpleEventsPage() {
   // Charger les événements sans filtres pour tester
   const eventsResult = await getPublicEventsAction({
-    limit: 24
+    limit: 24,
   });
 
   const events = eventsResult.success ? eventsResult.data! : [];
@@ -30,17 +31,21 @@ export default async function SimpleEventsPage() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <Calendar className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">Agenda des événements</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Agenda des événements
+          </h1>
         </div>
         <p className="text-muted-foreground">
-          Découvrez tous les événements, concerts, festivals et activités à Bédarieux et ses environs
+          Découvrez tous les événements, concerts, festivals et activités à
+          Bédarieux et ses environs
         </p>
       </div>
 
       {/* Statistiques */}
       <div className="mb-6">
         <p className="text-muted-foreground">
-          {events.length} événement{events.length > 1 ? 's' : ''} trouvé{events.length > 1 ? 's' : ''}
+          {events.length} événement{events.length > 1 ? "s" : ""} trouvé
+          {events.length > 1 ? "s" : ""}
         </p>
       </div>
 
@@ -57,18 +62,29 @@ export default async function SimpleEventsPage() {
                 Aucun événement trouvé
               </h3>
               <p className="text-muted-foreground mb-6">
-                Aucun événement n'est programmé pour le moment.
+                Aucun événement n&apos;est programmé pour le moment.
               </p>
               <Button asChild>
-                <Link href="/dashboard/events/new">
-                  Organiser un événement
-                </Link>
+                <Link href="/dashboard/events/new">Organiser un événement</Link>
               </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => (
-                <EventCard key={event.id} event={event} />
+                <EventCard
+                  key={event.id}
+                  event={{
+                    ...event,
+                    slug: (event as { slug?: string }).slug ?? event.id,
+                    summary: (event as { summary?: string | null }).summary,
+                    isAllDay: !!event.isAllDay,
+                    isFeatured: !!event.isFeatured,
+                    isFree: !!event.isFree,
+                    _count: { participants: event._count?.participants ?? 0 },
+                    startDate: event.startDate ?? new Date(),
+                    endDate: event.endDate ?? new Date(),
+                  }}
+                />
               ))}
             </div>
           )}

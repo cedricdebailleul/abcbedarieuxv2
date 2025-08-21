@@ -24,7 +24,10 @@ export async function GET(
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     try {
@@ -60,94 +63,97 @@ export async function GET(
         openedStats,
         clickedStats,
         failedStats,
-        timelineStats
+        timelineStats,
       ] = await Promise.all([
         // Emails envoyés
         prisma.newsletterCampaignSent.count({
-          where: { campaignId: id }
+          where: { campaignId: id },
         }),
 
         // Emails livrés
         prisma.newsletterCampaignSent.count({
-          where: { 
+          where: {
             campaignId: id,
-            status: { in: ['DELIVERED', 'OPENED', 'CLICKED'] }
-          }
+            status: { in: ["DELIVERED", "OPENED", "CLICKED"] },
+          },
         }),
 
         // Emails ouverts
         prisma.newsletterCampaignSent.count({
           where: {
             campaignId: id,
-            openedAt: { not: null }
-          }
+            openedAt: { not: null },
+          },
         }),
 
         // Liens cliqués
         prisma.newsletterCampaignSent.count({
           where: {
             campaignId: id,
-            clickedAt: { not: null }
-          }
+            clickedAt: { not: null },
+          },
         }),
 
         // Emails échoués
         prisma.newsletterCampaignSent.count({
           where: {
             campaignId: id,
-            status: 'FAILED'
-          }
+            status: "FAILED",
+          },
         }),
 
         // Timeline des événements (dernières 24h par heure)
         prisma.newsletterCampaignSent.groupBy({
-          by: ['status'],
+          by: ["status"],
           where: {
             campaignId: id,
             sentAt: {
-              gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
-            }
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            },
           },
           _count: {
-            id: true
-          }
-        })
+            id: true,
+          },
+        }),
       ]);
 
       // Calculer les taux
-      const openRate = deliveredStats > 0 ? Math.round((openedStats / deliveredStats) * 100) : 0;
-      const clickRate = openedStats > 0 ? Math.round((clickedStats / openedStats) * 100) : 0;
-      const deliveryRate = sentStats > 0 ? Math.round((deliveredStats / sentStats) * 100) : 0;
-      const failureRate = sentStats > 0 ? Math.round((failedStats / sentStats) * 100) : 0;
+      const openRate =
+        deliveredStats > 0
+          ? Math.round((openedStats / deliveredStats) * 100)
+          : 0;
+      const clickRate =
+        openedStats > 0 ? Math.round((clickedStats / openedStats) * 100) : 0;
+      const deliveryRate =
+        sentStats > 0 ? Math.round((deliveredStats / sentStats) * 100) : 0;
+      const failureRate =
+        sentStats > 0 ? Math.round((failedStats / sentStats) * 100) : 0;
 
       // Récupérer les détails des erreurs
       const errorDetails = await prisma.newsletterCampaignSent.findMany({
         where: {
           campaignId: id,
-          status: 'FAILED',
-          errorMessage: { not: null }
+          status: "FAILED",
+          errorMessage: { not: null },
         },
         select: {
           errorMessage: true,
           sentAt: true,
           subscriber: {
             select: {
-              email: true
-            }
-          }
+              email: true,
+            },
+          },
         },
-        orderBy: { sentAt: 'desc' },
-        take: 10 // Dernières 10 erreurs
+        orderBy: { sentAt: "desc" },
+        take: 10, // Dernières 10 erreurs
       });
 
       // Activité récente (dernières ouvertures/clics)
       const recentActivity = await prisma.newsletterCampaignSent.findMany({
         where: {
           campaignId: id,
-          OR: [
-            { openedAt: { not: null } },
-            { clickedAt: { not: null } }
-          ]
+          OR: [{ openedAt: { not: null } }, { clickedAt: { not: null } }],
         },
         select: {
           openedAt: true,
@@ -156,15 +162,12 @@ export async function GET(
             select: {
               email: true,
               firstName: true,
-              lastName: true
-            }
-          }
+              lastName: true,
+            },
+          },
         },
-        orderBy: [
-          { clickedAt: 'desc' },
-          { openedAt: 'desc' }
-        ],
-        take: 20 // 20 dernières activités
+        orderBy: [{ clickedAt: "desc" }, { openedAt: "desc" }],
+        take: 20, // 20 dernières activités
       });
 
       return NextResponse.json({
@@ -199,31 +202,32 @@ export async function GET(
             opened: campaign.totalOpened,
             clicked: campaign.totalClicked,
             unsubscribed: campaign.totalUnsubscribed,
-          }
+          },
         },
         timeline: timelineStats,
         errors: errorDetails,
-        recentActivity: recentActivity.map(activity => ({
+        recentActivity: recentActivity.map((activity) => ({
           email: activity.subscriber.email,
           name: activity.subscriber.firstName || activity.subscriber.email,
-          action: activity.clickedAt ? 'clicked' : 'opened',
+          action: activity.clickedAt ? "clicked" : "opened",
           timestamp: activity.clickedAt || activity.openedAt,
-        }))
+        })),
       });
-
-    } catch (prismaError: any) {
-      if (prismaError.message?.includes("newsletterCampaign")) {
+    } catch (prismaError: unknown) {
+      if (
+        prismaError instanceof Error &&
+        prismaError.message.includes("newsletterCampaign")
+      ) {
         return NextResponse.json(
-          { 
+          {
             error: "Les tables de newsletter ne sont pas encore créées.",
-            migrationRequired: true
+            migrationRequired: true,
           },
           { status: 500 }
         );
       }
       throw prismaError;
     }
-
   } catch (error) {
     console.error("Erreur lors de la récupération des statistiques:", error);
     return NextResponse.json(

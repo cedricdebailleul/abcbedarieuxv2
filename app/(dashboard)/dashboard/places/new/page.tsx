@@ -7,7 +7,20 @@ import { PlaceForm } from "@/components/forms/place-form";
 export default function NewPlacePage() {
   const router = useRouter();
 
-  const handleSubmit = async (data: any) => {
+  interface PlaceData {
+    name: string;
+    type: string;
+    street: string;
+    postalCode: string;
+    city: string;
+    category?: string;
+    categories?: string[];
+    description?: string;
+    summary?: string;
+    [key: string]: string | number | boolean | string[] | undefined; // Adjust fields as per your requirements
+  }
+
+  const handleSubmit = async (data: PlaceData) => {
     try {
       const response = await fetch("/api/places", {
         method: "POST",
@@ -22,15 +35,19 @@ export default function NewPlacePage() {
         throw new Error(error.error || "Erreur lors de la création");
       }
 
-      const _result = await response.json();
-
-      toast.success("Place créée avec succès! Elle sera vérifiée par un administrateur.");
+      toast.success(
+        "Place créée avec succès! Elle sera vérifiée par un administrateur."
+      );
 
       // Rediriger vers la liste des places
       router.push("/dashboard/places");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur:", error);
-      toast.error(error.message || "Erreur lors de la création de la place");
+      if (error instanceof Error) {
+        toast.error(error.message || "Erreur lors de la création de la place");
+      } else {
+        toast.error("Erreur lors de la création de la place");
+      }
       throw error; // Re-lancer pour que le PlaceForm gère l'état de loading
     }
   };
@@ -39,10 +56,12 @@ export default function NewPlacePage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* En-tête */}
       <div className="border-b border-gray-200 pb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Créer une nouvelle place</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Créer une nouvelle place
+        </h1>
         <p className="text-gray-600 mt-2">
-          Ajoutez votre établissement au répertoire local. Votre place sera vérifiée par un
-          administrateur avant publication.
+          Ajoutez votre établissement au répertoire local. Votre place sera
+          vérifiée par un administrateur avant publication.
         </p>
       </div>
 
@@ -67,10 +86,15 @@ export default function NewPlacePage() {
           <div>
             <h3 className="text-blue-900 font-medium">À savoir</h3>
             <ul className="text-blue-800 text-sm mt-2 space-y-1">
-              <li>• Votre place sera en attente de validation après création</li>
+              <li>
+                • Votre place sera en attente de validation après création
+              </li>
               <li>• Vous recevrez un email une fois la validation effectuée</li>
-              <li>• Utilisez la recherche Google pour importer automatiquement les informations</li>
-              <li>• Tous les champs marqués d'un * sont obligatoires</li>
+              <li>
+                • Utilisez la recherche Google pour importer automatiquement les
+                informations
+              </li>
+              <li>• Tous les champs marqués d&apos;un * sont obligatoires</li>
             </ul>
           </div>
         </div>

@@ -5,144 +5,146 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const categoriesParam = searchParams.get("categories");
+    const limitParam = searchParams.get("limit");
 
     if (!query || query.length < 2) {
-      return NextResponse.json({ results: [] });
+      return NextResponse.json({ results: [], total: 0 });
     }
 
-    const searchTerms = query.toLowerCase().trim();
+    const searchQuery = query.trim();
+    const categories = categoriesParam
+      ? categoriesParam.split(",").filter(Boolean)
+      : [];
+    const limit = parseInt(limitParam || "50");
 
-    // Rechercher dans les places
-    const places = await prisma.place.findMany({
-      where: {
-        AND: [
-          { status: "ACTIVE" },
-          {
-            OR: [
-              { name: { contains: searchTerms, mode: "insensitive" } },
-              { description: { contains: searchTerms, mode: "insensitive" } },
-              { street: { contains: searchTerms, mode: "insensitive" } },
-              { city: { contains: searchTerms, mode: "insensitive" } },
-            ],
-          },
-        ],
-      },
-      take: Math.floor(limit * 0.6), // 60% pour les places
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        slug: true,
-        street: true,
-        city: true,
-        type: true,
-      },
+    const results = [];
+
+    // Search in Places if no categories specified or 'places' is included
+    if (categories.length === 0 || categories.includes("places")) {
+      const places = await prisma.place.findMany({
+        where: {
+          name: { contains: searchQuery, mode: "insensitive" },
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          slug: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        take: 20,
+        orderBy: { updatedAt: "desc" },
+      });
+
+      results.push(
+        ...places.map((place) => ({
+          ...place,
+          title: place.name,
+          type: "place" as const,
+        }))
+      );
+    }
+
+    // Search in Events if no categories specified or 'events' is included
+    if (categories.length === 0 || categories.includes("events")) {
+      const events = await prisma.event.findMany({
+        where: {
+          title: { contains: searchQuery, mode: "insensitive" },
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          slug: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        take: 20,
+        orderBy: { updatedAt: "desc" },
+      });
+
+      results.push(
+        ...events.map((event) => ({
+          ...event,
+          type: "event" as const,
+        }))
+      );
+    }
+
+    // Search in Actions if no categories specified or 'actions' is included
+    if (categories.length === 0 || categories.includes("actions")) {
+      const actions = await prisma.action.findMany({
+        where: {
+          title: { contains: searchQuery, mode: "insensitive" },
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          slug: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        take: 20,
+        orderBy: { updatedAt: "desc" },
+      });
+
+      results.push(
+        ...actions.map((action) => ({
+          ...action,
+          type: "action" as const,
+        }))
+      );
+    }
+
+    // Search in Posts if no categories specified or 'posts' is included
+    if (categories.length === 0 || categories.includes("posts")) {
+      const posts = await prisma.post.findMany({
+        where: {
+          title: { contains: searchQuery, mode: "insensitive" },
+        },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        take: 20,
+        orderBy: { updatedAt: "desc" },
+      });
+
+      results.push(
+        ...posts.map((post) => ({
+          ...post,
+          type: "post" as const,
+        }))
+      );
+    }
+
+    // Sort all results by updatedAt desc
+    results.sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+
+    // Limit results
+    const limitedResults = results.slice(0, limit);
+
+    return NextResponse.json({
+      success: true,
+      results: limitedResults,
+      total: limitedResults.length,
+      query: searchQuery,
+      categories: categories,
     });
-
-    // Rechercher dans les événements
-    const events = await prisma.event.findMany({
-      where: {
-        AND: [
-          { status: "PUBLISHED" },
-          { startDate: { gte: new Date() } }, // Événements futurs seulement
-          {
-            OR: [
-              { title: { contains: searchTerms, mode: "insensitive" } },
-              { description: { contains: searchTerms, mode: "insensitive" } },
-              { summary: { contains: searchTerms, mode: "insensitive" } },
-              { locationName: { contains: searchTerms, mode: "insensitive" } },
-              { locationAddress: { contains: searchTerms, mode: "insensitive" } },
-              { locationCity: { contains: searchTerms, mode: "insensitive" } },
-            ],
-          },
-        ],
-      },
-      take: Math.floor(limit * 0.3), // 30% pour les événements
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        slug: true,
-        startDate: true,
-        locationName: true,
-        locationAddress: true,
-        locationCity: true,
-        category: true,
-      },
-    });
-
-    // Rechercher dans les catégories
-    const categories = await prisma.placeCategory.findMany({
-      where: {
-        AND: [
-          { isActive: true },
-          {
-            OR: [
-              { name: { contains: searchTerms, mode: "insensitive" } },
-              { description: { contains: searchTerms, mode: "insensitive" } },
-            ],
-          },
-        ],
-      },
-      take: Math.floor(limit * 0.1), // 10% pour les catégories
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        slug: true,
-        placeCount: true,
-      },
-    });
-
-    // Formater les résultats
-    const results = [
-      // Places
-      ...places.map((place) => ({
-        id: place.id,
-        name: place.name,
-        description: place.description?.substring(0, 150) + (place.description && place.description.length > 150 ? "..." : ""),
-        type: "place" as const,
-        slug: place.slug,
-        location: `${place.street}, ${place.city}`,
-      })),
-      // Événements
-      ...events.map((event) => ({
-        id: event.id,
-        name: event.title,
-        description: event.description?.substring(0, 150) + (event.description && event.description.length > 150 ? "..." : ""),
-        type: "event" as const,
-        slug: event.slug,
-        location: event.locationName || 
-                  (event.locationAddress && event.locationCity ? `${event.locationAddress}, ${event.locationCity}` : 
-                   event.locationCity || undefined),
-        date: event.startDate.toLocaleDateString("fr-FR", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }),
-        category: event.category,
-      })),
-      // Catégories
-      ...categories.map((category) => ({
-        id: category.id,
-        name: category.name,
-        description: category.description?.substring(0, 150) + (category.description && category.description.length > 150 ? "..." : ""),
-        type: "category" as const,
-        slug: category.slug,
-        location: `${category.placeCount} établissement${category.placeCount > 1 ? "s" : ""}`,
-      })),
-    ];
-
-    return NextResponse.json({ 
-      results: results.slice(0, limit),
-      total: results.length 
-    });
-
   } catch (error) {
-    console.error("Erreur API search:", error);
+    console.error("Search error:", error);
+
     return NextResponse.json(
-      { error: "Erreur lors de la recherche" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

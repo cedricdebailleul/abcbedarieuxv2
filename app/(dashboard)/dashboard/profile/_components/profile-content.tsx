@@ -27,28 +27,6 @@ import EmailVerification from "./email-verification";
 import ProfileEditForm from "./profile-edit-form";
 import NewsletterPreferences from "./newsletter-preferences";
 
-const transformUserData = (dbUser: any): UserData => {
-  return {
-    ...dbUser,
-    badges:
-      dbUser.badges?.map((userBadge: any) => ({
-        id: userBadge.id,
-        earnedAt: userBadge.earnedAt,
-        reason: userBadge.reason ?? undefined, // Convertir null en undefined
-        isVisible: userBadge.isVisible,
-        badge: {
-          id: userBadge.badge.id,
-          title: userBadge.badge.title,
-          description: userBadge.badge.description,
-          iconUrl: userBadge.badge.iconUrl,
-          color: userBadge.badge.color,
-          category: userBadge.badge.category.toString(), // Convertir enum en string
-          rarity: userBadge.badge.rarity.toString(), // Convertir enum en string
-        },
-      })) || [],
-  };
-};
-
 interface UserData {
   id: string;
   name: string;
@@ -114,8 +92,8 @@ export default function ProfileContent({
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState(user);
 
-  const handleProfileUpdate = (updatedUser: any) => {
-    setUserData(updatedUser);
+  const handleProfileUpdate = (updatedUser: UserData) => {
+    setUserData({ ...updatedUser, createdAt: userData.createdAt });
     setIsEditing(false);
   };
 
@@ -467,7 +445,24 @@ export default function ProfileContent({
 
         <TabsContent value="edit">
           <ProfileEditForm
-            user={userData}
+            user={{
+              ...userData,
+              badges: userData.badges.map((badge) => ({
+                id: badge.id,
+                earnedAt: badge.earnedAt,
+                reason: badge.reason,
+                isVisible: badge.isVisible,
+                badge: {
+                  id: badge.badge.id,
+                  title: badge.badge.title,
+                  description: badge.badge.description,
+                  iconUrl: badge.badge.iconUrl,
+                  color: badge.badge.color,
+                  category: badge.badge.category,
+                  rarity: badge.badge.rarity,
+                },
+              })),
+            }}
             onUpdate={handleProfileUpdate}
             onCancel={() => setIsEditing(false)}
           />

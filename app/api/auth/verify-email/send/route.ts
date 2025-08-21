@@ -1,10 +1,10 @@
 import { headers } from "next/headers";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { sendEmail } from "@/lib/mailer";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
     // Vérifier l'authentification
     const session = await auth.api.getSession({
@@ -22,11 +22,17 @@ export async function POST(_request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Utilisateur introuvable" },
+        { status: 404 }
+      );
     }
 
     if (user.emailVerified) {
-      return NextResponse.json({ error: "Email déjà vérifié" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Email déjà vérifié" },
+        { status: 400 }
+      );
     }
 
     // Supprimer les anciens tokens de vérification
@@ -91,6 +97,9 @@ export async function POST(_request: NextRequest) {
   } catch (error) {
     console.error("Erreur lors de l'envoi du code de vérification:", error);
 
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

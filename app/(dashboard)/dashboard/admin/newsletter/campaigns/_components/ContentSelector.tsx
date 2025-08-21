@@ -39,23 +39,6 @@ export function ContentSelector({ items, selectedIds, onToggle, type }: ContentS
     }
   };
 
-  const formatDate = (dateString: string, isAllDay?: boolean) => {
-    const date = new Date(dateString);
-    if (isAllDay) {
-      return date.toLocaleDateString('fr-FR', { 
-        weekday: 'long', 
-        day: 'numeric', 
-        month: 'long' 
-      });
-    }
-    return date.toLocaleDateString('fr-FR', { 
-      weekday: 'short', 
-      day: 'numeric', 
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   const getTypeLabel = (type: string) => {
     switch (type) {

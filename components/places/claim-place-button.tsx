@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
 
@@ -27,14 +27,14 @@ export function ClaimPlaceButton({
   placeName,
   hasOwner,
 }: ClaimPlaceButtonProps) {
-  const { data: session, status } = useSession();
+  const { data: status } = useSession();
   const [claimStatus, setClaimStatus] = useState<ClaimStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [claimMessage, setClaimMessage] = useState("");
   const [proofUrl, setProofUrl] = useState("");
 
-  const fetchClaimStatus = async () => {
+  const fetchClaimStatus = useCallback(async () => {
     try {
       const response = await fetch(`/api/places/${placeId}/claim`);
       if (response.ok) {
@@ -44,10 +44,10 @@ export function ClaimPlaceButton({
     } catch (error) {
       console.error("Erreur lors de la vérification du statut:", error);
     }
-  };
+  }, [placeId]);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status && status.user) {
       fetchClaimStatus();
     }
   }, [status, fetchClaimStatus]);
@@ -83,9 +83,9 @@ export function ClaimPlaceButton({
       setClaimMessage("");
       setProofUrl("");
       fetchClaimStatus(); // Recharger le statut
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur:", error);
-      toast.error(error.message || "Erreur lors de la revendication");
+      toast.error((error as Error).message || "Erreur lors de la revendication");
     } finally {
       setLoading(false);
     }
@@ -117,11 +117,11 @@ export function ClaimPlaceButton({
     }
   };
 
-  if (status === "loading") {
+  if (!status) {
     return null;
   }
 
-  if (status === "unauthenticated") {
+  if (status?.state === "unauthenticated") {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-blue-800 text-sm">
@@ -187,7 +187,7 @@ export function ClaimPlaceButton({
           </span>
         </div>
 
-        <p className="text-sm text-gray-700 mb-3">"{latestClaim.message}"</p>
+        <p className="text-sm text-gray-700 mb-3">&quot;{latestClaim.message}&quot;</p>
 
         {latestClaim.adminMessage && (
           <div className="bg-blue-50 border border-blue-200 rounded p-3">
@@ -226,7 +226,7 @@ export function ClaimPlaceButton({
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <h3 className="font-medium text-gray-900 mb-4">
-          Revendiquer "{placeName}"
+          Revendiquer &quot;{placeName}&quot;
         </h3>
 
         <div className="space-y-4">

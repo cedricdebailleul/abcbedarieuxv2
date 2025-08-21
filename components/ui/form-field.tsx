@@ -2,9 +2,15 @@
 
 import type { ReactNode } from "react";
 import type { FieldPath, UseFormReturn } from "react-hook-form";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-interface FormFieldWrapperProps<T extends Record<string, any>> {
+interface FormFieldWrapperProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>;
   name: FieldPath<T>;
   label: string;
@@ -12,7 +18,7 @@ interface FormFieldWrapperProps<T extends Record<string, any>> {
   description?: string;
 }
 
-export function FormFieldWrapper<T extends Record<string, any>>({
+export function FormFieldWrapper<T extends Record<string, unknown>>({
   form,
   name,
   label,
@@ -23,11 +29,13 @@ export function FormFieldWrapper<T extends Record<string, any>>({
     <FormField
       control={form.control}
       name={name}
-      render={({ field }) => (
+      render={() => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>{children}</FormControl>
-          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
+          )}
           <FormMessage />
         </FormItem>
       )}

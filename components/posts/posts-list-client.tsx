@@ -1,9 +1,6 @@
 "use client";
 
 import {
-  Archive,
-  Calendar,
-  Clock,
   Edit,
   Eye,
   Folder,
@@ -14,7 +11,6 @@ import {
   Tag as TagIcon,
   Trash2,
   User,
-  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -48,9 +44,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Type definitions for API responses (matches exactly what getPostsAction returns)
+// type PostFromAPI = {
+//   id: string;
+//   title: string;
+//   slug: string;
+//   author: { id: string; name: string };
+//   category?: { id: string; name: string };
+//   tags: { tag: { id: string; name: string } }[];
+// };
+
 interface PostsListClientProps {
   initialData: {
-    posts: any[];
+    posts: {
+      id: string;
+      title: string;
+      slug: string;
+      author: { id: string; name: string };
+      category?: { id: string; name: string };
+      tags: { tag: { id: string; name: string } }[];
+    }[];
     total: number;
     pages: number;
   };
@@ -76,7 +89,9 @@ export function PostsListClient({
 }: PostsListClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [posts, setPosts] = useState<any[]>(initialData.posts);
+  const [posts, setPosts] = useState<
+    PostsListClientProps["initialData"]["posts"]
+  >(initialData.posts);
   const [total, setTotal] = useState(initialData.total);
   const [pages, setPages] = useState(initialData.pages);
   const [isLoading, setIsLoading] = useState(false);
@@ -109,7 +124,7 @@ export function PostsListClient({
             | "ARCHIVED"
             | "REJECTED"
             | undefined,
-          published: searchParams.published === "true" ? true : undefined
+          published: searchParams.published === "true" ? true : undefined,
         };
 
         const result = await getPostsAction(filters);
@@ -133,34 +148,34 @@ export function PostsListClient({
   }, [searchParams, userId]);
 
   // Fonctions utilitaires
-  const getStatusColor = (status: string, published: boolean) => {
-    if (published && status === "PUBLISHED")
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-    if (status === "PENDING_REVIEW")
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-    if (status === "REJECTED")
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-    if (status === "ARCHIVED")
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-    return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-  };
+  // const getStatusColor = (status: string, published: boolean) => {
+  //   if (published && status === "PUBLISHED")
+  //     return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+  //   if (status === "PENDING_REVIEW")
+  //     return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+  //   if (status === "REJECTED")
+  //     return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+  //   if (status === "ARCHIVED")
+  //     return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+  //   return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+  // };
 
-  const getStatusIcon = (status: string, published: boolean) => {
-    if (published && status === "PUBLISHED")
-      return <Globe className="h-3 w-3" />;
-    if (status === "PENDING_REVIEW") return <Clock className="h-3 w-3" />;
-    if (status === "REJECTED") return <XCircle className="h-3 w-3" />;
-    if (status === "ARCHIVED") return <Archive className="h-3 w-3" />;
-    return <Edit className="h-3 w-3" />;
-  };
+  // const getStatusIcon = (status: string, published: boolean) => {
+  //   if (published && status === "PUBLISHED")
+  //     return <Globe className="h-3 w-3" />;
+  //   if (status === "PENDING_REVIEW") return <Clock className="h-3 w-3" />;
+  //   if (status === "REJECTED") return <XCircle className="h-3 w-3" />;
+  //   if (status === "ARCHIVED") return <Archive className="h-3 w-3" />;
+  //   return <Edit className="h-3 w-3" />;
+  // };
 
-  const getStatusText = (status: string, published: boolean) => {
-    if (published && status === "PUBLISHED") return "Publié";
-    if (status === "PENDING_REVIEW") return "En attente";
-    if (status === "REJECTED") return "Rejeté";
-    if (status === "ARCHIVED") return "Archivé";
-    return "Brouillon";
-  };
+  // const getStatusText = (status: string, published: boolean) => {
+  //   if (published && status === "PUBLISHED") return "Publié";
+  //   if (status === "PENDING_REVIEW") return "En attente";
+  //   if (status === "REJECTED") return "Rejeté";
+  //   if (status === "ARCHIVED") return "Archivé";
+  //   return "Brouillon";
+  // };
 
   // Gestion de la sélection
   const handleSelectAll = (checked: boolean) => {
@@ -389,27 +404,8 @@ export function PostsListClient({
                         >
                           {post.title}
                         </Link>
-                        <Badge
-                          className={getStatusColor(
-                            post.status,
-                            post.published
-                          )}
-                        >
-                          <div className="flex items-center space-x-1">
-                            {getStatusIcon(post.status, post.published)}
-                            <span>
-                              {getStatusText(post.status, post.published)}
-                            </span>
-                          </div>
-                        </Badge>
                       </div>
 
-                      {/* Extrait */}
-                      {post.excerpt && (
-                        <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
-                          {post.excerpt}
-                        </p>
-                      )}
 
                       {/* Métadonnées */}
                       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
@@ -418,32 +414,16 @@ export function PostsListClient({
                           <span>{post.author.name}</span>
                         </div>
 
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>
-                            {new Date(post.createdAt).toLocaleDateString(
-                              "fr-FR"
-                            )}
-                          </span>
-                        </div>
 
                         {post.category && (
                           <div className="flex items-center space-x-1">
                             <Folder className="h-3 w-3" />
                             <div className="flex items-center space-x-1">
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: post.category.color }}
-                              />
                               <span>{post.category.name}</span>
                             </div>
                           </div>
                         )}
 
-                        <div className="flex items-center space-x-1">
-                          <Eye className="h-3 w-3" />
-                          <span>{post.viewCount} vues</span>
-                        </div>
 
                         {post.tags.length > 0 && (
                           <div className="flex items-center space-x-1">
@@ -459,15 +439,11 @@ export function PostsListClient({
                       {/* Tags */}
                       {post.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {post.tags.slice(0, 3).map((postTag: any) => (
+                          {post.tags.slice(0, 3).map((postTag: { tag: { id: string; name: string } }) => (
                             <Badge
                               key={postTag.tag.id}
                               variant="outline"
                               className="text-xs"
-                              style={{
-                                borderColor: postTag.tag.color || "#6B7280",
-                                color: postTag.tag.color || "#6B7280",
-                              }}
                             >
                               {postTag.tag.name}
                             </Badge>

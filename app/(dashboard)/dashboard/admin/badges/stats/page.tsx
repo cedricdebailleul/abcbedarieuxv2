@@ -79,7 +79,8 @@ export default async function BadgeStatsPage() {
               Statistiques des badges
             </h1>
             <p className="text-muted-foreground">
-              Analyse détaillée de l'utilisation des badges sur la plateforme
+              Analyse détaillée de l&apos;utilisation des badges sur la
+              plateforme
             </p>
           </div>
         </div>

@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AdminGuard } from "@/components/auth/admin-guard";
 import { useSession } from "@/hooks/use-session";
+import Image from "next/image";
 
 interface Claim {
   id: string;
@@ -50,9 +50,6 @@ interface ApiResponse {
 
 function AdminClaimsContent() {
   const { data: session, status } = useSession();
-  const searchParams = useSearchParams();
-  const _placeFilter = searchParams.get("place");
-
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -188,8 +185,12 @@ function AdminClaimsContent() {
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Revendications de Places</h1>
-          <p className="text-gray-600">Gérez les demandes de revendication des utilisateurs</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Revendications de Places
+          </h1>
+          <p className="text-gray-600">
+            Gérez les demandes de revendication des utilisateurs
+          </p>
         </div>
 
         {pendingCount > 0 && (
@@ -261,22 +262,29 @@ function AdminClaimsContent() {
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">Aucune revendication trouvée</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            Aucune revendication trouvée
+          </h3>
           <p className="text-gray-600">
             {statusFilter === "all"
               ? "Aucune revendication dans le système."
-              : `Aucune revendication avec le statut "${getStatusText(statusFilter)}".`}
+              : `Aucune revendication avec le statut "${getStatusText(
+                  statusFilter
+                )}".`}
           </p>
         </div>
       ) : (
         <div className="space-y-6">
           {claims.map((claim) => (
-            <div key={claim.id} className="bg-white rounded-lg border border-gray-200 p-6">
+            <div
+              key={claim.id}
+              className="bg-white rounded-lg border border-gray-200 p-6"
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-start gap-4">
                     {claim.user.image && (
-                      <img
+                      <Image
                         src={claim.user.image}
                         alt={claim.user.name}
                         className="w-10 h-10 rounded-full"
@@ -284,7 +292,7 @@ function AdminClaimsContent() {
                     )}
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        Revendication pour "{claim.place.name}"
+                        Revendication pour &quot;{claim.place.name}&quot;
                       </h3>
                       <p className="text-sm text-gray-600 mb-2">
                         Par {claim.user.name} ({claim.user.email})
@@ -294,7 +302,8 @@ function AdminClaimsContent() {
                       </p>
                       {claim.place.owner && (
                         <p className="text-sm text-gray-500">
-                          Propriétaire actuel: {claim.place.owner.name} ({claim.place.owner.email})
+                          Propriétaire actuel: {claim.place.owner.name} (
+                          {claim.place.owner.email})
                         </p>
                       )}
                     </div>
@@ -318,12 +327,18 @@ function AdminClaimsContent() {
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <h4 className="font-medium text-gray-900 mb-2">Message de revendication:</h4>
-                <p className="text-gray-700 whitespace-pre-wrap">{claim.message}</p>
+                <h4 className="font-medium text-gray-900 mb-2">
+                  Message de revendication:
+                </h4>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {claim.message}
+                </p>
 
                 {claim.proof && (
                   <div className="mt-3">
-                    <h5 className="font-medium text-gray-900 mb-1">Preuve fournie:</h5>
+                    <h5 className="font-medium text-gray-900 mb-1">
+                      Preuve fournie:
+                    </h5>
                     <a
                       href={claim.proof}
                       target="_blank"
@@ -338,7 +353,9 @@ function AdminClaimsContent() {
 
               {claim.status !== "PENDING" && claim.adminMessage && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <h4 className="font-medium text-blue-900 mb-2">Message admin:</h4>
+                  <h4 className="font-medium text-blue-900 mb-2">
+                    Message admin:
+                  </h4>
                   <p className="text-blue-800">{claim.adminMessage}</p>
                   {claim.processedAt && (
                     <p className="text-xs text-blue-600 mt-2">
@@ -427,7 +444,9 @@ function AdminClaimsContent() {
               Précédent
             </button>
             <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              onClick={() =>
+                setCurrentPage(Math.min(totalPages, currentPage + 1))
+              }
               disabled={currentPage === totalPages}
               className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
@@ -452,7 +471,11 @@ function AdminClaimsContent() {
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
                   <span className="sr-only">Précédent</span>
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
@@ -479,12 +502,18 @@ function AdminClaimsContent() {
                 })}
 
                 <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
                   <span className="sr-only">Suivant</span>
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"

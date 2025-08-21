@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FolderTree, Eye, EyeOff, Folder } from "lucide-react";
+import { FolderTree, Eye, Folder } from "lucide-react";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getPlaceCategoryStatsAction } from "@/actions/place-category";
 
 export function PlaceCategoryStatsCards() {
-  const [stats, setStats] = useState<any>(null);
+  interface PlaceCategoryStats {
+    total: number;
+    active: number;
+    rootCategories: number;
+    subCategories: number;
+  }
+
+  const [stats, setStats] = useState<PlaceCategoryStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,11 +25,13 @@ export function PlaceCategoryStatsCards() {
       try {
         const result = await getPlaceCategoryStatsAction();
         if (result.success) {
-          setStats(result.data);
+          setStats(result.data ?? null);
         } else {
-          toast.error(result.error || "Erreur lors du chargement des statistiques");
+          toast.error(
+            result.error || "Erreur lors du chargement des statistiques"
+          );
         }
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors du chargement des statistiques");
       }
       setLoading(false);
@@ -59,14 +68,14 @@ export function PlaceCategoryStatsCards() {
       {/* Total des catégories */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total catégories</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            Total catégories
+          </CardTitle>
           <FolderTree className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.total}</div>
-          <p className="text-xs text-muted-foreground">
-            Catégories créées
-          </p>
+          <p className="text-xs text-muted-foreground">Catégories créées</p>
         </CardContent>
       </Card>
 
@@ -77,12 +86,13 @@ export function PlaceCategoryStatsCards() {
           <Eye className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+          <div className="text-2xl font-bold text-green-600">
+            {stats.active}
+          </div>
           <p className="text-xs text-muted-foreground">
-            {stats.total > 0 
+            {stats.total > 0
               ? `${Math.round((stats.active / stats.total) * 100)}% du total`
-              : "0% du total"
-            }
+              : "0% du total"}
           </p>
         </CardContent>
       </Card>
@@ -90,11 +100,15 @@ export function PlaceCategoryStatsCards() {
       {/* Catégories racines */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Catégories racines</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            Catégories racines
+          </CardTitle>
           <Folder className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">{stats.rootCategories}</div>
+          <div className="text-2xl font-bold text-blue-600">
+            {stats.rootCategories}
+          </div>
           <p className="text-xs text-muted-foreground">
             Catégories principales
           </p>
@@ -108,10 +122,10 @@ export function PlaceCategoryStatsCards() {
           <FolderTree className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-purple-600">{stats.subCategories}</div>
-          <p className="text-xs text-muted-foreground">
-            Catégories enfants
-          </p>
+          <div className="text-2xl font-bold text-purple-600">
+            {stats.subCategories}
+          </div>
+          <p className="text-xs text-muted-foreground">Catégories enfants</p>
         </CardContent>
       </Card>
     </div>

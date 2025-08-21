@@ -91,10 +91,14 @@ export default async function CategoriesPage() {
     }
 
     // Icône Lucide
-    const IconComponent = (LucideIcons as any)[icon];
-    if (IconComponent) {
+    const IconComponent = LucideIcons[icon as keyof typeof LucideIcons];
+    if (
+      IconComponent &&
+      typeof IconComponent === "function" &&
+      "displayName" in IconComponent
+    ) {
       return (
-        <IconComponent className={size} style={{ color: color || undefined }} />
+        <IconComponent className={size} style={{ color: color || undefined }} iconNode={[]} />
       );
     }
 
@@ -237,8 +241,8 @@ export default async function CategoriesPage() {
             <div>
               <h3 className="font-medium mb-1">Explorez</h3>
               <p className="text-muted-foreground">
-                Parcourez les catégories pour trouver le type d'établissement
-                qui vous intéresse.
+                Parcourez les catégories pour trouver le type
+                d&apos;établissement qui vous intéresse.
               </p>
             </div>
           </div>
@@ -249,8 +253,8 @@ export default async function CategoriesPage() {
             <div>
               <h3 className="font-medium mb-1">Découvrez</h3>
               <p className="text-muted-foreground">
-                Consultez tous les établissements d'une catégorie avec leurs
-                informations détaillées.
+                Consultez tous les établissements d&apos;une catégorie avec
+                leurs informations détaillées.
               </p>
             </div>
           </div>
@@ -261,7 +265,7 @@ export default async function CategoriesPage() {
             <div>
               <h3 className="font-medium mb-1">Choisissez</h3>
               <p className="text-muted-foreground">
-                Lisez les avis et trouvez l'établissement parfait pour vos
+                Lisez les avis et trouvez l&apos;établissement parfait pour vos
                 besoins.
               </p>
             </div>

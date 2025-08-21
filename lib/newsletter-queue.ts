@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
-import { sendEmail, createNewsletterEmailTemplate } from '@/lib/email';
+import { prisma } from "@/lib/prisma";
+import { sendEmail, createNewsletterEmailTemplate } from "@/lib/email";
 
 interface QueueJob {
   id: string;
@@ -10,7 +10,7 @@ interface QueueJob {
   maxAttempts: number;
   scheduledAt: Date;
   processedAt?: Date | null;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
   error?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -32,11 +32,53 @@ interface EmailData {
   };
   baseUrl: string;
   selectedContent: {
-    events: any[];
-    places: any[];
-    posts: any[];
+    events: {
+      id: string;
+      title: string;
+      slug: string;
+      summary: string;
+      description: string;
+      startDate: Date;
+      endDate: Date;
+      isAllDay: boolean;
+      locationName: string;
+      locationAddress: string;
+      locationCity: string;
+      coverImage: string;
+      category: string;
+    }[];
+    places: {
+      id: string;
+      name: string;
+      slug: string;
+      summary: string;
+      description: string;
+      street: string;
+      city: string;
+      phone: string;
+      website: string;
+      logo: string;
+      coverImage: string;
+      type: string;
+    }[];
+    posts: {
+      id: string;
+      title: string;
+      slug: string;
+      excerpt: string;
+      coverImage: string;
+      publishedAt: Date;
+      author: {
+        name: string;
+      };
+    }[];
   };
-  attachments: any[];
+  attachments: {
+    originalName: string;
+    fileSize: number;
+    fileType: string;
+    filePath: string;
+  }[];
 }
 
 class NewsletterQueue {
@@ -45,29 +87,35 @@ class NewsletterQueue {
   private processingDelay = 1000; // 1 seconde entre chaque email
   private batchDelay = 5000; // 5 secondes entre chaque batch
 
-  async addToQueue(campaignId: string, subscriberIds: string[], priority: number = 0) {
+  async addToQueue(
+    campaignId: string,
+    subscriberIds: string[],
+    priority: number = 0
+  ) {
     try {
       // Ajouter les tâches à la base de données
-      const jobs = subscriberIds.map(subscriberId => ({
+      const jobs = subscriberIds.map((subscriberId) => ({
         campaignId,
         subscriberId,
         priority,
         attempts: 0,
         maxAttempts: 3,
         scheduledAt: new Date(),
-        status: 'PENDING' as const
+        status: "PENDING" as const,
       }));
 
       // Utiliser une transaction pour insérer tous les jobs
       await prisma.$transaction(async (tx) => {
         for (const job of jobs) {
           await tx.newsletterQueue.create({
-            data: job
+            data: job,
           });
         }
       });
 
-      console.log(`✅ ${jobs.length} emails ajoutés à la file d'attente pour la campagne ${campaignId}`);
+      console.log(
+        `✅ ${jobs.length} emails ajoutés à la file d'attente pour la campagne ${campaignId}`
+      );
 
       // Démarrer le traitement si ce n'est pas déjà en cours
       if (!this.isProcessing) {
@@ -76,19 +124,19 @@ class NewsletterQueue {
 
       return { success: true, queued: jobs.length };
     } catch (error) {
-      console.error('❌ Erreur lors de l\'ajout à la file d\'attente:', error);
+      console.error("❌ Erreur lors de l'ajout à la file d'attente:", error);
       throw error;
     }
   }
 
   async processQueue() {
     if (this.isProcessing) {
-      console.log('🔄 Traitement de la file d\'attente déjà en cours');
+      console.log("🔄 Traitement de la file d'attente déjà en cours");
       return;
     }
 
     this.isProcessing = true;
-    console.log('🚀 Démarrage du traitement de la file d\'attente');
+    console.log("🚀 Démarrage du traitement de la file d'attente");
 
     // Vérifier et corriger les campagnes qui peuvent être coincées en statut SENDING
     await this.updateCampaignStatuses();
@@ -98,27 +146,26 @@ class NewsletterQueue {
         // Récupérer le prochain batch de jobs en attente
         const pendingJobs = await prisma.newsletterQueue.findMany({
           where: {
-            status: 'PENDING',
-            scheduledAt: { lte: new Date() }
+            status: "PENDING",
+            scheduledAt: { lte: new Date() },
           },
-          orderBy: [
-            { priority: 'desc' },
-            { scheduledAt: 'asc' }
-          ],
-          take: this.batchSize
+          orderBy: [{ priority: "desc" }, { scheduledAt: "asc" }],
+          take: this.batchSize,
         });
 
         if (pendingJobs.length === 0) {
-          console.log('📭 Aucun job en attente, arrêt du traitement');
+          console.log("📭 Aucun job en attente, arrêt du traitement");
           break;
         }
 
-        console.log(`📧 Traitement d'un batch de ${pendingJobs.length} emails...`);
+        console.log(
+          `📧 Traitement d'un batch de ${pendingJobs.length} emails...`
+        );
 
         // Traiter chaque job du batch
         for (const job of pendingJobs) {
           await this.processJob(job);
-          
+
           // Délai entre chaque email pour éviter de surcharger le serveur SMTP
           if (pendingJobs.indexOf(job) < pendingJobs.length - 1) {
             await this.sleep(this.processingDelay);
@@ -132,10 +179,13 @@ class NewsletterQueue {
         await this.sleep(this.batchDelay);
       }
     } catch (error) {
-      console.error('❌ Erreur lors du traitement de la file d\'attente:', error);
+      console.error(
+        "❌ Erreur lors du traitement de la file d'attente:",
+        error
+      );
     } finally {
       this.isProcessing = false;
-      console.log('✅ Traitement de la file d\'attente terminé');
+      console.log("✅ Traitement de la file d'attente terminé");
     }
   }
 
@@ -144,14 +194,17 @@ class NewsletterQueue {
       // Marquer comme en cours de traitement
       await prisma.newsletterQueue.update({
         where: { id: job.id },
-        data: { status: 'PROCESSING' }
+        data: { status: "PROCESSING" },
       });
 
       // Récupérer les données nécessaires
-      const emailData = await this.getEmailData(job.campaignId, job.subscriberId);
-      
+      const emailData = await this.getEmailData(
+        job.campaignId,
+        job.subscriberId
+      );
+
       if (!emailData) {
-        throw new Error('Données email introuvables');
+        throw new Error("Données email introuvables");
       }
 
       // Créer l'URL de tracking
@@ -159,11 +212,11 @@ class NewsletterQueue {
       const unsubscribeUrl = `${emailData.baseUrl}/newsletter/unsubscribe?token=${emailData.subscriber.unsubscribeToken}`;
 
       // Mapper les pièces jointes pour le template email
-      const templateAttachments = emailData.attachments.map(attachment => ({
+      const templateAttachments = emailData.attachments.map((attachment) => ({
         name: attachment.originalName,
         size: attachment.fileSize,
         type: attachment.fileType,
-        url: `${emailData.baseUrl}${attachment.filePath}`
+        url: `${emailData.baseUrl}${attachment.filePath}`,
       }));
 
       // Générer le contenu de l'email
@@ -174,19 +227,31 @@ class NewsletterQueue {
         unsubscribeUrl,
         trackingPixelUrl,
         subscriberName: emailData.subscriber.firstName || undefined,
-        events: emailData.selectedContent.events,
+        events: emailData.selectedContent.events.map((event) => ({
+          title: event.title,
+          slug: event.slug,
+          coverImage: event.coverImage,
+          description: event.description,
+          startDate: event.startDate.toISOString(),
+          locationName: event.locationName,
+          locationAddress: event.locationAddress,
+          locationCity: event.locationCity,
+        })),
         places: emailData.selectedContent.places,
-        posts: emailData.selectedContent.posts,
+        posts: emailData.selectedContent.posts.map((post) => ({
+          ...post,
+          publishedAt: post.publishedAt.toISOString(),
+        })),
         attachments: templateAttachments,
         campaignId: job.campaignId,
-        subscriberId: job.subscriberId
+        subscriberId: job.subscriberId,
       });
 
       // Préparer les pièces jointes pour l'email
-      const emailAttachments = emailData.attachments.map(attachment => ({
+      const emailAttachments = emailData.attachments.map((attachment) => ({
         filename: attachment.originalName,
         path: `${process.cwd()}/public${attachment.filePath}`, // Chemin vers le fichier
-        contentType: attachment.fileType
+        contentType: attachment.fileType,
       }));
 
       // Envoyer l'email
@@ -194,17 +259,17 @@ class NewsletterQueue {
         to: emailData.subscriber.email,
         subject: emailData.campaign.subject,
         html: emailHtml,
-        attachments: emailAttachments.length > 0 ? emailAttachments : undefined
+        attachments: emailAttachments.length > 0 ? emailAttachments : undefined,
       });
 
       if (emailResult.success) {
         // Marquer le job comme réussi
         await prisma.newsletterQueue.update({
           where: { id: job.id },
-          data: { 
-            status: 'COMPLETED',
-            error: null
-          }
+          data: {
+            status: "COMPLETED",
+            error: null,
+          },
         });
 
         // Enregistrer l'envoi dans la table de suivi
@@ -212,35 +277,40 @@ class NewsletterQueue {
           where: {
             campaignId_subscriberId: {
               campaignId: job.campaignId,
-              subscriberId: job.subscriberId
-            }
+              subscriberId: job.subscriberId,
+            },
           },
           update: {
             sentAt: new Date(),
-            status: emailResult.development ? 'SENT' : 'DELIVERED'
+            status: emailResult.development ? "SENT" : "DELIVERED",
           },
           create: {
             campaignId: job.campaignId,
             subscriberId: job.subscriberId,
             sentAt: new Date(),
-            status: emailResult.development ? 'SENT' : 'DELIVERED'
-          }
+            status: emailResult.development ? "SENT" : "DELIVERED",
+          },
         });
 
-        console.log(`✅ Email envoyé avec succès à ${emailData.subscriber.firstName || 'subscriber'} (ID: ${emailData.subscriber.id})`);
+        console.log(
+          `✅ Email envoyé avec succès à ${
+            emailData.subscriber.firstName || "subscriber"
+          } (ID: ${emailData.subscriber.id})`
+        );
       } else {
-        throw new Error(emailResult.error || 'Erreur d\'envoi inconnue');
+        throw new Error(emailResult.error || "Erreur d'envoi inconnue");
       }
-
     } catch (error) {
       console.error(`❌ Erreur lors du traitement du job ${job.id}:`, error);
 
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      const errorMessage =
+        error instanceof Error ? error.message : "Erreur inconnue";
       const attempts = job.attempts + 1;
-      const status = attempts >= job.maxAttempts ? 'FAILED' : 'PENDING';
-      const scheduledAt = attempts < job.maxAttempts 
-        ? new Date(Date.now() + Math.pow(2, attempts) * 60000) // Backoff exponentiel
-        : undefined;
+      const status = attempts >= job.maxAttempts ? "FAILED" : "PENDING";
+      const scheduledAt =
+        attempts < job.maxAttempts
+          ? new Date(Date.now() + Math.pow(2, attempts) * 60000) // Backoff exponentiel
+          : undefined;
 
       await prisma.newsletterQueue.update({
         where: { id: job.id },
@@ -248,41 +318,44 @@ class NewsletterQueue {
           status,
           attempts,
           error: errorMessage,
-          ...(scheduledAt && { scheduledAt })
-        }
+          ...(scheduledAt && { scheduledAt }),
+        },
       });
 
-      if (status === 'FAILED') {
+      if (status === "FAILED") {
         // Enregistrer l'échec
         await prisma.newsletterCampaignSent.upsert({
           where: {
             campaignId_subscriberId: {
               campaignId: job.campaignId,
-              subscriberId: job.subscriberId
-            }
+              subscriberId: job.subscriberId,
+            },
           },
           update: {
-            status: 'FAILED',
-            errorMessage: errorMessage
+            status: "FAILED",
+            errorMessage: errorMessage,
           },
           create: {
             campaignId: job.campaignId,
             subscriberId: job.subscriberId,
-            status: 'FAILED',
-            errorMessage: errorMessage
-          }
+            status: "FAILED",
+            errorMessage: errorMessage,
+          },
         });
       }
     }
   }
 
-  private async getEmailData(campaignId: string, subscriberId: string): Promise<EmailData | null> {
+  private async getEmailData(
+    campaignId: string,
+    subscriberId: string
+  ): Promise<EmailData | null> {
     try {
       const campaign = await prisma.newsletterCampaign.findUnique({
         where: { id: campaignId },
         include: {
-          attachments: true
-        }
+          attachments: true,
+        },
       });
 
       const subscriber = await prisma.newsletterSubscriber.findUnique({
@@ -291,8 +364,8 @@ class NewsletterQueue {
           id: true,
           email: true,
           firstName: true,
-          unsubscribeToken: true
-        }
+          unsubscribeToken: true,
+        },
       });
 
       if (!campaign || !subscriber) {
@@ -302,7 +375,7 @@ class NewsletterQueue {
       // Récupérer les contenus sélectionnés basés sur les IDs
       const [events, places, posts] = await Promise.all([
         // Événements
-        campaign.includedEvents.length > 0 
+        campaign.includedEvents.length > 0
           ? prisma.event.findMany({
               where: { id: { in: campaign.includedEvents } },
               select: {
@@ -318,11 +391,11 @@ class NewsletterQueue {
                 locationAddress: true,
                 locationCity: true,
                 coverImage: true,
-                category: true
-              }
+                category: true,
+              },
             })
           : [],
-        
+
         // Places
         campaign.includedPlaces.length > 0
           ? prisma.place.findMany({
@@ -339,11 +412,11 @@ class NewsletterQueue {
                 website: true,
                 logo: true,
                 coverImage: true,
-                type: true
-              }
+                type: true,
+              },
             })
           : [],
-        
+
         // Posts
         campaign.includedPosts.length > 0
           ? prisma.post.findMany({
@@ -356,43 +429,65 @@ class NewsletterQueue {
                 coverImage: true,
                 publishedAt: true,
                 author: {
-                  select: { name: true }
-                }
-              }
+                  select: { name: true },
+                },
+              },
             })
-          : []
+          : [],
       ]);
 
-      const baseUrl = process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr';
+      const baseUrl = process.env.NEXTAUTH_URL || "https://abc-bedarieux.fr";
 
       return {
         subscriber: {
           ...subscriber,
-          unsubscribeToken: subscriber.unsubscribeToken || ''
+          unsubscribeToken: subscriber.unsubscribeToken || "",
         },
         campaign: {
           id: campaign.id,
           title: campaign.title,
           subject: campaign.subject,
           content: campaign.content,
-          type: campaign.type
+          type: campaign.type,
         },
         baseUrl,
         selectedContent: {
-          events,
-          places,
-          posts
+          events: events.map((event) => ({
+            ...event,
+            summary: event.summary || "",
+            description: event.description || "",
+            coverImage: event.coverImage || "",
+            category: event.category || "",
+            locationName: event.locationName || "",
+            locationAddress: event.locationAddress || "",
+            locationCity: event.locationCity || "",
+          })),
+          places: places.map((place) => ({
+            ...place,
+            summary: place.summary || "",
+            description: place.description || "",
+            phone: place.phone || "",
+            website: place.website || "",
+            logo: place.logo || "",
+            coverImage: place.coverImage || "",
+          })),
+          posts: posts.map((post) => ({
+            ...post,
+            excerpt: post.excerpt || "",
+            publishedAt: post.publishedAt || new Date(0),
+            coverImage: post.coverImage || "",
+          })),
         },
-        attachments: campaign.attachments
+        attachments: campaign.attachments,
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération des données email:', error);
+      console.error("Erreur lors de la récupération des données email:", error);
       return null;
     }
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private async updateCampaignStatuses() {
@@ -400,68 +495,74 @@ class NewsletterQueue {
       // Récupérer toutes les campagnes en cours d'envoi
       const sendingCampaigns = await prisma.newsletterCampaign.findMany({
         where: {
-          status: 'SENDING'
+          status: "SENDING",
         },
         select: {
           id: true,
           title: true,
-          totalRecipients: true
-        }
+          totalRecipients: true,
+        },
       });
 
       for (const campaign of sendingCampaigns) {
         // Vérifier si tous les jobs de cette campagne sont terminés
-        const [pendingCount, totalJobsCount, completedCount, failedCount] = await Promise.all([
-          prisma.newsletterQueue.count({
-            where: {
-              campaignId: campaign.id,
-              status: { in: ['PENDING', 'PROCESSING'] }
-            }
-          }),
-          prisma.newsletterQueue.count({
-            where: {
-              campaignId: campaign.id
-            }
-          }),
-          prisma.newsletterQueue.count({
-            where: {
-              campaignId: campaign.id,
-              status: 'COMPLETED'
-            }
-          }),
-          prisma.newsletterQueue.count({
-            where: {
-              campaignId: campaign.id,
-              status: 'FAILED'
-            }
-          })
-        ]);
+        const [pendingCount, totalJobsCount, completedCount, failedCount] =
+          await Promise.all([
+            prisma.newsletterQueue.count({
+              where: {
+                campaignId: campaign.id,
+                status: { in: ["PENDING", "PROCESSING"] },
+              },
+            }),
+            prisma.newsletterQueue.count({
+              where: {
+                campaignId: campaign.id,
+              },
+            }),
+            prisma.newsletterQueue.count({
+              where: {
+                campaignId: campaign.id,
+                status: "COMPLETED",
+              },
+            }),
+            prisma.newsletterQueue.count({
+              where: {
+                campaignId: campaign.id,
+                status: "FAILED",
+              },
+            }),
+          ]);
 
         // Si plus aucun job en attente ou en cours de traitement
         if (pendingCount === 0 && totalJobsCount > 0) {
-          const newStatus = failedCount === totalJobsCount ? 'ERROR' : 'SENT';
-          
+          const newStatus = failedCount === totalJobsCount ? "ERROR" : "SENT";
+
           await prisma.newsletterCampaign.update({
             where: { id: campaign.id },
             data: {
               status: newStatus,
               totalSent: completedCount,
-              totalDelivered: completedCount // On assume que les emails sont délivrés s'ils sont envoyés avec succès
-            }
+              totalDelivered: completedCount, // On assume que les emails sont délivrés s'ils sont envoyés avec succès
+            },
           });
 
-          console.log(`✅ Campagne "${campaign.title}" mise à jour avec le statut ${newStatus} (${completedCount} réussies, ${failedCount} échouées)`);
+          console.log(
+            `✅ Campagne "${campaign.title}" mise à jour avec le statut ${newStatus} (${completedCount} réussies, ${failedCount} échouées)`
+          );
         }
       }
     } catch (error) {
-      console.error('❌ Erreur lors de la mise à jour des statuts de campagne:', error);
+      console.error(
+        "❌ Erreur lors de la mise à jour des statuts de campagne:",
+        error
+      );
     }
   }
 
   async getQueueStatus() {
     const stats = await prisma.newsletterQueue.groupBy({
-      by: ['status'],
-      _count: { status: true }
+      by: ["status"],
+      _count: { status: true },
     });
 
     return stats.reduce((acc, stat) => {
@@ -471,23 +572,27 @@ class NewsletterQueue {
   }
 
   async clearCompletedJobs(olderThanDays: number = 7) {
-    const cutoffDate = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
-    
+    const cutoffDate = new Date(
+      Date.now() - olderThanDays * 24 * 60 * 60 * 1000
+    );
+
     const result = await prisma.newsletterQueue.deleteMany({
       where: {
-        status: 'COMPLETED',
-        scheduledAt: { lt: cutoffDate }
-      }
+        status: "COMPLETED",
+        scheduledAt: { lt: cutoffDate },
+      },
     });
 
-    console.log(`🧹 ${result.count} jobs complétés supprimés de la file d'attente`);
+    console.log(
+      `🧹 ${result.count} jobs complétés supprimés de la file d'attente`
+    );
     return result.count;
   }
 
   async fixStuckCampaigns() {
-    console.log('🔍 Vérification des campagnes bloquées...');
+    console.log("🔍 Vérification des campagnes bloquées...");
     await this.updateCampaignStatuses();
-    console.log('✅ Mise à jour des campagnes terminée');
+    console.log("✅ Mise à jour des campagnes terminée");
   }
 }
 

@@ -2,20 +2,12 @@
 
 import {
   IconCalendar,
-  IconCategory,
-  IconChartBar,
   IconDashboard,
   IconFileDescription,
   IconHeart,
   IconMapPin,
-  IconMail,
   IconSettings,
-  IconUsers,
-  IconUserPlus,
-  IconAward,
   IconBuilding,
-  IconClaim,
-  IconNotebook,
   IconBell,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -106,6 +98,10 @@ const data = {
           title: "Newsletter",
           url: "/dashboard/admin/newsletter",
         },
+        {
+          title: "Actions",
+          url: "/dashboard/admin/actions",
+        },
       ],
     },
     {
@@ -169,42 +165,61 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = authClient.useSession();
 
   // Filtrer les items de navigation selon le rôle utilisateur
-  const filteredNavMain = data.navMain.filter((item) => {
-    // Si c'est le menu Administration ou ABC, ne l'afficher que pour les admins et modérateurs
-    if (item.title === "Administration" || item.title === "ABC") {
-      return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
-    }
-    return true;
-  }).map((item) => {
-    // Filtrer les sous-items d'administration selon les permissions
-    if (item.title === "Administration" && item.items) {
-      const filteredItems = item.items.filter((subItem) => {
-        // Vue d'ensemble : admin et modérateur
-        if (subItem.title === "Vue d'ensemble") {
-          return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
-        }
-        // Newsletter et Badges : admin seulement
-        if (["Newsletter", "Badges"].includes(subItem.title)) {
-          return session?.user?.role === "admin";
-        }
-        // Utilisateurs, Réclamations et Places : admin et modérateur
-        if (["Utilisateurs", "Réclamations", "Places"].includes(subItem.title)) {
-          return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
-        }
-        // Catégories : tous les rôles admin/moderator
-        return session?.user?.role && ["admin", "moderator"].includes(session.user.role);
-      });
-      return { ...item, items: filteredItems };
-    }
-    return item;
-  });
+  const filteredNavMain = data.navMain
+    .filter((item) => {
+      // Si c'est le menu Administration ou ABC, ne l'afficher que pour les admins et modérateurs
+      if (item.title === "Administration" || item.title === "ABC") {
+        return (
+          session?.user?.role &&
+          ["admin", "moderator"].includes(session.user.role)
+        );
+      }
+      return true;
+    })
+    .map((item) => {
+      // Filtrer les sous-items d'administration selon les permissions
+      if (item.title === "Administration" && item.items) {
+        const filteredItems = item.items.filter((subItem) => {
+          // Vue d'ensemble : admin et modérateur
+          if (subItem.title === "Vue d'ensemble") {
+            return (
+              session?.user?.role &&
+              ["admin", "moderator"].includes(session.user.role)
+            );
+          }
+          // Newsletter et Badges : admin seulement
+          if (["Newsletter", "Badges"].includes(subItem.title)) {
+            return session?.user?.role === "admin";
+          }
+          // Utilisateurs, Réclamations et Places : admin et modérateur
+          if (
+            ["Utilisateurs", "Réclamations", "Places"].includes(subItem.title)
+          ) {
+            return (
+              session?.user?.role &&
+              ["admin", "moderator"].includes(session.user.role)
+            );
+          }
+          // Catégories : tous les rôles admin/moderator
+          return (
+            session?.user?.role &&
+            ["admin", "moderator"].includes(session.user.role)
+          );
+        });
+        return { ...item, items: filteredItems };
+      }
+      return item;
+    });
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:!p-1.5"
+            >
               <Link href="/">
                 <Logo width={50} height={50} />
                 <span>ABC</span>

@@ -6,7 +6,6 @@ import { Search, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,19 +24,25 @@ import {
 } from "@/components/ui/popover";
 
 import { searchUsersAction, awardBadgeAction } from "@/actions/badge";
+import { UserSearchResult } from "@/lib/types/badge";
 
 interface ManualAwardBadgeProps {
   badgeId: string;
   badgeTitle: string;
 }
 
-export function ManualAwardBadge({ badgeId, badgeTitle }: ManualAwardBadgeProps) {
+export function ManualAwardBadge({
+  badgeId,
+  badgeTitle,
+}: ManualAwardBadgeProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [userSearchOpen, setUserSearchOpen] = useState(false);
   const [userQuery, setUserQuery] = useState("");
-  const [users, setUsers] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [users, setUsers] = useState<UserSearchResult[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(
+    null
+  );
   const [reason, setReason] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
 
@@ -56,7 +61,7 @@ export function ManualAwardBadge({ badgeId, badgeTitle }: ManualAwardBadgeProps)
       } else {
         toast.error(result.error || "Erreur lors de la recherche");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la recherche d'utilisateurs");
     }
     setSearchLoading(false);
@@ -88,7 +93,7 @@ export function ManualAwardBadge({ badgeId, badgeTitle }: ManualAwardBadgeProps)
         } else {
           toast.error(result.error || "Erreur lors de l'attribution");
         }
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors de l'attribution du badge");
       }
     });
@@ -102,7 +107,7 @@ export function ManualAwardBadge({ badgeId, badgeTitle }: ManualAwardBadgeProps)
         {selectedUser ? (
           <div className="flex items-center gap-2 p-2 border rounded-md mt-1">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={selectedUser.image} />
+              <AvatarImage src={selectedUser.image || ""} />
               <AvatarFallback>
                 {selectedUser.name?.[0] || selectedUser.email[0].toUpperCase()}
               </AvatarFallback>
@@ -150,7 +155,9 @@ export function ManualAwardBadge({ badgeId, badgeTitle }: ManualAwardBadgeProps)
                 />
                 <CommandList>
                   <CommandEmpty>
-                    {searchLoading ? "Recherche..." : "Aucun utilisateur trouvé"}
+                    {searchLoading
+                      ? "Recherche..."
+                      : "Aucun utilisateur trouvé"}
                   </CommandEmpty>
                   <CommandGroup>
                     {users.map((user) => (
@@ -164,7 +171,7 @@ export function ManualAwardBadge({ badgeId, badgeTitle }: ManualAwardBadgeProps)
                       >
                         <div className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.image} />
+                            <AvatarImage src={user.image || ""} />
                             <AvatarFallback>
                               {user.name?.[0] || user.email[0].toUpperCase()}
                             </AvatarFallback>
@@ -192,7 +199,7 @@ export function ManualAwardBadge({ badgeId, badgeTitle }: ManualAwardBadgeProps)
 
       {/* Raison */}
       <div>
-        <Label htmlFor="reason">Raison de l'attribution *</Label>
+        <Label htmlFor="reason">Raison de l&apos;attribution *</Label>
         <Textarea
           id="reason"
           placeholder="Pourquoi attribuer ce badge à cet utilisateur ?"
@@ -201,12 +208,12 @@ export function ManualAwardBadge({ badgeId, badgeTitle }: ManualAwardBadgeProps)
           className="min-h-[80px] mt-1"
         />
         <div className="text-xs text-muted-foreground mt-1">
-          Cette raison sera visible pour l'utilisateur
+          Cette raison sera visible pour l&apos;utilisateur
         </div>
       </div>
 
       {/* Bouton d'attribution */}
-      <Button 
+      <Button
         onClick={handleAward}
         disabled={!selectedUser || !reason.trim() || isPending}
         className="w-full"
@@ -223,7 +230,8 @@ export function ManualAwardBadge({ badgeId, badgeTitle }: ManualAwardBadgeProps)
 
       {selectedUser && (
         <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded border">
-          💡 Le badge "{badgeTitle}" sera attribué à {selectedUser.email} avec la raison fournie.
+          💡 Le badge &quot;{badgeTitle}&quot; sera attribué à{" "}
+          {selectedUser.email} avec la raison fournie.
         </div>
       )}
     </div>

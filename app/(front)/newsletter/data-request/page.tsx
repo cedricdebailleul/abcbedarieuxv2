@@ -41,7 +41,7 @@ export default function DataRequestPage() {
   const [loading, setLoading] = useState(false);
   const [gdprInfo, setGdprInfo] = useState<GdprInfo | null>(null);
   const [activeAction, setActiveAction] = useState<string | null>(null);
-  const [exportedData, setExportedData] = useState<any>(null);
+  const [exportedData, setExportedData] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     fetchGdprInfo();
@@ -100,7 +100,7 @@ export default function DataRequestPage() {
       } else {
         toast.error(data.error || "Erreur lors de la demande");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la demande RGPD");
     } finally {
       setLoading(false);
@@ -345,7 +345,7 @@ export default function DataRequestPage() {
         <div className="mt-8 text-center">
           <Button asChild variant="outline">
             <Link href="/">
-              Retour à l'accueil
+              Retour à l&apos;accueil
             </Link>
           </Button>
         </div>

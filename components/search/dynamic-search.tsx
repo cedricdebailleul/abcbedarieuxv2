@@ -11,7 +11,7 @@ interface SearchResult {
   id: string;
   name: string;
   description?: string;
-  type: 'place' | 'event' | 'category';
+  type: "place" | "event" | "category";
   slug: string;
   category?: string;
   location?: string;
@@ -23,27 +23,30 @@ interface DynamicSearchProps {
   className?: string;
 }
 
-export function DynamicSearch({ 
+export function DynamicSearch({
   placeholder = "Rechercher un lieu, événement, catégorie...",
-  className = ""
+  className = "",
 }: DynamicSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout>(null);
 
   // Fermer les résultats quand on clique à l'extérieur
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         setShowResults(false);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Fonction de recherche avec debounce
@@ -56,14 +59,16 @@ export function DynamicSearch({
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`);
+      const response = await fetch(
+        `/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`
+      );
       if (response.ok) {
         const data = await response.json();
         setResults(data.results || []);
         setShowResults(true);
       }
     } catch (error) {
-      console.error('Erreur de recherche:', error);
+      console.error("Erreur de recherche:", error);
       setResults([]);
     } finally {
       setIsLoading(false);
@@ -73,7 +78,7 @@ export function DynamicSearch({
   // Debounce de la recherche
   const handleInputChange = (value: string) => {
     setQuery(value);
-    
+
     // Annuler la recherche précédente
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -95,11 +100,11 @@ export function DynamicSearch({
 
   const getResultIcon = (type: string) => {
     switch (type) {
-      case 'place':
+      case "place":
         return <MapPin className="w-4 h-4 text-blue-500" />;
-      case 'event':
+      case "event":
         return <Calendar className="w-4 h-4 text-green-500" />;
-      case 'category':
+      case "category":
         return <Users className="w-4 h-4 text-purple-500" />;
       default:
         return <Search className="w-4 h-4 text-gray-500" />;
@@ -108,27 +113,27 @@ export function DynamicSearch({
 
   const getResultLink = (result: SearchResult) => {
     switch (result.type) {
-      case 'place':
+      case "place":
         return `/places/${result.slug}`;
-      case 'event':
+      case "event":
         return `/events/${result.slug}`;
-      case 'category':
+      case "category":
         return `/categories/${result.slug}`;
       default:
-        return '#';
+        return "#";
     }
   };
 
   const getResultLabel = (type: string) => {
     switch (type) {
-      case 'place':
-        return 'Établissement';
-      case 'event':
-        return 'Événement';
-      case 'category':
-        return 'Catégorie';
+      case "place":
+        return "Établissement";
+      case "event":
+        return "Événement";
+      case "category":
+        return "Catégorie";
       default:
-        return '';
+        return "";
     }
   };
 
@@ -193,26 +198,30 @@ export function DynamicSearch({
                   </div>
                 </Link>
               ))}
-              
+
               {/* Lien vers recherche complète */}
               <div className="border-t mt-2 pt-2">
                 <Button
-                  variant="ghost" 
+                  variant="ghost"
                   className="w-full justify-start text-blue-600 hover:text-blue-700"
                   onClick={() => {
-                    window.location.href = `/recherche?q=${encodeURIComponent(query)}`;
+                    window.location.href = `/recherche?q=${encodeURIComponent(
+                      query
+                    )}`;
                   }}
                 >
                   <Search className="w-4 h-4 mr-2" />
-                  Voir tous les résultats pour "{query}"
+                  Voir tous les résultats pour &quot;{query}&quot;
                 </Button>
               </div>
             </div>
           ) : query.length > 2 ? (
             <div className="p-4 text-center text-gray-500">
               <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p>Aucun résultat trouvé pour "{query}"</p>
-              <p className="text-sm mt-1">Essayez avec d'autres mots-clés</p>
+              <p>Aucun résultat trouvé pour &quot;{query}&quot;</p>
+              <p className="text-sm mt-1">
+                Essayez avec d&apos;autres mots-clés
+              </p>
             </div>
           ) : null}
         </Card>

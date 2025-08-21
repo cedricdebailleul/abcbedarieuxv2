@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -35,7 +38,7 @@ export async function POST(request: NextRequest) {
       includedPosts = [],
       attachments = [],
       status = "DRAFT",
-      scheduledAt
+      scheduledAt,
     } = body;
 
     // Validation des données requises
@@ -49,11 +52,12 @@ export async function POST(request: NextRequest) {
     // Vérifier si les modèles newsletter existent
     try {
       await prisma.newsletterCampaign.findFirst({ take: 1 });
-    } catch (error) {
+    } catch {
       return NextResponse.json(
-        { 
-          error: "Les tables de newsletter ne sont pas encore créées. Veuillez exécuter 'pnpm db:push' pour migrer la base de données.",
-          migrationRequired: true
+        {
+          error:
+            "Les tables de newsletter ne sont pas encore créées. Veuillez exécuter 'pnpm db:push' pour migrer la base de données.",
+          migrationRequired: true,
         },
         { status: 500 }
       );
@@ -79,15 +83,23 @@ export async function POST(request: NextRequest) {
           createdBy: {
             select: {
               name: true,
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       });
 
       // Créer les pièces jointes si présentes
       if (attachments && attachments.length > 0) {
-        const attachmentData = attachments.map((attachment: any) => ({
+        type Attachment = {
+          id?: string;
+          name: string;
+          type: string;
+          size: number;
+          url: string;
+        };
+
+        const attachmentData = attachments.map((attachment: Attachment) => ({
           campaignId: newCampaign.id,
           fileName: attachment.id || `file-${Date.now()}`, // Utilise l'ID généré comme nom de fichier
           originalName: attachment.name,
@@ -98,7 +110,7 @@ export async function POST(request: NextRequest) {
         }));
 
         await tx.newsletterAttachment.createMany({
-          data: attachmentData
+          data: attachmentData,
         });
       }
 
@@ -109,29 +121,36 @@ export async function POST(request: NextRequest) {
           createdBy: {
             select: {
               name: true,
-              email: true
-            }
+              email: true,
+            },
           },
           attachments: true,
-        }
+        },
       });
     });
 
     return NextResponse.json({
       success: true,
       campaign,
-      message: status === "SCHEDULED" ? "Campagne programmée avec succès" : "Campagne créée avec succès"
+      message:
+        status === "SCHEDULED"
+          ? "Campagne programmée avec succès"
+          : "Campagne créée avec succès",
     });
-
   } catch (error) {
     console.error("Erreur lors de la création de la campagne:", error);
-    
+
     // Gérer l'erreur de modèle non trouvé
-    if (error.message?.includes("Unknown arg `type`") || error.message?.includes("newsletterCampaign")) {
+    if (
+      error instanceof Error &&
+      (error.message?.includes("Unknown arg `type`") ||
+        error.message?.includes("newsletterCampaign"))
+    ) {
       return NextResponse.json(
-        { 
-          error: "Les tables de newsletter ne sont pas encore créées. Veuillez exécuter la migration de la base de données.",
-          migrationRequired: true
+        {
+          error:
+            "Les tables de newsletter ne sont pas encore créées. Veuillez exécuter la migration de la base de données.",
+          migrationRequired: true,
         },
         { status: 500 }
       );
@@ -162,7 +181,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -181,12 +203,12 @@ export async function GET(request: NextRequest) {
             createdBy: {
               select: {
                 name: true,
-                email: true
-              }
-            }
-          }
+                email: true,
+              },
+            },
+          },
         }),
-        prisma.newsletterCampaign.count()
+        prisma.newsletterCampaign.count(),
       ]);
 
       const totalPages = Math.ceil(totalCount / limit);
@@ -200,11 +222,10 @@ export async function GET(request: NextRequest) {
           totalCount,
           totalPages,
           hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
-        }
+          hasPrevPage: page > 1,
+        },
       });
-
-    } catch (error) {
+    } catch {
       // Si les modèles n'existent pas encore
       return NextResponse.json({
         success: true,
@@ -215,12 +236,11 @@ export async function GET(request: NextRequest) {
           totalCount: 0,
           totalPages: 0,
           hasNextPage: false,
-          hasPrevPage: false
+          hasPrevPage: false,
         },
-        migrationRequired: true
+        migrationRequired: true,
       });
     }
-
   } catch (error) {
     console.error("Erreur lors de la récupération des campagnes:", error);
     return NextResponse.json(

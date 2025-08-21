@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, Filter, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,6 @@ import {
   RARITY_LABELS,
   type BadgeFilters,
 } from "@/lib/validations/badge";
-import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
 
 interface BadgeFiltersProps {
   initialFilters: BadgeFilters;
@@ -29,7 +28,6 @@ interface BadgeFiltersProps {
 
 export function BadgeFilters({ initialFilters }: BadgeFiltersProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [filters, setFilters] = useState({
     search: initialFilters.search || "",

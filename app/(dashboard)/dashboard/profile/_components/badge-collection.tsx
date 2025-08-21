@@ -65,9 +65,6 @@ export default function BadgeCollection({
   userBadges,
   allBadges,
 }: BadgeCollectionProps) {
-  const [_selectedBadge, _setSelectedBadge] = useState<Badge | null>(null);
-  const [_selectedUserBadge, _setSelectedUserBadge] =
-    useState<UserBadgeData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [rarityFilter, setRarityFilter] = useState<string>("all");
@@ -529,7 +526,7 @@ export default function BadgeCollection({
                           ) : (
                             <div className="bg-gray-50 p-4 rounded-lg">
                               <h4 className="font-medium mb-2 text-gray-700">
-                                💡 Comment l'obtenir ?
+                                💡 Comment l&apos;obtenir ?
                               </h4>
                               <p className="text-gray-600 text-sm">
                                 {getHowToEarnMessage(

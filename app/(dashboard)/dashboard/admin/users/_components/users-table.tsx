@@ -13,7 +13,6 @@ import {
   Trash2,
   UserCheck,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -90,7 +89,6 @@ interface UsersResponse {
 }
 
 export default function UsersTable() {
-  const _router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -158,7 +156,7 @@ export default function UsersTable() {
     }, search || roleFilter !== "all" || statusFilter !== "all" ? 500 : 0);
 
     return () => clearTimeout(timeout);
-  }, [fetchUsers]); // fetchUsers est maintenant stable grâce à useCallback
+  }, [fetchUsers, roleFilter, search, statusFilter]); // fetchUsers est maintenant stable grâce à useCallback
 
   // Supprimer un utilisateur
   const handleDeleteUser = async (user: User) => {
@@ -484,7 +482,7 @@ export default function UsersTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer l'utilisateur{" "}
+              Êtes-vous sûr de vouloir supprimer l&apos;utilisateur{" "}
               <strong>{deleteDialog.user?.name}</strong> ?
               <br />
               Cette action est irréversible et supprimera toutes les données associées.

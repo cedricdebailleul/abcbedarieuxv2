@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +12,6 @@ import {
   Search, 
   Download, 
   Mail,
-  Calendar,
-  MapPin,
-  FileText,
   UserCheck,
   UserX,
   Filter,
@@ -82,7 +79,7 @@ export default function SubscribersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [verifiedFilter, setVerifiedFilter] = useState("all");
 
-  const fetchSubscribers = async () => {
+  const fetchSubscribers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -107,12 +104,12 @@ export default function SubscribersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, search, statusFilter, verifiedFilter]);
 
   useEffect(() => {
     const timeout = setTimeout(fetchSubscribers, search ? 500 : 0);
     return () => clearTimeout(timeout);
-  }, [search, statusFilter, verifiedFilter, pagination.page]);
+  }, [search, statusFilter, verifiedFilter, pagination.page, fetchSubscribers]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -151,7 +148,7 @@ export default function SubscribersPage() {
         setSelectedIds([]);
         fetchSubscribers();
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de l'action groupée");
     }
   };
@@ -192,7 +189,7 @@ export default function SubscribersPage() {
           } else {
             errorCount++;
           }
-        } catch (error) {
+        } catch  {
           errorCount++;
         }
       }
@@ -203,7 +200,7 @@ export default function SubscribersPage() {
       if (errorCount > 0) {
         toast.error(`${errorCount} erreur(s) lors de l'envoi`);
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de l'envoi des validations");
     }
   };
@@ -219,7 +216,7 @@ export default function SubscribersPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       toast.success("Export en cours de téléchargement");
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de l'export");
     }
   };
@@ -268,7 +265,7 @@ export default function SubscribersPage() {
       } else {
         toast.error(`Erreur lors de l'${action}ation`);
       }
-    } catch (error) {
+    } catch {
       toast.error(`Erreur lors de l'${action}ation`);
     }
   };
@@ -287,7 +284,7 @@ export default function SubscribersPage() {
       } else {
         toast.error("Erreur lors de la suppression");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la suppression");
     }
   };
@@ -332,7 +329,7 @@ export default function SubscribersPage() {
         <div>
           <h1 className="text-3xl font-bold">Abonnés Newsletter</h1>
           <p className="text-muted-foreground">
-            Gérez votre liste d'abonnés et leurs préférences
+            Gérez votre liste d&apos;abonnés et leurs préférences
           </p>
         </div>
         <div className="flex gap-2">

@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { newsletterQueue } from "@/lib/newsletter-queue";
-import crypto from "crypto";
 
 export async function POST(
   request: NextRequest,
@@ -26,12 +25,15 @@ export async function POST(
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     try {
       const { id } = await params;
-      
+
       // Vérifier que la campagne existe et peut être envoyée
       const campaign = await prisma.newsletterCampaign.findUnique({
         where: { id },
@@ -54,7 +56,10 @@ export async function POST(
 
       if (!["DRAFT", "SCHEDULED"].includes(campaign.status)) {
         return NextResponse.json(
-          { error: "Seules les campagnes en brouillon ou programmées peuvent être envoyées" },
+          {
+            error:
+              "Seules les campagnes en brouillon ou programmées peuvent être envoyées",
+          },
           { status: 400 }
         );
       }
@@ -78,7 +83,7 @@ export async function POST(
       }
 
       // Filtrer les abonnés selon le type de campagne et leurs préférences
-      const filteredSubscribers = subscribers.filter(subscriber => {
+      const filteredSubscribers = subscribers.filter((subscriber) => {
         if (!subscriber.preferences) return true; // Si pas de préférences, inclure par défaut
 
         switch (campaign.type) {
@@ -106,10 +111,12 @@ export async function POST(
       });
 
       // Ajouter tous les emails à la file d'attente
-      const subscriberIds = filteredSubscribers.map(s => s.id);
+      const subscriberIds = filteredSubscribers.map((s) => s.id);
       const queueResult = await newsletterQueue.addToQueue(id, subscriberIds);
 
-      console.log(`📧 ${queueResult.queued} emails ajoutés à la file d'attente pour la campagne ${campaign.title}`);
+      console.log(
+        `📧 ${queueResult.queued} emails ajoutés à la file d'attente pour la campagne ${campaign.title}`
+      );
 
       return NextResponse.json({
         success: true,
@@ -127,8 +134,7 @@ export async function POST(
         },
         queueStatus: await newsletterQueue.getQueueStatus(),
       });
-
-    } catch (prismaError: any) {
+    } catch (prismaError: unknown) {
       // En cas d'erreur, remettre le statut en brouillon
       try {
         const { id } = await params;
@@ -142,21 +148,20 @@ export async function POST(
         console.error("Erreur lors du rollback:", rollbackError);
       }
 
-      if (prismaError.message?.includes("newsletterCampaign")) {
+      if (prismaError instanceof Error && prismaError.message.includes("newsletterCampaign")) {
         return NextResponse.json(
-          { 
+          {
             error: "Les tables de newsletter ne sont pas encore créées.",
-            migrationRequired: true
+            migrationRequired: true,
           },
           { status: 500 }
         );
       }
       throw prismaError;
     }
-
   } catch (error) {
     console.error("Erreur lors de l'envoi de la campagne:", error);
-    
+
     // Marquer la campagne en erreur
     try {
       const { id } = await params;

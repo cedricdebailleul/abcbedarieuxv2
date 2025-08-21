@@ -8,7 +8,9 @@ const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
   role: z.enum(["user", "admin", "moderator", "dpo", "editor"]).optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "BANNED", "PENDING_VERIFICATION"]).optional(),
+  status: z
+    .enum(["ACTIVE", "INACTIVE", "SUSPENDED", "BANNED", "PENDING_VERIFICATION"])
+    .optional(),
   banned: z.boolean().optional(),
   banReason: z.string().optional(),
   banExpires: z.string().datetime().optional(),
@@ -52,7 +54,10 @@ export async function GET(
     const isOwnProfile = session.user.id === resolvedParams.userId;
 
     if (!isAdmin && !isOwnProfile) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     // Récupérer l'utilisateur avec toutes ses relations
@@ -94,7 +99,10 @@ export async function GET(
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé" },
+        { status: 404 }
+      );
     }
 
     // Masquer certaines informations sensibles si ce n'est pas l'admin
@@ -150,7 +158,10 @@ export async function GET(
     return NextResponse.json(userData);
   } catch (error) {
     console.error("Erreur lors de la récupération de l'utilisateur:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }
 
@@ -179,7 +190,10 @@ export async function PUT(
     const isOwnProfile = session.user.id === resolvedParams.userId;
 
     if (!isAdmin && !isOwnProfile) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     // Parser les données
@@ -189,7 +203,13 @@ export async function PUT(
     // Restrictions pour les non-admins
     if (!isAdmin) {
       // Les utilisateurs normaux ne peuvent pas modifier leur rôle, statut, etc.
-      const restrictedFields = ["role", "status", "banned", "banReason", "banExpires"];
+      const restrictedFields = [
+        "role",
+        "status",
+        "banned",
+        "banReason",
+        "banExpires",
+      ];
       for (const field of restrictedFields) {
         if (field in data) {
           delete data[field as keyof typeof data];
@@ -209,7 +229,10 @@ export async function PUT(
     });
 
     if (!existingUser) {
-      return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé" },
+        { status: 404 }
+      );
     }
 
     // Vérifier l'unicité de l'email si modifié
@@ -223,7 +246,10 @@ export async function PUT(
       });
 
       if (emailExists) {
-        return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Cet email est déjà utilisé" },
+          { status: 400 }
+        );
       }
     }
 
@@ -232,7 +258,13 @@ export async function PUT(
 
     // Si l'email est modifié, marquer comme non vérifié
     if (userData.email && userData.email !== existingUser.email) {
-      (userData as any).emailVerified = false;
+      (
+        userData as {
+          [key: string]: unknown;
+          email?: string;
+          emailVerified?: boolean;
+        }
+      ).emailVerified = false;
     }
 
     // Mettre à jour l'utilisateur et son profil
@@ -288,7 +320,10 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }
 
@@ -313,7 +348,10 @@ export async function DELETE(
     });
 
     if (currentUser?.role !== "admin") {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     // Empêcher l'auto-suppression
@@ -334,7 +372,10 @@ export async function DELETE(
     });
 
     if (!existingUser) {
-      return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé" },
+        { status: 404 }
+      );
     }
 
     // Parser les paramètres de requête pour déterminer le type de suppression
@@ -362,10 +403,15 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: hardDelete ? "Utilisateur supprimé définitivement" : "Utilisateur supprimé",
+      message: hardDelete
+        ? "Utilisateur supprimé définitivement"
+        : "Utilisateur supprimé",
     });
   } catch (error) {
     console.error("Erreur lors de la suppression de l'utilisateur:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

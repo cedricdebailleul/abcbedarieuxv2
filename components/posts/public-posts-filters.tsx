@@ -31,16 +31,25 @@ interface PublicPostsFiltersProps {
   }>;
 }
 
-export function PublicPostsFilters({ categories, tags }: PublicPostsFiltersProps) {
+export function PublicPostsFilters({
+  categories,
+  tags,
+}: PublicPostsFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // État local pour les filtres
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [categoryId, setCategoryId] = useState(searchParams.get("categoryId") || "");
+  const [categoryId, setCategoryId] = useState(
+    searchParams.get("categoryId") || ""
+  );
   const [tagId, setTagId] = useState(searchParams.get("tagId") || "");
-  const [sortBy, setSortBy] = useState(searchParams.get("sortBy") || "publishedAt");
-  const [sortOrder, setSortOrder] = useState(searchParams.get("sortOrder") || "desc");
+  const [sortBy, setSortBy] = useState(
+    searchParams.get("sortBy") || "publishedAt"
+  );
+  const [sortOrder, setSortOrder] = useState(
+    searchParams.get("sortOrder") || "desc"
+  );
 
   // Fonction pour créer l'URL avec les paramètres
   const createQueryString = useCallback(
@@ -88,7 +97,11 @@ export function PublicPostsFilters({ categories, tags }: PublicPostsFiltersProps
 
   // Vérifier s'il y a des filtres actifs
   const hasActiveFilters =
-    search || categoryId || tagId || sortBy !== "publishedAt" || sortOrder !== "desc";
+    search ||
+    categoryId ||
+    tagId ||
+    sortBy !== "publishedAt" ||
+    sortOrder !== "desc";
 
   // Appliquer automatiquement les filtres de tri
   useEffect(() => {
@@ -207,7 +220,9 @@ export function PublicPostsFilters({ categories, tags }: PublicPostsFiltersProps
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="publishedAt">Date de publication</SelectItem>
+                  <SelectItem value="publishedAt">
+                    Date de publication
+                  </SelectItem>
                   <SelectItem value="createdAt">Date de création</SelectItem>
                   <SelectItem value="title">Titre</SelectItem>
                   <SelectItem value="viewCount">Nombre de vues</SelectItem>
@@ -232,24 +247,36 @@ export function PublicPostsFilters({ categories, tags }: PublicPostsFiltersProps
           {/* Filtres actifs */}
           {hasActiveFilters && (
             <div className="space-y-3">
-              <Label className="text-xs text-muted-foreground">Filtres actifs</Label>
+              <Label className="text-xs text-muted-foreground">
+                Filtres actifs
+              </Label>
               <div className="flex flex-wrap gap-2">
                 {search && (
                   <Badge variant="secondary" className="text-xs">
-                    Recherche: "{search}"
-                    <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setSearch("")} />
+                    Recherche: &quot;{search}&quot;
+                    <X
+                      className="h-3 w-3 ml-1 cursor-pointer"
+                      onClick={() => setSearch("")}
+                    />
                   </Badge>
                 )}
                 {categoryId && (
                   <Badge variant="secondary" className="text-xs">
-                    Catégorie: {categories.find((c) => c.id === categoryId)?.name}
-                    <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setCategoryId("")} />
+                    Catégorie:{" "}
+                    {categories.find((c) => c.id === categoryId)?.name}
+                    <X
+                      className="h-3 w-3 ml-1 cursor-pointer"
+                      onClick={() => setCategoryId("")}
+                    />
                   </Badge>
                 )}
                 {tagId && (
                   <Badge variant="secondary" className="text-xs">
                     Tag: {tags.find((t) => t.id === tagId)?.name}
-                    <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setTagId("")} />
+                    <X
+                      className="h-3 w-3 ml-1 cursor-pointer"
+                      onClick={() => setTagId("")}
+                    />
                   </Badge>
                 )}
               </div>

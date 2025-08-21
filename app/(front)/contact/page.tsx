@@ -8,7 +8,8 @@ import { Mail, Phone, MapPin, Clock, Users, Briefcase } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Contact - ABC Bédarieux",
-  description: "Contactez l'Association Bédaricienne des Commerçants. Nous sommes à votre écoute pour toutes vos questions.",
+  description:
+    "Contactez l'Association Bédaricienne des Commerçants. Nous sommes à votre écoute pour toutes vos questions.",
 };
 
 export default function ContactPage() {
@@ -18,7 +19,8 @@ export default function ContactPage() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Nous contacter</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          L'équipe de l'Association Bédaricienne des Commerçants est à votre écoute pour répondre à toutes vos questions.
+          L&apos;équipe de l&apos;Association Bédaricienne des Commerçants est à
+          votre écoute pour répondre à toutes vos questions.
         </p>
       </div>
 
@@ -44,55 +46,60 @@ export default function ContactPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email *</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="votre.email@example.com" 
-                    required 
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="votre.email@example.com"
+                    required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Téléphone</Label>
-                  <Input 
-                    id="phone" 
-                    type="tel" 
-                    placeholder="06 12 34 56 78" 
-                  />
+                  <Input id="phone" type="tel" placeholder="06 12 34 56 78" />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subject">Sujet *</Label>
-                  <Input 
-                    id="subject" 
-                    placeholder="Objet de votre message" 
-                    required 
+                  <Input
+                    id="subject"
+                    placeholder="Objet de votre message"
+                    required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="company">Entreprise / Établissement</Label>
-                  <Input 
-                    id="company" 
-                    placeholder="Nom de votre entreprise (optionnel)" 
+                  <Input
+                    id="company"
+                    placeholder="Nom de votre entreprise (optionnel)"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="message">Message *</Label>
-                  <Textarea 
-                    id="message" 
+                  <Textarea
+                    id="message"
                     placeholder="Décrivez votre demande en détail..."
                     className="min-h-32"
-                    required 
+                    required
                   />
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="consent" className="rounded" required />
+                  <input
+                    type="checkbox"
+                    id="consent"
+                    className="rounded"
+                    required
+                  />
                   <Label htmlFor="consent" className="text-sm">
-                    J'accepte que mes données personnelles soient utilisées pour répondre à ma demande 
-                    conformément à notre <a href="/privacy" className="text-primary underline">politique de confidentialité</a>.
+                    J&apos;accepte que mes données personnelles soient utilisées
+                    pour répondre à ma demande conformément à notre{" "}
+                    <a href="/privacy" className="text-primary underline">
+                      politique de confidentialité
+                    </a>
+                    .
                   </Label>
                 </div>
 
@@ -117,26 +124,32 @@ export default function ContactPage() {
                 <div>
                   <p className="font-medium">Adresse</p>
                   <p className="text-sm text-muted-foreground">
-                    Mairie de Bédarieux<br />
-                    1 Avenue Abbé Tarroux<br />
+                    Mairie de Bédarieux
+                    <br />
+                    1 Avenue Abbé Tarroux
+                    <br />
                     34600 Bédarieux
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-primary" />
                 <div>
                   <p className="font-medium">Email</p>
-                  <p className="text-sm text-muted-foreground">contact@abc-bedarieux.fr</p>
+                  <p className="text-sm text-muted-foreground">
+                    contact@abc-bedarieux.fr
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-primary" />
                 <div>
                   <p className="font-medium">Téléphone</p>
-                  <p className="text-sm text-muted-foreground">04 67 95 XX XX</p>
+                  <p className="text-sm text-muted-foreground">
+                    04 67 95 XX XX
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -147,7 +160,7 @@ export default function ContactPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="w-5 h-5" />
-                Horaires d'accueil
+                Horaires d&apos;accueil
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -172,22 +185,34 @@ export default function ContactPage() {
               <CardTitle>Actions rapides</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button asChild variant="outline" className="w-full justify-start">
+              <Button
+                asChild
+                variant="outline"
+                className="w-full justify-start"
+              >
                 <a href="mailto:contact@abc-bedarieux.fr">
                   <Mail className="w-4 h-4 mr-2" />
                   Envoyer un email
                 </a>
               </Button>
-              
-              <Button asChild variant="outline" className="w-full justify-start">
+
+              <Button
+                asChild
+                variant="outline"
+                className="w-full justify-start"
+              >
                 <a href="tel:0467950000">
                   <Phone className="w-4 h-4 mr-2" />
                   Appeler directement
                 </a>
               </Button>
-              
-              <Button asChild variant="outline" className="w-full justify-start">
-                <a 
+
+              <Button
+                asChild
+                variant="outline"
+                className="w-full justify-start"
+              >
+                <a
                   href="https://www.google.com/maps/place/Mairie+de+B%C3%A9darieux,+1+Av.+Abb%C3%A9+Tarroux,+34600+B%C3%A9darieux"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -246,8 +271,8 @@ export default function ContactPage() {
               ></iframe>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
-              Nous sommes situés au cœur de Bédarieux, dans les locaux de la mairie. 
-              Un parking public est disponible à proximité.
+              Nous sommes situés au cœur de Bédarieux, dans les locaux de la
+              mairie. Un parking public est disponible à proximité.
             </p>
           </CardContent>
         </Card>

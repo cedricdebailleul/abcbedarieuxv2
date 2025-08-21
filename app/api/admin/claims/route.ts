@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { ClaimStatus } from "@/lib/generated/prisma";
+import { ClaimStatus, Prisma } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/admin/claims - Liste des revendications
@@ -11,7 +11,10 @@ export async function GET(request: Request) {
     });
 
     if (!session?.user || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -21,8 +24,10 @@ export async function GET(request: Request) {
 
     const offset = (page - 1) * limit;
 
-    const where: any = {};
-    if (status) where.status = status;
+    const where: Prisma.PlaceClaimWhereInput = {};
+    if (status && Object.values(ClaimStatus).includes(status as ClaimStatus)) {
+      where.status = status as ClaimStatus;
+    }
 
     const [claims, total, pendingCount] = await Promise.all([
       prisma.placeClaim.findMany({
@@ -80,6 +85,9 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Erreur admin claims:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

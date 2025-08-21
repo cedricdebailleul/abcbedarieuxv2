@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, MapPin, Clock, Star } from "lucide-react";
+import { ChevronRight, MapPin, Star } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { PlaceStatus } from "@/lib/generated/prisma";
 
 // Force dynamic rendering
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface CategoryPageProps {
   params: {
@@ -33,10 +33,12 @@ function normalizeImagePath(path?: string | null): string | undefined {
 }
 
 // Générer les métadonnées de la page
-export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: CategoryPageProps): Promise<Metadata> {
   const category = await prisma.placeCategory.findFirst({
     where: { slug: params.slug, isActive: true },
-    select: { name: true, description: true, slug: true }
+    select: { name: true, description: true, slug: true },
   });
 
   if (!category) {
@@ -47,7 +49,9 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   }
 
   const title = `${category.name} - Toutes les places`;
-  const description = category.description || `Découvrez tous les établissements de la catégorie ${category.name}`;
+  const description =
+    category.description ||
+    `Découvrez tous les établissements de la catégorie ${category.name}`;
 
   return {
     title,
@@ -60,7 +64,10 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   };
 }
 
-export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: CategoryPageProps) {
   const page = parseInt(searchParams.page || "1", 10);
   const limit = 12;
   const offset = (page - 1) * limit;
@@ -70,14 +77,14 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     where: { slug: params.slug, isActive: true },
     include: {
       parent: {
-        select: { id: true, name: true, slug: true }
+        select: { id: true, name: true, slug: true },
       },
       children: {
         where: { isActive: true },
         select: { id: true, name: true, slug: true, icon: true, color: true },
-        orderBy: { sortOrder: "asc" }
-      }
-    }
+        orderBy: { sortOrder: "asc" },
+      },
+    },
   });
 
   if (!category) {
@@ -85,7 +92,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   }
 
   // Charger les places de cette catégorie (et de ses sous-catégories)
-  const categoryIds = [category.id, ...category.children.map(child => child.id)];
+  const categoryIds = [
+    category.id,
+    ...category.children.map((child) => child.id),
+  ];
 
   const [places, totalPlaces] = await Promise.all([
     prisma.place.findMany({
@@ -95,27 +105,30 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         categories: {
           some: {
             categoryId: {
-              in: categoryIds
-            }
-          }
-        }
+              in: categoryIds,
+            },
+          },
+        },
       },
       include: {
         categories: {
           include: {
             category: {
-              select: { id: true, name: true, slug: true, icon: true, color: true },
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                icon: true,
+                color: true,
+              },
             },
           },
         },
         _count: {
-          select: { reviews: true, favorites: true }
-        }
+          select: { reviews: true, favorites: true },
+        },
       },
-      orderBy: [
-        { isFeatured: "desc" },
-        { createdAt: "desc" }
-      ],
+      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
       skip: offset,
       take: limit,
     }),
@@ -126,33 +139,55 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         categories: {
           some: {
             categoryId: {
-              in: categoryIds
-            }
-          }
-        }
-      }
-    })
+              in: categoryIds,
+            },
+          },
+        },
+      },
+    }),
   ]);
 
   const totalPages = Math.ceil(totalPlaces / limit);
 
   // Rendu de l'icône de catégorie
-  const renderCategoryIcon = (icon: string | null, size: string = "w-8 h-8") => {
+  const renderCategoryIcon = (
+    icon: string | null,
+    size: string = "w-8 h-8"
+  ) => {
     if (!icon) return null;
-    
+
     // Emoji - adapter la taille selon le contexte
-    if (icon.length <= 4 && /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon)) {
+    if (
+      icon.length <= 4 &&
+      /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(
+        icon
+      )
+    ) {
       // Pour les petites icônes (badges), utiliser une taille réduite
-      const textSize = size.includes("w-3") ? "text-xs" : size.includes("w-12") ? "text-2xl" : "text-base";
-      return <span className={`${textSize} inline-block text-center leading-none`}>{icon}</span>;
+      const textSize = size.includes("w-3")
+        ? "text-xs"
+        : size.includes("w-12")
+        ? "text-2xl"
+        : "text-base";
+      return (
+        <span className={`${textSize} inline-block text-center leading-none`}>
+          {icon}
+        </span>
+      );
     }
-    
+
     // Icône Lucide
-    const IconComponent = (LucideIcons as any)[icon];
-    if (IconComponent) {
-      return <IconComponent className={size} style={{ color: category.color || undefined }} />;
+    const IconComponent = LucideIcons[icon as keyof typeof LucideIcons];
+    if (IconComponent && typeof IconComponent === "function") {
+      const ValidIconComponent = IconComponent as React.ElementType;
+      return (
+        <ValidIconComponent
+          className={size}
+          style={{ color: category.color || undefined }}
+        />
+      );
     }
-    
+
     return null;
   };
 
@@ -170,7 +205,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         {category.parent && (
           <>
             <ChevronRight className="w-4 h-4" />
-            <Link href={`/categories/${category.parent.slug}`} className="hover:text-foreground">
+            <Link
+              href={`/categories/${category.parent.slug}`}
+              className="hover:text-foreground"
+            >
               {category.parent.name}
             </Link>
           </>
@@ -184,9 +222,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         <div className="flex items-center gap-4 mb-4">
           {renderCategoryIcon(category.icon, "w-12 h-12")}
           <div>
-            <h1 className="text-3xl font-bold text-foreground">{category.name}</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              {category.name}
+            </h1>
             {category.description && (
-              <p className="text-muted-foreground mt-2">{category.description}</p>
+              <p className="text-muted-foreground mt-2">
+                {category.description}
+              </p>
             )}
           </div>
         </div>
@@ -219,7 +261,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       {/* Statistiques */}
       <div className="mb-6">
         <p className="text-muted-foreground">
-          {totalPlaces} établissement{totalPlaces > 1 ? 's' : ''} trouvé{totalPlaces > 1 ? 's' : ''}
+          {totalPlaces} établissement{totalPlaces > 1 ? "s" : ""} trouvé
+          {totalPlaces > 1 ? "s" : ""}
         </p>
       </div>
 
@@ -245,7 +288,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                 {/* Image de couverture */}
                 <div className="relative h-48 w-full">
                   <SafeImage
-                    src={normalizeImagePath(place.coverImage || place.logo) || ""}
+                    src={
+                      normalizeImagePath(place.coverImage || place.logo) || ""
+                    }
                     alt={`Image de ${place.name}`}
                     fill
                     className="object-cover rounded-t-lg"
@@ -253,7 +298,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                     fallbackClassName="w-full h-full bg-gradient-to-br from-muted to-muted/50 rounded-t-lg flex items-center justify-center"
                   />
                   {place.isFeatured && (
-                    <Badge className="absolute top-2 left-2" variant="secondary">
+                    <Badge
+                      className="absolute top-2 left-2"
+                      variant="secondary"
+                    >
                       À la une
                     </Badge>
                   )}
@@ -291,7 +339,11 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                   {/* Catégories */}
                   {place.categories && place.categories.length > 0 && (
                     <div className="mb-3">
-                      <PlaceCategoriesBadges categories={place.categories} maxDisplay={3} size="sm" />
+                      <PlaceCategoriesBadges
+                        categories={place.categories}
+                        maxDisplay={3}
+                        size="sm"
+                      />
                     </div>
                   )}
 
@@ -309,7 +361,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                   {/* Actions */}
                   <Button className="w-full" size="sm" asChild>
                     <Link href={`/places/${place.slug}`}>
-                      Voir l'établissement
+                      Voir l&apos;établissement
                     </Link>
                   </Button>
                 </div>
@@ -329,35 +381,40 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               </Link>
             </Button>
           )}
-          
+
           <div className="flex items-center space-x-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => {
-              const isCurrentPage = pageNumber === page;
-              const isNearCurrentPage = Math.abs(pageNumber - page) <= 2;
-              const isFirstOrLast = pageNumber === 1 || pageNumber === totalPages;
-              
-              if (!isNearCurrentPage && !isFirstOrLast) {
-                return null;
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (pageNumber) => {
+                const isCurrentPage = pageNumber === page;
+                const isNearCurrentPage = Math.abs(pageNumber - page) <= 2;
+                const isFirstOrLast =
+                  pageNumber === 1 || pageNumber === totalPages;
+
+                if (!isNearCurrentPage && !isFirstOrLast) {
+                  return null;
+                }
+
+                return (
+                  <Button
+                    key={pageNumber}
+                    variant={isCurrentPage ? "default" : "outline"}
+                    size="sm"
+                    asChild={!isCurrentPage}
+                    disabled={isCurrentPage}
+                  >
+                    {isCurrentPage ? (
+                      pageNumber
+                    ) : (
+                      <Link
+                        href={`/categories/${category.slug}?page=${pageNumber}`}
+                      >
+                        {pageNumber}
+                      </Link>
+                    )}
+                  </Button>
+                );
               }
-              
-              return (
-                <Button
-                  key={pageNumber}
-                  variant={isCurrentPage ? "default" : "outline"}
-                  size="sm"
-                  asChild={!isCurrentPage}
-                  disabled={isCurrentPage}
-                >
-                  {isCurrentPage ? (
-                    pageNumber
-                  ) : (
-                    <Link href={`/categories/${category.slug}?page=${pageNumber}`}>
-                      {pageNumber}
-                    </Link>
-                  )}
-                </Button>
-              );
-            })}
+            )}
           </div>
 
           {page < totalPages && (

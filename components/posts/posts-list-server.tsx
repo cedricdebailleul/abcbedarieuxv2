@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PostsFilters } from "./posts-filters";
-import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
 
 interface PostsListServerProps {
   searchParams: {
@@ -42,30 +41,108 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
   // Récupérer les posts avec les filtres
   const result = await getPostsAction({
     search: searchParams.search || "",
-    status: searchParams.status as any,
+    status: searchParams.status as
+      | "PUBLISHED"
+      | "DRAFT"
+      | "PENDING_REVIEW"
+      | "ARCHIVED"
+      | "REJECTED"
+      | undefined,
     categoryId: searchParams.categoryId || "",
     tagId: searchParams.tagId || "",
     published:
       searchParams.published === "true"
         ? true
         : searchParams.published === "false"
-          ? false
-          : undefined,
+        ? false
+        : undefined,
     page: parseInt(searchParams.page || "1"),
     limit: parseInt(searchParams.limit || "10"),
-    sortBy: (searchParams.sortBy as any) || "createdAt",
-    sortOrder: (searchParams.sortOrder as any) || "desc",
+    sortBy:
+      (searchParams.sortBy as
+        | "createdAt"
+        | "updatedAt"
+        | "publishedAt"
+        | "title"
+        | "viewCount"
+        | undefined) || "createdAt",
+    sortOrder: (searchParams.sortOrder as "asc" | "desc" | undefined) || "desc",
   });
 
   if (!result.success || !result.data) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Erreur lors du chargement des articles</p>
+        <p className="text-muted-foreground">
+          Erreur lors du chargement des articles
+        </p>
       </div>
     );
   }
 
-  const { posts, total, pages } = result.data;
+  const {
+    posts,
+    total,
+    pages,
+  }: {
+    posts: {
+      id: string;
+      title: string;
+      slug: string;
+      author: { id: string; name: string };
+      category?: { id: string; name: string } | undefined;
+      tags: { tag: { id: string; name: string } }[];
+      excerpt?: string;
+      published: boolean;
+      createdAt: string;
+      publishedAt?: string | null;
+      viewCount: number;
+      status:
+        | "PUBLISHED"
+        | "DRAFT"
+        | "PENDING_REVIEW"
+        | "ARCHIVED"
+        | "REJECTED";
+    }[];
+    total: number;
+    pages: number;
+  } = {
+    posts: result.data.posts.map(
+      (post: {
+        id: string;
+        title: string;
+        slug: string;
+        author: { id: string; name: string };
+        category?: { id: string; name: string } | undefined;
+        tags: { tag: { id: string; name: string } }[];
+        excerpt?: string;
+        published?: boolean;
+        createdAt?: string;
+        publishedAt?: string | null;
+        viewCount?: number;
+        status?:
+          | "PUBLISHED"
+          | "DRAFT"
+          | "PENDING_REVIEW"
+          | "ARCHIVED"
+          | "REJECTED";
+      }) => ({
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        author: post.author,
+        category: post.category,
+        tags: post.tags,
+        excerpt: post.excerpt ?? "",
+        published: post.published ?? false,
+        createdAt: post.createdAt ?? "",
+        publishedAt: post.publishedAt ?? null,
+        viewCount: post.viewCount ?? 0,
+        status: post.status ?? "DRAFT",
+      })
+    ),
+    total: result.data.total,
+    pages: result.data.pages,
+  };
 
   if (posts.length === 0) {
     return (
@@ -134,10 +211,10 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                             post.status === "PUBLISHED"
                               ? "default"
                               : post.status === "DRAFT"
-                                ? "secondary"
-                                : post.status === "PENDING_REVIEW"
-                                  ? "outline"
-                                  : "destructive"
+                              ? "secondary"
+                              : post.status === "PENDING_REVIEW"
+                              ? "outline"
+                              : "destructive"
                           }
                         >
                           {post.status === "PUBLISHED" && "Publié"}
@@ -166,32 +243,36 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                       {/* Dates */}
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        Créé le {new Date(post.createdAt).toLocaleDateString("fr-FR")}
+                        Créé le{" "}
+                        {new Date(post.createdAt).toLocaleDateString("fr-FR")}
                       </div>
 
                       {post.publishedAt && (
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          Publié le {new Date(post.publishedAt).toLocaleDateString("fr-FR")}
+                          Publié le{" "}
+                          {new Date(post.publishedAt).toLocaleDateString(
+                            "fr-FR"
+                          )}
                         </div>
                       )}
 
                       {/* Statistiques */}
                       <div className="flex items-center gap-1">
                         <Eye className="h-4 w-4" />
-                        {post.viewCount || 0} vue{(post.viewCount || 0) > 1 ? "s" : ""}
+                        {post.viewCount || 0} vue
+                        {(post.viewCount || 0) > 1 ? "s" : ""}
                       </div>
                     </div>
 
                     {/* Catégorie et Tags */}
                     <div className="flex flex-wrap items-center gap-2">
                       {post.category && (
-                        <Badge variant="outline" className="flex items-center gap-1">
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
                           <Folder className="h-3 w-3" />
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: post.category.color || "#6B7280" }}
-                          />
                           {post.category.name}
                         </Badge>
                       )}
@@ -200,19 +281,21 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                         <div className="flex items-center gap-1">
                           <TagIcon className="h-3 w-3 text-muted-foreground" />
                           <div className="flex flex-wrap gap-1">
-                            {post.tags.slice(0, 3).map((postTag: { tag: { id: Key | null | undefined; color: any; name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }; }) => (
-                              <Badge
-                                key={postTag.tag.id}
-                                variant="outline"
-                                className="text-xs"
-                                style={{
-                                  backgroundColor: `${postTag.tag.color || "#8B5CF6"}20`,
-                                  color: postTag.tag.color || "#8B5CF6",
-                                }}
-                              >
-                                {postTag.tag.name}
-                              </Badge>
-                            ))}
+                            {post.tags
+                              .slice(0, 3)
+                              .map(
+                                (postTag: {
+                                  tag: { id: string; name: string };
+                                }) => (
+                                  <Badge
+                                    key={postTag.tag.id}
+                                    variant="outline"
+                                    className="text-xs"
+                                  >
+                                    {postTag.tag.name}
+                                  </Badge>
+                                )
+                              )}
                             {post.tags.length > 3 && (
                               <Badge variant="outline" className="text-xs">
                                 +{post.tags.length - 3}
@@ -272,7 +355,10 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                   pathname: "/dashboard/posts",
                   query: {
                     ...searchParams,
-                    page: Math.max(1, parseInt(searchParams.page || "1") - 1).toString(),
+                    page: Math.max(
+                      1,
+                      parseInt(searchParams.page || "1") - 1
+                    ).toString(),
                   },
                 }}
               >
@@ -295,7 +381,10 @@ export async function PostsListServer({ searchParams }: PostsListServerProps) {
                   pathname: "/dashboard/posts",
                   query: {
                     ...searchParams,
-                    page: Math.min(pages, parseInt(searchParams.page || "1") + 1).toString(),
+                    page: Math.min(
+                      pages,
+                      parseInt(searchParams.page || "1") + 1
+                    ).toString(),
                   },
                 }}
               >

@@ -101,7 +101,7 @@ export async function sendEmail({ to, subject, html, text, from, attachments }: 
       attachments: attachments || undefined,
     };
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await (transporter as nodemailer.Transporter).sendMail(mailOptions);
     
     // En mode développement, extraire et logger le contenu
     if (!env.SMTP_HOST) {
@@ -166,9 +166,35 @@ export function createNewsletterEmailTemplate({
   unsubscribeUrl: string;
   trackingPixelUrl: string;
   subscriberName?: string;
-  places?: any[];
-  posts?: any[];
-  events?: any[];
+  places?: Array<{
+    name: string;
+    slug: string;
+    coverImage?: string;
+    logo?: string;
+    summary?: string;
+    street?: string;
+    city?: string;
+    phone?: string;
+    website?: string;
+  }>;
+  posts?: Array<{
+    title: string;
+    slug: string;
+    coverImage?: string;
+    excerpt?: string;
+    publishedAt?: string;
+    author?: { name: string };
+  }>;
+  events?: Array<{
+    title: string;
+    slug: string;
+    coverImage?: string;
+    description?: string;
+    startDate?: string;
+    locationName?: string;
+    locationAddress?: string;
+    locationCity?: string;
+  }>;
   attachments?: { name: string; url: string; size: number; type: string }[];
   campaignId?: string;
   subscriberId?: string;

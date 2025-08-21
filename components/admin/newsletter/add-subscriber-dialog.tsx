@@ -14,7 +14,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Mail, User, Settings } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,7 +29,10 @@ interface AddSubscriberDialogProps {
   children?: React.ReactNode;
 }
 
-export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialogProps) {
+export function AddSubscriberDialog({
+  onSuccess,
+  children,
+}: AddSubscriberDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -61,12 +70,14 @@ export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialog
         onSuccess();
       } else {
         if (data.migrationRequired) {
-          toast.error("Migration de base de données requise. Veuillez exécuter 'pnpm newsletter:migrate'");
+          toast.error(
+            "Migration de base de données requise. Veuillez exécuter 'pnpm newsletter:migrate'"
+          );
         } else {
           toast.error(data.error || "Erreur lors de l'ajout");
         }
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de l'ajout de l'abonné");
     } finally {
       setLoading(false);
@@ -89,7 +100,7 @@ export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialog
   };
 
   const updatePreference = (key: string, value: boolean | string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       preferences: {
         ...prev.preferences,
@@ -133,7 +144,9 @@ export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialog
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, email: e.target.value }))
+                }
                 placeholder="exemple@email.com"
                 required
               />
@@ -145,7 +158,12 @@ export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialog
                 <Input
                   id="firstName"
                   value={formData.firstName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      firstName: e.target.value,
+                    }))
+                  }
                   placeholder="Prénom"
                 />
               </div>
@@ -155,7 +173,12 @@ export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialog
                 <Input
                   id="lastName"
                   value={formData.lastName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      lastName: e.target.value,
+                    }))
+                  }
                   placeholder="Nom"
                 />
               </div>
@@ -174,7 +197,9 @@ export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialog
                 <Checkbox
                   id="events"
                   checked={formData.preferences.events}
-                  onCheckedChange={(checked) => updatePreference("events", checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    updatePreference("events", checked as boolean)
+                  }
                 />
                 <Label htmlFor="events" className="text-sm">
                   Événements et animations
@@ -185,7 +210,9 @@ export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialog
                 <Checkbox
                   id="places"
                   checked={formData.preferences.places}
-                  onCheckedChange={(checked) => updatePreference("places", checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    updatePreference("places", checked as boolean)
+                  }
                 />
                 <Label htmlFor="places" className="text-sm">
                   Nouveaux commerces et services
@@ -196,7 +223,9 @@ export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialog
                 <Checkbox
                   id="offers"
                   checked={formData.preferences.offers}
-                  onCheckedChange={(checked) => updatePreference("offers", checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    updatePreference("offers", checked as boolean)
+                  }
                 />
                 <Label htmlFor="offers" className="text-sm">
                   Offres et promotions
@@ -207,16 +236,18 @@ export function AddSubscriberDialog({ onSuccess, children }: AddSubscriberDialog
                 <Checkbox
                   id="news"
                   checked={formData.preferences.news}
-                  onCheckedChange={(checked) => updatePreference("news", checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    updatePreference("news", checked as boolean)
+                  }
                 />
                 <Label htmlFor="news" className="text-sm">
-                  Actualités de l'association
+                  Actualités de l&apos;association
                 </Label>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="frequency">Fréquence d'envoi</Label>
+              <Label htmlFor="frequency">Fréquence d&apos;envoi</Label>
               <Select
                 value={formData.preferences.frequency}
                 onValueChange={(value) => updatePreference("frequency", value)}

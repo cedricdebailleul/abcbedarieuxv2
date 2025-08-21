@@ -9,6 +9,7 @@ interface User {
 }
 
 interface Session {
+  state: string;
   user: User;
 }
 

@@ -144,11 +144,15 @@ export default function ClaimPlacePage({
 
       toast.success(result.message);
       router.push(`/places/${place.slug}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur soumission:", error);
-      toast.error(
-        error.message || "Erreur lors de la soumission de la demande"
-      );
+      if (error instanceof Error) {
+        toast.error(
+          error.message || "Erreur lors de la soumission de la demande"
+        );
+      } else {
+        toast.error("Erreur lors de la soumission de la demande");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -167,7 +171,7 @@ export default function ClaimPlacePage({
       <div className="text-center py-12">
         <p className="text-gray-500">Place non trouvée</p>
         <Link href="/" className="text-primary hover:underline">
-          Retour à l'accueil
+          Retour à l&apos;accueil
         </Link>
       </div>
     );
@@ -283,7 +287,7 @@ export default function ClaimPlacePage({
 
             <div>
               <Label htmlFor="relationship">
-                Votre relation avec l'établissement *
+                Votre relation avec l&apos;établissement *
               </Label>
               <select
                 id="relationship"
@@ -291,7 +295,12 @@ export default function ClaimPlacePage({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    relationship: e.target.value as any,
+                    relationship: e.target.value as
+                      | "owner"
+                      | "manager"
+                      | "employee"
+                      | "family"
+                      | "other",
                   })
                 }
                 className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -336,7 +345,7 @@ export default function ClaimPlacePage({
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Lien vers un document, photo ou autre preuve de votre relation
-                avec l'établissement
+                avec l&apos;établissement
               </p>
             </div>
 
@@ -345,10 +354,10 @@ export default function ClaimPlacePage({
                 Types de preuves acceptées :
               </h4>
               <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Kbis ou documents officiels de l'entreprise</li>
-                <li>• Factures ou contrats au nom de l'établissement</li>
-                <li>• Photos de vous dans l'établissement</li>
-                <li>• Attestation d'emploi ou contrat de travail</li>
+                <li>• Kbis ou documents officiels de l&apos;entreprise</li>
+                <li>• Factures ou contrats au nom de l&apos;établissement</li>
+                <li>• Photos de vous dans l&apos;établissement</li>
+                <li>• Attestation d&apos;emploi ou contrat de travail</li>
                 <li>• Tout autre document prouvant votre lien</li>
               </ul>
             </div>

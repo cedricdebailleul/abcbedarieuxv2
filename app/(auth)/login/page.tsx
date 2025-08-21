@@ -18,7 +18,8 @@ function AccountCreatedMessage() {
     <Alert className="border-green-200 bg-green-50">
       <CheckCircle className="h-4 w-4 text-green-600" />
       <AlertDescription className="text-green-700">
-        🎉 Votre compte a été créé avec succès ! Vous pouvez maintenant vous connecter.
+        🎉 Votre compte a été créé avec succès ! Vous pouvez maintenant vous
+        connecter.
       </AlertDescription>
     </Alert>
   );
@@ -33,7 +34,9 @@ export default async function LoginPage({
   return (
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
       <AnimatedContainer className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
-        {resolvedSearchParams.message === "account-created" && <AccountCreatedMessage />}
+        {resolvedSearchParams.message === "account-created" && (
+          <AccountCreatedMessage />
+        )}
 
         <Card>
           <CardHeader className="space-y-1">
@@ -50,7 +53,9 @@ export default async function LoginPage({
                 <Separator />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Ou continuez avec</span>
+                <span className="bg-background px-2 text-muted-foreground">
+                  Ou continuez avec
+                </span>
               </div>
             </div>
 
@@ -66,8 +71,11 @@ export default async function LoginPage({
 
               <p className="text-sm text-muted-foreground">
                 Pas encore de compte ?{" "}
-                <Link href="/register" className="underline underline-offset-4 hover:text-primary">
-                  S'inscrire
+                <Link
+                  href="/register"
+                  className="underline underline-offset-4 hover:text-primary"
+                >
+                  S&apos;inscrire
                 </Link>
               </p>
             </div>

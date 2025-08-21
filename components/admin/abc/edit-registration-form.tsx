@@ -188,7 +188,7 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
               Inscription modifiée !
             </h3>
             <p className="text-muted-foreground">
-              Les informations de l'inscription ont été mises à jour avec succès.
+              Les informations de l&apos;inscription ont été mises à jour avec succès.
             </p>
           </div>
         </DialogContent>
@@ -204,7 +204,7 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <IconEdit className="h-5 w-5" />
-            <span>Modifier l'inscription de {registration.firstName} {registration.lastName}</span>
+            <span>Modifier l&apos;inscription de {registration.firstName} {registration.lastName}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -332,7 +332,7 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
 
           {/* Type d'adhésion */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Type d'adhésion</h3>
+            <h3 className="text-lg font-semibold">Type d&apos;adhésion</h3>
             <Select
               value={formData.membershipType}
               onValueChange={(value) => handleInputChange("membershipType", value)}
@@ -355,7 +355,7 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
 
           {/* Centres d'intérêt */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Centres d'intérêt</h3>
+            <h3 className="text-lg font-semibold">Centres d&apos;intérêt</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {interestOptions.map((interest) => (
                 <div key={interest} className="flex items-center space-x-2">
@@ -413,7 +413,7 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
               ) : (
                 <>
                   <IconEdit className="h-4 w-4 mr-2" />
-                  Modifier l'inscription
+                  Modifier l&apos;inscription
                 </>
               )}
             </Button>

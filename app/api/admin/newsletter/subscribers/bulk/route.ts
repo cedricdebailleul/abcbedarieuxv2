@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user?.role || !["admin", "moderator", "editor"].includes(user.role)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -35,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     let result;
-    
+
     try {
       switch (action) {
         case "activate":
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
           await prisma.newsletterPreferences.deleteMany({
             where: { subscriberId: { in: ids } },
           });
-          
+
           // Puis supprimer les abonnés
           result = await prisma.newsletterSubscriber.deleteMany({
             where: { id: { in: ids } },
@@ -74,22 +77,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         affected: result.count,
-        message: `${result.count} abonné(s) ${action === "delete" ? "supprimé(s)" : action === "activate" ? "activé(s)" : "désactivé(s)"}`,
+        message: `${result.count} abonné(s) ${
+          action === "delete"
+            ? "supprimé(s)"
+            : action === "activate"
+            ? "activé(s)"
+            : "désactivé(s)"
+        }`,
       });
-
     } catch (prismaError) {
-      if (prismaError.message?.includes("newsletterSubscriber")) {
+      if (
+        prismaError instanceof Error &&
+        prismaError.message.includes("newsletterSubscriber")
+      ) {
         return NextResponse.json(
-          { 
+          {
             error: "Les tables de newsletter ne sont pas encore créées.",
-            migrationRequired: true
+            migrationRequired: true,
           },
           { status: 500 }
         );
       }
       throw prismaError;
     }
-
   } catch (error) {
     console.error("Erreur lors de l'action groupée:", error);
     return NextResponse.json(

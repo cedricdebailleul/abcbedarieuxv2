@@ -1,4 +1,11 @@
-import { IconTrendingDown, IconTrendingUp, IconUsers, IconFileText, IconBuilding, IconMail } from "@tabler/icons-react";
+import {
+  IconTrendingDown,
+  IconTrendingUp,
+  IconUsers,
+  IconFileText,
+  IconBuilding,
+  IconMail,
+} from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -57,21 +64,21 @@ export function SectionCards() {
         icon: IconTrendingUp,
         variant: "default" as const,
         text: `+${rate}%`,
-        description: "Croissance positive"
+        description: "Croissance positive",
       };
     } else if (rate < 0) {
       return {
         icon: IconTrendingDown,
         variant: "destructive" as const,
         text: `${rate}%`,
-        description: "En baisse ce mois"
+        description: "En baisse ce mois",
       };
     } else {
       return {
         icon: IconTrendingUp,
         variant: "secondary" as const,
         text: "0%",
-        description: "Stable"
+        description: "Stable",
       };
     }
   };
@@ -97,7 +104,8 @@ export function SectionCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            {stats.recentUsers} nouveaux ce mois <IconUsers className="size-4" />
+            {stats.recentUsers} nouveaux ce mois{" "}
+            <IconUsers className="size-4" />
           </div>
           <div className="text-muted-foreground">{growth.description}</div>
         </CardFooter>
@@ -113,16 +121,18 @@ export function SectionCards() {
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingUp className="size-3" />
-              +{stats.recentPosts}
+              <IconTrendingUp className="size-3" />+{stats.recentPosts}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            {stats.recentPosts} nouveaux ce mois <IconFileText className="size-4" />
+            {stats.recentPosts} nouveaux ce mois{" "}
+            <IconFileText className="size-4" />
           </div>
-          <div className="text-muted-foreground">Contenu dynamique et actuel</div>
+          <div className="text-muted-foreground">
+            Contenu dynamique et actuel
+          </div>
         </CardFooter>
       </Card>
 
@@ -143,9 +153,12 @@ export function SectionCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            {stats.activePlaces} commerces actifs <IconBuilding className="size-4" />
+            {stats.activePlaces} commerces actifs{" "}
+            <IconBuilding className="size-4" />
           </div>
-          <div className="text-muted-foreground">Bon taux d'engagement</div>
+          <div className="text-muted-foreground">
+            Bon taux d&apos;engagement
+          </div>
         </CardFooter>
       </Card>
 

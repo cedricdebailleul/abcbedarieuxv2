@@ -44,16 +44,20 @@ export function useGSAPAnimation() {
   return ref;
 }
 
-export function useGSAPTimeline(dependencies: any[] = []) {
+export function useGSAPTimeline(dependencies: unknown[] = []) {
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
 
-  useEffect(() => {
-    timelineRef.current = gsap.timeline();
+  useEffect(
+    () => {
+      timelineRef.current = gsap.timeline();
 
-    return () => {
-      timelineRef.current?.kill();
-    };
-  }, dependencies);
+      return () => {
+        timelineRef.current?.kill();
+      };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    Array.isArray(dependencies) ? dependencies : []
+  );
 
   return timelineRef.current;
 }

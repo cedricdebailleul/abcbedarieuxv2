@@ -183,10 +183,6 @@ async function main() {
             bio: "Administrateur de la plateforme ABC Bédarieux",
             // location: "Bédarieux, France", // Removed as it is not part of the Profile model
             // website: "https://abc-bedarieux.fr", // Removed as it is not part of the Profile model
-            socialLinks: JSON.stringify({
-              github: "https://github.com/cedricdebailleul",
-              linkedin: "https://linkedin.com/in/cedric-debailleul",
-            }),
           },
         },
       },
@@ -202,7 +198,6 @@ async function main() {
           profile: {
             create: {
               bio: "Passionnée de cuisine locale et de découvertes culinaires à Bédarieux",
-              location: "Bédarieux",
             },
           },
         },
@@ -216,7 +211,6 @@ async function main() {
           profile: {
             create: {
               bio: "Commerçant local, toujours à la recherche de nouveaux partenaires",
-              location: "Bédarieux",
             },
           },
         },
@@ -231,7 +225,6 @@ async function main() {
           profile: {
             create: {
               bio: "Modératrice de la communauté ABC Bédarieux",
-              location: "Bédarieux",
             },
           },
         },
@@ -245,7 +238,6 @@ async function main() {
           profile: {
             create: {
               bio: "Organisateur d'événements locaux",
-              location: "Bédarieux",
             },
           },
         },
@@ -259,7 +251,6 @@ async function main() {
           profile: {
             create: {
               bio: "Artisane locale, passionnée par les produits du terroir",
-              location: "Bédarieux",
             },
           },
         },
@@ -309,7 +300,9 @@ async function main() {
           name: "La Table du Terroir",
           description:
             "Restaurant gastronomique proposant une cuisine du terroir avec des produits locaux. Spécialités régionales dans un cadre authentique.",
-          address: "12 Rue de la République, 34600 Bédarieux",
+          street: "12 Rue de la République, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 12 34",
           website: "https://latabledeterroir-bedarieux.fr",
           email: "contact@latabledeterroir.fr",
@@ -319,44 +312,6 @@ async function main() {
           type: "RESTAURANT",
           latitude: 43.6147,
           longitude: 3.1567,
-          openingHours: JSON.stringify({
-            monday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "19:00",
-              closeEvening: "22:00",
-            },
-            tuesday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "19:00",
-              closeEvening: "22:00",
-            },
-            wednesday: { closed: true },
-            thursday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "19:00",
-              closeEvening: "22:00",
-            },
-            friday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "19:00",
-              closeEvening: "22:30",
-            },
-            saturday: {
-              open: "12:00",
-              close: "14:30",
-              openEvening: "19:00",
-              closeEvening: "22:30",
-            },
-            sunday: { open: "12:00", close: "14:30" },
-          }),
-          socialLinks: JSON.stringify({
-            facebook: "https://facebook.com/latabledeterroir",
-            instagram: "https://instagram.com/latabledeterroir",
-          }),
         },
       }),
 
@@ -365,7 +320,9 @@ async function main() {
           name: "Pizzeria Bella Vista",
           description:
             "Pizzeria familiale avec pâte fraîche préparée quotidiennement. Terrasse avec vue sur les collines. Pizzas au feu de bois.",
-          address: "25 Avenue de Lodève, 34600 Bédarieux",
+          street: "25 Avenue de Lodève, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 45 67",
           email: "bellavista@pizzeria.fr",
           status: "ACTIVE",
@@ -374,25 +331,6 @@ async function main() {
           type: "RESTAURANT",
           latitude: 43.6155,
           longitude: 3.158,
-          openingHours: JSON.stringify({
-            monday: { closed: true },
-            tuesday: { openEvening: "18:30", closeEvening: "22:00" },
-            wednesday: { openEvening: "18:30", closeEvening: "22:00" },
-            thursday: { openEvening: "18:30", closeEvening: "22:00" },
-            friday: { openEvening: "18:30", closeEvening: "22:30" },
-            saturday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "18:30",
-              closeEvening: "22:30",
-            },
-            sunday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "18:30",
-              closeEvening: "22:00",
-            },
-          }),
         },
       }),
 
@@ -401,7 +339,9 @@ async function main() {
           name: "Café de la Place",
           description:
             "Café traditionnel au cœur de Bédarieux. Petite restauration, tapas et boissons. Terrasse ensoleillée sur la place principale.",
-          address: "3 Place de la République, 34600 Bédarieux",
+          street: "3 Place de la République, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 23 45",
           status: "ACTIVE",
           isVerified: true,
@@ -409,15 +349,6 @@ async function main() {
           type: "COMMERCE",
           latitude: 43.615,
           longitude: 3.1575,
-          openingHours: JSON.stringify({
-            monday: { open: "07:00", close: "20:00" },
-            tuesday: { open: "07:00", close: "20:00" },
-            wednesday: { open: "07:00", close: "20:00" },
-            thursday: { open: "07:00", close: "20:00" },
-            friday: { open: "07:00", close: "22:00" },
-            saturday: { open: "08:00", close: "22:00" },
-            sunday: { open: "08:00", close: "20:00" },
-          }),
           categories: {
             create: [
               { categoryId: restaurantsCategory.id },
@@ -433,7 +364,9 @@ async function main() {
           name: "Boulangerie Artisanale Durand",
           description:
             "Boulangerie artisanale depuis 1985. Pain traditionnel, viennoiseries, pâtisseries. Spécialités locales et pain bio.",
-          address: "18 Rue Jean Jaurès, 34600 Bédarieux",
+          street: "18 Rue Jean Jaurès, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 78 90",
           status: "ACTIVE",
           isVerified: true,
@@ -441,40 +374,6 @@ async function main() {
           type: "COMMERCE",
           latitude: 43.6143,
           longitude: 3.1572,
-          openingHours: JSON.stringify({
-            monday: {
-              open: "06:30",
-              close: "13:00",
-              openEvening: "15:30",
-              closeEvening: "19:30",
-            },
-            tuesday: {
-              open: "06:30",
-              close: "13:00",
-              openEvening: "15:30",
-              closeEvening: "19:30",
-            },
-            wednesday: { closed: true },
-            thursday: {
-              open: "06:30",
-              close: "13:00",
-              openEvening: "15:30",
-              closeEvening: "19:30",
-            },
-            friday: {
-              open: "06:30",
-              close: "13:00",
-              openEvening: "15:30",
-              closeEvening: "19:30",
-            },
-            saturday: {
-              open: "06:30",
-              close: "13:00",
-              openEvening: "15:30",
-              closeEvening: "19:30",
-            },
-            sunday: { open: "07:00", close: "13:00" },
-          }),
           categories: {
             create: [
               { categoryId: commercesCategory.id },
@@ -489,7 +388,9 @@ async function main() {
           name: "Pharmacie Centrale",
           description:
             "Pharmacie au centre de Bédarieux. Services de parapharmacie, orthopédie, matériel médical. Préparations magistrales.",
-          address: "14 Boulevard de la Liberté, 34600 Bédarieux",
+          street: "14 Boulevard de la Liberté, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 34 56",
           website: "https://pharmacie-centrale-bedarieux.fr",
           email: "contact@pharmacie-centrale.fr",
@@ -499,45 +400,6 @@ async function main() {
           type: "SERVICE",
           latitude: 43.6148,
           longitude: 3.1569,
-          openingHours: JSON.stringify({
-            monday: {
-              open: "08:30",
-              close: "12:30",
-              openEvening: "14:00",
-              closeEvening: "19:30",
-            },
-            tuesday: {
-              open: "08:30",
-              close: "12:30",
-              openEvening: "14:00",
-              closeEvening: "19:30",
-            },
-            wednesday: {
-              open: "08:30",
-              close: "12:30",
-              openEvening: "14:00",
-              closeEvening: "19:30",
-            },
-            thursday: {
-              open: "08:30",
-              close: "12:30",
-              openEvening: "14:00",
-              closeEvening: "19:30",
-            },
-            friday: {
-              open: "08:30",
-              close: "12:30",
-              openEvening: "14:00",
-              closeEvening: "19:30",
-            },
-            saturday: {
-              open: "08:30",
-              close: "12:30",
-              openEvening: "14:00",
-              closeEvening: "19:00",
-            },
-            sunday: { closed: true },
-          }),
           categories: {
             create: [
               { categoryId: servicesCategory.id },
@@ -552,7 +414,9 @@ async function main() {
           name: "Épicerie Bio Nature",
           description:
             "Épicerie bio et produits naturels. Fruits et légumes locaux, produits en vrac, cosmétiques naturels.",
-          address: "7 Rue du Marché, 34600 Bédarieux",
+          street: "7 Rue du Marché, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 67 89",
           email: "contact@nature-bio.fr",
           status: "ACTIVE",
@@ -561,35 +425,6 @@ async function main() {
           type: "COMMERCE",
           latitude: 43.6145,
           longitude: 3.1573,
-          openingHours: JSON.stringify({
-            monday: {
-              open: "09:00",
-              close: "12:30",
-              openEvening: "15:00",
-              closeEvening: "19:00",
-            },
-            tuesday: {
-              open: "09:00",
-              close: "12:30",
-              openEvening: "15:00",
-              closeEvening: "19:00",
-            },
-            wednesday: { closed: true },
-            thursday: {
-              open: "09:00",
-              close: "12:30",
-              openEvening: "15:00",
-              closeEvening: "19:00",
-            },
-            friday: {
-              open: "09:00",
-              close: "12:30",
-              openEvening: "15:00",
-              closeEvening: "19:00",
-            },
-            saturday: { open: "09:00", close: "18:00" },
-            sunday: { closed: true },
-          }),
           categories: {
             create: [{ categoryId: commercesCategory.id }],
           },
@@ -601,7 +436,9 @@ async function main() {
           name: "Bar Le Central",
           description:
             "Bar traditionnel avec ambiance conviviale. Billard, jeux, retransmissions sportives. Terrasse ombragée.",
-          address: "9 Place Jean Moulin, 34600 Bédarieux",
+          street: "9 Place Jean Moulin, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 12 78",
           status: "ACTIVE",
           isVerified: true,
@@ -609,15 +446,6 @@ async function main() {
           type: "COMMERCE",
           latitude: 43.6152,
           longitude: 3.1576,
-          openingHours: JSON.stringify({
-            monday: { open: "08:00", close: "21:00" },
-            tuesday: { open: "08:00", close: "21:00" },
-            wednesday: { open: "08:00", close: "21:00" },
-            thursday: { open: "08:00", close: "21:00" },
-            friday: { open: "08:00", close: "01:00" },
-            saturday: { open: "08:00", close: "01:00" },
-            sunday: { open: "09:00", close: "21:00" },
-          }),
           categories: {
             create: [
               { categoryId: restaurantsCategory.id },
@@ -632,7 +460,9 @@ async function main() {
           name: "Librairie Papeterie du Centre",
           description:
             "Librairie généraliste avec rayon papeterie. Livres régionaux, presse, jeux, articles scolaires et de bureau.",
-          address: "22 Rue de la Paix, 34600 Bédarieux",
+          street: "22 Rue de la Paix, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 56 78",
           email: "librairie@centre-bedarieux.fr",
           status: "ACTIVE",
@@ -641,40 +471,6 @@ async function main() {
           type: "COMMERCE",
           latitude: 43.6149,
           longitude: 3.1571,
-          openingHours: JSON.stringify({
-            monday: {
-              open: "09:00",
-              close: "12:00",
-              openEvening: "14:00",
-              closeEvening: "18:30",
-            },
-            tuesday: {
-              open: "09:00",
-              close: "12:00",
-              openEvening: "14:00",
-              closeEvening: "18:30",
-            },
-            wednesday: {
-              open: "09:00",
-              close: "12:00",
-              openEvening: "14:00",
-              closeEvening: "18:30",
-            },
-            thursday: {
-              open: "09:00",
-              close: "12:00",
-              openEvening: "14:00",
-              closeEvening: "18:30",
-            },
-            friday: {
-              open: "09:00",
-              close: "12:00",
-              openEvening: "14:00",
-              closeEvening: "18:30",
-            },
-            saturday: { open: "09:00", close: "18:00" },
-            sunday: { closed: true },
-          }),
           categories: {
             create: [{ categoryId: commercesCategory.id }],
           },
@@ -686,7 +482,9 @@ async function main() {
           name: "Coiffure & Style Beauté",
           description:
             "Salon de coiffure mixte. Coupe, coloration, soins capillaires. Service esthétique et manucure.",
-          address: "16 Avenue de Béziers, 34600 Bédarieux",
+          street: "16 Avenue de Béziers, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 89 01",
           status: "ACTIVE",
           isVerified: true,
@@ -694,15 +492,6 @@ async function main() {
           type: "SERVICE",
           latitude: 43.6144,
           longitude: 3.1578,
-          openingHours: JSON.stringify({
-            monday: { closed: true },
-            tuesday: { open: "09:00", close: "18:00" },
-            wednesday: { open: "09:00", close: "18:00" },
-            thursday: { open: "09:00", close: "18:00" },
-            friday: { open: "09:00", close: "19:00" },
-            saturday: { open: "08:30", close: "17:00" },
-            sunday: { closed: true },
-          }),
           categories: {
             create: [{ categoryId: servicesCategory.id }],
           },
@@ -714,7 +503,9 @@ async function main() {
           name: "Restaurant L'Authentique",
           description:
             "Restaurant de spécialités méditerranéennes. Cuisine faite maison avec produits frais et de saison. Menu du jour.",
-          address: "31 Rue des Jardins, 34600 Bédarieux",
+          street: "31 Rue des Jardins, 34600 Bédarieux",
+          postalCode: "34600",
+          city: "Bédarieux",
           phone: "04 67 95 45 23",
           website: "https://restaurant-authentique.fr",
           email: "reservation@authentique.fr",
@@ -724,44 +515,6 @@ async function main() {
           type: "RESTAURANT",
           latitude: 43.6146,
           longitude: 3.1574,
-          openingHours: JSON.stringify({
-            monday: { closed: true },
-            tuesday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "19:30",
-              closeEvening: "21:30",
-            },
-            wednesday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "19:30",
-              closeEvening: "21:30",
-            },
-            thursday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "19:30",
-              closeEvening: "21:30",
-            },
-            friday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "19:30",
-              closeEvening: "22:00",
-            },
-            saturday: {
-              open: "12:00",
-              close: "14:00",
-              openEvening: "19:30",
-              closeEvening: "22:00",
-            },
-            sunday: { open: "12:00", close: "14:00" },
-          }),
-          socialLinks: JSON.stringify({
-            facebook: "https://facebook.com/authentique.bedarieux",
-            instagram: "https://instagram.com/authentique_bedarieux",
-          }),
           categories: {
             create: [{ categoryId: restaurantsCategory.id }],
           },
@@ -789,18 +542,15 @@ async function main() {
           title: "Soirée Dégustation - Vins et Terroir",
           description:
             "Découvrez les meilleurs vins de la région accompagnés de produits du terroir local. Dégustation commentée par un sommelier.",
-          content:
-            "Une soirée exceptionnelle vous attend à La Table du Terroir ! Notre sommelier vous guidera à travers une sélection de vins locaux accompagnés de fromages et charcuteries de la région. Places limitées, réservation obligatoire.",
           startDate: futureDate1,
           endDate: new Date(futureDate1.getTime() + 3 * 60 * 60 * 1000), // +3h
           slug: "soiree-degustation-vins-terroir",
           status: "PUBLISHED",
-          category: "GASTRONOMIE",
+          category: "CULTURAL",
           maxParticipants: 25,
           price: 35.0,
           placeId: places[0].id, // La Table du Terroir
           organizerId: adminUser.id,
-          location: "La Table du Terroir",
           isRecurring: false,
         },
       }),
@@ -810,18 +560,15 @@ async function main() {
           title: "Atelier Pizza - Apprenez avec le Chef",
           description:
             "Atelier culinaire pour apprendre à faire sa pizza comme un professionnel. Pâte fraîche et garnitures au choix.",
-          content:
-            "Rejoignez-nous pour un atelier pizza interactif ! Apprenez les secrets de notre pâte maison et créez votre propre pizza sous les conseils de notre chef pizzaïolo. Dégustation incluse avec boisson.",
           startDate: futureDate2,
           endDate: new Date(futureDate2.getTime() + 2 * 60 * 60 * 1000), // +2h
           slug: "atelier-pizza-chef",
           status: "PUBLISHED",
-          category: "ATELIER",
+          category: "WORKSHOP",
           maxParticipants: 12,
           price: 25.0,
           placeId: places[1].id, // Pizzeria Bella Vista
           organizerId: users[3].id, // Jean-Luc Moreau
-          location: "Pizzeria Bella Vista",
           isRecurring: false,
         },
       }),
@@ -831,20 +578,16 @@ async function main() {
           title: "Marché Bio et Artisanal",
           description:
             "Marché hebdomadaire des producteurs locaux et artisans. Produits bio, créations artisanales et spécialités régionales.",
-          content:
-            "Tous les samedis matin, découvrez notre marché bio et artisanal sur la place de la République. Producteurs locaux, artisans créateurs, et bien plus encore !",
           startDate: new Date(currentDate.getTime() + 3 * 24 * 60 * 60 * 1000), // +3 jours (samedi)
           endDate: new Date(
             currentDate.getTime() + 3 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000
           ), // +4h
           slug: "marche-bio-artisanal",
           status: "PUBLISHED",
-          category: "MARCHE",
+          category: "SOCIAL",
           price: 0, // Gratuit
           organizerId: users[4].id, // Claire Rousseau
-          location: "Place de la République, Bédarieux",
           isRecurring: true,
-          recurringPattern: "weekly",
         },
       }),
 
@@ -853,8 +596,6 @@ async function main() {
           title: "Concert Jazz au Café de la Place",
           description:
             "Soirée jazz avec le trio 'Bédarieux Blues'. Ambiance intimiste et cocktails d'exception.",
-          content:
-            "Le Café de la Place vous invite à une soirée jazz exceptionnelle avec le trio local 'Bédarieux Blues'. Répertoire jazz classique et créations originales dans une ambiance chaleureuse. Cocktails et tapas disponibles.",
           startDate: futureDate3,
           endDate: new Date(futureDate3.getTime() + 3 * 60 * 60 * 1000), // +3h
           slug: "concert-jazz-cafe-place",
@@ -864,7 +605,6 @@ async function main() {
           price: 15.0,
           placeId: places[2].id, // Café de la Place
           organizerId: users[1].id, // Pierre Martin
-          location: "Café de la Place",
           isRecurring: false,
         },
       }),
@@ -877,15 +617,11 @@ async function main() {
       prisma.post.create({
         data: {
           title: "Bédarieux, un terroir d'exception",
-          content:
-            "Découvrez les richesses gastronomiques de notre belle région...",
           excerpt:
             "Plongée dans l'univers culinaire local avec nos producteurs et chefs passionnés.",
           slug: "bedarieux-terroir-exception",
           status: "PUBLISHED",
           authorId: adminUser.id,
-          featuredImage: "/images/terroir-bedarieux.jpg",
-          tags: JSON.stringify(["terroir", "gastronomie", "producteurs"]),
           publishedAt: new Date(
             currentDate.getTime() - 2 * 24 * 60 * 60 * 1000
           ), // -2 jours
@@ -895,15 +631,11 @@ async function main() {
       prisma.post.create({
         data: {
           title: "Les nouveaux commerces s'installent",
-          content:
-            "Tour d'horizon des dernières ouvertures qui dynamisent le centre-ville...",
           excerpt:
             "De nouvelles enseignes rejoignent l'écosystème commercial bédaricien.",
           slug: "nouveaux-commerces-installation",
           status: "PUBLISHED",
           authorId: users[1].id, // Pierre Martin
-          featuredImage: "/images/commerces-bedarieux.jpg",
-          tags: JSON.stringify(["commerce", "économie locale", "centre-ville"]),
           publishedAt: new Date(
             currentDate.getTime() - 5 * 24 * 60 * 60 * 1000
           ), // -5 jours
@@ -942,8 +674,8 @@ async function main() {
         userId: users[2].id, // Sophie Leclerc
         status: "APPROVED",
         message: "Je suis la propriétaire de cet établissement",
-        reviewedAt: new Date(),
-        reviewedBy: adminUser.id,
+        processedAt: new Date(),
+        processedBy: adminUser.id,
       },
     });
 

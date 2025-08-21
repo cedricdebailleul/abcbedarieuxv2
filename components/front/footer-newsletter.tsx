@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ export default function FooterNewsletter() {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
       toast.error("Veuillez entrer une adresse email valide");
       return;
@@ -35,7 +35,7 @@ export default function FooterNewsletter() {
       const response = await fetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           email: email.trim(),
           source: "footer",
           preferences: {
@@ -44,7 +44,7 @@ export default function FooterNewsletter() {
             offers: false,
             news: true,
             frequency: "WEEKLY",
-          }
+          },
         }),
       });
 
@@ -54,11 +54,13 @@ export default function FooterNewsletter() {
         setIsSubscribed(true);
         setEmail("");
         setShowForm(false);
-        toast.success(data.message || "Inscription réussie ! Vérifiez votre email.");
+        toast.success(
+          data.message || "Inscription réussie ! Vérifiez votre email."
+        );
       } else {
         toast.error(data.error || "Erreur lors de l'inscription");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de l'inscription à la newsletter");
     } finally {
       setIsLoading(false);
@@ -66,7 +68,7 @@ export default function FooterNewsletter() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="flex justify-end h-full"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
@@ -76,11 +78,13 @@ export default function FooterNewsletter() {
         <div className="text-xs text-gray-600 mb-2 tracking-wide">
           POUR PLUS D&apos;INFORMATION
         </div>
-        
+
         {!isSubscribed ? (
           <>
-            <h3 className="text-xl font-bold mb-6">Abonnez-vous à l&apos;essentiel</h3>
-            
+            <h3 className="text-xl font-bold mb-6">
+              Abonnez-vous à l&apos;essentiel
+            </h3>
+
             {!showForm ? (
               <div className="flex gap-3">
                 <motion.div
@@ -88,7 +92,7 @@ export default function FooterNewsletter() {
                   whileTap={{ scale: 0.98 }}
                   className="flex-1"
                 >
-                  <Button 
+                  <Button
                     onClick={() => setShowForm(true)}
                     className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-full w-full"
                   >
@@ -106,14 +110,12 @@ export default function FooterNewsletter() {
                     className="border-blue-300 text-gray-900 hover:bg-pink-50 px-6 py-2 rounded-full w-full bg-transparent"
                     asChild
                   >
-                    <Link href="/contact">
-                      S&apos;abonner aux avis
-                    </Link>
+                    <Link href="/contact">S&apos;abonner aux avis</Link>
                   </Button>
                 </motion.div>
               </div>
             ) : (
-              <motion.form 
+              <motion.form
                 onSubmit={handleSubscribe}
                 className="space-y-4"
                 initial={{ opacity: 0, height: 0 }}
@@ -131,9 +133,9 @@ export default function FooterNewsletter() {
                     required
                   />
                 </div>
-                
+
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     type="submit"
                     disabled={isLoading}
                     className="bg-gray-900 hover:bg-gray-800 text-white flex-1"
@@ -141,7 +143,11 @@ export default function FooterNewsletter() {
                     {isLoading ? (
                       <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                         className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                       />
                     ) : (
@@ -166,12 +172,16 @@ export default function FooterNewsletter() {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-3 h-3 mt-0.5 text-blue-600 flex-shrink-0" />
                     <p>
-                      En vous abonnant, vous acceptez de recevoir nos emails et vous pouvez vous désabonner à tout moment.
+                      En vous abonnant, vous acceptez de recevoir nos emails et
+                      vous pouvez vous désabonner à tout moment.
                     </p>
                   </div>
                   <p>
-                    Conformément au RGPD, vos données sont protégées. 
-                    <Link href="/privacy" className="underline hover:text-blue-700 ml-1">
+                    Conformément au RGPD, vos données sont protégées.
+                    <Link
+                      href="/privacy"
+                      className="underline hover:text-blue-700 ml-1"
+                    >
                       Politique de confidentialité
                     </Link>
                   </p>
@@ -192,8 +202,8 @@ export default function FooterNewsletter() {
             <div>
               <h3 className="text-xl font-bold mb-2">Merci !</h3>
               <p className="text-gray-600 text-sm">
-                Vous êtes maintenant abonné à notre newsletter. 
-                Vérifiez votre boîte email pour confirmer votre inscription.
+                Vous êtes maintenant abonné à notre newsletter. Vérifiez votre
+                boîte email pour confirmer votre inscription.
               </p>
             </div>
             <Button

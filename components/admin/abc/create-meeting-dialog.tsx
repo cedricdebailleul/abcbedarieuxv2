@@ -53,7 +53,17 @@ export function CreateMeetingDialog({ onSuccess }: CreateMeetingDialogProps) {
       setLoading(true);
       setError("");
 
-      const meetingData: any = {
+      interface MeetingData {
+        title: string;
+        description: string | null;
+        type: string;
+        scheduledAt: string;
+        status: string;
+        location: string | null;
+        duration?: number;
+      }
+
+      const meetingData: MeetingData = {
         title,
         description: description || null,
         type,

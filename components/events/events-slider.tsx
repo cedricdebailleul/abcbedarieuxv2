@@ -199,7 +199,7 @@ export function EventsSlider({ events, className = "" }: EventsSliderProps) {
                 className="bg-white/20 hover:bg-white/30 text-white border-white/30 rounded-full"
               >
                 <Link href={`/events/${currentEvent.slug}`}>
-                  Voir l'événement
+                  Voir l&apos;événement
                 </Link>
               </Button>
             </div>

@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Vérifier l'authentification
     const session = await auth.api.getSession({
@@ -26,15 +26,14 @@ export async function GET(request: NextRequest) {
       subscriber,
       isSubscribed: !!subscriber?.isActive,
     });
-
   } catch (error) {
     console.error("Erreur lors de la récupération de l'abonnement:", error);
     return NextResponse.json(
-      { 
+      {
         success: true,
         subscriber: null,
         isSubscribed: false,
-        migrationRequired: true 
+        migrationRequired: true,
       },
       { status: 200 }
     );
@@ -97,8 +96,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Créer un nouvel abonnement
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-      const unsubscribeToken = crypto.randomBytes(32).toString('hex');
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      const unsubscribeToken = crypto.randomBytes(32).toString("hex");
 
       // Récupérer les infos du profil utilisateur
       const user = await prisma.user.findUnique({
@@ -109,8 +108,10 @@ export async function POST(request: NextRequest) {
       const newSubscriber = await prisma.newsletterSubscriber.create({
         data: {
           email: session.user.email,
-          firstName: user?.profile?.firstname || session.user.name.split(' ')[0],
-          lastName: user?.profile?.lastname || session.user.name.split(' ')[1] || '',
+          firstName:
+            user?.profile?.firstname || session.user.name.split(" ")[0],
+          lastName:
+            user?.profile?.lastname || session.user.name.split(" ")[1] || "",
           verificationToken,
           unsubscribeToken,
           isActive: true,
@@ -133,11 +134,10 @@ export async function POST(request: NextRequest) {
         subscriber: newSubscriber,
         message: "Abonnement créé avec succès",
       });
-
     } else if (action === "unsubscribe") {
       // Désactiver l'abonnement
       const subscriber = await prisma.newsletterSubscriber.updateMany({
-        where: { 
+        where: {
           email: session.user.email,
           isActive: true,
         },
@@ -155,7 +155,6 @@ export async function POST(request: NextRequest) {
         success: true,
         message: "Désabonnement effectué avec succès",
       });
-
     } else if (action === "updatePreferences") {
       // Mettre à jour les préférences
       const subscriber = await prisma.newsletterSubscriber.findUnique({
@@ -175,11 +174,17 @@ export async function POST(request: NextRequest) {
         data: {
           preferences: {
             update: {
-              events: preferences.events ?? subscriber.preferences?.events ?? true,
-              places: preferences.places ?? subscriber.preferences?.places ?? true,
-              offers: preferences.offers ?? subscriber.preferences?.offers ?? false,
+              events:
+                preferences.events ?? subscriber.preferences?.events ?? true,
+              places:
+                preferences.places ?? subscriber.preferences?.places ?? true,
+              offers:
+                preferences.offers ?? subscriber.preferences?.offers ?? false,
               news: preferences.news ?? subscriber.preferences?.news ?? true,
-              frequency: preferences.frequency ?? subscriber.preferences?.frequency ?? "WEEKLY",
+              frequency:
+                preferences.frequency ??
+                subscriber.preferences?.frequency ??
+                "WEEKLY",
             },
           },
         },
@@ -197,7 +202,6 @@ export async function POST(request: NextRequest) {
       { error: "Action non supportée" },
       { status: 400 }
     );
-
   } catch (error) {
     console.error("Erreur lors de la gestion de l'abonnement:", error);
     return NextResponse.json(

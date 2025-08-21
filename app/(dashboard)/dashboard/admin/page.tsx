@@ -1,7 +1,20 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { IconUsers, IconAward, IconBuilding, IconMail, IconFlag, IconTrendingUp } from "@tabler/icons-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  IconUsers,
+  IconAward,
+  IconBuilding,
+  IconMail,
+  IconFlag,
+  IconTrendingUp,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
 
@@ -11,7 +24,8 @@ export default function AdminPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Administration</h1>
         <p className="text-muted-foreground">
-          Gérez les utilisateurs, contenus et paramètres de la plateforme ABC Bédarieux.
+          Gérez les utilisateurs, contenus et paramètres de la plateforme ABC
+          Bédarieux.
         </p>
       </div>
 
@@ -129,34 +143,40 @@ export default function AdminPage() {
         <CardHeader>
           <CardTitle>Actions rapides</CardTitle>
           <CardDescription>
-            Accès direct aux tâches d'administration les plus courantes
+            Accès direct aux tâches d&apos;administration les plus courantes
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Link 
-              href="/dashboard/admin/claims" 
+            <Link
+              href="/dashboard/admin/claims"
               className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
             >
               <IconFlag className="h-4 w-4 text-orange-500" />
-              <span className="text-sm font-medium">Traiter les réclamations</span>
+              <span className="text-sm font-medium">
+                Traiter les réclamations
+              </span>
             </Link>
-            <Link 
-              href="/dashboard/admin/newsletter" 
+            <Link
+              href="/dashboard/admin/newsletter"
               className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
             >
               <IconMail className="h-4 w-4 text-purple-500" />
-              <span className="text-sm font-medium">Envoyer une newsletter</span>
+              <span className="text-sm font-medium">
+                Envoyer une newsletter
+              </span>
             </Link>
-            <Link 
-              href="/dashboard/admin/users" 
+            <Link
+              href="/dashboard/admin/users"
               className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
             >
               <IconUsers className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium">Gérer les utilisateurs</span>
+              <span className="text-sm font-medium">
+                Gérer les utilisateurs
+              </span>
             </Link>
-            <Link 
-              href="/dashboard/admin/badges" 
+            <Link
+              href="/dashboard/admin/badges"
               className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
             >
               <IconAward className="h-4 w-4 text-yellow-500" />

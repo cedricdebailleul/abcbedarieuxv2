@@ -27,16 +27,18 @@ export function OpenGraphDebug({ url, className }: OpenGraphDebugProps) {
   const testMetadata = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/og-refresh?url=${encodeURIComponent(url)}`);
+      const response = await fetch(
+        `/api/og-refresh?url=${encodeURIComponent(url)}`
+      );
       const data = await response.json();
-      
+
       if (response.ok) {
         setOgData(data);
         toast.success("Métadonnées récupérées avec succès");
       } else {
         toast.error(data.error || "Erreur lors de la récupération");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur de connexion");
     } finally {
       setIsLoading(false);
@@ -46,14 +48,14 @@ export function OpenGraphDebug({ url, className }: OpenGraphDebugProps) {
   const refreshFacebookCache = async () => {
     setIsRefreshing(true);
     try {
-      const response = await fetch('/api/og-refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
+      const response = await fetch("/api/og-refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         toast.success("Cache Facebook rafraîchi");
         // Recharger les métadonnées après rafraîchissement
@@ -61,7 +63,7 @@ export function OpenGraphDebug({ url, className }: OpenGraphDebugProps) {
       } else {
         toast.error(data.message || "Erreur lors du rafraîchissement");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur de connexion");
     } finally {
       setIsRefreshing(false);
@@ -69,12 +71,14 @@ export function OpenGraphDebug({ url, className }: OpenGraphDebugProps) {
   };
 
   const openFacebookDebugger = () => {
-    const debugUrl = `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(url)}`;
-    window.open(debugUrl, '_blank');
+    const debugUrl = `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(
+      url
+    )}`;
+    window.open(debugUrl, "_blank");
   };
 
   // N'afficher qu'en mode développement
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === "production") {
     return null;
   }
 
@@ -84,7 +88,9 @@ export function OpenGraphDebug({ url, className }: OpenGraphDebugProps) {
         <CardTitle className="flex items-center gap-2 text-sm">
           <Eye className="w-4 h-4" />
           Debug Open Graph
-          <Badge variant="outline" className="text-xs">Dev</Badge>
+          <Badge variant="outline" className="text-xs">
+            Dev
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -96,10 +102,14 @@ export function OpenGraphDebug({ url, className }: OpenGraphDebugProps) {
             variant="outline"
             className="flex-1"
           >
-            {isLoading ? <RefreshCw className="w-3 h-3 mr-1 animate-spin" /> : <Eye className="w-3 h-3 mr-1" />}
+            {isLoading ? (
+              <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+            ) : (
+              <Eye className="w-3 h-3 mr-1" />
+            )}
             Tester métadonnées
           </Button>
-          
+
           <Button
             onClick={refreshFacebookCache}
             disabled={isRefreshing}
@@ -107,15 +117,15 @@ export function OpenGraphDebug({ url, className }: OpenGraphDebugProps) {
             variant="outline"
             className="flex-1"
           >
-            {isRefreshing ? <RefreshCw className="w-3 h-3 mr-1 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+            {isRefreshing ? (
+              <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3 h-3 mr-1" />
+            )}
             Rafraîchir FB
           </Button>
-          
-          <Button
-            onClick={openFacebookDebugger}
-            size="sm"
-            variant="outline"
-          >
+
+          <Button onClick={openFacebookDebugger} size="sm" variant="outline">
             <ExternalLink className="w-3 h-3" />
           </Button>
         </div>
@@ -133,7 +143,7 @@ export function OpenGraphDebug({ url, className }: OpenGraphDebugProps) {
                 ))}
               </div>
             </div>
-            
+
             {Object.keys(ogData.twitter).length > 0 && (
               <>
                 <Separator />
@@ -150,10 +160,10 @@ export function OpenGraphDebug({ url, className }: OpenGraphDebugProps) {
                 </div>
               </>
             )}
-            
+
             <Separator />
             <div className="text-xs text-muted-foreground">
-              Testé le {new Date(ogData.timestamp).toLocaleString('fr-FR')}
+              Testé le {new Date(ogData.timestamp).toLocaleString("fr-FR")}
             </div>
           </div>
         )}

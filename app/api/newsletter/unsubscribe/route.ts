@@ -57,7 +57,6 @@ export async function POST(request: NextRequest) {
         where: { id: subscriber.id },
         data: {
           isActive: false,
-          unsubscribedAt: new Date(),
         },
       });
 
@@ -66,27 +65,31 @@ export async function POST(request: NextRequest) {
         message: "Vous avez été désabonné avec succès de notre newsletter.",
         subscriber: {
           email: updatedSubscriber.email,
-          unsubscribedAt: updatedSubscriber.unsubscribedAt,
+          isActive: updatedSubscriber.isActive,
         },
       });
-
-    } catch (prismaError: any) {
-      if (prismaError.message?.includes("newsletterSubscriber")) {
-        return NextResponse.json({
-          success: false,
-          error: "Le service de newsletter n'est pas encore disponible.",
-          migrationRequired: true,
-        }, { status: 503 });
+    } catch (prismaError: unknown) {
+      if (
+        prismaError instanceof Error &&
+        prismaError.message.includes("newsletterSubscriber")
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Le service de newsletter n'est pas encore disponible.",
+            migrationRequired: true,
+          },
+          { status: 503 }
+        );
       }
       throw prismaError;
     }
-
   } catch (error) {
     console.error("Erreur lors du désabonnement:", error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: "Erreur interne du serveur" 
+        error: "Erreur interne du serveur",
       },
       { status: 500 }
     );
@@ -96,7 +99,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   // Endpoint pour vérifier un token de désinscription
   const { searchParams } = new URL(request.url);
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
 
   if (!token) {
     return NextResponse.json({ error: "Token requis" }, { status: 400 });
@@ -135,13 +138,12 @@ export async function GET(request: NextRequest) {
       },
       isValid: true,
     });
-
   } catch (error) {
     console.error("Erreur lors de la vérification du token:", error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: "Erreur lors de la vérification" 
+        error: "Erreur lors de la vérification",
       },
       { status: 500 }
     );

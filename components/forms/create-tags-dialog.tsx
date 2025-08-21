@@ -44,18 +44,24 @@ const createTagsFormSchema = z.object({
     }, "Au moins un nom de tag valide est requis"),
   color: z
     .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, "La couleur doit être un code hexadécimal valide")
+    .regex(
+      /^#[0-9A-Fa-f]{6}$/,
+      "La couleur doit être un code hexadécimal valide"
+    )
     .optional(),
 });
 
 type CreateTagsFormInput = z.infer<typeof createTagsFormSchema>;
 
 interface CreateTagsDialogProps {
-  onTagsCreated?: (tags: any[]) => void;
+  onTagsCreated?: (tags: string[]) => void;
   trigger?: React.ReactNode;
 }
 
-export function CreateTagsDialog({ onTagsCreated, trigger }: CreateTagsDialogProps) {
+export function CreateTagsDialog({
+  onTagsCreated,
+  trigger,
+}: CreateTagsDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [previewTags, setPreviewTags] = useState<string[]>([]);
@@ -100,7 +106,9 @@ export function CreateTagsDialog({ onTagsCreated, trigger }: CreateTagsDialogPro
 
           // Afficher les résultats
           if (created.length > 0 && existing.length > 0) {
-            toast.success(`${created.length} tag(s) créé(s), ${existing.length} existait(s) déjà`);
+            toast.success(
+              `${created.length} tag(s) créé(s), ${existing.length} existait(s) déjà`
+            );
           } else if (created.length > 0) {
             toast.success(`${created.length} tag(s) créé(s) avec succès`);
           } else if (existing.length > 0) {
@@ -109,7 +117,10 @@ export function CreateTagsDialog({ onTagsCreated, trigger }: CreateTagsDialogPro
 
           // Appeler le callback avec tous les tags (créés + existants)
           if (onTagsCreated) {
-            onTagsCreated([...created, ...existing]);
+            onTagsCreated([
+              ...created.map((tag) => tag.name),
+              ...existing.map((tag) => tag.name),
+            ]);
           }
 
           // Réinitialiser le formulaire et fermer
@@ -166,8 +177,8 @@ export function CreateTagsDialog({ onTagsCreated, trigger }: CreateTagsDialogPro
             Créer de nouveaux tags
           </DialogTitle>
           <DialogDescription>
-            Ajoutez un ou plusieurs tags séparés par des virgules. Les tags existants seront
-            détectés automatiquement.
+            Ajoutez un ou plusieurs tags séparés par des virgules. Les tags
+            existants seront détectés automatiquement.
           </DialogDescription>
         </DialogHeader>
 
@@ -189,7 +200,9 @@ export function CreateTagsDialog({ onTagsCreated, trigger }: CreateTagsDialogPro
                       }}
                     />
                   </FormControl>
-                  <FormDescription>Séparez plusieurs tags par des virgules</FormDescription>
+                  <FormDescription>
+                    Séparez plusieurs tags par des virgules
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -209,7 +222,9 @@ export function CreateTagsDialog({ onTagsCreated, trigger }: CreateTagsDialogPro
                       variant="secondary"
                       className="flex items-center gap-1"
                       style={{
-                        backgroundColor: `${form.watch("color") || "#8B5CF6"}20`,
+                        backgroundColor: `${
+                          form.watch("color") || "#8B5CF6"
+                        }20`,
                         color: form.watch("color") || "#8B5CF6",
                       }}
                     >
@@ -272,7 +287,10 @@ export function CreateTagsDialog({ onTagsCreated, trigger }: CreateTagsDialogPro
               >
                 Annuler
               </Button>
-              <Button type="submit" disabled={isPending || previewTags.length === 0}>
+              <Button
+                type="submit"
+                disabled={isPending || previewTags.length === 0}
+              >
                 {isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

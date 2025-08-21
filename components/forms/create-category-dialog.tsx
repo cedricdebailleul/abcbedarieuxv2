@@ -26,14 +26,22 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { type CategoryInput, createCategorySchema, generateSlug } from "@/lib/validations/post";
+import {
+  type CategoryInput,
+  createCategorySchema,
+  generateSlug,
+} from "@/lib/validations/post";
+import { Category } from "@/lib/generated/prisma";
 
 interface CreateCategoryDialogProps {
-  onCategoryCreated?: (category: any) => void;
+  onCategoryCreated?: (category: Category) => void;
   trigger?: React.ReactNode;
 }
 
-export function CreateCategoryDialog({ onCategoryCreated, trigger }: CreateCategoryDialogProps) {
+export function CreateCategoryDialog({
+  onCategoryCreated,
+  trigger,
+}: CreateCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -70,7 +78,24 @@ export function CreateCategoryDialog({ onCategoryCreated, trigger }: CreateCateg
 
           // Appeler le callback si fourni
           if (onCategoryCreated) {
-            onCategoryCreated(result.data);
+            onCategoryCreated({
+              ...result.data,
+              slug: "slug" in result.data ? (result.data.slug as string) : "",
+              description:
+                "description" in result.data
+                  ? (result.data.description as string | null)
+                  : null,
+              color:
+                "color" in result.data
+                  ? (result.data.color as string | null)
+                  : null,
+              parentId:
+                "parentId" in result.data
+                  ? (result.data.parentId as string | null)
+                  : null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
           }
 
           // Réinitialiser le formulaire et fermer

@@ -50,7 +50,9 @@ import {
   RARITY_COLORS,
   type BadgeFilters 
 } from "@/lib/validations/badge";
-import { cn } from "@/lib/utils";
+import { BadgeListItem } from "@/lib/types/badge";
+import Image from "next/image";
+
 
 interface BadgesTableProps {
   filters: BadgeFilters;
@@ -60,7 +62,7 @@ export function BadgesTable({ filters }: BadgesTableProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [data, setData] = useState<{
-    badges: any[];
+    badges: BadgeListItem[];
     total: number;
     pages: number;
   } | null>(null);
@@ -78,7 +80,7 @@ export function BadgesTable({ filters }: BadgesTableProps) {
         } else {
           toast.error(result.error || "Erreur lors du chargement");
         }
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors du chargement des badges");
       }
       setLoading(false);
@@ -102,7 +104,7 @@ export function BadgesTable({ filters }: BadgesTableProps) {
         } else {
           toast.error(result.error || "Erreur lors de la suppression");
         }
-      } catch (error) {
+      } catch  {
         toast.error("Erreur lors de la suppression du badge");
       }
       setDeleteId(null);
@@ -129,7 +131,7 @@ export function BadgesTable({ filters }: BadgesTableProps) {
     const isUrl = iconUrl.startsWith('http://') || iconUrl.startsWith('https://') || iconUrl.startsWith('/');
     
     if (isUrl) {
-      return <img src={iconUrl} alt="" className="w-6 h-6 object-contain" />;
+      return <Image src={iconUrl} alt="" className="w-6 h-6 object-contain" />;
     } else {
       return <span className="text-lg">{iconUrl}</span>;
     }

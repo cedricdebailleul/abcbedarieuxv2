@@ -169,24 +169,21 @@ async function main() {
         data: {
           title: "Événement Test 1",
           description: "Premier événement de test",
-          content: "Contenu détaillé de l'événement de test",
           startDate: futureDate,
           endDate: new Date(futureDate.getTime() + 2 * 60 * 60 * 1000),
           slug: "evenement-test-1",
           status: "PUBLISHED",
-          category: "GASTRONOMIE",
+          category: "CULTURAL",
           maxParticipants: 20,
           price: 25.00,
           placeId: places[0].id,
           organizerId: adminUser.id,
-          location: "Restaurant Test",
         },
       }),
       prisma.event.create({
         data: {
           title: "Événement Test 2",
           description: "Deuxième événement de test",
-          content: "Contenu détaillé du deuxième événement",
           startDate: new Date(futureDate.getTime() + 7 * 24 * 60 * 60 * 1000),
           endDate: new Date(futureDate.getTime() + 7 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
           slug: "evenement-test-2",
@@ -196,7 +193,6 @@ async function main() {
           price: 15.00,
           placeId: places[1].id,
           organizerId: users[3].id,
-          location: "Café de Test",
         },
       }),
     ]);

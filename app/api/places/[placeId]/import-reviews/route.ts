@@ -41,7 +41,16 @@ export async function POST(
     }
 
     // Récupérer les avis Google depuis googleBusinessData
-    const googleBusinessData = place.googleBusinessData as { reviews?: any[]; rating?: number; user_ratings_total?: number };
+    type GoogleReview = {
+      author_name: string;
+      author_url?: string;
+      rating: number;
+      text?: string;
+      time: number;
+      relative_time_description?: string;
+    };
+
+    const googleBusinessData = place.googleBusinessData as { reviews?: GoogleReview[]; rating?: number; user_ratings_total?: number };
     const googleReviews = googleBusinessData?.reviews || [];
 
     // Debug: voir ce qui est disponible

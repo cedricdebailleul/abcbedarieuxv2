@@ -10,22 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-interface NewsletterSubscriber {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  isActive: boolean;
-  isVerified: boolean;
-  preferences?: {
-    events: boolean;
-    places: boolean;
-    offers: boolean;
-    news: boolean;
-    frequency: string;
-  };
-}
-
 interface NewsletterPreferencesProps {
   userEmail: string;
 }
@@ -33,7 +17,6 @@ interface NewsletterPreferencesProps {
 export default function NewsletterPreferences({ userEmail }: NewsletterPreferencesProps) {
   const [loading, setLoading] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [subscriber, setSubscriber] = useState<NewsletterSubscriber | null>(null);
   const [preferences, setPreferences] = useState({
     events: true,
     places: true,
@@ -51,7 +34,6 @@ export default function NewsletterPreferences({ userEmail }: NewsletterPreferenc
 
         if (data.success) {
           setIsSubscribed(data.isSubscribed);
-          setSubscriber(data.subscriber);
           
           if (data.subscriber?.preferences) {
             setPreferences({
@@ -87,12 +69,11 @@ export default function NewsletterPreferences({ userEmail }: NewsletterPreferenc
 
       if (data.success) {
         setIsSubscribed(true);
-        setSubscriber(data.subscriber);
         toast.success(data.message || "Abonnement réussi !");
       } else {
         toast.error(data.error || "Erreur lors de l'abonnement");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de l'abonnement");
     } finally {
       setLoading(false);
@@ -114,12 +95,11 @@ export default function NewsletterPreferences({ userEmail }: NewsletterPreferenc
 
       if (data.success) {
         setIsSubscribed(false);
-        setSubscriber(null);
         toast.success(data.message || "Désabonnement réussi");
       } else {
         toast.error(data.error || "Erreur lors du désabonnement");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors du désabonnement");
     } finally {
       setLoading(false);
@@ -141,12 +121,11 @@ export default function NewsletterPreferences({ userEmail }: NewsletterPreferenc
       const data = await response.json();
 
       if (data.success) {
-        setSubscriber(data.subscriber);
         toast.success(data.message || "Préférences mises à jour");
       } else {
         toast.error(data.error || "Erreur lors de la mise à jour");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la mise à jour");
     } finally {
       setLoading(false);
@@ -160,15 +139,6 @@ export default function NewsletterPreferences({ userEmail }: NewsletterPreferenc
     }));
   };
 
-  const getFrequencyLabel = (frequency: string) => {
-    const labels = {
-      DAILY: "Quotidienne",
-      WEEKLY: "Hebdomadaire", 
-      MONTHLY: "Mensuelle",
-    };
-    return labels[frequency as keyof typeof labels] || frequency;
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -177,7 +147,7 @@ export default function NewsletterPreferences({ userEmail }: NewsletterPreferenc
           Newsletter
         </CardTitle>
         <CardDescription>
-          Restez informé des dernières actualités de l'association
+          Restez informé des dernières actualités de l&apos;association
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -289,10 +259,10 @@ export default function NewsletterPreferences({ userEmail }: NewsletterPreferenc
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label htmlFor="news" className="text-sm font-medium">
-                    Actualités de l'association
+                    Actualités de l&apos;association
                   </Label>
                   <p className="text-xs text-gray-600">
-                    Recevez les nouvelles de l'association ABC Bédarieux
+                    Recevez les nouvelles de l&apos;association ABC Bédarieux
                   </p>
                 </div>
                 <Switch
@@ -306,7 +276,7 @@ export default function NewsletterPreferences({ userEmail }: NewsletterPreferenc
             {/* Fréquence d'envoi */}
             <div className="space-y-2">
               <Label htmlFor="frequency" className="text-sm font-medium">
-                Fréquence d'envoi
+                Fréquence d&apos;envoi
               </Label>
               <Select
                 value={preferences.frequency}

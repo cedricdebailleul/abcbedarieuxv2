@@ -15,12 +15,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  IconLoader2, 
-  IconUserPlus, 
+import {
+  IconLoader2,
+  IconUserPlus,
   IconMail,
   IconFileText,
-  IconCheck 
+  IconCheck,
 } from "@tabler/icons-react";
 
 interface RegistrationFormData {
@@ -41,11 +41,27 @@ interface RegistrationFormData {
 }
 
 const membershipTypes = [
-  { value: "ACTIF", label: "Membre Actif", description: "Participation active aux activités" },
+  {
+    value: "ACTIF",
+    label: "Membre Actif",
+    description: "Participation active aux activités",
+  },
   { value: "ARTISAN", label: "Artisan", description: "Artisan local" },
-  { value: "AUTO_ENTREPRENEUR", label: "Auto-Entrepreneur", description: "Travailleur indépendant" },
-  { value: "PARTENAIRE", label: "Partenaire", description: "Entreprise partenaire" },
-  { value: "BIENFAITEUR", label: "Bienfaiteur", description: "Soutien financier" },
+  {
+    value: "AUTO_ENTREPRENEUR",
+    label: "Auto-Entrepreneur",
+    description: "Travailleur indépendant",
+  },
+  {
+    value: "PARTENAIRE",
+    label: "Partenaire",
+    description: "Entreprise partenaire",
+  },
+  {
+    value: "BIENFAITEUR",
+    label: "Bienfaiteur",
+    description: "Soutien financier",
+  },
 ];
 
 const interestOptions = [
@@ -59,7 +75,11 @@ const interestOptions = [
   "Solidarité",
 ];
 
-export function RegistrationForm() {
+interface RegistrationFormProps {
+  onSuccess?: () => void;
+}
+
+export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
   const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: "",
     lastName: "",
@@ -82,22 +102,25 @@ export function RegistrationForm() {
   const [error, setError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  const handleInputChange = (field: keyof RegistrationFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (
+    field: keyof RegistrationFormData,
+    value: string
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleInterestToggle = (interest: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       interests: prev.interests.includes(interest)
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
+        ? prev.interests.filter((i) => i !== interest)
+        : [...prev.interests, interest],
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!acceptedTerms) {
       setError("Vous devez accepter les conditions pour continuer");
       return;
@@ -105,7 +128,7 @@ export function RegistrationForm() {
 
     setLoading(true);
     setError("");
-    
+
     try {
       const response = await fetch("/api/abc/register", {
         method: "POST",
@@ -119,6 +142,7 @@ export function RegistrationForm() {
 
       if (response.ok) {
         setSuccess(true);
+        onSuccess?.();
         setFormData({
           firstName: "",
           lastName: "",
@@ -158,7 +182,8 @@ export function RegistrationForm() {
             Inscription envoyée !
           </h3>
           <p className="text-muted-foreground mb-4">
-            Votre demande d&apos;adhésion à l&apos;association ABC Bédarieux a été envoyée avec succès.
+            Votre demande d&apos;adhésion à l&apos;association ABC Bédarieux a
+            été envoyée avec succès.
           </p>
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center justify-center space-x-2">
@@ -167,13 +192,12 @@ export function RegistrationForm() {
             </div>
             <div className="flex items-center justify-center space-x-2">
               <IconFileText className="h-4 w-4" />
-              <span>Le bulletin d&apos;inscription PDF est joint à l&apos;email</span>
+              <span>
+                Le bulletin d&apos;inscription PDF est joint à l&apos;email
+              </span>
             </div>
           </div>
-          <Button
-            className="mt-6"
-            onClick={() => setSuccess(false)}
-          >
+          <Button className="mt-6" onClick={() => setSuccess(false)}>
             Nouvelle inscription
           </Button>
         </CardContent>
@@ -189,7 +213,8 @@ export function RegistrationForm() {
           <span>Adhésion Association ABC Bédarieux</span>
         </CardTitle>
         <p className="text-muted-foreground">
-          Rejoignez notre association pour soutenir le commerce local et l&apos;artisanat bédaricien
+          Rejoignez notre association pour soutenir le commerce local et
+          l&apos;artisanat bédaricien
         </p>
       </CardHeader>
       <CardContent>
@@ -209,7 +234,9 @@ export function RegistrationForm() {
                 <Input
                   id="firstName"
                   value={formData.firstName}
-                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("firstName", e.target.value)
+                  }
                   required
                 />
               </div>
@@ -218,7 +245,9 @@ export function RegistrationForm() {
                 <Input
                   id="lastName"
                   value={formData.lastName}
-                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("lastName", e.target.value)
+                  }
                   required
                 />
               </div>
@@ -247,7 +276,9 @@ export function RegistrationForm() {
                   id="birthDate"
                   type="date"
                   value={formData.birthDate}
-                  onChange={(e) => handleInputChange("birthDate", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("birthDate", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -270,7 +301,9 @@ export function RegistrationForm() {
                 <Input
                   id="postalCode"
                   value={formData.postalCode}
-                  onChange={(e) => handleInputChange("postalCode", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("postalCode", e.target.value)
+                  }
                 />
               </div>
               <div className="md:col-span-2">
@@ -286,14 +319,18 @@ export function RegistrationForm() {
 
           {/* Informations professionnelles */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Informations professionnelles (optionnel)</h3>
+            <h3 className="text-lg font-semibold">
+              Informations professionnelles (optionnel)
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="profession">Profession</Label>
                 <Input
                   id="profession"
                   value={formData.profession}
-                  onChange={(e) => handleInputChange("profession", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("profession", e.target.value)
+                  }
                 />
               </div>
               <div>
@@ -320,7 +357,9 @@ export function RegistrationForm() {
             <h3 className="text-lg font-semibold">Type d&apos;adhésion</h3>
             <Select
               value={formData.membershipType}
-              onValueChange={(value) => handleInputChange("membershipType", value)}
+              onValueChange={(value) =>
+                handleInputChange("membershipType", value)
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Choisir le type d'adhésion" />
@@ -330,7 +369,9 @@ export function RegistrationForm() {
                   <SelectItem key={type.value} value={type.value}>
                     <div>
                       <div className="font-medium">{type.label}</div>
-                      <div className="text-sm text-muted-foreground">{type.description}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {type.description}
+                      </div>
                     </div>
                   </SelectItem>
                 ))}
@@ -362,12 +403,15 @@ export function RegistrationForm() {
             <h3 className="text-lg font-semibold">Motivation</h3>
             <div>
               <Label htmlFor="motivation">
-                Pourquoi souhaitez-vous rejoindre l&apos;association ABC Bédarieux ?
+                Pourquoi souhaitez-vous rejoindre l&apos;association ABC
+                Bédarieux ?
               </Label>
               <Textarea
                 id="motivation"
                 value={formData.motivation}
-                onChange={(e) => handleInputChange("motivation", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("motivation", e.target.value)
+                }
                 placeholder="Décrivez vos motivations et ce que vous espérez apporter à l'association..."
                 rows={4}
               />
@@ -380,12 +424,15 @@ export function RegistrationForm() {
               <Checkbox
                 id="terms"
                 checked={acceptedTerms}
-                onCheckedChange={setAcceptedTerms}
+                onCheckedChange={(checked) =>
+                  setAcceptedTerms(checked === true)
+                }
               />
               <Label htmlFor="terms" className="text-sm leading-relaxed">
-                J&apos;accepte les conditions d&apos;adhésion et autorise l&apos;association ABC Bédarieux 
-                à traiter mes données personnelles dans le cadre de ma demande d&apos;adhésion.
-                Un bulletin d&apos;inscription PDF me sera envoyé par email.
+                J&apos;accepte les conditions d&apos;adhésion et autorise
+                l&apos;association ABC Bédarieux à traiter mes données
+                personnelles dans le cadre de ma demande d&apos;adhésion. Un
+                bulletin d&apos;inscription PDF me sera envoyé par email.
               </Label>
             </div>
           </div>

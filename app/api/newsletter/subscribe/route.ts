@@ -4,12 +4,19 @@ import crypto from "crypto";
 import { sendEmail, createVerificationEmailTemplate } from "@/lib/email";
 import { checkRateLimit, createRateLimitResponse, getClientIP, newsletterSubscribeLimit } from "@/lib/rate-limit";
 import { validateAndSanitize, subscribeSchema } from "@/lib/validation";
+import { NewsletterFrequency } from "@/lib/generated/prisma";
 
 export async function POST(request: NextRequest) {
   try {
     // Vérifier le rate limiting en premier
     const clientIP = getClientIP(request);
-    const rateLimitResult = await checkRateLimit(newsletterSubscribeLimit, clientIP, request);
+    if (!newsletterSubscribeLimit) {
+      return NextResponse.json(
+        { error: "Rate limiter non configuré" },
+        { status: 500 }
+      );
+    }
+    const rateLimitResult = await checkRateLimit(newsletterSubscribeLimit, clientIP);
     
     if (!rateLimitResult.success) {
       return createRateLimitResponse(rateLimitResult);
@@ -20,7 +27,17 @@ export async function POST(request: NextRequest) {
     // Validation et sanitisation des données
     let validatedData;
     try {
-      validatedData = validateAndSanitize(subscribeSchema, body);
+      const sanitizedBody = {
+        ...body,
+        preferences: {
+          events: body.preferences?.events === undefined ? true : body.preferences.events,
+          places: body.preferences?.places === undefined ? true : body.preferences.places,
+          offers: body.preferences?.offers === undefined ? false : body.preferences.offers,
+          news: body.preferences?.news === undefined ? true : body.preferences.news,
+          frequency: typeof body.preferences?.frequency === "string" ? body.preferences.frequency : "WEEKLY",
+        },
+      };
+      validatedData = validateAndSanitize(subscribeSchema, sanitizedBody);
     } catch (error) {
       return NextResponse.json(
         { error: `Données invalides: ${error instanceof Error ? error.message : 'Erreur de validation'}` },
@@ -28,7 +45,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, firstName, lastName, preferences, source } = validatedData;
+    const { email, firstName, lastName, preferences }: { email: string; firstName?: string; lastName?: string; preferences: { events?: boolean; places?: boolean; offers?: boolean; news?: boolean; frequency?: string } } = validatedData as { email: string; firstName?: string; lastName?: string; preferences: { events?: boolean; places?: boolean; offers?: boolean; news?: boolean; frequency?: string } };
 
     try {
       // Vérifier si l'email existe déjà
@@ -62,14 +79,14 @@ export async function POST(request: NextRequest) {
                     places: preferences.places ?? true,
                     offers: preferences.offers ?? false,
                     news: preferences.news ?? true,
-                    frequency: preferences.frequency ?? "WEEKLY",
+                    frequency: preferences.frequency as NewsletterFrequency ?? "WEEKLY",
                   },
                   update: {
                     events: preferences.events ?? true,
                     places: preferences.places ?? true,
                     offers: preferences.offers ?? false,
                     news: preferences.news ?? true,
-                    frequency: preferences.frequency ?? "WEEKLY",
+                    frequency: preferences.frequency as NewsletterFrequency ?? "WEEKLY",
                   },
                 },
               },
@@ -105,7 +122,7 @@ export async function POST(request: NextRequest) {
               places: preferences.places ?? true,
               offers: preferences.offers ?? false,
               news: preferences.news ?? true,
-              frequency: preferences.frequency ?? "WEEKLY",
+              frequency: preferences.frequency as NewsletterFrequency ?? "WEEKLY",
             },
           },
         },
@@ -140,11 +157,12 @@ export async function POST(request: NextRequest) {
           "Inscription réussie ! Vous allez recevoir un email de confirmation.",
         requiresVerification: true,
       });
-    } catch (prismaError: any) {
+    } catch (prismaError: unknown) {
       // Si les tables n'existent pas encore (migration non effectuée)
       if (
-        prismaError.message?.includes("newsletterSubscriber") ||
-        prismaError.code === "P2021"
+        prismaError instanceof Error &&
+        (prismaError.message?.includes("newsletterSubscriber") ||
+          "code" in prismaError && prismaError.code === "P2021")
       ) {
         return NextResponse.json(
           {

@@ -52,7 +52,7 @@ export function RevokeBadgeButton({
         } else {
           toast.error(result.error || "Erreur lors du retrait");
         }
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors du retrait du badge");
       }
     });
@@ -69,7 +69,7 @@ export function RevokeBadgeButton({
         <AlertDialogHeader>
           <AlertDialogTitle>Retirer le badge</AlertDialogTitle>
           <AlertDialogDescription>
-            Êtes-vous sûr de vouloir retirer le badge "{badgeTitle}" à {userEmail} ? 
+            Êtes-vous sûr de vouloir retirer le badge &quot;{badgeTitle}&quot; à {userEmail} ? 
             Cette action est irréversible.
           </AlertDialogDescription>
         </AlertDialogHeader>

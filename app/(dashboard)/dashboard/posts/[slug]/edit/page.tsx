@@ -16,7 +16,9 @@ interface EditPostPageProps {
   }>;
 }
 
-export default async function EditPostPage({ params: paramsPromise }: EditPostPageProps) {
+export default async function EditPostPage({
+  params: paramsPromise,
+}: EditPostPageProps) {
   const params = await paramsPromise;
 
   // Vérifier l'authentification
@@ -80,7 +82,8 @@ export default async function EditPostPage({ params: paramsPromise }: EditPostPa
       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
     if (status === "PENDING_REVIEW")
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-    if (status === "REJECTED") return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+    if (status === "REJECTED")
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
     return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
   };
 
@@ -90,6 +93,19 @@ export default async function EditPostPage({ params: paramsPromise }: EditPostPa
     if (status === "REJECTED") return "Rejeté";
     if (status === "ARCHIVED") return "Archivé";
     return "Brouillon";
+  };
+
+  // Préparer les données initiales en convertissant les valeurs null en undefined
+  const initialDataForForm = {
+    id: post.id,
+    title: post.title ?? undefined,
+    slug: post.slug ?? undefined,
+    content: post.content ?? undefined,
+    excerpt: post.excerpt ?? undefined,
+    published: post.published ?? undefined,
+    categoryId: post.category?.id ?? undefined,
+    tagIds: post.tags?.map((pt) => pt.tag.id) ?? undefined,
+    status: post.status ?? undefined,
   };
 
   return (
@@ -106,9 +122,11 @@ export default async function EditPostPage({ params: paramsPromise }: EditPostPa
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Edit className="h-6 w-6" />
-              Modifier l'article
+              Modifier l&apos;article
             </h1>
-            <p className="text-muted-foreground truncate max-w-md">{post.title}</p>
+            <p className="text-muted-foreground truncate max-w-md">
+              {post.title}
+            </p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -134,7 +152,9 @@ export default async function EditPostPage({ params: paramsPromise }: EditPostPa
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Créé le:</span>
-              <span>{new Date(post.createdAt).toLocaleDateString("fr-FR")}</span>
+              <span>
+                {new Date(post.createdAt).toLocaleDateString("fr-FR")}
+              </span>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -215,24 +235,29 @@ export default async function EditPostPage({ params: paramsPromise }: EditPostPa
             <CardContent className="pt-4">
               <div className="flex items-center space-x-2 text-orange-800 dark:text-orange-200">
                 <Edit className="h-4 w-4" />
-                <span className="font-medium">Vous modifiez l'article d'un autre utilisateur</span>
+                <span className="font-medium">
+                  Vous modifiez l&apos;article d&apos;un autre utilisateur
+                </span>
               </div>
               <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
-                En tant qu'{session.user.role === "admin" ? "administrateur" : "éditeur"}, vous
-                pouvez modifier cet article de {post.author.name}.
+                En tant qu&apos;
+                {session.user.role === "admin" ? "administrateur" : "éditeur"},
+                vous pouvez modifier cet article de {post.author.name}.
               </p>
             </CardContent>
           </Card>
         )}
 
       {/* Formulaire de modification */}
-      <PostForm mode="edit" initialData={post} />
+      <PostForm mode="edit" initialData={initialDataForForm} />
     </div>
   );
 }
 
 // Métadonnées dynamiques
-export async function generateMetadata({ params: paramsPromise }: EditPostPageProps) {
+export async function generateMetadata({
+  params: paramsPromise,
+}: EditPostPageProps) {
   const params = await paramsPromise;
   const post = await prisma.post.findUnique({
     where: { slug: params.slug },

@@ -15,7 +15,13 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { FormProvider, useForm, useFormContext } from "react-hook-form";
+import {
+  FormProvider,
+  Resolver,
+  useForm,
+  useFormContext,
+  type FieldValues,
+} from "react-hook-form";
 import { toast } from "sonner";
 import { useBadgeCelebration } from "@/hooks/use-badge-celebration";
 import {
@@ -76,13 +82,28 @@ interface Tag {
 }
 
 interface PostFormProps {
-  initialData?: any; // Post existant pour l'édition
+  initialData?: {
+    id?: string;
+    title?: string;
+    slug?: string;
+    content?: string;
+    excerpt?: string;
+    published?: boolean;
+    categoryId?: string;
+    tags?: { tag: { id: string } }[];
+    coverImage?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    ogImage?: string;
+    canonicalUrl?: string;
+    status?: PostStatus;
+  }; // Post existant pour l'édition
   mode: "create" | "edit";
 }
 
 // Composant pour la sélection des tags
 function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
-  const form = useFormContext<CreatePostInput | UpdatePostInput>();
+  const form = useFormContext();
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,7 +114,9 @@ function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
     try {
       const result = await getTagsAction();
       if (result.success && result.data) {
-        setTags(result.data);
+        setTags(
+          result.data.map((tag) => ({ ...tag, color: tag.color ?? undefined }))
+        );
       }
     } catch (error) {
       console.error("Erreur lors du chargement des tags:", error);
@@ -138,7 +161,9 @@ function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
     return (
       <div className="flex items-center justify-center py-4">
         <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="ml-2 text-sm text-muted-foreground">Chargement des tags...</span>
+        <span className="ml-2 text-sm text-muted-foreground">
+          Chargement des tags...
+        </span>
       </div>
     );
   }
@@ -190,7 +215,9 @@ function TagSelector({ refreshTrigger }: { refreshTrigger?: number }) {
       </div>
 
       {tags.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-4">Aucun tag disponible</p>
+        <p className="text-sm text-muted-foreground text-center py-4">
+          Aucun tag disponible
+        </p>
       )}
     </div>
   );
@@ -207,8 +234,28 @@ export function PostForm({ initialData, mode }: PostFormProps) {
   const { showBadge } = useBadgeCelebration();
 
   // Configuration du formulaire selon le mode
-  const form = useForm<CreatePostInput | UpdatePostInput>({
-    resolver: zodResolver((mode === "create" ? createPostSchema : updatePostSchema) as any),
+  type PostFormValues = {
+    id?: string; // Add id as optional for compatibility with edit mode
+    title: string;
+    slug: string;
+    content?: string | null;
+    excerpt?: string | null;
+    published?: boolean;
+    categoryId?: string | null;
+    tagIds: string[];
+    coverImage?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    ogImage?: string;
+    canonicalUrl?: string;
+    status: PostStatus;
+  };
+
+  const form = useForm<PostFormValues>({
+    resolver:
+      mode === "create"
+        ? (zodResolver(createPostSchema) as Resolver<PostFormValues>)
+        : (zodResolver(updatePostSchema) as Resolver<PostFormValues>),
     defaultValues:
       mode === "create"
         ? {
@@ -233,7 +280,10 @@ export function PostForm({ initialData, mode }: PostFormProps) {
             excerpt: initialData?.excerpt || "",
             published: initialData?.published || false,
             categoryId: initialData?.categoryId || "none",
-            tagIds: initialData?.tags?.map((t: any) => t.tag.id) || [],
+            tagIds:
+              initialData?.tags?.map(
+                (t: { tag: { id: string } }) => t.tag.id
+              ) || [],
             coverImage: initialData?.coverImage || "",
             metaTitle: initialData?.metaTitle || "",
             metaDescription: initialData?.metaDescription || "",
@@ -249,7 +299,12 @@ export function PostForm({ initialData, mode }: PostFormProps) {
       try {
         const result = await getCategoriesAction();
         if (result.success && result.data) {
-          setCategories(result.data);
+          setCategories(
+            result.data.map((category) => ({
+              ...category,
+              color: category.color ?? undefined,
+            }))
+          );
         }
       } catch (error) {
         console.error("Erreur lors du chargement des catégories:", error);
@@ -270,14 +325,17 @@ export function PostForm({ initialData, mode }: PostFormProps) {
 
       // Mettre à jour le slug seulement si l'utilisateur n'a pas manually modifié
       const currentSlug = form.getValues("slug");
-      if (!currentSlug || currentSlug === generateSlug(watchTitle.slice(0, -1))) {
+      if (
+        !currentSlug ||
+        currentSlug === generateSlug(watchTitle.slice(0, -1))
+      ) {
         form.setValue("slug", newSlug);
       }
     }
   }, [watchTitle, form, mode]);
 
   // Soumettre le formulaire
-  const onSubmit = async (data: CreatePostInput | UpdatePostInput) => {
+  const onSubmit = async (data: FieldValues) => {
     startTransition(async () => {
       try {
         const result =
@@ -286,27 +344,41 @@ export function PostForm({ initialData, mode }: PostFormProps) {
             : await updatePostAction(data as UpdatePostInput);
 
         if (result.success) {
-          toast.success(`Article ${mode === "create" ? "créé" : "mis à jour"} avec succès`);
-          
+          toast.success(
+            `Article ${mode === "create" ? "créé" : "mis à jour"} avec succès`
+          );
+
           // Afficher les badges nouvellement obtenus
-if (mode === "create" && result.data) {
-  const createData = result.data as { slug: string; newBadges?: any[] };
-  if (createData.newBadges && createData.newBadges.length > 0) {
-    setTimeout(() => {
-      createData.newBadges!.forEach((badgeData: any) => {
-        showBadge(badgeData.badge, badgeData.reason);
-      });
-    }, 1000);
-  }
-}
-          
+          if (mode === "create" && result.data) {
+            const createData = result.data as {
+              slug: string;
+              newBadges?: Array<{
+                badge: {
+                  title: string;
+                  description: string;
+                  iconUrl?: string | null;
+                  color?: string | null;
+                  rarity: string;
+                };
+                reason: string;
+              }>;
+            };
+            if (createData.newBadges && createData.newBadges.length > 0) {
+              setTimeout(() => {
+                createData.newBadges!.forEach((badgeData) => {
+                  showBadge(badgeData.badge, badgeData.reason);
+                });
+              }, 1000);
+            }
+          }
+
           router.push("/dashboard/posts");
           router.refresh();
         } else {
           if (result.errors) {
             // Afficher les erreurs de validation
             Object.entries(result.errors).forEach(([field, messages]) => {
-              form.setError(field as any, {
+              form.setError(field as keyof PostFormValues, {
                 message: messages.join(", "),
               });
             });
@@ -324,13 +396,13 @@ if (mode === "create" && result.data) {
   const handleSaveAsDraft = () => {
     form.setValue("published", false);
     form.setValue("status", PostStatus.DRAFT);
-    form.handleSubmit(onSubmit as any)();
+    form.handleSubmit(onSubmit)();
   };
 
   const handlePublish = () => {
     form.setValue("published", true);
     form.setValue("status", PostStatus.PUBLISHED);
-    form.handleSubmit(onSubmit as any)();
+    form.handleSubmit(onSubmit)();
   };
 
   const handlePreview = () => {
@@ -364,7 +436,10 @@ if (mode === "create" && result.data) {
                       <FormItem>
                         <FormLabel>Titre *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Titre de votre article..." {...field} />
+                          <Input
+                            placeholder="Titre de votre article..."
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -380,10 +455,16 @@ if (mode === "create" && result.data) {
                         <FormLabel>Slug</FormLabel>
                         <FormControl>
                           <div className="space-y-2">
-                            <Input placeholder="slug-de-votre-article" {...field} />
+                            <Input
+                              placeholder="slug-de-votre-article"
+                              {...field}
+                            />
                             {previewSlug && mode === "create" && (
                               <p className="text-sm text-muted-foreground">
-                                Aperçu: <code className="bg-muted px-1 rounded">{previewSlug}</code>
+                                Aperçu:{" "}
+                                <code className="bg-muted px-1 rounded">
+                                  {previewSlug}
+                                </code>
                               </p>
                             )}
                           </div>
@@ -431,7 +512,10 @@ if (mode === "create" && result.data) {
                             type="posts"
                             slug={form.getValues("slug") || "general"}
                             aspectRatios={[
-                              { label: "Réseaux sociaux 1.91:1 (optimal)", value: 1.91 },
+                              {
+                                label: "Réseaux sociaux 1.91:1 (optimal)",
+                                value: 1.91,
+                              },
                               { label: "Paysage 16:9", value: 16 / 9 },
                               { label: "Paysage 4:3", value: 4 / 3 },
                               { label: "Carré 1:1", value: 1 },
@@ -528,7 +612,8 @@ if (mode === "create" && result.data) {
                             />
                           </FormControl>
                           <p className="text-xs text-muted-foreground">
-                            Image affichée lors du partage sur les réseaux sociaux
+                            Image affichée lors du partage sur les réseaux
+                            sociaux
                           </p>
                           <FormMessage />
                         </FormItem>
@@ -649,7 +734,10 @@ if (mode === "create" && result.data) {
                     </CardTitle>
                     <CreateCategoryDialog
                       onCategoryCreated={(newCategory) => {
-                        setCategories((prev) => [...prev, newCategory]);
+                        setCategories((prev) => [
+                          ...prev,
+                          newCategory as Category,
+                        ]);
                         form.setValue("categoryId", newCategory.id);
                       }}
                     />
@@ -671,13 +759,20 @@ if (mode === "create" && result.data) {
                               <SelectValue placeholder="Sélectionner une catégorie" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">Aucune catégorie</SelectItem>
+                              <SelectItem value="none">
+                                Aucune catégorie
+                              </SelectItem>
                               {categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id}
+                                >
                                   <div className="flex items-center gap-2">
                                     <div
                                       className="w-3 h-3 rounded-full"
-                                      style={{ backgroundColor: category.color }}
+                                      style={{
+                                        backgroundColor: category.color,
+                                      }}
                                     />
                                     {category.name}
                                   </div>
@@ -702,13 +797,14 @@ if (mode === "create" && result.data) {
                       Tags
                     </CardTitle>
                     <CreateTagsDialog
-                      onTagsCreated={(newTags) => {
+                      onTagsCreated={(newTagIds) => {
                         // Déclencher le refresh du TagSelector
                         setTagRefreshTrigger((prev) => prev + 1);
                         // Optionnel : sélectionner automatiquement les nouveaux tags créés
-                        const newTagIds = newTags.map((tag) => tag.id);
                         const currentTagIds = form.getValues("tagIds") || [];
-                        const uniqueTagIds = [...new Set([...currentTagIds, ...newTagIds])];
+                        const uniqueTagIds = [
+                          ...new Set([...currentTagIds, ...newTagIds]),
+                        ];
                         form.setValue("tagIds", uniqueTagIds);
                       }}
                     />

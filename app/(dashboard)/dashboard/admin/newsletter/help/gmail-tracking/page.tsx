@@ -3,31 +3,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Mail, 
-  Eye, 
-  MousePointer, 
-  Shield, 
-  Info, 
+import {
+  Eye,
+  MousePointer,
+  Shield,
+  Info,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
 
 export default function GmailTrackingHelpPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Tracking Gmail - Guide d'aide</h1>
+        <h1 className="text-3xl font-bold">
+          Tracking Gmail - Guide d&apos;aide
+        </h1>
         <p className="text-muted-foreground">
-          Comprendre pourquoi les statistiques d'ouverture peuvent être limitées sur Gmail
+          Comprendre pourquoi les statistiques d&apos;ouverture peuvent être
+          limitées sur Gmail
         </p>
       </div>
 
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Gmail et la plupart des clients email bloquent automatiquement les images pour protéger la vie privée, 
-          ce qui peut affecter le tracking des ouvertures.
+          Gmail et la plupart des clients email bloquent automatiquement les
+          images pour protéger la vie privée, ce qui peut affecter le tracking
+          des ouvertures.
         </AlertDescription>
       </Alert>
 
@@ -46,10 +49,10 @@ export default function GmailTrackingHelpPage() {
                 <span className="text-sm">Pixel invisible 1x1</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Un pixel transparent est chargé quand l'email s'ouvre
+                Un pixel transparent est chargé quand l&apos;email s&apos;ouvre
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <h4 className="font-medium text-sm flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-orange-500" />
@@ -70,7 +73,7 @@ export default function GmailTrackingHelpPage() {
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Multiples pixels de tracking</li>
                 <li>• Tracking CSS de fallback</li>
-                <li>• Lien "Voir dans le navigateur"</li>
+                <li>• Lien &quot;Voir dans le navigateur&quot;</li>
                 <li>• Auto-tracking via clics</li>
               </ul>
             </div>
@@ -94,7 +97,7 @@ export default function GmailTrackingHelpPage() {
                 Tous les liens passent par notre système de tracking
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <h4 className="font-medium text-sm flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
@@ -104,7 +107,7 @@ export default function GmailTrackingHelpPage() {
                 <li>• ✅ Fonctionne sur tous les clients</li>
                 <li>• ✅ Non bloqué par Gmail</li>
                 <li>• ✅ Tracking précis à 100%</li>
-                <li>• ✅ Marque aussi comme "ouvert"</li>
+                <li>• ✅ Marque aussi comme &quot;ouvert&quot;</li>
               </ul>
             </div>
           </CardContent>
@@ -123,25 +126,44 @@ export default function GmailTrackingHelpPage() {
             <div className="space-y-3">
               <h4 className="font-medium">Pour les destinataires :</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>📧 <strong>Cliquer sur "Voir dans le navigateur"</strong></p>
-                <p>→ Ouvrira l'email dans le navigateur avec tracking complet</p>
+                <p>
+                  📧{" "}
+                  <strong>
+                    Cliquer sur &quot;Voir dans le navigateur&quot;
+                  </strong>
+                </p>
+                <p>
+                  → Ouvrira l&apos;email dans le navigateur avec tracking
+                  complet
+                </p>
               </div>
-              
+
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>🖼️ <strong>Autoriser les images dans Gmail</strong></p>
-                <p>→ Paramètres Gmail {">"} Images {">"} Toujours afficher</p>
+                <p>
+                  🖼️ <strong>Autoriser les images dans Gmail</strong>
+                </p>
+                <p>
+                  → Paramètres Gmail {">"} Images {">"} Toujours afficher
+                </p>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               <h4 className="font-medium">Détection automatique :</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>🖱️ <strong>Tracking par les clics</strong></p>
-                <p>→ Dès qu'un destinataire clique, il est marqué "ouvert"</p>
+                <p>
+                  🖱️ <strong>Tracking par les clics</strong>
+                </p>
+                <p>
+                  → Dès qu&apos;un destinataire clique, il est marqué
+                  &quot;ouvert&quot;
+                </p>
               </div>
-              
+
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>🌐 <strong>Version web</strong></p>
+                <p>
+                  🌐 <strong>Version web</strong>
+                </p>
                 <p>→ Tracking fiable à 100% dans le navigateur</p>
               </div>
             </div>
@@ -160,18 +182,23 @@ export default function GmailTrackingHelpPage() {
               <Badge variant="default">100% fiable</Badge>
             </div>
             <div className="flex justify-between items-center p-3 bg-muted rounded">
-              <span className="font-medium">Tracking des ouvertures (Gmail)</span>
+              <span className="font-medium">
+                Tracking des ouvertures (Gmail)
+              </span>
               <Badge variant="outline">30-60% visibilité</Badge>
             </div>
             <div className="flex justify-between items-center p-3 bg-muted rounded">
-              <span className="font-medium">Tracking des ouvertures (autres clients)</span>
+              <span className="font-medium">
+                Tracking des ouvertures (autres clients)
+              </span>
               <Badge variant="secondary">70-90% visibilité</Badge>
             </div>
           </div>
-          
+
           <p className="text-sm text-muted-foreground mt-4">
-            <strong>Note :</strong> Les taux d'ouverture réels sont généralement plus élevés que ce qui est mesuré, 
-            en raison des protections anti-tracking des clients email modernes.
+            <strong>Note :</strong> Les taux d&apos;ouverture réels sont
+            généralement plus élevés que ce qui est mesuré, en raison des
+            protections anti-tracking des clients email modernes.
           </p>
         </CardContent>
       </Card>

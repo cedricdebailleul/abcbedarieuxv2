@@ -33,9 +33,9 @@ interface Place {
   metaDescription?: string;
   logo?: string;
   coverImage?: string;
-  images?: any; // JSON field contenant les images sauvegardées
+  images?: string[] | string; // JSON field contenant les images sauvegardées
   googleBusinessData?: {
-    openingHours?: any[];
+    openingHours?: { day: string; open: string; close: string }[];
     images?: string[];
   };
   status: string;
@@ -46,7 +46,11 @@ interface Place {
   };
 }
 
-export default function EditPlacePage({ params }: { params: Promise<{ placeId: string }> }) {
+export default function EditPlacePage({
+  params,
+}: {
+  params: Promise<{ placeId: string }>;
+}) {
   const router = useRouter();
   const { data: session } = useSession();
   const [place, setPlace] = useState<Place | null>(null);
@@ -83,9 +87,13 @@ export default function EditPlacePage({ params }: { params: Promise<{ placeId: s
 
         const data = await response.json();
         setPlace(data.place);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Erreur:", error);
-        setError(error.message || "Erreur lors du chargement de la place");
+        if (error instanceof Error) {
+          setError(error.message || "Erreur lors du chargement de la place");
+        } else {
+          setError("Erreur inconnue lors du chargement de la place");
+        }
       } finally {
         setLoading(false);
       }
@@ -94,7 +102,7 @@ export default function EditPlacePage({ params }: { params: Promise<{ placeId: s
     fetchPlace();
   }, [placeId]);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: Partial<Place>) => {
     try {
       const response = await fetch(`/api/places/${placeId}`, {
         method: "PUT",
@@ -113,16 +121,24 @@ export default function EditPlacePage({ params }: { params: Promise<{ placeId: s
 
       // Si la place repasse en PENDING, informer l'utilisateur
       if (result.place.status === "PENDING" && place?.status === "ACTIVE") {
-        toast.success("Place mise à jour! Elle sera re-vérifiée par un administrateur.");
+        toast.success(
+          "Place mise à jour! Elle sera re-vérifiée par un administrateur."
+        );
       } else {
         toast.success("Place mise à jour avec succès!");
       }
 
       // Rediriger vers la liste des places
       router.push("/dashboard/places");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur:", error);
-      toast.error(error.message || "Erreur lors de la modification de la place");
+      if (error instanceof Error) {
+        toast.error(
+          error.message || "Erreur lors de la modification de la place"
+        );
+      } else {
+        toast.error("Erreur inconnue lors de la modification de la place");
+      }
       throw error; // Re-lancer pour que le PlaceForm gère l'état de loading
     }
   };
@@ -171,7 +187,7 @@ export default function EditPlacePage({ params }: { params: Promise<{ placeId: s
   }
 
   // Fonction helper pour parser les images
-  const parseImages = (images: any): string[] => {
+  const parseImages = (images: unknown): string[] => {
     if (!images) return [];
     if (Array.isArray(images)) return images;
     try {
@@ -216,7 +232,12 @@ export default function EditPlacePage({ params }: { params: Promise<{ placeId: s
     // Images sauvegardées en base de données (priorité sur Google Business)
     images: parseImages(place.images) || place.googleBusinessData?.images || [],
     // Données Google Business
-    openingHours: place.googleBusinessData?.openingHours || [],
+    openingHours:
+      place.googleBusinessData?.openingHours?.map((hour) => ({
+        dayOfWeek: hour.day,
+        openTime: hour.open,
+        closeTime: hour.close,
+      })) || [],
   };
 
   const getStatusText = (status: string) => {
@@ -255,11 +276,17 @@ export default function EditPlacePage({ params }: { params: Promise<{ placeId: s
       <div className="border-b border-gray-200 pb-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Modifier la place</h1>
-            <p className="text-gray-600 mt-2">Modifiez les informations de votre établissement</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Modifier la place
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Modifiez les informations de votre établissement
+            </p>
           </div>
           <span
-            className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(place.status)}`}
+            className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
+              place.status
+            )}`}
           >
             {getStatusText(place.status)}
           </span>
@@ -286,8 +313,9 @@ export default function EditPlacePage({ params }: { params: Promise<{ placeId: s
             <div>
               <h3 className="text-yellow-900 font-medium">Attention</h3>
               <p className="text-yellow-800 text-sm mt-1">
-                Cette place est actuellement active. Toute modification nécessitera une nouvelle
-                validation par un administrateur et la place repassera temporairement en attente.
+                Cette place est actuellement active. Toute modification
+                nécessitera une nouvelle validation par un administrateur et la
+                place repassera temporairement en attente.
               </p>
             </div>
           </div>

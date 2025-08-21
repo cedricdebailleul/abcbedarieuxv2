@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -48,8 +48,10 @@ import {
   IconFileText,
   IconMail,
   IconPlus,
+  IconEdit,
 } from "@tabler/icons-react";
 import { ManualRegistrationForm } from "@/components/admin/abc/manual-registration-form";
+import { EditRegistrationForm } from "@/components/admin/abc/edit-registration-form";
 
 interface AbcRegistration {
   id: string;
@@ -126,6 +128,8 @@ export default function AbcRegistrationsPage() {
   const [memberStatus, setMemberStatus] = useState<MemberStatus | null>(null);
   const [loadingMemberStatus, setLoadingMemberStatus] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingRegistration, setEditingRegistration] = useState<AbcRegistration | null>(null);
 
   useEffect(() => {
     fetchRegistrations();
@@ -263,6 +267,11 @@ export default function AbcRegistrationsPage() {
     }
   };
 
+  const handleEditRegistration = (registration: AbcRegistration) => {
+    setEditingRegistration(registration);
+    setShowEditForm(true);
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -280,7 +289,7 @@ export default function AbcRegistrationsPage() {
         <div>
           <h1 className="text-3xl font-bold">Inscriptions ABC</h1>
           <p className="text-muted-foreground mt-2">
-            Gestion des demandes d'adhésion à l'association
+            Gestion des demandes d&apos;adhésion à l&apos;association
           </p>
         </div>
         <Button
@@ -379,7 +388,7 @@ export default function AbcRegistrationsPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="membership-filter">Type d'adhésion</Label>
+              <Label htmlFor="membership-filter">Type d&apos;adhésion</Label>
               <Select value={membershipFilter} onValueChange={setMembershipFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tous les types" />
@@ -464,6 +473,10 @@ export default function AbcRegistrationsPage() {
                           <IconEye className="h-4 w-4 mr-2" />
                           Voir détails
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditRegistration(registration)}>
+                          <IconEdit className="h-4 w-4 mr-2" />
+                          Modifier
+                        </DropdownMenuItem>
                         {registration.status === "PENDING" && (
                           <>
                             <DropdownMenuItem onClick={() => openActionDialog(registration, "approve")}>
@@ -502,7 +515,7 @@ export default function AbcRegistrationsPage() {
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Détails de l'inscription - {selectedRegistration?.firstName}{" "}
+              Détails de l&apos;inscription - {selectedRegistration?.firstName}{" "}
               {selectedRegistration?.lastName}
             </DialogTitle>
             <DialogDescription>
@@ -609,14 +622,14 @@ export default function AbcRegistrationsPage() {
               {/* Type d'adhésion et centres d'intérêt */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label>Type d'adhésion</Label>
+                  <Label>Type d&apos;adhésion</Label>
                   <p className="text-sm">
                     {membershipTypeLabels[selectedRegistration.membershipType as keyof typeof membershipTypeLabels]}
                   </p>
                 </div>
                 {selectedRegistration.interests && (
                   <div>
-                    <Label>Centres d'intérêt</Label>
+                    <Label>Centres d&apos;intérêt</Label>
                     <p className="text-sm">{selectedRegistration.interests}</p>
                   </div>
                 )}
@@ -671,11 +684,11 @@ export default function AbcRegistrationsPage() {
                               <p className="font-mono font-medium">{memberStatus.member?.memberNumber}</p>
                             </div>
                             <div>
-                              <Label className="text-green-700">Type d'adhésion</Label>
+                              <Label className="text-green-700">Type d&apos;adhésion</Label>
                               <p>{membershipTypeLabels[memberStatus.member?.type as keyof typeof membershipTypeLabels]}</p>
                             </div>
                             <div>
-                              <Label className="text-green-700">Date d'adhésion</Label>
+                              <Label className="text-green-700">Date d&apos;adhésion</Label>
                               <p>{memberStatus.member?.membershipDate && new Date(memberStatus.member.membershipDate).toLocaleDateString("fr-FR")}</p>
                             </div>
                             <div>
@@ -699,6 +712,10 @@ export default function AbcRegistrationsPage() {
 
               {/* Actions rapides */}
               <div className="flex space-x-2 pt-4 border-t">
+                <Button onClick={() => handleEditRegistration(selectedRegistration)} variant="outline">
+                  <IconEdit className="h-4 w-4 mr-2" />
+                  Modifier
+                </Button>
                 <Button onClick={() => exportToPDF(selectedRegistration.id)} variant="outline">
                   <IconFileText className="h-4 w-4 mr-2" />
                   Télécharger PDF
@@ -736,7 +753,7 @@ export default function AbcRegistrationsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {actionType === "approve" ? "Approuver" : "Rejeter"} l'inscription
+              {actionType === "approve" ? "Approuver" : "Rejeter"} l&apos;inscription
             </DialogTitle>
             <DialogDescription>
               {actionType === "approve"
@@ -785,6 +802,18 @@ export default function AbcRegistrationsPage() {
         onSuccess={() => {
           fetchRegistrations();
           setShowManualForm(false);
+        }}
+      />
+
+      {/* Formulaire de modification d'inscription */}
+      <EditRegistrationForm
+        open={showEditForm}
+        onOpenChange={setShowEditForm}
+        registration={editingRegistration}
+        onSuccess={() => {
+          fetchRegistrations();
+          setShowEditForm(false);
+          setEditingRegistration(null);
         }}
       />
     </div>

@@ -20,7 +20,9 @@ interface EditPlaceCategoryPageProps {
   };
 }
 
-export default async function EditPlaceCategoryPage({ params }: EditPlaceCategoryPageProps) {
+export default async function EditPlaceCategoryPage({
+  params,
+}: EditPlaceCategoryPageProps) {
   // Charger la catégorie
   const result = await getPlaceCategoryAction(params.categoryId);
 
@@ -43,7 +45,7 @@ export default async function EditPlaceCategoryPage({ params }: EditPlaceCategor
           <Edit className="h-6 w-6 text-primary" />
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              Modifier "{category.name}"
+              Modifier &quot;{category.name}&quot;
             </h1>
             <p className="text-muted-foreground">
               Modifiez les informations de cette catégorie
@@ -58,8 +60,8 @@ export default async function EditPlaceCategoryPage({ params }: EditPlaceCategor
           <CardTitle>Informations de la catégorie</CardTitle>
         </CardHeader>
         <CardContent>
-          <PlaceCategoryForm 
-            mode="edit" 
+          <PlaceCategoryForm
+            mode="edit"
             categoryId={params.categoryId}
             initialData={{
               id: category.id,

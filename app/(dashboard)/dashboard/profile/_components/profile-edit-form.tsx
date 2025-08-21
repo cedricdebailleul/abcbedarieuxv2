@@ -1,12 +1,27 @@
 "use client";
 
-import { Globe, Mail, MapPin, Phone, Save, Settings, User, X } from "lucide-react";
+import {
+  Globe,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  Settings,
+  User,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,7 +40,10 @@ const profileSchema = z.object({
   profile: z.object({
     firstname: z.string().optional(),
     lastname: z.string().optional(),
-    bio: z.string().max(500, "La biographie ne peut pas dépasser 500 caractères").optional(),
+    bio: z
+      .string()
+      .max(500, "La biographie ne peut pas dépasser 500 caractères")
+      .optional(),
     phone: z.string().optional(),
     address: z.string().optional(),
     language: z.string().optional(),
@@ -43,6 +61,7 @@ interface UserData {
   emailVerified: boolean;
   role: string;
   status: string;
+  createdAt: string | Date;
   profile?: {
     firstname?: string;
     lastname?: string;
@@ -55,8 +74,25 @@ interface UserData {
     showEmail: boolean;
     showPhone: boolean;
   };
-  badges: any[];
-  _count: any;
+  badges: Array<{
+    id: string;
+    earnedAt: string | Date;
+    reason?: string | null;
+    isVisible: boolean;
+    badge: {
+      id: string;
+      title: string;
+      description: string;
+      iconUrl?: string | null;
+      color?: string | null;
+      category: string;
+      rarity: string;
+    };
+  }>;
+  _count: {
+    posts: number;
+    sessions: number;
+  };
 }
 
 interface ProfileEditFormProps {
@@ -65,7 +101,11 @@ interface ProfileEditFormProps {
   onCancel: () => void;
 }
 
-export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEditFormProps) {
+export default function ProfileEditForm({
+  user,
+  onUpdate,
+  onCancel,
+}: ProfileEditFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -111,7 +151,7 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
         if (data.details) {
           // Erreurs de validation Zod
           const newErrors: Record<string, string> = {};
-          data.details.forEach((error: any) => {
+          data.details.forEach((error: { path: string[]; message: string }) => {
             const path = error.path.join(".");
             newErrors[path] = error.message;
           });
@@ -172,21 +212,27 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             <User className="h-5 w-5" />
             Informations de base
           </CardTitle>
-          <CardDescription>Modifiez vos informations personnelles de base</CardDescription>
+          <CardDescription>
+            Modifiez vos informations personnelles de base
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nom d'utilisateur *</Label>
+              <Label htmlFor="name">Nom d&apos;utilisateur *</Label>
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className={errors.name ? "border-red-500" : ""}
                 disabled={loading}
                 required
               />
-              {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -197,16 +243,20 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className={errors.email ? "border-red-500 pl-10" : "pl-10"}
                   disabled={loading}
                   required
                 />
               </div>
-              {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email}</p>
+              )}
               {formData.email !== user.email && (
                 <p className="text-sm text-orange-600">
-                  ⚠️ Modifier l'email nécessitera une nouvelle vérification
+                  ⚠️ Modifier l&apos;email nécessitera une nouvelle vérification
                 </p>
               )}
             </div>
@@ -263,7 +313,9 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             {errors["profile.bio"] && (
               <p className="text-sm text-red-500">{errors["profile.bio"]}</p>
             )}
-            <p className="text-sm text-gray-500">{formData.profile.bio.length}/500 caractères</p>
+            <p className="text-sm text-gray-500">
+              {formData.profile.bio.length}/500 caractères
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -390,7 +442,9 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
             <Globe className="h-5 w-5" />
             Confidentialité
           </CardTitle>
-          <CardDescription>Contrôlez la visibilité de vos informations</CardDescription>
+          <CardDescription>
+            Contrôlez la visibilité de vos informations
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
@@ -414,7 +468,7 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <div className="text-sm font-medium">Afficher l'email</div>
+              <div className="text-sm font-medium">Afficher l&apos;email</div>
               <div className="text-xs text-gray-500">
                 Rend votre adresse email visible sur votre profil public
               </div>
@@ -471,7 +525,11 @@ export default function ProfileEditForm({ user, onUpdate, onCancel }: ProfileEdi
           <X className="h-4 w-4" />
           Annuler
         </Button>
-        <Button type="submit" disabled={loading} className="flex items-center gap-2">
+        <Button
+          type="submit"
+          disabled={loading}
+          className="flex items-center gap-2"
+        >
           <Save className="h-4 w-4" />
           {loading ? "Enregistrement..." : "Enregistrer les modifications"}
         </Button>

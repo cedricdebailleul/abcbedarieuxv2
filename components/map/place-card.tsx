@@ -21,7 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SafeImage } from "@/components/safe-image";
 import { PlaceCategoriesBadges } from "@/components/places/place-categories-badges";
-import type { MapCategory, MapPlace } from "./interactive-map";
+import type { MapPlace } from "./interactive-map";
 import { calculateDistance, formatDistance } from "@/lib/map-utils";
 import {
   computeOpeningStatus,
@@ -281,7 +281,7 @@ export function PlaceCard({
                     className="p-0 h-auto font-medium text-sm hover:bg-transparent"
                     onClick={() => setShowFullHours(!showFullHours)}
                   >
-                    Horaires d'ouverture
+                    Horaires d&apos;ouverture
                     {showFullHours ? (
                       <ChevronUp className="w-3 h-3 ml-1" />
                     ) : (

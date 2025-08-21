@@ -20,10 +20,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 
 // Force dynamic rendering
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 // Helper functions
-function parseSocials(socialsJson: any): Record<string, string> {
+function parseSocials(
+  socialsJson: string | Record<string, string> | null
+): Record<string, string> {
   if (!socialsJson) return {};
   try {
     if (typeof socialsJson === "string") {
@@ -162,7 +164,13 @@ export default async function ProfilePage({ params }: PageProps) {
       ? `${user.profile.firstname} ${user.profile.lastname}`
       : user.name;
 
-  const socials = parseSocials(user.profile?.socials);
+  const socials = parseSocials(
+    typeof user.profile?.socials === "string"
+      ? user.profile.socials
+      : user.profile?.socials && typeof user.profile.socials === "object"
+      ? (user.profile.socials as Record<string, string>)
+      : null
+  );
   const hasSocials = Object.keys(socials).some((key) => socials[key]);
 
   const badgesByCategory = user.badges.reduce((acc, userBadge) => {

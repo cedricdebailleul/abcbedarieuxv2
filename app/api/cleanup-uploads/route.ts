@@ -1,15 +1,18 @@
 import { headers } from "next/headers";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
     // Vérifier l'authentification admin
     const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session?.user || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
     }
 
     const { readdir, rm } = await import("node:fs/promises");
@@ -66,6 +69,9 @@ export async function POST(_request: NextRequest) {
     });
   } catch (error) {
     console.error("Erreur lors du nettoyage:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

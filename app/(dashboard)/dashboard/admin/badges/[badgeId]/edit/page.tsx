@@ -23,7 +23,7 @@ export async function generateMetadata({
 
   return {
     title: result.success
-      ? `Modifier ${result.data.title} | Administration`
+      ? `Modifier ${result.data?.title ?? "Badge"} | Administration`
       : "Badge introuvable | Administration",
     description: "Modifier les informations du badge",
   };
@@ -33,7 +33,7 @@ export default async function EditBadgePage({ params }: EditBadgePageProps) {
   const { badgeId } = await params;
   const result = await getBadgeAction(badgeId);
 
-  if (!result.success) {
+  if (!result.success || !result.data) {
     notFound();
   }
 
@@ -55,7 +55,7 @@ export default async function EditBadgePage({ params }: EditBadgePageProps) {
               Modifier le badge
             </h1>
             <p className="text-muted-foreground">
-              Modifiez les informations de "{badge.title}"
+              Modifiez les informations de &quot;{badge.title}&quot;
             </p>
           </div>
         </div>
@@ -76,8 +76,8 @@ export default async function EditBadgePage({ params }: EditBadgePageProps) {
               description: badge.description,
               category: badge.category,
               rarity: badge.rarity,
-              color: badge.color,
-              iconUrl: badge.iconUrl,
+              color: badge.color ?? "",
+              iconUrl: badge.iconUrl ?? "",
               isActive: badge.isActive,
             }}
           />

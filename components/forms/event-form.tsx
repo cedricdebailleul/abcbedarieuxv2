@@ -16,7 +16,6 @@ import {
   Repeat,
   Plus,
   X,
-  Upload
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -57,7 +56,7 @@ import {
   EVENT_CATEGORIES_LABELS,
   RECURRENCE_FREQUENCY_OPTIONS
 } from "@/lib/validations/event";
-import { EventStatus, EventCategory, RecurrenceFrequency } from "@/lib/generated/prisma";
+import { EventStatus, RecurrenceFrequency } from "@/lib/generated/prisma";
 
 interface EventFormProps {
   initialData?: Partial<EventWithRecurrenceData & { id: string }>;
@@ -254,7 +253,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                   name="title"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Titre de l'événement *</FormLabel>
+                      <FormLabel>Titre de l&apos;événement *</FormLabel>
                       <FormControl>
                         <Input placeholder="Concert de jazz au parc..." {...field} />
                       </FormControl>
@@ -361,7 +360,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">Événement à la une</FormLabel>
                       <FormDescription>
-                        Mettre en avant cet événement sur la page d'accueil
+                        Mettre en avant cet événement sur la page d&apos;accueil
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -562,7 +561,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                             name="recurrence.count"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Nombre d'occurrences</FormLabel>
+                                <FormLabel>Nombre d&apos;occurrences</FormLabel>
                                 <FormControl>
                                   <Input
                                     type="number"
@@ -582,7 +581,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                             name="recurrence.until"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Ou jusqu'au</FormLabel>
+                                <FormLabel>Ou jusqu&apos;au</FormLabel>
                                 <FormControl>
                                   <Input type="date" {...field} />
                                 </FormControl>
@@ -630,7 +629,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="w-5 h-5" />
-                Lieu de l'événement
+                Lieu de l&apos;événement
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -791,7 +790,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">Événement gratuit</FormLabel>
                       <FormDescription>
-                        Cochez si l'événement est gratuit
+                        Cochez si l&apos;événement est gratuit
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -1025,7 +1024,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       />
                     </FormControl>
                     <FormDescription>
-                      Image principale qui apparaîtra en tête de l'événement (recommandé: 1200x675px)
+                      Image principale qui apparaîtra en tête de l&apos;événement (recommandé: 1200x675px)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -1035,7 +1034,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
               {/* Galerie d'images */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label>Galerie d'images</Label>
+                  <Label>Galerie d&apos;images</Label>
                   <Button type="button" variant="outline" size="sm" onClick={addImage}>
                     <Plus className="w-4 h-4 mr-2" />
                     Ajouter une image

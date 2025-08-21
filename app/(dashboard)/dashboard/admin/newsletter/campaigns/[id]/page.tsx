@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
+import {
   ArrowLeft,
-  Edit, 
-  Send, 
-  Calendar, 
+  Edit,
+  Send,
+  Calendar,
   Users,
   BarChart3,
   Mail,
@@ -19,7 +19,7 @@ import {
   Trash2,
   Eye,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,14 +64,17 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
     params.then(({ id }) => setCampaignId(id));
   }, [params]);
 
-  const fetchCampaign = async () => {
+  const fetchCampaign = useCallback(async () => {
     if (!campaignId) return;
-    
+
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/newsletter/campaigns/${campaignId}`, {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `/api/admin/newsletter/campaigns/${campaignId}`,
+        {
+          credentials: "include",
+        }
+      );
       const data = await response.json();
 
       if (data.success) {
@@ -80,43 +83,50 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
         toast.error("Campagne introuvable");
         router.push("/dashboard/admin/newsletter/campaigns");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors du chargement de la campagne");
       router.push("/dashboard/admin/newsletter/campaigns");
     } finally {
       setLoading(false);
     }
-  };
+  }, [campaignId, router]);
 
   useEffect(() => {
     fetchCampaign();
-  }, [campaignId]);
+  }, [campaignId, fetchCampaign]);
 
   const handleSendNow = async () => {
-    if (!campaignId || !confirm("Êtes-vous sûr de vouloir envoyer cette campagne maintenant ?")) return;
+    if (
+      !campaignId ||
+      !confirm("Êtes-vous sûr de vouloir envoyer cette campagne maintenant ?")
+    )
+      return;
 
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/admin/newsletter/campaigns/${campaignId}/send`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `/api/admin/newsletter/campaigns/${campaignId}/send`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok && data.success) {
         toast.success(data.message || "Campagne envoyée avec succès");
-        console.log('📧 Résultat d\'envoi:', data);
+        console.log("📧 Résultat d'envoi:", data);
         fetchCampaign();
       } else {
-        console.error('❌ Erreur d\'envoi:', data);
+        console.error("❌ Erreur d'envoi:", data);
         toast.error(data.error || "Erreur lors de l'envoi");
       }
     } catch (error) {
-      console.error('❌ Erreur réseau:', error);
+      console.error("❌ Erreur réseau:", error);
       toast.error("Erreur de connexion lors de l'envoi");
     } finally {
       setActionLoading(false);
@@ -125,23 +135,28 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
 
   const handleDuplicate = async () => {
     if (!campaignId) return;
-    
+
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/admin/newsletter/campaigns/${campaignId}/duplicate`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `/api/admin/newsletter/campaigns/${campaignId}/duplicate`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const data = await response.json();
       if (data.success) {
         toast.success("Campagne dupliquée");
-        router.push(`/dashboard/admin/newsletter/campaigns/${data.campaign.id}`);
+        router.push(
+          `/dashboard/admin/newsletter/campaigns/${data.campaign.id}`
+        );
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la duplication");
     } finally {
       setActionLoading(false);
@@ -149,58 +164,85 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
   };
 
   const handleDelete = async () => {
-    if (!campaignId || !confirm("Êtes-vous sûr de vouloir supprimer cette campagne ?")) return;
+    if (
+      !campaignId ||
+      !confirm("Êtes-vous sûr de vouloir supprimer cette campagne ?")
+    )
+      return;
 
     try {
-      const response = await fetch(`/api/admin/newsletter/campaigns/${campaignId}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `/api/admin/newsletter/campaigns/${campaignId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.ok) {
         toast.success("Campagne supprimée");
         router.push("/dashboard/admin/newsletter/campaigns");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la suppression");
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "DRAFT": return "bg-gray-100 text-gray-800";
-      case "SCHEDULED": return "bg-blue-100 text-blue-800";
-      case "SENDING": return "bg-orange-100 text-orange-800";
-      case "SENT": return "bg-green-100 text-green-800";
-      case "CANCELLED": return "bg-red-100 text-red-800";
-      case "ERROR": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "DRAFT":
+        return "bg-gray-100 text-gray-800";
+      case "SCHEDULED":
+        return "bg-blue-100 text-blue-800";
+      case "SENDING":
+        return "bg-orange-100 text-orange-800";
+      case "SENT":
+        return "bg-green-100 text-green-800";
+      case "CANCELLED":
+        return "bg-red-100 text-red-800";
+      case "ERROR":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "DRAFT": return "Brouillon";
-      case "SCHEDULED": return "Programmée";
-      case "SENDING": return "En cours d'envoi";
-      case "SENT": return "Envoyée";
-      case "CANCELLED": return "Annulée";
-      case "ERROR": return "Erreur";
-      default: return status;
+      case "DRAFT":
+        return "Brouillon";
+      case "SCHEDULED":
+        return "Programmée";
+      case "SENDING":
+        return "En cours d'envoi";
+      case "SENT":
+        return "Envoyée";
+      case "CANCELLED":
+        return "Annulée";
+      case "ERROR":
+        return "Erreur";
+      default:
+        return status;
     }
   };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case "NEWSLETTER": return "Newsletter";
-      case "ANNOUNCEMENT": return "Annonce";
-      case "EVENT_DIGEST": return "Événements";
-      case "PLACE_UPDATE": return "Commerces";
-      case "PROMOTIONAL": return "Promotion";
-      default: return type;
+      case "NEWSLETTER":
+        return "Newsletter";
+      case "ANNOUNCEMENT":
+        return "Annonce";
+      case "EVENT_DIGEST":
+        return "Événements";
+      case "PLACE_UPDATE":
+        return "Commerces";
+      case "PROMOTIONAL":
+        return "Promotion";
+      default:
+        return type;
     }
   };
 
@@ -209,7 +251,9 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Chargement de la campagne...</p>
+          <p className="mt-4 text-muted-foreground">
+            Chargement de la campagne...
+          </p>
         </div>
       </div>
     );
@@ -221,7 +265,7 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
         <AlertTriangle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
         <h2 className="text-2xl font-bold mb-2">Campagne introuvable</h2>
         <p className="text-muted-foreground mb-4">
-          Cette campagne n'existe pas ou a été supprimée.
+          Cette campagne n&apos;existe pas ou a été supprimée.
         </p>
         <Button asChild>
           <Link href="/dashboard/admin/newsletter/campaigns">
@@ -250,9 +294,7 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
                 {getStatusLabel(campaign.status)}
               </Badge>
               <span>•</span>
-              <Badge variant="secondary">
-                {getTypeLabel(campaign.type)}
-              </Badge>
+              <Badge variant="secondary">{getTypeLabel(campaign.type)}</Badge>
             </p>
           </div>
         </div>
@@ -261,14 +303,18 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
           {(campaign.status === "DRAFT" || campaign.status === "SCHEDULED") && (
             <>
               <Button variant="outline" asChild>
-                <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/edit`}>
+                <Link
+                  href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/edit`}
+                >
                   <Edit className="w-4 h-4 mr-2" />
                   Modifier
                 </Link>
               </Button>
               <Button onClick={handleSendNow} disabled={actionLoading}>
                 <Send className="w-4 h-4 mr-2" />
-                {campaign.status === "SCHEDULED" ? "Envoyer maintenant" : "Envoyer maintenant"}
+                {campaign.status === "SCHEDULED"
+                  ? "Envoyer maintenant"
+                  : "Envoyer maintenant"}
               </Button>
             </>
           )}
@@ -276,13 +322,15 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
           {campaign.status === "ERROR" && (
             <Button onClick={handleSendNow} disabled={actionLoading}>
               <Send className="w-4 h-4 mr-2" />
-              Réessayer l'envoi
+              Réessayer l&apos;envoi
             </Button>
           )}
 
           {campaign.status === "SENT" && (
             <Button variant="outline" asChild>
-              <Link href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/stats`}>
+              <Link
+                href={`/dashboard/admin/newsletter/campaigns/${campaign.id}/stats`}
+              >
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Statistiques temps réel
               </Link>
@@ -305,7 +353,9 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Objet</label>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Objet
+                  </label>
                   <div className="mt-1 p-3 bg-muted rounded-lg">
                     {campaign.subject}
                   </div>
@@ -313,7 +363,9 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
 
                 {campaign.content && (
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Message personnalisé</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Message personnalisé
+                    </label>
                     <div className="mt-1 p-3 bg-muted rounded-lg whitespace-pre-wrap">
                       {campaign.content}
                     </div>
@@ -322,8 +374,10 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
 
                 {/* Contenu sélectionné */}
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-muted-foreground">Contenu inclus</label>
-                  
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Contenu inclus
+                  </label>
+
                   {campaign.includedEvents.length > 0 && (
                     <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
@@ -357,13 +411,13 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
                     </div>
                   )}
 
-                  {campaign.includedEvents.length === 0 && 
-                   campaign.includedPlaces.length === 0 && 
-                   campaign.includedPosts.length === 0 && (
-                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
-                      Aucun contenu spécifique sélectionné
-                    </div>
-                  )}
+                  {campaign.includedEvents.length === 0 &&
+                    campaign.includedPlaces.length === 0 &&
+                    campaign.includedPosts.length === 0 && (
+                      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
+                        Aucun contenu spécifique sélectionné
+                      </div>
+                    )}
                 </div>
               </div>
             </CardContent>
@@ -375,7 +429,7 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5" />
-                  Statistiques d'envoi
+                  Statistiques d&apos;envoi
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -387,19 +441,27 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
                     </div>
                     <div className="flex justify-between">
                       <span>Livrés</span>
-                      <span className="font-medium">{campaign.totalDelivered}</span>
+                      <span className="font-medium">
+                        {campaign.totalDelivered}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Ouverts</span>
-                      <span className="font-medium">{campaign.totalOpened}</span>
+                      <span className="font-medium">
+                        {campaign.totalOpened}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Cliqués</span>
-                      <span className="font-medium">{campaign.totalClicked}</span>
+                      <span className="font-medium">
+                        {campaign.totalClicked}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Désabonnements</span>
-                      <span className="font-medium">{campaign.totalUnsubscribed}</span>
+                      <span className="font-medium">
+                        {campaign.totalUnsubscribed}
+                      </span>
                     </div>
                   </div>
 
@@ -407,25 +469,50 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
                     <div className="flex justify-between">
                       <span>Taux de livraison</span>
                       <span className="font-medium">
-                        {campaign.totalSent > 0 ? Math.round((campaign.totalDelivered / campaign.totalSent) * 100) : 0}%
+                        {campaign.totalSent > 0
+                          ? Math.round(
+                              (campaign.totalDelivered / campaign.totalSent) *
+                                100
+                            )
+                          : 0}
+                        %
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Taux d'ouverture</span>
+                      <span>Taux d&apos;ouverture</span>
                       <span className="font-medium">
-                        {campaign.totalDelivered > 0 ? Math.round((campaign.totalOpened / campaign.totalDelivered) * 100) : 0}%
+                        {campaign.totalDelivered > 0
+                          ? Math.round(
+                              (campaign.totalOpened / campaign.totalDelivered) *
+                                100
+                            )
+                          : 0}
+                        %
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Taux de clic</span>
                       <span className="font-medium">
-                        {campaign.totalOpened > 0 ? Math.round((campaign.totalClicked / campaign.totalOpened) * 100) : 0}%
+                        {campaign.totalOpened > 0
+                          ? Math.round(
+                              (campaign.totalClicked / campaign.totalOpened) *
+                                100
+                            )
+                          : 0}
+                        %
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Taux de désabonnement</span>
                       <span className="font-medium">
-                        {campaign.totalSent > 0 ? Math.round((campaign.totalUnsubscribed / campaign.totalSent) * 100) : 0}%
+                        {campaign.totalSent > 0
+                          ? Math.round(
+                              (campaign.totalUnsubscribed /
+                                campaign.totalSent) *
+                                100
+                            )
+                          : 0}
+                        %
                       </span>
                     </div>
                   </div>
@@ -444,24 +531,30 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Créé par</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Créé par
+                </label>
                 <div className="mt-1">
                   <div className="font-medium">{campaign.createdBy.name}</div>
-                  <div className="text-sm text-muted-foreground">{campaign.createdBy.email}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {campaign.createdBy.email}
+                  </div>
                 </div>
               </div>
 
               <Separator />
 
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Date de création</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Date de création
+                </label>
                 <div className="mt-1">
                   {new Date(campaign.createdAt).toLocaleDateString("fr-FR", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
                     hour: "2-digit",
-                    minute: "2-digit"
+                    minute: "2-digit",
                   })}
                 </div>
               </div>
@@ -470,15 +563,20 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
                 <>
                   <Separator />
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Programmée pour</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Programmée pour
+                    </label>
                     <div className="mt-1">
-                      {new Date(campaign.scheduledAt).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "long", 
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      })}
+                      {new Date(campaign.scheduledAt).toLocaleDateString(
+                        "fr-FR",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )}
                     </div>
                   </div>
                 </>
@@ -488,15 +586,17 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
                 <>
                   <Separator />
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Envoyée le</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Envoyée le
+                    </label>
                     <div className="mt-1 flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                       {new Date(campaign.sentAt).toLocaleDateString("fr-FR", {
                         day: "numeric",
                         month: "long",
-                        year: "numeric", 
+                        year: "numeric",
                         hour: "2-digit",
-                        minute: "2-digit"
+                        minute: "2-digit",
                       })}
                     </div>
                   </div>
@@ -506,10 +606,13 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
               <Separator />
 
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Destinataires</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Destinataires
+                </label>
                 <div className="mt-1 flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  {campaign.totalRecipients} abonné{campaign.totalRecipients > 1 ? "s" : ""}
+                  {campaign.totalRecipients} abonné
+                  {campaign.totalRecipients > 1 ? "s" : ""}
                 </div>
               </div>
             </CardContent>
@@ -521,13 +624,22 @@ export default function CampaignDetailsPage({ params }: CampaignDetailsProps) {
               <CardTitle>Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full" onClick={handleDuplicate} disabled={actionLoading}>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleDuplicate}
+                disabled={actionLoading}
+              >
                 <Copy className="w-4 h-4 mr-2" />
                 Dupliquer
               </Button>
 
               {["DRAFT", "CANCELLED"].includes(campaign.status) && (
-                <Button variant="destructive" className="w-full" onClick={handleDelete}>
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={handleDelete}
+                >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Supprimer
                 </Button>

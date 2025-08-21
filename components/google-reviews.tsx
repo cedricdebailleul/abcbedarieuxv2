@@ -43,7 +43,9 @@ function ReviewItem({ review }: { review: GoogleReview }) {
 
   const shouldTruncate = review.comment && review.comment.length > 200;
   const displayText =
-    shouldTruncate && !isExpanded ? `${review.comment.substring(0, 200)}...` : review.comment;
+    shouldTruncate && !isExpanded
+      ? `${review.comment?.substring(0, 200)}...`
+      : review.comment || "";
 
   return (
     <Card className="mb-4">
@@ -58,11 +60,15 @@ function ReviewItem({ review }: { review: GoogleReview }) {
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h4 className="font-medium text-gray-900">{review.authorName}</h4>
+                <h4 className="font-medium text-gray-900">
+                  {review.authorName}
+                </h4>
                 <div className="flex items-center gap-2 mt-1">
                   <StarRating rating={review.rating} />
                   {review.relativeTime && (
-                    <span className="text-sm text-gray-500">{review.relativeTime}</span>
+                    <span className="text-sm text-gray-500">
+                      {review.relativeTime}
+                    </span>
                   )}
                 </div>
               </div>
@@ -99,7 +105,10 @@ function ReviewItem({ review }: { review: GoogleReview }) {
   );
 }
 
-export default function GoogleReviews({ reviews, className = "" }: GoogleReviewsProps) {
+export default function GoogleReviews({
+  reviews,
+  className = "",
+}: GoogleReviewsProps) {
   const [showAll, setShowAll] = useState(false);
 
   if (!reviews || reviews.length === 0) {
@@ -115,7 +124,8 @@ export default function GoogleReviews({ reviews, className = "" }: GoogleReviews
   const displayedReviews = showAll ? sortedReviews : sortedReviews.slice(0, 3);
 
   // Calculer la moyenne
-  const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+  const averageRating =
+    reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -127,10 +137,14 @@ export default function GoogleReviews({ reviews, className = "" }: GoogleReviews
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="flex items-center gap-1">
-                  <span className="text-2xl font-bold">{averageRating.toFixed(1)}</span>
+                  <span className="text-2xl font-bold">
+                    {averageRating.toFixed(1)}
+                  </span>
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                 </div>
-                <div className="text-sm text-gray-500">{reviews.length} avis</div>
+                <div className="text-sm text-gray-500">
+                  {reviews.length} avis
+                </div>
               </div>
             </div>
           </div>
@@ -148,7 +162,9 @@ export default function GoogleReviews({ reviews, className = "" }: GoogleReviews
       {reviews.length > 3 && (
         <div className="text-center">
           <Button variant="outline" onClick={() => setShowAll(!showAll)}>
-            {showAll ? "Voir moins" : `Voir les ${reviews.length - 3} autres avis`}
+            {showAll
+              ? "Voir moins"
+              : `Voir les ${reviews.length - 3} autres avis`}
           </Button>
         </div>
       )}

@@ -3,8 +3,8 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().optional(),
-    BETTER_AUTH_SECRET: z.string().optional(),
+    DATABASE_URL: z.string().min(1),
+    BETTER_AUTH_SECRET: z.string().min(1),
 
     GITHUB_CLIENT_ID: z.string().optional(),
     GITHUB_CLIENT_SECRET: z.string().optional(),
@@ -40,7 +40,7 @@ export const env = createEnv({
     NEXT_PUBLIC_URL: z.string().optional(),
     NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES: z.string().optional(),
     NEXT_PUBLIC_S3_BUCKET_NAME_VIDEOS: z.string().optional(),
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().min(1),
     NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: z.string().optional(),
     NEXT_PUBLIC_PRIVACY_POLICY_URL: z.string().optional(),
   },

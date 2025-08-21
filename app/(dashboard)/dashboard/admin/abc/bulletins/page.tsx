@@ -75,6 +75,9 @@ interface Bulletin {
     title: string;
     scheduledAt: string;
   };
+  status: string; // Added property
+  scheduledAt: string | null; // Updated property
+  sentAt?: string; // Added property
 }
 
 interface BulletinsResponse {
@@ -91,12 +94,12 @@ const getStatusInfo = (bulletin: Bulletin) => {
   if (bulletin.isPublished) {
     return {
       label: "Publié",
-      color: "bg-green-100 text-green-800"
+      color: "bg-green-100 text-green-800",
     };
   } else {
     return {
       label: "Brouillon",
-      color: "bg-gray-100 text-gray-800"
+      color: "bg-gray-100 text-gray-800",
     };
   }
 };
@@ -115,8 +118,12 @@ export default function AbcBulletinsPage() {
   });
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingBulletin, setEditingBulletin] = useState<Bulletin | null>(null);
-  const [deletingBulletin, setDeletingBulletin] = useState<Bulletin | null>(null);
-  const [previewingBulletin, setPreviewingBulletin] = useState<Bulletin | null>(null);
+  const [deletingBulletin, setDeletingBulletin] = useState<Bulletin | null>(
+    null
+  );
+  const [previewingBulletin, setPreviewingBulletin] = useState<Bulletin | null>(
+    null
+  );
 
   const fetchBulletins = useCallback(async () => {
     try {
@@ -189,14 +196,21 @@ export default function AbcBulletinsPage() {
   };
 
   const handleSendBulletin = async (bulletin: Bulletin) => {
-    if (!confirm(`Êtes-vous sûr de vouloir envoyer le bulletin "${bulletin.title}" à tous les membres de l'association ?`)) {
+    if (
+      !confirm(
+        `Êtes-vous sûr de vouloir envoyer le bulletin "${bulletin.title}" à tous les membres de l'association ?`
+      )
+    ) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/abc/bulletins/${bulletin.id}/send`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/admin/abc/bulletins/${bulletin.id}/send`,
+        {
+          method: "POST",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -205,17 +219,17 @@ export default function AbcBulletinsPage() {
       }
 
       const result = await response.json();
-      
+
       // Afficher les statistiques d'envoi
       let message = result.message + "\n\n";
       message += `📊 Statistiques:\n`;
       message += `• Total membres: ${result.stats.totalMembers}\n`;
       message += `• Emails envoyés: ${result.stats.sentCount}\n`;
-      
+
       if (result.stats.errorCount > 0) {
         message += `• Erreurs: ${result.stats.errorCount}\n`;
         if (result.stats.errors.length > 0) {
-          message += `\nPremières erreurs:\n${result.stats.errors.join('\n')}`;
+          message += `\nPremières erreurs:\n${result.stats.errors.join("\n")}`;
         }
       }
 
@@ -385,9 +399,7 @@ export default function AbcBulletinsPage() {
                               Lié à: {bulletin.meeting.title}
                             </Badge>
                           ) : (
-                            <Badge variant="secondary">
-                              Général
-                            </Badge>
+                            <Badge variant="secondary">Général</Badge>
                           )}
                         </div>
                       </TableCell>
@@ -397,7 +409,9 @@ export default function AbcBulletinsPage() {
                             <div>
                               <div>Publié le:</div>
                               <div className="text-muted-foreground">
-                                {new Date(bulletin.publishedAt).toLocaleDateString("fr-FR")}
+                                {new Date(
+                                  bulletin.publishedAt
+                                ).toLocaleDateString("fr-FR")}
                               </div>
                             </div>
                           ) : (
@@ -412,7 +426,9 @@ export default function AbcBulletinsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(bulletin.createdAt).toLocaleDateString("fr-FR")}
+                          {new Date(bulletin.createdAt).toLocaleDateString(
+                            "fr-FR"
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -537,34 +553,39 @@ export default function AbcBulletinsPage() {
                 <h3 className="font-semibold mb-2">Informations du bulletin</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium">Titre:</span> {previewingBulletin.title}
+                    <span className="font-medium">Titre:</span>{" "}
+                    {previewingBulletin.title}
                   </div>
                   <div>
-                    <span className="font-medium">Statut:</span> {
-                      previewingBulletin.isPublished ? "Publié" : "Brouillon"
-                    }
+                    <span className="font-medium">Statut:</span>{" "}
+                    {previewingBulletin.isPublished ? "Publié" : "Brouillon"}
                   </div>
                   <div>
-                    <span className="font-medium">Créé par:</span> {previewingBulletin.createdBy.name}
+                    <span className="font-medium">Créé par:</span>{" "}
+                    {previewingBulletin.createdBy.name}
                   </div>
                   <div>
-                    <span className="font-medium">Date:</span> {
-                      new Date(previewingBulletin.createdAt).toLocaleDateString("fr-FR")
-                    }
+                    <span className="font-medium">Date:</span>{" "}
+                    {new Date(previewingBulletin.createdAt).toLocaleDateString(
+                      "fr-FR"
+                    )}
                   </div>
                 </div>
                 {previewingBulletin.meeting && (
                   <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                    <span className="font-medium">Réunion associée:</span> {previewingBulletin.meeting.title}
+                    <span className="font-medium">Réunion associée:</span>{" "}
+                    {previewingBulletin.meeting.title}
                     <br />
                     <span className="text-sm text-muted-foreground">
-                      {new Date(previewingBulletin.meeting.scheduledAt).toLocaleDateString("fr-FR", {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                      {new Date(
+                        previewingBulletin.meeting.scheduledAt
+                      ).toLocaleDateString("fr-FR", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </span>
                   </div>
@@ -577,39 +598,58 @@ export default function AbcBulletinsPage() {
                   <h1 className="text-xl font-bold">ABC Bédarieux</h1>
                   <h2 className="text-lg">{previewingBulletin.title}</h2>
                 </div>
-                
+
                 <div className="p-6 bg-gray-50">
                   <p className="mb-4">Bonjour [Nom du membre],</p>
-                  
+
                   <div className="bg-white p-4 rounded-lg mb-4">
-                    <div 
+                    <div
                       className="prose max-w-none"
                       dangerouslySetInnerHTML={{
-                        __html: previewingBulletin.content.replace(/\n/g, '<br>')
+                        __html: previewingBulletin.content.replace(
+                          /\n/g,
+                          "<br>"
+                        ),
                       }}
                     />
                   </div>
-                  
+
                   {previewingBulletin.meeting && (
                     <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                      <h3 className="font-semibold mb-2">📅 Réunion associée</h3>
-                      <p><strong>{previewingBulletin.meeting.title}</strong></p>
-                      <p>Date : {new Date(previewingBulletin.meeting.scheduledAt).toLocaleDateString('fr-FR', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}</p>
+                      <h3 className="font-semibold mb-2">
+                        📅 Réunion associée
+                      </h3>
+                      <p>
+                        <strong>{previewingBulletin.meeting.title}</strong>
+                      </p>
+                      <p>
+                        Date :{" "}
+                        {new Date(
+                          previewingBulletin.meeting.scheduledAt
+                        ).toLocaleDateString("fr-FR", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
                     </div>
                   )}
-                  
-                  <p>Cordialement,<br />L&apos;équipe ABC Bédarieux</p>
+
+                  <p>
+                    Cordialement,
+                    <br />
+                    L&apos;équipe ABC Bédarieux
+                  </p>
                 </div>
-                
+
                 <div className="bg-gray-100 p-4 text-center text-xs text-gray-600">
-                  <p>Vous recevez cet email car vous êtes membre de l&apos;association ABC Bédarieux.</p>
+                  <p>
+                    Vous recevez cet email car vous êtes membre de
+                    l&apos;association ABC Bédarieux.
+                  </p>
                   <p>Association ABC Bédarieux - Bédarieux, France</p>
                 </div>
               </div>
@@ -627,8 +667,8 @@ export default function AbcBulletinsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer le bulletin</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer le bulletin &quot;{deletingBulletin?.title}&quot; ? 
-              Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer le bulletin &quot;
+              {deletingBulletin?.title}&quot; ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

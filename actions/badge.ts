@@ -17,6 +17,13 @@ import {
   type AwardBadgeInput,
   type RevokeBadgeInput,
 } from "@/lib/validations/badge";
+import {
+  Badge,
+  BadgeWithUsers,
+  BadgeListItem,
+  BadgeStats,
+  BadgeAwardResult,
+} from "@/lib/types/badge";
 import { Prisma, BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
 
 // Types pour les réponses
@@ -55,7 +62,7 @@ export async function createBadgeAction(
     const validatedData = createBadgeSchema.parse(input);
 
     // Vérifier l'unicité du titre
-    const existingBadge = await prisma.badge.findUnique({
+    const existingBadge = await prisma.badge.findFirst({
       where: { title: validatedData.title },
       select: { id: true },
     });
@@ -107,7 +114,7 @@ export async function createBadgeAction(
 // READ - Obtenir un badge par ID
 export async function getBadgeAction(
   badgeId: string
-): Promise<ActionResult<any>> {
+): Promise<ActionResult<BadgeWithUsers>> {
   try {
     await checkAdminPermissions();
 
@@ -164,7 +171,13 @@ export async function getBadgeAction(
 // READ - Lister les badges avec filtres et pagination
 export async function getBadgesAction(
   filters: BadgeFilters
-): Promise<ActionResult<{ badges: any[]; total: number; pages: number }>> {
+): Promise<
+  ActionResult<{
+    badges: BadgeListItem[];
+    total: number;
+    pages: number;
+  }>
+> {
   try {
     await checkAdminPermissions();
 
@@ -331,7 +344,9 @@ export async function updateBadgeAction(
 }
 
 // DELETE - Supprimer un badge
-export async function deleteBadgeAction(badgeId: string): Promise<ActionResult> {
+export async function deleteBadgeAction(
+  badgeId: string
+): Promise<ActionResult> {
   try {
     await checkAdminPermissions();
 
@@ -539,16 +554,7 @@ export async function revokeBadgeAction(
 }
 
 // STATS - Obtenir les statistiques des badges
-export async function getBadgeStatsAction(): Promise<
-  ActionResult<{
-    total: number;
-    active: number;
-    inactive: number;
-    totalAwarded: number;
-    categoriesStats: Record<BadgeCategory, number>;
-    raritiesStats: Record<BadgeRarity, number>;
-  }>
-> {
+export async function getBadgeStatsAction(): Promise<ActionResult<BadgeStats>> {
   try {
     await checkAdminPermissions();
 
@@ -597,6 +603,8 @@ export async function getBadgeStatsAction(): Promise<
         active,
         inactive,
         totalAwarded,
+        byCategory: categoriesStatsObj,
+        byRarity: raritiesStatsObj,
         categoriesStats: categoriesStatsObj,
         raritiesStats: raritiesStatsObj,
       },
@@ -621,7 +629,9 @@ export async function getBadgeStatsAction(): Promise<
 // GET USERS - Rechercher des utilisateurs pour attribution
 export async function searchUsersAction(
   query: string
-): Promise<ActionResult<Array<{ id: string; email: string; name: string | null }>>> {
+): Promise<
+  ActionResult<Array<{ id: string; email: string; name: string | null }>>
+> {
   try {
     await checkAdminPermissions();
 

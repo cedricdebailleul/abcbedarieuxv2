@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { UserStatus } from "@/lib/generated/prisma";
 
 const banUserSchema = z.object({
   banned: z.boolean(),
@@ -10,7 +11,10 @@ const banUserSchema = z.object({
   banExpires: z.string().datetime().optional(),
 });
 
-export async function PUT(request: NextRequest, context: { params: Promise<{ userId: string }> }) {
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ userId: string }> }
+) {
   try {
     const params = await context.params;
     const userId = params.userId;
@@ -31,7 +35,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ use
     });
 
     if (currentUser?.role !== "admin") {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     // Empêcher l'auto-bannissement
@@ -53,11 +60,20 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ use
     });
 
     if (!existingUser) {
-      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Utilisateur introuvable" },
+        { status: 404 }
+      );
     }
 
     // Préparer les données de mise à jour
-    const updateData: any = {
+    const updateData: {
+      banned: boolean;
+      status: UserStatus;
+      bannedBy: string | null;
+      banReason?: string | null;
+      banExpires?: Date | null;
+    } = {
       banned,
       status: banned ? "BANNED" : "ACTIVE",
       bannedBy: banned ? currentUser.id : null,
@@ -107,6 +123,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ use
       );
     }
 
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

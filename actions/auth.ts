@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { CreateUserSchema, LoginSchema } from "@/types";
 
@@ -31,12 +30,20 @@ export async function signUpAction(formData: FormData) {
 
     if ("error" in result && result.error) {
       return {
-        errors: { general: [(result.error as any).message] },
+        errors: {
+          general: [
+            typeof result.error === "object" &&
+            result.error !== null &&
+            "message" in result.error
+              ? (result.error as { message: string }).message
+              : "Unknown error",
+          ],
+        },
       };
     }
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return {
       errors: { general: ["Une erreur est survenue"] },
     };
@@ -66,26 +73,34 @@ export async function signInAction(formData: FormData) {
 
     console.log("Résultat signInEmail:", {
       hasError: "error" in result && !!result.error,
-      error: "error" in result ? result.error : null
+      error: "error" in result ? result.error : null,
     });
 
     if ("error" in result && result.error) {
       console.log("Erreur de connexion:", result.error);
       return {
-        errors: { general: [(result.error as any).message || "Identifiants incorrects"] },
+        errors: {
+          general: [
+            typeof result.error === "object" &&
+            result.error !== null &&
+            "message" in result.error
+              ? (result.error as { message: string }).message
+              : "Identifiants incorrects",
+          ],
+        },
       };
     }
 
     console.log("Connexion réussie - Better Auth signInEmail terminé");
-    
+
     // Retourner le succès au lieu de rediriger - laisser le client gérer
     return { success: true, redirect: "/dashboard" };
   } catch (error) {
     // Si c'est une redirection Next.js (connexion réussie), la relancer
-    if ((error as any).message === "NEXT_REDIRECT") {
+    if ((error as { message?: string }).message === "NEXT_REDIRECT") {
       throw error;
     }
-    
+
     console.error("Erreur lors de la connexion:", error);
     return {
       errors: { general: ["Erreur de connexion"] },
