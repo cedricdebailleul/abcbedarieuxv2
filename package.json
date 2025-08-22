@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",
     "build:coolify": "prisma generate && SKIP_BUILD_STATIC_GENERATION=true next build",
-    "start": "next start",
+    "start": "prisma db push && next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "biome:check": "biome check .",
