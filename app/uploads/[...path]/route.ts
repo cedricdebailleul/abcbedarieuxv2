@@ -3,11 +3,10 @@ import { NextResponse } from "next/server";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import mime from "mime";
+import { UPLOADS_ROOT } from "@/lib/path";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const UPLOADS_ROOT = process.env.UPLOADS_DIR || "/app/uploads";
 
 export async function GET(
   _req: Request,

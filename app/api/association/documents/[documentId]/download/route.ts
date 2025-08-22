@@ -1,20 +1,26 @@
+// app/api/association/documents/[documentId]/download/route.ts
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { readFile } from "fs/promises";
-import path from "path";
+import { readFile, stat } from "node:fs/promises";
+import path from "node:path";
+import mime from "mime";
 
-// GET /api/association/documents/[documentId]/download - Télécharger un document public
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+// racine des uploads: dev => ./uploads ; prod => /app/uploads (via UPLOADS_DIR)
+const UPLOADS_ROOT =
+  process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
+const DOCS_DIR = path.join(UPLOADS_ROOT, "documents");
+
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ documentId: string }> }
+  { params }: { params: { documentId: string } }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    // Vérifier que l'utilisateur est connecté
+    const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user) {
       return NextResponse.json(
         { error: "Authentication requise" },
@@ -22,17 +28,16 @@ export async function GET(
       );
     }
 
-    const { documentId } = await params;
+    const { documentId } = params;
 
-    // Récupérer le document
     const document = await prisma.abcDocument.findUnique({
       where: { id: documentId },
-      include: {
-        uploadedBy: {
-          select: {
-            name: true,
-          },
-        },
+      select: {
+        id: true,
+        title: true,
+        filePath: true, // ex: "/uploads/documents/123_abc_nom.pdf"
+        fileName: true, // nom d’origine
+        fileSize: true, // taille en octets
       },
     });
 
@@ -43,50 +48,61 @@ export async function GET(
       );
     }
 
-    // Les membres connectés peuvent accéder à tous les documents
-    // (pas de restriction d'accès pour les membres de l'association)
+    // On récupère le nom de fichier depuis le chemin public stocké en BDD
+    const baseName = path.basename(document.filePath || "");
+    if (!baseName) {
+      return NextResponse.json(
+        { error: "Chemin de fichier invalide" },
+        { status: 400 }
+      );
+    }
 
+    // Chemin absolu dans le VOLUME persistant
+    const absPath = path.join(DOCS_DIR, baseName);
+
+    // Sécurité: s’assurer qu’on reste bien sous DOCS_DIR
+    const resolved = path.resolve(absPath);
+    if (!resolved.startsWith(path.resolve(DOCS_DIR))) {
+      return NextResponse.json({ error: "Chemin invalide" }, { status: 400 });
+    }
+
+    // Lire le fichier
+    let file: Buffer;
     try {
-      // Construire le chemin du fichier
-      // filePath contient le chemin relatif complet, on extrait juste le nom de fichier
-      const fileName = path.basename(document.filePath);
-      const uploadsPath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "documents"
-      );
-      const fullPath = path.join(uploadsPath, fileName);
-
-      // Lire le fichier
-      const fileBuffer = await readFile(fullPath);
-
-      // Convertir correctement le Buffer Node.js en ArrayBuffer (copie pour garantir un ArrayBuffer)
-      const uint8 = new Uint8Array(fileBuffer.byteLength);
-      uint8.set(fileBuffer, 0);
-      const arrayBuffer = uint8.buffer;
-
-      // Préparer la réponse avec le fichier
-      const response = new NextResponse(arrayBuffer);
-
-      // Définir les en-têtes appropriés
-      response.headers.set("Content-Type", "application/octet-stream");
-      response.headers.set(
-        "Content-Disposition",
-        `attachment; filename="${encodeURIComponent(document.fileName)}"`
-      );
-      response.headers.set("Content-Length", document.fileSize.toString());
-
-      return response;
-    } catch (fileError) {
-      console.error("Erreur lors de la lecture du fichier:", fileError);
+      file = await readFile(resolved);
+    } catch {
       return NextResponse.json(
         { error: "Fichier non trouvé sur le serveur" },
         { status: 404 }
       );
     }
-  } catch (error) {
-    console.error("Erreur lors du téléchargement du document:", error);
+
+    // Métadonnées (taille réelle si dispo)
+    const st = await stat(resolved).catch(() => null);
+    const size = st?.size ?? document.fileSize ?? file.byteLength;
+
+    // Content-Type précis
+    const contentType = mime.getType(resolved) || "application/octet-stream";
+
+    // BodyInit valide (Uint8Array)
+    const body = new Uint8Array(file);
+
+    const res = new NextResponse(body, {
+      headers: {
+        "Content-Type": contentType,
+        "Content-Length": String(size),
+        // Téléchargement forcé avec un nom sûr
+        "Content-Disposition": `attachment; filename="${encodeURIComponent(
+          document.fileName || baseName
+        )}"`,
+        // Cache côté client si tu veux (facultatif)
+        // "Cache-Control": "private, max-age=0, must-revalidate",
+      },
+    });
+
+    return res;
+  } catch (err) {
+    console.error("[download] Erreur:", err);
     return NextResponse.json(
       { error: "Erreur interne du serveur" },
       { status: 500 }

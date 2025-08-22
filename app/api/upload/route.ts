@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
+import { UPLOADS_ROOT } from "@/lib/path";
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,9 +88,7 @@ export async function POST(request: NextRequest) {
 
     // Déterminer le chemin de destination
     const uploadDir = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
+      UPLOADS_ROOT,
       type,
       slug || "general",
       subfolder
@@ -154,7 +153,10 @@ export async function POST(request: NextRequest) {
     if (oldImagePath?.startsWith("/uploads/")) {
       try {
         const { unlink } = await import("node:fs/promises");
-        const oldFullPath = path.join(process.cwd(), "public", oldImagePath);
+        const oldFullPath = path.join(
+          UPLOADS_ROOT,
+          oldImagePath.replace(/^\/uploads\//, "")
+        );
         if (existsSync(oldFullPath)) {
           await unlink(oldFullPath);
         }
