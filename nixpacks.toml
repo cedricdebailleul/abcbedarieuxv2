@@ -4,6 +4,8 @@ providers = ["node"]
 [phases.setup]
 dependsOn = []
 cmds = [
+  "rm -rf lib/generated/prisma",
+  "pnpm install --frozen-lockfile",
   "pnpm prisma generate"
 ]
 
