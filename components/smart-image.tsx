@@ -6,6 +6,15 @@ export default function SmartImage({ alt, src, ...props }: ImageProps) {
   const safeSrc =
     typeof src === "string" && !src.startsWith("http") && !src.startsWith("/") && !src.startsWith("data:") ? `/${src}` : src;
   const isDataUrl = typeof src === "string" && src.startsWith("data:");
+  
+  // Logs pour debugging
+  console.log(`[SmartImage] Traitement:`, {
+    originalSrc: src,
+    safeSrc,
+    alt: safeAlt,
+    isDataUrl,
+    srcType: typeof src
+  });
   return (
     <Image
       src={safeSrc}
