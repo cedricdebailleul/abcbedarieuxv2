@@ -1,8 +1,8 @@
 # Utiliser Node.js LTS
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
-# Installer pnpm
-RUN npm install -g pnpm
+# Installer pnpm avec cache
+RUN npm install -g pnpm && npm cache clean --force
 
 # Installer les dépendances seulement quand nécessaire
 FROM base AS deps
@@ -13,8 +13,9 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY prisma ./prisma/
 
-# Installer les dépendances
-RUN pnpm install --frozen-lockfile
+# Installer les dépendances avec optimisations
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --prefer-offline
 
 # Builder l'application
 FROM base AS builder
@@ -22,11 +23,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Générer Prisma client
-RUN pnpm prisma generate
+# Nettoyer les fichiers Prisma générés localement
+RUN rm -rf lib/generated/prisma
 
-# Builder Next.js
-RUN pnpm run build
+# Générer Prisma client et builder
+RUN pnpm prisma generate && pnpm run build
 
 # Image de production
 FROM base AS runner
