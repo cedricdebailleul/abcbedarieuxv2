@@ -1,0 +1,4 @@
+# Coolify Build Cache Config
+# Force cache optimization
+BUILDKIT_INLINE_CACHE=1
+DOCKER_BUILDKIT=1
