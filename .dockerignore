@@ -12,3 +12,12 @@ Dockerfile
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-store
+.pnpm-cache
+pnpm-debug.log*
+tsconfig.tsbuildinfo
+lib/generated/prisma/*.node
+lib/generated/prisma/*.tmp*
+lib/generated/prisma/query_engine-*
+dev_output.log
+dev_test.log
