@@ -1,0 +1,17 @@
+[build]
+providers = ["node"]
+
+[phases.setup]
+dependsOn = []
+cmds = [
+  "pnpm prisma generate"
+]
+
+[phases.build]
+dependsOn = ["setup"]
+cmds = [
+  "pnpm build"
+]
+
+[start]
+cmd = "pnpm start"
