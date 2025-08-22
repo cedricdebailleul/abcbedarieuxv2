@@ -16,8 +16,6 @@ yarn-error.log*
 .pnpm-cache
 pnpm-debug.log*
 tsconfig.tsbuildinfo
-lib/generated/prisma/*.node
-lib/generated/prisma/*.tmp*
-lib/generated/prisma/query_engine-*
+lib/generated/prisma/
 dev_output.log
 dev_test.log
