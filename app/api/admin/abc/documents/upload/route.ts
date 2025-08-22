@@ -1,34 +1,52 @@
+// app/api/admin/abc/documents/upload/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
+import { mkdir, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { DOCUMENTS_DIR } from "@/lib/path";
 
-// POST /api/admin/abc/documents/upload - Uploader un fichier
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+// Types autorisés
+const ALLOWED_TYPES = new Set<string>([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "text/plain",
+]);
+
 export async function POST(request: Request) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    // Auth
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (
+      !session?.user ||
+      !["admin", "moderator"].includes(session.user.role ?? "")
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
       );
     }
 
+    // FormData + fichier
     const formData = await request.formData();
-    const file = formData.get("file") as File;
-
-    if (!file) {
+    const file = formData.get("file");
+    if (!(file instanceof File)) {
       return NextResponse.json(
-        { error: "Aucun fichier fourni" },
+        { error: "Aucun fichier valide fourni" },
         { status: 400 }
       );
     }
 
-    // Vérifier la taille du fichier (max 10MB)
+    // Tailles & types
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       return NextResponse.json(
@@ -36,59 +54,45 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    // Vérifier le type de fichier
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'text/plain',
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
+    if (!file.type || !ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json(
-        { error: "Type de fichier non autorisé" },
+        { error: `Type de fichier non autorisé: ${file.type || "unknown"}` },
         { status: 400 }
       );
     }
 
-    // Créer un nom de fichier unique
-    const timestamp = Date.now();
-    const randomSuffix = Math.random().toString(36).substring(2, 15);
-    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fileName = `${timestamp}_${randomSuffix}_${safeName}`;
+    // Nom de fichier sûr et unique
+    const safeBase = (file.name || "document")
+      .replace(/[^a-zA-Z0-9._-]/g, "_")
+      .slice(0, 180); // évite les noms trop longs
+    const fileName = `${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 10)}_${safeBase}`;
 
-    // Créer le répertoire de destination
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents');
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    // Répertoire cible (dans le VOLUME)
+    if (!existsSync(DOCUMENTS_DIR)) {
+      await mkdir(DOCUMENTS_DIR, { recursive: true });
     }
 
-    // Chemin complet du fichier
-    const filePath = path.join(uploadDir, fileName);
-    const relativeFilePath = `/uploads/documents/${fileName}`;
-
-    // Écrire le fichier
+    // Écriture
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const absPath = path.join(DOCUMENTS_DIR, fileName);
+    await writeFile(absPath, buffer);
+
+    // URL publique servie par ta route /uploads/[...path]
+    const publicUrl = `/uploads/documents/${fileName}`;
 
     return NextResponse.json({
       fileName: file.name,
       uploadedFileName: fileName,
-      filePath: relativeFilePath,
+      filePath: publicUrl,
       fileSize: file.size,
       fileType: file.type,
       message: "Fichier uploadé avec succès",
     });
-
   } catch (error) {
-    console.error("Erreur lors de l'upload du fichier:", error);
+    console.error("[documents/upload] Erreur:", error);
     return NextResponse.json(
       { error: "Erreur interne du serveur" },
       { status: 500 }

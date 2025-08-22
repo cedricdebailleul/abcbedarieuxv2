@@ -5,11 +5,10 @@ import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
+import { UPLOADS_ROOT } from "@/lib/path";
 
 export async function POST(request: NextRequest) {
   try {
-    const UPLOADS_ROOT =
-      process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
     // Vérifier l'authentification
     const session = await auth.api.getSession({ headers: await headers() });
 

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { type DayOfWeek, PlaceStatus, PlaceType } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
+import { PLACES_ROOT } from "@/lib/path";
 
 const placeSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -452,10 +453,8 @@ export async function DELETE(
   { params }: { params: { placeId: string } }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-    const { placeId } = await params;
+    const session = await auth.api.getSession({ headers: request.headers });
+    const { placeId } = params;
 
     if (!session?.user) {
       return NextResponse.json(
@@ -467,7 +466,6 @@ export async function DELETE(
     const existingPlace = await prisma.place.findUnique({
       where: { id: placeId },
     });
-
     if (!existingPlace) {
       return NextResponse.json({ error: "Place non trouvée" }, { status: 404 });
     }
@@ -475,7 +473,6 @@ export async function DELETE(
     const canDelete =
       session.user.role === "admin" ||
       existingPlace.ownerId === session.user.id;
-
     if (!canDelete) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
@@ -483,39 +480,22 @@ export async function DELETE(
       );
     }
 
-    // Supprimer le dossier d'uploads de la place avant de supprimer en BDD
+    // Supprimer le dossier uploads de la place (dans le volume persistant)
     try {
       const { rm } = await import("node:fs/promises");
-      const { existsSync } = await import("node:fs");
-      const path = await import("node:path");
+      const uploadDir = PLACES_ROOT(existingPlace.slug || existingPlace.id);
 
-      const uploadDir = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "places",
-        existingPlace.slug || existingPlace.id
-      );
-
-      if (existsSync(uploadDir)) {
-        await rm(uploadDir, { recursive: true, force: true });
-        console.log(`Dossier supprimé: ${uploadDir}`);
-      }
-    } catch (error) {
-      console.error(
-        "Erreur lors de la suppression du dossier d'uploads:",
-        error
-      );
-      // Continuer même si la suppression du dossier échoue
+      await rm(uploadDir, { recursive: true, force: true }).catch(() => {});
+      console.log(`Dossier supprimé: ${uploadDir}`);
+    } catch (err) {
+      console.error("Erreur suppression dossier uploads:", err);
     }
 
-    await prisma.place.delete({
-      where: { id: placeId },
-    });
+    await prisma.place.delete({ where: { id: placeId } });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Erreur lors de la suppression de la place:", error);
+  } catch (err) {
+    console.error("Erreur DELETE place:", err);
     return NextResponse.json(
       { error: "Erreur interne du serveur" },
       { status: 500 }
