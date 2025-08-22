@@ -8,6 +8,8 @@ import { auth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    const UPLOADS_ROOT =
+      process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
     // Vérifier l'authentification
     const session = await auth.api.getSession({ headers: await headers() });
 
@@ -18,26 +20,31 @@ export async function POST(request: NextRequest) {
     // Vérifier les permissions
     const userRole = session.user.role;
     if (!userRole || !["admin", "editor", "user"].includes(userRole)) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
     const { images, slug, type = "places", imageType } = body;
 
     if (!Array.isArray(images) || images.length === 0) {
-      return NextResponse.json({ error: "Aucune image fournie" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Aucune image fournie" },
+        { status: 400 }
+      );
     }
 
-    const sanitize = (s: string) => s.replace(/[^a-z0-9-_]/gi, "").toLowerCase();
+    const sanitize = (s: string) =>
+      s.replace(/[^a-z0-9-_]/gi, "").toLowerCase();
     const cleanSlug = sanitize(slug);
     const cleanType = sanitize(type);
 
     // Créer le dossier de destination selon le type
     const isGalleryImage = !imageType || imageType === "gallery";
     const uploadDir = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
+      UPLOADS_ROOT,
       cleanType,
       cleanSlug,
       isGalleryImage ? "gallery" : ""
@@ -106,7 +113,9 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         console.error(`Erreur traitement image ${imageUrl}:`, error);
         errors.push(
-          `Erreur traitement ${imageUrl}: ${error instanceof Error ? error.message : "Erreur inconnue"}`
+          `Erreur traitement ${imageUrl}: ${
+            error instanceof Error ? error.message : "Erreur inconnue"
+          }`
         );
       }
     }
@@ -120,6 +129,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Erreur lors de l'upload des images Google:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }
