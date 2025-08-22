@@ -18,11 +18,9 @@ import {
   type RevokeBadgeInput,
 } from "@/lib/validations/badge";
 import {
-  Badge,
   BadgeWithUsers,
   BadgeListItem,
   BadgeStats,
-  BadgeAwardResult,
 } from "@/lib/types/badge";
 import { Prisma, BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
 
