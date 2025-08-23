@@ -1,5 +1,6 @@
 import { PLACES_ROOT } from "@/lib/path";
 import { promises as fsp } from "node:fs";
+import { join } from "node:path";
 
 interface DataToCreate {
   logo?: string;
@@ -15,15 +16,12 @@ function collectTempSlugs(data: DataToCreate): string[] {
     ...(Array.isArray(data.images) ? data.images : []),
   ].filter(Boolean) as string[];
 
-  // extrait le dossier après /uploads/places/
   const temps = new Set<string>();
   for (const u of urls) {
     const m = u.match(/\/uploads\/places\/([^/]+)/i);
-    if (m && m[1] && m[1].startsWith("temp-")) {
-      temps.add(m[1]);
-    }
+    if (m && m[1] && m[1].startsWith("temp-")) temps.add(m[1]);
   }
-  return Array.from(temps);
+  return [...temps];
 }
 
 function rewriteUrlFromTemp(url: string, tempSlug: string, finalSlug: string) {
@@ -33,13 +31,36 @@ function rewriteUrlFromTemp(url: string, tempSlug: string, finalSlug: string) {
   );
 }
 
-async function safeRenameOrCopy(src: string, dest: string) {
+async function pathExists(p: string) {
   try {
-    await fsp.rename(src, dest); // même volume → instantané
+    await fsp.stat(p);
+    return true;
   } catch {
-    // fallback: copie récursive puis suppression
-    await fsp.cp(src, dest, { recursive: true });
+    return false;
+  }
+}
+
+// Déplace/merge une entrée (fichier OU sous-dossier) vers sa destination.
+// Essaie rename -> sinon copie puis supprime la source.
+async function moveEntry(src: string, dest: string) {
+  try {
+    await fsp.rename(src, dest);
+  } catch {
+    // dest peut déjà exister -> on force la copie/merge
+    await fsp.cp(src, dest, { recursive: true, force: true });
     await fsp.rm(src, { recursive: true, force: true });
+  }
+}
+
+// Merge le contenu de srcDir dans destDir (sans imbriquer un niveau)
+async function mergeDirContents(srcDir: string, destDir: string) {
+  await fsp.mkdir(destDir, { recursive: true });
+  const entries = await fsp.readdir(srcDir, { withFileTypes: true });
+
+  for (const ent of entries) {
+    const from = join(srcDir, ent.name);
+    const to = join(destDir, ent.name);
+    await moveEntry(from, to);
   }
 }
 
@@ -51,23 +72,39 @@ export async function moveTemporaryFiles(
   if (tempSlugs.length === 0) return;
 
   const finalPath = PLACES_ROOT(finalSlug);
-  await fsp.mkdir(finalPath, { recursive: true });
 
   for (const tempSlug of tempSlugs) {
     const tempPath = PLACES_ROOT(tempSlug);
 
-    // si le dossier temp n'existe plus, on passe
+    // Sauter si le dossier n’existe plus
     try {
-      const stat = await fsp.stat(tempPath);
-      if (!stat.isDirectory()) continue;
+      const st = await fsp.stat(tempPath);
+      if (!st.isDirectory()) continue;
     } catch {
       continue;
     }
 
-    // déplace tout le dossier temp → slug
-    await safeRenameOrCopy(tempPath, finalPath);
+    const hasFinal = await pathExists(finalPath);
 
-    // réécrit les URLs dans dataToCreate (temp → slug)
+    if (!hasFinal) {
+      // Premier dossier temp : on tente un rename complet (atomique & rapide)
+      try {
+        await fsp.rename(tempPath, finalPath);
+      } catch {
+        // Si le rename complet échoue (cross-device, permissions, course condition),
+        // on crée finalPath et on merge le contenu
+        await mergeDirContents(tempPath, finalPath);
+        await fsp
+          .rm(tempPath, { recursive: true, force: true })
+          .catch(() => {});
+      }
+    } else {
+      // finalPath existe déjà : on MERGE le contenu du temp dedans
+      await mergeDirContents(tempPath, finalPath);
+      await fsp.rm(tempPath, { recursive: true, force: true }).catch(() => {});
+    }
+
+    // Réécrire les URLs une fois le contenu fusionné
     if (typeof dataToCreate.logo === "string") {
       dataToCreate.logo = rewriteUrlFromTemp(
         dataToCreate.logo,
@@ -87,9 +124,5 @@ export async function moveTemporaryFiles(
         rewriteUrlFromTemp(u, tempSlug, finalSlug)
       );
     }
-
-    // si un résidu “tempSlug” a été fusionné dans finalPath, on tente un nettoyage
-    // (sécurisé, sans erreur si déjà supprimé)
-    await fsp.rm(tempPath, { recursive: true, force: true }).catch(() => {});
   }
 }
