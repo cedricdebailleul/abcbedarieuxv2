@@ -85,15 +85,19 @@ export const subscribeSchema = z.object({
   email: emailSchema,
   firstName: nameSchema,
   lastName: nameSchema,
-  preferences: z
-    .object({
-      email: emailSchema.optional(),
-      token: z.string().min(1, "Token requis").optional(),
-    })
-    .refine((data) => data.email || data.token, {
-      message: "Email ou token requis",
-      path: ["email"],
-    }),
+  preferences: z.object({
+    events: z.boolean().default(true),
+    places: z.boolean().default(true),
+    offers: z.boolean().default(false),
+    news: z.boolean().default(true),
+    frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY"]).default("WEEKLY"),
+  }).default({
+    events: true,
+    places: true,
+    offers: false,
+    news: true,
+    frequency: "WEEKLY",
+  }),
   source: z.string().max(50).optional().default("website"),
 });
 

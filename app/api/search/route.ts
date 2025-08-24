@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma";
+// import { normalizeForSearch } from "@/lib/share-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,11 +26,17 @@ export async function GET(request: NextRequest) {
     if (categories.length === 0 || categories.includes("places")) {
       const places = await prisma.place.findMany({
         where: {
-          name: { contains: searchQuery, mode: "insensitive" },
+          status: PlaceStatus.ACTIVE, // Seulement les places actives
+          OR: [
+            { name: { contains: searchQuery, mode: "insensitive" } },
+            { summary: { contains: searchQuery, mode: "insensitive" } },
+            { description: { contains: searchQuery, mode: "insensitive" } }
+          ]
         },
         select: {
           id: true,
           name: true,
+          summary: true,
           description: true,
           slug: true,
           createdAt: true,
@@ -51,7 +59,10 @@ export async function GET(request: NextRequest) {
     if (categories.length === 0 || categories.includes("events")) {
       const events = await prisma.event.findMany({
         where: {
-          title: { contains: searchQuery, mode: "insensitive" },
+          OR: [
+            { title: { contains: query.trim(), mode: "insensitive" } },
+            { title: { contains: searchQuery, mode: "insensitive" } }
+          ]
         },
         select: {
           id: true,
@@ -77,7 +88,10 @@ export async function GET(request: NextRequest) {
     if (categories.length === 0 || categories.includes("actions")) {
       const actions = await prisma.action.findMany({
         where: {
-          title: { contains: searchQuery, mode: "insensitive" },
+          OR: [
+            { title: { contains: query.trim(), mode: "insensitive" } },
+            { title: { contains: searchQuery, mode: "insensitive" } }
+          ]
         },
         select: {
           id: true,
@@ -103,7 +117,10 @@ export async function GET(request: NextRequest) {
     if (categories.length === 0 || categories.includes("posts")) {
       const posts = await prisma.post.findMany({
         where: {
-          title: { contains: searchQuery, mode: "insensitive" },
+          OR: [
+            { title: { contains: query.trim(), mode: "insensitive" } },
+            { title: { contains: searchQuery, mode: "insensitive" } }
+          ]
         },
         select: {
           id: true,

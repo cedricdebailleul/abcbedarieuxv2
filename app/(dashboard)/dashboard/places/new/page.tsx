@@ -3,52 +3,135 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PlaceForm } from "@/components/forms/place-form";
+import { generateSlug } from "@/lib/validations/post";
+
+const ALLOWED_TYPES = new Set([
+  "COMMERCE",
+  "SERVICE",
+  "RESTAURANT",
+  "ARTISAN",
+  "ADMINISTRATION",
+  "MUSEUM",
+  "TOURISM",
+  "PARK",
+  "LEISURE",
+  "ASSOCIATION",
+  "HEALTH",
+  "EDUCATION",
+  "TRANSPORT",
+  "ACCOMMODATION",
+  "OTHER",
+]);
+
+type PlaceFormData = {
+  name?: string;
+  type?: string;
+  description?: string | null;
+  summary?: string | null;
+
+  street?: string | null;
+  streetNumber?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+
+  logo?: string | null;
+  coverImage?: string | null;
+  images?: string[];
+
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+
+  facebook?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  tiktok?: string | null;
+
+  googlePlaceId?: string | null;
+  googleMapsUrl?: string | null;
+
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+};
 
 export default function NewPlacePage() {
   const router = useRouter();
 
-  interface PlaceData {
-    name: string;
-    type: string;
-    street: string;
-    postalCode: string;
-    city: string;
-    category?: string;
-    categories?: string[];
-    description?: string;
-    summary?: string;
-    [key: string]: string | number | boolean | string[] | undefined; // Adjust fields as per your requirements
-  }
+  const handleSubmit = async (data: PlaceFormData) => {
+    // ➜ plus de throw "Champs requis manquants" ici : zod gère déjà côté form
 
-  const handleSubmit = async (data: PlaceData) => {
+    // slug obligatoire pour l’API
+    const slug = generateSlug(String(data.name || ""));
+    // type normalisé vers l’enum Prisma (fallback sur OTHER)
+    const typeRaw = String(data.type || "").toUpperCase();
+    const type = ALLOWED_TYPES.has(typeRaw) ? typeRaw : "OTHER";
+
+    const payload = {
+      name: String(data.name || "").trim(),
+      slug,
+      type,
+      description: data.description || null,
+      summary: data.summary || null,
+
+      // Adresse
+      street: data.street,
+      streetNumber: data.streetNumber || null,
+      postalCode: data.postalCode,
+      city: data.city,
+      latitude: typeof data.latitude === "number" ? data.latitude : null,
+      longitude: typeof data.longitude === "number" ? data.longitude : null,
+
+      // Médias (le PlaceForm te transmet bien `images`)
+      logo: data.logo || null,
+      coverImage: data.coverImage || null,
+      images: Array.isArray(data.images) ? data.images : [],
+
+      // Contact
+      email: data.email || null,
+      phone: data.phone || null,
+      website: data.website || null,
+
+      // Réseaux
+      facebook: data.facebook || null,
+      instagram: data.instagram || null,
+      twitter: data.twitter || null,
+      linkedin: data.linkedin || null,
+      tiktok: data.tiktok || null,
+
+      // Google
+      googlePlaceId: data.googlePlaceId || null,
+      googleMapsUrl: data.googleMapsUrl || null,
+
+      // SEO
+      metaTitle: data.metaTitle || null,
+      metaDescription: data.metaDescription || null,
+    };
+
     try {
-      const response = await fetch("/api/places", {
+      const res = await fetch("/api/places", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+      const out = await res.json();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erreur lors de la création");
-      }
+      if (!res.ok) throw new Error(out?.error || "Erreur lors de la création");
 
-      toast.success(
-        "Place créée avec succès! Elle sera vérifiée par un administrateur."
-      );
-
-      // Rediriger vers la liste des places
+      toast.success("Place créée avec succès !");
       router.push("/dashboard/places");
-    } catch (error: unknown) {
-      console.error("Erreur:", error);
-      if (error instanceof Error) {
-        toast.error(error.message || "Erreur lors de la création de la place");
-      } else {
-        toast.error("Erreur lors de la création de la place");
-      }
-      throw error; // Re-lancer pour que le PlaceForm gère l'état de loading
+    } catch (err: unknown) {
+      console.error(err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : "Erreur lors de la création de la place";
+      toast.error(message);
+      throw err;
     }
   };
 

@@ -6,9 +6,6 @@ export async function GET(request: NextRequest) {
   try {
     // Rate limiting pour le tracking (moins strict)
     const clientIP = getClientIP(request);
-    if (!trackingLimit) {
-      throw new Error("Tracking limit is not defined");
-    }
     const rateLimitResult = await checkRateLimit(trackingLimit, clientIP);
 
     // Pour le tracking, on ne bloque pas complètement mais on log si limite dépassée

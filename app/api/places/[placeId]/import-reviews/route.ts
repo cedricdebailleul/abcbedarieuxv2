@@ -1,70 +1,127 @@
+// app/api/places/[placeId]/import-reviews/route.ts
+import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import crypto from "node:crypto";
+import { env } from "@/lib/env";
+
+type GoogleReviewV1 = {
+  rating?: number;
+  text?: { text?: string; languageCode?: string };
+  originalText?: { text?: string; languageCode?: string };
+  publishTime?: string; // ISO
+  authorAttribution?: { displayName?: string; uri?: string };
+};
+
+function stableGoogleReviewId(
+  googlePlaceId: string,
+  author: string,
+  publishTime: string | number
+) {
+  const key = `${googlePlaceId}#${author.trim().toLowerCase()}#${publishTime}`;
+  return crypto.createHash("sha1").update(key).digest("hex");
+}
 
 export async function POST(
-  _request: NextRequest,
+  _req: Request,
   { params }: { params: Promise<{ placeId: string }> }
 ) {
   try {
     const { placeId } = await params;
 
-    // Vérifier l'authentification
     const session = await auth.api.getSession({ headers: await headers() });
-
     if (!session?.user) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    // Vérifier que la place existe
     const place = await prisma.place.findUnique({
       where: { id: placeId },
       select: {
         id: true,
-        name: true,
-        googleBusinessData: true,
         ownerId: true,
+        name: true,
+        googlePlaceId: true,
       },
     });
-
     if (!place) {
       return NextResponse.json({ error: "Place non trouvée" }, { status: 404 });
     }
 
-    // Vérifier les permissions (propriétaire ou admin)
     const isOwner = place.ownerId === session.user.id;
     const isAdmin = session.user.role === "admin";
-
     if (!isOwner && !isAdmin) {
-      return NextResponse.json({ error: "Permissions insuffisantes" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Permissions insuffisantes" },
+        { status: 403 }
+      );
     }
 
-    // Récupérer les avis Google depuis googleBusinessData
-    type GoogleReview = {
-      author_name: string;
-      author_url?: string;
-      rating: number;
-      text?: string;
-      time: number;
-      relative_time_description?: string;
-    };
+    if (!place.googlePlaceId || !place.googlePlaceId.trim()) {
+      return NextResponse.json(
+        {
+          error:
+            "Aucun googlePlaceId associé à cette place. Liez d'abord la fiche à Google.",
+        },
+        { status: 400 }
+      );
+    }
 
-    const googleBusinessData = place.googleBusinessData as { reviews?: GoogleReview[]; rating?: number; user_ratings_total?: number };
-    const googleReviews = googleBusinessData?.reviews || [];
+    // Utilise de préférence la clé serveur; fallback sur la publique si nécessaire.
+    const API_KEY =
+      process.env.GOOGLE_MAPS_API_KEY || env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!API_KEY) {
+      return NextResponse.json(
+        { error: "GOOGLE_MAPS_API_KEY manquant" },
+        { status: 500 }
+      );
+    }
 
-    // Debug: voir ce qui est disponible
-    console.log("🔍 googleBusinessData keys:", Object.keys(place.googleBusinessData || {}));
-    console.log("🔍 reviews found:", googleReviews.length);
-    console.log("🔍 rating info:", {
-      rating: googleBusinessData?.rating,
-      user_ratings_total: (googleBusinessData?.user_ratings_total as number) || 0,
+    // v1 details endpoint — pas de reviews* dans l’URL, on contrôle via FieldMask
+    const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(
+      place.googlePlaceId
+    )}?languageCode=fr`;
+
+    // Demander des champs « feuilles » sinon 502/erreurs
+    const fieldMask = [
+      "id",
+      "rating",
+      "userRatingCount",
+      "reviews.rating",
+      "reviews.text.text",
+      "reviews.originalText.text",
+      "reviews.publishTime",
+      "reviews.authorAttribution.displayName",
+      "reviews.authorAttribution.uri",
+    ].join(",");
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "X-Goog-Api-Key": API_KEY,
+        "X-Goog-FieldMask": fieldMask,
+      },
+      cache: "no-store",
     });
 
-    if (!Array.isArray(googleReviews) || googleReviews.length === 0) {
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error("Google Places v1 error:", res.status, txt);
+      return NextResponse.json(
+        { error: "Échec récupération avis Google", details: txt },
+        { status: 502 }
+      );
+    }
+
+    const details = await res.json();
+    const reviews: GoogleReviewV1[] = Array.isArray(details?.reviews)
+      ? details.reviews
+      : [];
+
+    if (!reviews.length) {
       return NextResponse.json({
         success: true,
-        message: `Aucun avis Google trouvé dans googleBusinessData. Champs disponibles: ${Object.keys(place.googleBusinessData || {}).join(", ")}`,
+        message: "Aucun avis retourné par l'API Google",
         imported: 0,
         skipped: 0,
         errors: [],
@@ -75,60 +132,83 @@ export async function POST(
     let skipped = 0;
     const errors: string[] = [];
 
-    for (const review of googleReviews) {
+    for (const rev of reviews) {
+      const author = rev.authorAttribution?.displayName || "Utilisateur Google";
+
+      // Privilégier le texte traduit; fallback sur l’original
+      const comment =
+        rev.text?.text?.trim() ?? rev.originalText?.text?.trim() ?? null;
+
+      const rating = Number.isFinite(rev.rating) ? (rev.rating as number) : 0;
+      const iso = rev.publishTime || new Date().toISOString();
+      const unix = Math.floor(new Date(iso).getTime() / 1000);
+
+      const googleReviewId = stableGoogleReviewId(
+        place.googlePlaceId,
+        author,
+        unix
+      );
+
+      const exists = await prisma.googleReview.findUnique({
+        where: { googleReviewId },
+        select: { id: true },
+      });
+      if (exists) {
+        skipped++;
+        continue;
+      }
+
       try {
-        // Générer un ID unique basé sur les données Google
-        const googleReviewId = `${placeId}_${review.author_name}_${review.time}`;
-
-        // Vérifier si l'avis existe déjà
-        const existingReview = await prisma.googleReview.findUnique({
-          where: { googleReviewId },
-        });
-
-        if (existingReview) {
-          skipped++;
-          continue;
-        }
-
-        // Créer l'avis Google
         await prisma.googleReview.create({
           data: {
-            placeId,
-            rating: review.rating || 5,
-            comment: review.text || null,
+            placeId: place.id,
+            rating: rating || 5,
+            comment,
             googleReviewId,
-            authorName: review.author_name || "Utilisateur anonyme",
-            authorUrl: review.author_url || null,
-            googleTime: review.time || Math.floor(Date.now() / 1000),
-            relativeTime: review.relative_time_description || null,
+            authorName: author,
+            authorUrl: rev.authorAttribution?.uri || null,
+            googleTime: unix,
+            relativeTime: null,
+            status: "APPROVED",
           },
         });
-
         imported++;
-      } catch (error) {
-        console.error(`Erreur import avis ${review.author_name}:`, error);
+      } catch (e) {
+        console.error("create googleReview error:", e);
         errors.push(
-          `Erreur pour ${review.author_name}: ${error instanceof Error ? error.message : "Erreur inconnue"}`
+          `Erreur pour ${author} (${googleReviewId}): ${
+            e instanceof Error ? e.message : "Erreur inconnue"
+          }`
         );
       }
     }
 
-    // Mettre à jour les statistiques de la place
-    if (imported > 0) {
-      const stats = await prisma.googleReview.aggregate({
+    // Recalcule rapide : moyenne + total (GoogleReview APPROVED + Review APPROVED)
+    const [grAgg, rAgg] = await Promise.all([
+      prisma.googleReview.aggregate({
         where: { placeId, status: "APPROVED" },
         _avg: { rating: true },
         _count: { id: true },
-      });
+      }),
+      prisma.review.aggregate({
+        where: { placeId, status: "APPROVED" },
+        _avg: { rating: true },
+        _count: { id: true },
+      }),
+    ]);
 
-      await prisma.place.update({
-        where: { id: placeId },
-        data: {
-          rating: stats._avg.rating || 0,
-          reviewCount: ((place.googleBusinessData as { user_ratings_total?: number })?.user_ratings_total || 0) + stats._count.id,
-        },
-      });
-    }
+    const totalCount = (grAgg._count.id ?? 0) + (rAgg._count.id ?? 0);
+    const avg =
+      totalCount > 0
+        ? ((grAgg._avg.rating ?? 0) * (grAgg._count.id ?? 0) +
+            (rAgg._avg.rating ?? 0) * (rAgg._count.id ?? 0)) /
+          totalCount
+        : 0;
+
+    await prisma.place.update({
+      where: { id: placeId },
+      data: { rating: avg || 0, reviewCount: totalCount },
+    });
 
     return NextResponse.json({
       success: true,
@@ -137,8 +217,11 @@ export async function POST(
       skipped,
       errors,
     });
-  } catch (error) {
-    console.error("Erreur lors de l'import des avis:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+  } catch (err) {
+    console.error("Erreur import avis:", err);
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
   }
 }

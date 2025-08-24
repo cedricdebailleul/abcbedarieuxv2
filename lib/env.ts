@@ -23,6 +23,7 @@ export const env = createEnv({
     SMTP_USER: z.string().optional(),
     SMTP_PASSWORD: z.string().optional(),
     SMTP_FROM: z.string().optional(),
+    CONTACT_EMAIL: z.string().optional(),
 
     ARCJET_KEY: z.string().optional(),
 
@@ -66,6 +67,7 @@ export const env = createEnv({
     SMTP_USER: process.env.SMTP_USER,
     SMTP_PASSWORD: process.env.SMTP_PASSWORD,
     SMTP_FROM: process.env.SMTP_FROM,
+    CONTACT_EMAIL: process.env.CONTACT_EMAIL,
 
     ARCJET_KEY: process.env.ARCJET_KEY,
 

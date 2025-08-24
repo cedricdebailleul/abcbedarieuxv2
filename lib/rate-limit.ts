@@ -2,6 +2,53 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { NextRequest } from "next/server";
 
+// Interface pour un storage compatible Redis en mémoire
+interface MemoryStorage {
+  set: (key: string, value: string, options?: { ex?: number }) => Promise<"OK">;
+  get: (key: string) => Promise<string | null>;
+  incr: (key: string) => Promise<number>;
+  expire: (key: string, seconds: number) => Promise<number>;
+}
+
+// Implémentation d'un storage mémoire compatible avec Redis
+class InMemoryStorage implements MemoryStorage {
+  private storage = new Map<string, { value: string; expireAt?: number }>();
+
+  async set(key: string, value: string, options?: { ex?: number }): Promise<"OK"> {
+    const expireAt = options?.ex ? Date.now() + options.ex * 1000 : undefined;
+    this.storage.set(key, { value, expireAt });
+    return "OK";
+  }
+
+  async get(key: string): Promise<string | null> {
+    const item = this.storage.get(key);
+    if (!item) return null;
+    
+    if (item.expireAt && Date.now() > item.expireAt) {
+      this.storage.delete(key);
+      return null;
+    }
+    
+    return item.value;
+  }
+
+  async incr(key: string): Promise<number> {
+    const current = await this.get(key);
+    const newValue = current ? parseInt(current, 10) + 1 : 1;
+    await this.set(key, newValue.toString());
+    return newValue;
+  }
+
+  async expire(key: string, seconds: number): Promise<number> {
+    const item = this.storage.get(key);
+    if (!item) return 0;
+    
+    item.expireAt = Date.now() + seconds * 1000;
+    this.storage.set(key, item);
+    return 1;
+  }
+}
+
 // Configuration Redis (optionnelle, fallback vers mémoire locale)
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
@@ -11,6 +58,9 @@ const redis =
       })
     : undefined;
 
+// Instance de storage mémoire
+const memoryStorage = new InMemoryStorage();
+
 // Rate limiters pour différents endpoints
 export const newsletterSubscribeLimit = redis
   ? new Ratelimit({
@@ -19,7 +69,12 @@ export const newsletterSubscribeLimit = redis
       analytics: true,
       prefix: "ratelimit:newsletter:subscribe",
     })
-  : undefined;
+  : new Ratelimit({
+      redis: memoryStorage as unknown as Redis, // Fallback vers stockage mémoire local
+      limiter: Ratelimit.slidingWindow(5, "1 m"), // 5 requêtes par minute
+      analytics: false,
+      prefix: "ratelimit:newsletter:subscribe",
+    });
 
 export const trackingLimit = redis
   ? new Ratelimit({
@@ -28,7 +83,12 @@ export const trackingLimit = redis
       analytics: true,
       prefix: "ratelimit:tracking",
     })
-  : undefined;
+  : new Ratelimit({
+      redis: memoryStorage as unknown as Redis, // Fallback vers stockage mémoire local
+      limiter: Ratelimit.slidingWindow(100, "1 m"), // 100 tracking par minute
+      analytics: false,
+      prefix: "ratelimit:tracking",
+    });
 
 export const generalPublicLimit = redis
   ? new Ratelimit({
@@ -37,7 +97,12 @@ export const generalPublicLimit = redis
       analytics: true,
       prefix: "ratelimit:public",
     })
-  : undefined;
+  : new Ratelimit({
+      redis: memoryStorage as unknown as Redis, // Fallback vers stockage mémoire local
+      limiter: Ratelimit.slidingWindow(30, "1 m"), // 30 requêtes par minute
+      analytics: false,
+      prefix: "ratelimit:public",
+    });
 
 // Fonction helper pour obtenir l'IP du client
 export function getClientIP(request: NextRequest): string {

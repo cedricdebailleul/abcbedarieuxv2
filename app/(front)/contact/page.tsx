@@ -1,10 +1,8 @@
 import { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Mail, Phone, MapPin, Clock, Users, Briefcase } from "lucide-react";
+import { ContactForm } from "@/components/forms/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact - ABC Bédarieux",
@@ -32,81 +30,7 @@ export default function ContactPage() {
               <CardTitle>Envoyez-nous un message</CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">Prénom *</Label>
-                    <Input id="firstName" placeholder="Votre prénom" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Nom *</Label>
-                    <Input id="lastName" placeholder="Votre nom" required />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="votre.email@example.com"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone</Label>
-                  <Input id="phone" type="tel" placeholder="06 12 34 56 78" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Sujet *</Label>
-                  <Input
-                    id="subject"
-                    placeholder="Objet de votre message"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="company">Entreprise / Établissement</Label>
-                  <Input
-                    id="company"
-                    placeholder="Nom de votre entreprise (optionnel)"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="message">Message *</Label>
-                  <Textarea
-                    id="message"
-                    placeholder="Décrivez votre demande en détail..."
-                    className="min-h-32"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="consent"
-                    className="rounded"
-                    required
-                  />
-                  <Label htmlFor="consent" className="text-sm">
-                    J&apos;accepte que mes données personnelles soient utilisées
-                    pour répondre à ma demande conformément à notre{" "}
-                    <a href="/privacy" className="text-primary underline">
-                      politique de confidentialité
-                    </a>
-                    .
-                  </Label>
-                </div>
-
-                <Button type="submit" className="w-full">
-                  Envoyer le message
-                </Button>
-              </form>
+              <ContactForm />
             </CardContent>
           </Card>
         </div>

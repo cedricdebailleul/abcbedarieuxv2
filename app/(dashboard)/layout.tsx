@@ -18,19 +18,12 @@ export default async function DashboardLayout({
   let session = null;
   try {
     session = await auth.api.getSession({ headers: await headers() });
-    console.log("Dashboard Layout - Vérification session:", {
-      hasSession: !!session,
-      userId: session?.user?.id,
-      userRole: session?.user?.role,
-      email: session?.user?.email,
-    });
   } catch (error) {
     console.error("Dashboard Layout - Erreur lors de la récupération de la session:", error);
     redirect("/login");
   }
 
   if (!session) {
-    console.log("Dashboard Layout - Pas de session, redirection vers login");
     redirect("/login");
   }
 

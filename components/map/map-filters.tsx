@@ -14,6 +14,17 @@ import type { MapFilters as IMapFilters, MapCategory } from "./interactive-map";
 import { DISTANCE_OPTIONS } from "@/lib/map-utils";
 import { lucideIconToEmoji } from "@/lib/share-utils";
 
+// Calculer le nombre total de places pour une catégorie (incluant les sous-catégories)
+function getTotalPlacesCount(category: MapCategory): number {
+  let total = category._count.places;
+  if (category.children) {
+    category.children.forEach(child => {
+      total += child._count.places;
+    });
+  }
+  return total;
+}
+
 interface MapFiltersProps {
   filters: IMapFilters;
   onFiltersChange: (filters: IMapFilters) => void;
@@ -198,43 +209,38 @@ export function MapFilters({
                         className="flex items-center flex-1 cursor-pointer"
                         onClick={() => toggleCategory(category.id)}
                       >
-                        <div className="flex items-center flex-1">
-                          {category.icon && (
-                            <span className="mr-2 text-lg inline-block w-5 text-center leading-none">
-                              {/^[A-Z]/.test(category.icon) ? lucideIconToEmoji(category.icon) : category.icon}
-                            </span>
-                          )}
-                          <Label 
-                            htmlFor={`category-${category.id}`}
-                            className="cursor-pointer flex-1"
-                          >
-                            {category.name}
-                          </Label>
-                        </div>
+                        {category.icon && (
+                          <span className="mr-2 text-lg inline-block w-5 text-center leading-none">
+                            {/^[A-Z]/.test(category.icon) ? lucideIconToEmoji(category.icon) : category.icon}
+                          </span>
+                        )}
+                        <span className="cursor-pointer flex-1">
+                          {category.name}
+                        </span>
+                      </div>
                         
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className="text-xs">
-                            {category._count.places}
-                          </Badge>
-                          
-                          {hasChildren && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleExpandCategory(category.id);
-                              }}
-                            >
-                              {isExpanded ? (
-                                <ChevronDown className="w-3 h-3" />
-                              ) : (
-                                <ChevronRight className="w-3 h-3" />
-                              )}
-                            </Button>
-                          )}
-                        </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className="text-xs">
+                          {getTotalPlacesCount(category)}
+                        </Badge>
+                        
+                        {hasChildren && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpandCategory(category.id);
+                            }}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="w-3 h-3" />
+                            ) : (
+                              <ChevronRight className="w-3 h-3" />
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -264,16 +270,13 @@ export function MapFilters({
                                     {/^[A-Z]/.test(child.icon) ? lucideIconToEmoji(child.icon) : child.icon}
                                   </span>
                                 )}
-                                <Label 
-                                  htmlFor={`category-${child.id}`}
-                                  className="cursor-pointer text-sm flex-1"
-                                >
+                                <span className="cursor-pointer text-sm flex-1">
                                   {child.name}
-                                </Label>
-                                <Badge variant="outline" className="text-xs">
-                                  {child._count.places}
-                                </Badge>
+                                </span>
                               </div>
+                              <Badge variant="outline" className="text-xs">
+                                {child._count.places}
+                              </Badge>
                             </div>
                           );
                         })}

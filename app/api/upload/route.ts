@@ -6,6 +6,13 @@ import { type NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
 import { UPLOADS_ROOT } from "@/lib/path";
+import { promises as fs } from "node:fs";
+
+function isUnderUploads(abs: string) {
+  const root = path.resolve(UPLOADS_ROOT);
+  const rootWithSep = root.endsWith(path.sep) ? root : root + path.sep;
+  return abs.startsWith(rootWithSep);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -205,67 +212,78 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Route pour supprimer un fichier
+// Règle d’auto-service : user peut supprimer seulement ses fichiers temporaires
+type SessionLike = { user?: { role?: string | null } | null };
+
+/**
+ * Check whether the current session is allowed to delete the given relative path.
+ * Using a narrow SessionLike type instead of `any`.
+ */
+function canDelete(session: SessionLike | null | undefined, relPath: string) {
+  const role = session?.user?.role;
+  if (role === "admin" || role === "editor") return true;
+  const norm = relPath.replace(/\\/g, "/");
+  return /^places\/temp-[^/]+\//i.test(norm); // ex: places/temp-.../gallery/xxx.jpg
+}
+
 export async function DELETE(request: NextRequest) {
   try {
-    // Vérifier l'authentification
     const session = await auth.api.getSession({ headers: await headers() });
-
     if (!session) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    // Vérifier les permissions
-    const userRole = session.user.role;
-    if (!userRole || !["admin", "editor"].includes(userRole)) {
+    const { searchParams } = new URL(request.url);
+    const clientPath = searchParams.get("path"); // ex: /uploads/places/temp-.../gallery/x.jpg
+    if (!clientPath || !clientPath.startsWith("/uploads/")) {
+      return NextResponse.json({ error: "Chemin invalide" }, { status: 400 });
+    }
+
+    // On transforme l’URL publique -> chemin réel sous UPLOADS_ROOT
+    const rel = clientPath.replace(/^\/uploads\//, ""); // places/…
+    const abs = path.resolve(UPLOADS_ROOT, rel); // /app/uploads/places/…
+    if (!isUnderUploads(abs)) {
+      return NextResponse.json({ error: "Chemin interdit" }, { status: 403 });
+    }
+
+    if (!canDelete(session, rel)) {
       return NextResponse.json(
         { error: "Permissions insuffisantes" },
         { status: 403 }
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const filePath = searchParams.get("path");
-
-    if (!filePath) {
+    const st = await fs.stat(abs).catch(() => null);
+    if (!st) {
       return NextResponse.json(
-        { error: "Chemin du fichier requis" },
-        { status: 400 }
+        { error: "Fichier introuvable" },
+        { status: 404 }
       );
     }
 
-    // Sécurité: vérifier que le chemin est dans public/uploads/
-    if (!filePath.startsWith("/uploads/")) {
-      return NextResponse.json(
-        { error: "Chemin non autorisé" },
-        { status: 403 }
-      );
+    if (st.isDirectory()) {
+      await fs.rm(abs, { recursive: true, force: true });
+    } else {
+      await fs.unlink(abs);
     }
 
-    const fullPath = path.join(process.cwd(), "public", filePath);
-
-    // Supprimer le fichier s'il existe
+    // Nettoyage doux des dossiers vides (jusqu’à /app/uploads)
     try {
-      const { unlink } = await import("node:fs/promises");
-      let deletedCount = 0;
-
-      if (existsSync(fullPath)) {
-        await unlink(fullPath);
-        deletedCount++;
-        console.log(`Fichier supprimé: ${fullPath}`);
+      let dir = path.dirname(abs);
+      const stop = path.resolve(UPLOADS_ROOT);
+      for (let i = 0; i < 4 && dir !== stop && isUnderUploads(dir); i++) {
+        const entries = await fs.readdir(dir).catch(() => []);
+        if (entries.length) break;
+        await fs.rmdir(dir).catch(() => {});
+        dir = path.dirname(dir);
       }
-
-      console.log(`Total fichiers supprimés: ${deletedCount}`);
-    } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
-      throw error; // Re-lancer l'erreur pour que le client sache qu'il y a eu un problème
-    }
+    } catch {}
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Erreur lors de la suppression:", error);
+  } catch (err) {
+    console.error("DELETE /api/upload error:", err);
     return NextResponse.json(
-      { error: "Erreur lors de la suppression du fichier" },
+      { error: "Erreur lors de la suppression" },
       { status: 500 }
     );
   }

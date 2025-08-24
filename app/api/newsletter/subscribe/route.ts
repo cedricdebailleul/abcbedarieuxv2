@@ -10,12 +10,6 @@ export async function POST(request: NextRequest) {
   try {
     // Vérifier le rate limiting en premier
     const clientIP = getClientIP(request);
-    if (!newsletterSubscribeLimit) {
-      return NextResponse.json(
-        { error: "Rate limiter non configuré" },
-        { status: 500 }
-      );
-    }
     const rateLimitResult = await checkRateLimit(newsletterSubscribeLimit, clientIP);
     
     if (!rateLimitResult.success) {
@@ -27,17 +21,7 @@ export async function POST(request: NextRequest) {
     // Validation et sanitisation des données
     let validatedData;
     try {
-      const sanitizedBody = {
-        ...body,
-        preferences: {
-          events: body.preferences?.events === undefined ? true : body.preferences.events,
-          places: body.preferences?.places === undefined ? true : body.preferences.places,
-          offers: body.preferences?.offers === undefined ? false : body.preferences.offers,
-          news: body.preferences?.news === undefined ? true : body.preferences.news,
-          frequency: typeof body.preferences?.frequency === "string" ? body.preferences.frequency : "WEEKLY",
-        },
-      };
-      validatedData = validateAndSanitize(subscribeSchema, sanitizedBody);
+      validatedData = validateAndSanitize(subscribeSchema, body);
     } catch (error) {
       return NextResponse.json(
         { error: `Données invalides: ${error instanceof Error ? error.message : 'Erreur de validation'}` },
@@ -45,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, firstName, lastName, preferences }: { email: string; firstName?: string; lastName?: string; preferences: { events?: boolean; places?: boolean; offers?: boolean; news?: boolean; frequency?: string } } = validatedData as { email: string; firstName?: string; lastName?: string; preferences: { events?: boolean; places?: boolean; offers?: boolean; news?: boolean; frequency?: string } };
+    const { email, firstName, lastName, preferences } = validatedData;
 
     try {
       // Vérifier si l'email existe déjà
@@ -75,18 +59,18 @@ export async function POST(request: NextRequest) {
               preferences: {
                 upsert: {
                   create: {
-                    events: preferences.events ?? true,
-                    places: preferences.places ?? true,
-                    offers: preferences.offers ?? false,
-                    news: preferences.news ?? true,
-                    frequency: preferences.frequency as NewsletterFrequency ?? "WEEKLY",
+                    events: preferences.events,
+                    places: preferences.places,
+                    offers: preferences.offers,
+                    news: preferences.news,
+                    frequency: preferences.frequency as NewsletterFrequency,
                   },
                   update: {
-                    events: preferences.events ?? true,
-                    places: preferences.places ?? true,
-                    offers: preferences.offers ?? false,
-                    news: preferences.news ?? true,
-                    frequency: preferences.frequency as NewsletterFrequency ?? "WEEKLY",
+                    events: preferences.events,
+                    places: preferences.places,
+                    offers: preferences.offers,
+                    news: preferences.news,
+                    frequency: preferences.frequency as NewsletterFrequency,
                   },
                 },
               },
@@ -118,11 +102,11 @@ export async function POST(request: NextRequest) {
           isVerified: false, // Nécessite une vérification email
           preferences: {
             create: {
-              events: preferences.events ?? true,
-              places: preferences.places ?? true,
-              offers: preferences.offers ?? false,
-              news: preferences.news ?? true,
-              frequency: preferences.frequency as NewsletterFrequency ?? "WEEKLY",
+              events: preferences.events,
+              places: preferences.places,
+              offers: preferences.offers,
+              news: preferences.news,
+              frequency: preferences.frequency as NewsletterFrequency,
             },
           },
         },

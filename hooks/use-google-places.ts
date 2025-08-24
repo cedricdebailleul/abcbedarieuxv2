@@ -490,6 +490,67 @@ export const useGooglePlaces = ({
     clearPredictions();
   }, [clearPredictions]);
 
+  // Récupérer uniquement les horaires d'une place existante
+  const fetchOpeningHours = useCallback(
+    (googlePlaceId: string): Promise<FormattedPlaceData["openingHours"]> => {
+      return new Promise((resolve, reject) => {
+        if (!isLoaded || !google || !placesService.current) {
+          reject(new Error("Google Maps pas encore chargé"));
+          return;
+        }
+
+        const request = {
+          placeId: googlePlaceId,
+          fields: ["opening_hours"],
+          language,
+        };
+
+        placesService.current.getDetails(request, (place, status) => {
+          const g = google;
+          if (g && status === g.maps.places.PlacesServiceStatus.OK && place) {
+            const hours = formatOpeningHours(place.opening_hours?.periods);
+            resolve(hours);
+          } else {
+            reject(new Error("Impossible de récupérer les horaires depuis Google"));
+          }
+        });
+      });
+    },
+    [isLoaded, google, formatOpeningHours, language]
+  );
+
+  // Géocoder une adresse pour obtenir les coordonnées
+  const geocodeAddress = useCallback(
+    (address: string): Promise<{ lat: number; lng: number }> => {
+      return new Promise((resolve, reject) => {
+        if (!isLoaded || !google) {
+          reject(new Error("Google Maps pas encore chargé"));
+          return;
+        }
+
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode(
+          {
+            address: address,
+            region: defaultCountry,
+          },
+          (results, status) => {
+            if (status === google.maps.GeocoderStatus.OK && results?.[0]) {
+              const location = results[0].geometry.location;
+              resolve({
+                lat: location.lat(),
+                lng: location.lng(),
+              });
+            } else {
+              reject(new Error("Impossible de géocoder l'adresse"));
+            }
+          }
+        );
+      });
+    },
+    [isLoaded, google, defaultCountry]
+  );
+
   return {
     // État
     isLoaded,
@@ -502,6 +563,8 @@ export const useGooglePlaces = ({
     // Actions
     searchPlaces,
     getPlaceDetails,
+    fetchOpeningHours,
+    geocodeAddress,
     clearPredictions,
     clearSelection,
     setInputValue,

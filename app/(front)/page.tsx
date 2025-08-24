@@ -1,13 +1,16 @@
-import { ArrowRight, FileText } from "lucide-react";
+import { ArrowRight, FileText, MapPin } from "lucide-react";
 import Link from "next/link";
 import { getLatestPostsAction } from "@/actions/post";
 import { getUpcomingEventsAction } from "@/actions/event";
+import { getFeaturedPlacesAction } from "@/actions/place";
 import Hero from "@/components/front/hero";
 import { PostCard } from "@/components/posts/post-card";
+import { PlacePreviewCard } from "@/components/places/place-preview-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ActionsSection } from "@/components/actions/actions-section";
 import { CTASection } from "@/components/sections/cta-section";
+import { PartnersSection } from "@/components/sections/partners-section";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -40,6 +43,9 @@ export default async function Home() {
 
   // Récupérer les événements à venir
   const upcomingEventsResult = await getUpcomingEventsAction(5);
+  
+  // Récupérer les places en vedette
+  const featuredPlacesResult = await getFeaturedPlacesAction(6);
   const upcomingEvents = upcomingEventsResult.success
     ? upcomingEventsResult.data!.map(
         (event: {
@@ -66,6 +72,9 @@ export default async function Home() {
       )
     : [];
 
+  // Traiter les places en vedette
+  const featuredPlaces = featuredPlacesResult.success ? featuredPlacesResult.data! : [];
+
   return (
     <>
       <Hero upcomingEvents={upcomingEvents} />
@@ -78,6 +87,52 @@ export default async function Home() {
         title="Nos Actions Phares"
         description="Découvrez nos principales initiatives pour soutenir et dynamiser le commerce local à Bédarieux"
       />
+
+      {/* Section des places en vedette */}
+      {featuredPlaces.length > 0 && (
+        <section className="py-16 mx-auto px-8 bg-muted/30">
+          <div>
+            {/* En-tête de section */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-3xl font-bold mb-2">Établissements en vedette</h2>
+                <p className="text-muted-foreground">
+                  Découvrez les commerces et services mis en avant à Bédarieux
+                </p>
+              </div>
+              <Button asChild variant="outline">
+                <Link href="/carte">
+                  <MapPin className="size-4 mr-2" />
+                  Voir la carte
+                  <ArrowRight className="size-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
+
+            {/* Grille des places */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredPlaces.map((place) => (
+                <PlacePreviewCard key={place.id} place={place} />
+              ))}
+            </div>
+
+            {/* Message si aucune place */}
+            {featuredPlaces.length === 0 && (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+                  <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">
+                    Aucun établissement en vedette
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Les établissements mis en avant apparaîtront ici prochainement.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Section des derniers articles */}
       {latestPosts.length > 0 && (
@@ -137,6 +192,7 @@ export default async function Home() {
 
       {/* Section call-to-action */}
       <CTASection />
+      <PartnersSection />
     </>
   );
 }

@@ -58,7 +58,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
         >
           {children}
           <Toaster closeButton position="bottom-center" />

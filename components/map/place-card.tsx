@@ -13,6 +13,11 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  Mail,
+  Facebook,
+  Instagram,
+  Twitter,
+  Linkedin,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -65,9 +70,7 @@ export function PlaceCard({
   const formattedHours = formatOpeningHours(place.openingHours);
 
   // Adresse complète
-  const fullAddress = `${place.street}${
-    place.streetNumber ? ` ${place.streetNumber}` : ""
-  }, ${place.postalCode} ${place.city}`;
+  const fullAddress = `${place.streetNumber ? `${place.streetNumber} ` : ""}${place.street}, ${place.postalCode} ${place.city}`;
 
   // URL Google Maps pour l'itinéraire
   const directionsUrl =
@@ -181,7 +184,7 @@ export function PlaceCard({
               <Button
                 variant="secondary"
                 size="icon"
-                className="absolute top-3 right-3 z-10 bg-background/80 backdrop-blur-sm hover:bg-background"
+                className="absolute top-3 right-3 z-10 bg-red-600 text-white hover:bg-red-700 shadow-lg"
                 onClick={onClose}
               >
                 <X className="w-4 h-4" />
@@ -197,7 +200,10 @@ export function PlaceCard({
               {/* Statut ouverture */}
               <div className="absolute bottom-3 left-3">
                 <Badge
-                  className={cn("text-xs font-medium", statusInfo.className)}
+                  className={cn(
+                    "text-xs font-medium shadow-lg border-2 border-white/20",
+                    statusInfo.className
+                  )}
                 >
                   <Clock className="w-3 h-3 mr-1" />
                   {statusInfo.text}
@@ -209,7 +215,7 @@ export function PlaceCard({
                 <div className="absolute bottom-3 right-3">
                   <Badge
                     variant="secondary"
-                    className="bg-background/80 backdrop-blur-sm"
+                    className="bg-blue-600 text-white shadow-lg border-2 border-white/20 font-medium"
                   >
                     <Navigation className="w-3 h-3 mr-1" />
                     {formatDistance(distance)}
@@ -229,32 +235,44 @@ export function PlaceCard({
                   <Badge variant="outline" className="text-xs">
                     {getPlaceTypeLabel(place.type)}
                   </Badge>
-                  {place._count.reviews + place._count.googleReviews > 0 && (
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <Star className="w-3 h-3 mr-1 text-yellow-500" />
-                      {place._count.reviews + place._count.googleReviews} avis
-                    </div>
-                  )}
+                  {place._count.reviews + place._count.googleReviews > 0 && (() => {
+                    const allReviews = [...place.reviews, ...place.googleReviews];
+                    const averageRating = allReviews.length > 0 
+                      ? allReviews.reduce((sum, review) => sum + review.rating, 0) / allReviews.length
+                      : 0;
+                    
+                    return (
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <Star className="w-3 h-3 mr-1 text-yellow-500 fill-yellow-500" />
+                        <span className="font-medium text-foreground">
+                          {averageRating.toFixed(1)}
+                        </span>
+                        <span className="ml-1">
+                          ({place._count.reviews + place._count.googleReviews} avis)
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
-              </div>
 
-              {/* Catégories */}
-              {place.categories.length > 0 && (
-                <div>
-                  <PlaceCategoriesBadges
-                    categories={place.categories.map((category) => ({
-                      ...category,
-                      category: {
-                        ...category.category,
-                        icon: category.category.icon || null,
-                        color: category.category.color ?? null,
-                      },
-                    }))}
-                    maxDisplay={3}
-                    size="sm"
-                  />
-                </div>
-              )}
+                {/* Catégories */}
+                {place.categories.length > 0 && (
+                  <div className="mt-2">
+                    <PlaceCategoriesBadges
+                      categories={place.categories.map((category) => ({
+                        ...category,
+                        category: {
+                          ...category.category,
+                          icon: category.category.icon || null,
+                          color: category.category.color ?? null,
+                        },
+                      }))}
+                      maxDisplay={4}
+                      size="sm"
+                    />
+                  </div>
+                )}
+              </div>
 
               {/* Description */}
               {place.summary && (
@@ -329,31 +347,155 @@ export function PlaceCard({
                   <span className="text-muted-foreground">{fullAddress}</span>
                 </div>
 
-                {/* Contact */}
-                {(place.phone || place.website) && (
-                  <div className="space-y-2">
+                {/* Contact - Boutons principaux */}
+                {(place.phone || place.email || place.website) && (
+                  <div className="grid grid-cols-1 gap-2">
                     {place.phone && (
-                      <a
-                        href={`tel:${place.phone}`}
-                        className="flex items-center text-sm text-primary hover:underline"
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="justify-start"
                       >
-                        <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
-                        {place.phone}
-                      </a>
+                        <a href={`tel:${place.phone}`}>
+                          <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                          Appeler
+                        </a>
+                      </Button>
+                    )}
+
+                    {place.email && (
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="justify-start"
+                      >
+                        <a href={`mailto:${place.email}`}>
+                          <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+                          Email
+                        </a>
+                      </Button>
                     )}
 
                     {place.website && (
-                      <a
-                        href={place.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center text-sm text-primary hover:underline"
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="justify-start"
                       >
-                        <Globe className="w-4 h-4 mr-2 flex-shrink-0" />
-                        Site web
-                        <ExternalLink className="w-3 h-3 ml-1 flex-shrink-0" />
-                      </a>
+                        <a
+                          href={place.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Globe className="w-4 h-4 mr-2 flex-shrink-0" />
+                          Site web
+                          <ExternalLink className="w-3 h-3 ml-1 flex-shrink-0" />
+                        </a>
+                      </Button>
                     )}
+                  </div>
+                )}
+
+                {/* Réseaux sociaux */}
+                {(place.facebook || place.instagram || place.twitter || place.linkedin || place.tiktok) && (
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground mb-2">
+                      Réseaux sociaux
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {place.facebook && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="icon"
+                          className="w-8 h-8"
+                        >
+                          <a
+                            href={place.facebook}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Facebook"
+                          >
+                            <Facebook className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      )}
+
+                      {place.instagram && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="icon"
+                          className="w-8 h-8"
+                        >
+                          <a
+                            href={place.instagram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Instagram"
+                          >
+                            <Instagram className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      )}
+
+                      {place.twitter && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="icon"
+                          className="w-8 h-8"
+                        >
+                          <a
+                            href={place.twitter}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Twitter"
+                          >
+                            <Twitter className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      )}
+
+                      {place.linkedin && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="icon"
+                          className="w-8 h-8"
+                        >
+                          <a
+                            href={place.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="LinkedIn"
+                          >
+                            <Linkedin className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      )}
+
+                      {place.tiktok && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="icon"
+                          className="w-8 h-8"
+                        >
+                          <a
+                            href={place.tiktok}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="TikTok"
+                          >
+                            <span className="text-sm font-bold">TT</span>
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

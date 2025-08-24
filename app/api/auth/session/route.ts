@@ -11,11 +11,6 @@ export async function GET(request: Request) {
       return NextResponse.json(null);
     }
 
-    console.log("Session récupérée:", {
-      id: session.user.id,
-      email: session.user.email,
-      role: session.user.role,
-    });
 
     return NextResponse.json({
       user: {

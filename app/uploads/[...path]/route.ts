@@ -1,6 +1,6 @@
 // app/uploads/[...path]/route.ts
 import { NextResponse } from "next/server";
-import path from "node:path";
+import * as nodePath from "node:path";
 import { promises as fs } from "node:fs";
 import mime from "mime";
 import { UPLOADS_ROOT } from "@/lib/path";
@@ -10,23 +10,28 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { path: string[] } }
+  ctx: { params: Promise<{ path: string[] }> } // 👈 params est async
 ) {
-  const relPath = path.join(...params.path);
+  const { path } = await ctx.params; // 👈 on attend params
+  const relPath = nodePath.join(...path);
 
-  // anti-path traversal
-  if (relPath.includes("..")) {
+  // Anti path traversal robuste
+  const root = nodePath.resolve(UPLOADS_ROOT);
+  const abs = nodePath.resolve(root, relPath);
+  const rootWithSep = root.endsWith(nodePath.sep) ? root : root + nodePath.sep;
+  if (!abs.startsWith(rootWithSep)) {
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
-  const filePath = path.join(UPLOADS_ROOT, relPath);
-
   try {
-    const file = await fs.readFile(filePath); // Buffer (Node)
-    const type = mime.getType(filePath) || "application/octet-stream";
+    const stat = await fs.stat(abs);
+    if (stat.isDirectory()) {
+      return NextResponse.json({ error: "Is a directory" }, { status: 404 });
+    }
 
-    // ✅ Convertit Buffer -> Uint8Array (BodyInit valide)
-    const body = new Uint8Array(file);
+    const file = await fs.readFile(abs); // Buffer (Uint8Array)
+    const type = mime.getType(abs) || "application/octet-stream";
+    const body = new Uint8Array(file); // convert Node Buffer to a web-compatible Uint8Array
 
     return new NextResponse(body, {
       headers: {
