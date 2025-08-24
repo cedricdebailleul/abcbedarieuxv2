@@ -419,6 +419,15 @@ export async function getPostsAction(
               color: true,
             },
           },
+          place: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              type: true,
+              city: true,
+            },
+          },
           tags: {
             include: {
               tag: {
@@ -810,6 +819,7 @@ export async function getPublicPostsAction(
       updatedAt: Date;
       author: { id: string; name: string };
       category?: { id: string; name: string; slug: string; color?: string | null } | null;
+      place?: { id: string; name: string; slug: string; type: string; city?: string | null } | null;
       tags: Array<{ tag: { id: string; name: string; slug: string; color?: string | null } }>;
     }>;
     total: number;
@@ -879,6 +889,15 @@ export async function getPublicPostsAction(
               name: true,
               slug: true,
               color: true,
+            },
+          },
+          place: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              type: true,
+              city: true,
             },
           },
           tags: {
@@ -966,6 +985,7 @@ export async function getLatestPostsAction(
       where: {
         published: true,
         status: PostStatus.PUBLISHED,
+        placeId: null, // Seulement les articles de l'association (non liés à un lieu)
       },
       include: {
         author: {

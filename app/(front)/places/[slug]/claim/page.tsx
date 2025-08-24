@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useSession } from "@/hooks/use-session";
+import { useUserProfile } from "@/hooks/use-user-profile";
 
 interface Place {
   id: string;
@@ -29,7 +29,7 @@ export default function ClaimPlacePage({
 }: ClaimPlacePageProps) {
   const router = useRouter();
   const [slug, setSlug] = useState<string>("");
-  const { data: session, status } = useSession();
+  const { user, loading: profileLoading } = useUserProfile();
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -89,12 +89,25 @@ export default function ClaimPlacePage({
     }
   }, [slug]);
 
-  // Rediriger si pas connecté (seulement si on a un slug et que le status est chargé)
+  // Rediriger si pas connecté
   useEffect(() => {
-    if (status === "unauthenticated" && !session?.user && slug) {
+    if (!profileLoading && !user && slug) {
       router.push(`/login?callbackUrl=/places/${slug}/claim`);
     }
-  }, [session, status, router, slug]);
+  }, [user, profileLoading, router, slug]);
+
+  // Pré-remplir les champs avec les données de l'utilisateur connecté
+  useEffect(() => {
+    if (user && !profileLoading) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.profile?.firstname || user.name?.split(' ')[0] || "",
+        lastName: user.profile?.lastname || user.name?.split(' ').slice(1).join(' ') || "",
+        email: user.email || "",
+        phone: user.profile?.phone || "",
+      }));
+    }
+  }, [user, profileLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,10 +171,29 @@ export default function ClaimPlacePage({
     }
   };
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          Connexion requise
+        </h1>
+        <p className="text-gray-600 mb-6">
+          Vous devez être connecté pour revendiquer un établissement.
+        </p>
+        <Link
+          href={`/login?callbackUrl=/places/${slug}/claim`}
+          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Se connecter
+        </Link>
       </div>
     );
   }
@@ -173,14 +205,6 @@ export default function ClaimPlacePage({
         <Link href="/" className="text-primary hover:underline">
           Retour à l&apos;accueil
         </Link>
-      </div>
-    );
-  }
-
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }

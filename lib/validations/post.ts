@@ -46,6 +46,7 @@ export const postSchema = z.object({
 
   // Relations
   categoryId: z.string().cuid().optional().nullable(),
+  placeId: z.string().cuid().optional().nullable(), // Articles liés à un lieu (optionnel)
   tagIds: z.array(z.string().cuid()).default([]),
 
   // Image de couverture
@@ -130,8 +131,9 @@ export const createPostSchema = postSchema
     slug: data.slug || generateSlug(data.title),
     // Met à jour publishedAt si published change
     publishedAt: data.published ? data.publishedAt || new Date() : null,
-    // Convertir "none" en null pour categoryId
+    // Convertir "none" en null pour categoryId et placeId
     categoryId: data.categoryId === "none" ? null : data.categoryId,
+    placeId: data.placeId === "none" ? null : data.placeId,
     // Convertir les chaînes vides en null pour les URLs et images
     coverImage: data.coverImage === "" ? null : data.coverImage,
     ogImage: data.ogImage === "" ? null : data.ogImage,
@@ -179,9 +181,12 @@ export const updatePostSchema = postSchema
       result.publishedAt = data.published ? new Date() : null;
     }
 
-    // Convertir "none" en null pour categoryId
+    // Convertir "none" en null pour categoryId et placeId
     if (data.categoryId === "none") {
       result.categoryId = null;
+    }
+    if (data.placeId === "none") {
+      result.placeId = null;
     }
 
     // Convertir les chaînes vides en null pour les URLs et images

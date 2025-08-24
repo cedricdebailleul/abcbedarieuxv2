@@ -28,6 +28,7 @@ import { SocialShare } from "@/components/shared/social-share";
 import { PlaceSchema } from "@/components/structured-data/place-schema";
 import { OpenGraphDebug } from "@/components/debug/og-debug";
 import { PrintHeader } from "@/components/print/print-header";
+import { PlaceTabs } from "@/components/places/place-tabs";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
@@ -491,71 +492,81 @@ export default async function PlacePage({ params }: PageProps) {
         </div>
 
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Colonne principale */}
+          {/* Colonne principale avec onglets */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Description */}
-            {(place.summary || place.description) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>À propos</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {place.summary && (
-                    <p className="text-foreground/90 font-medium">
-                      {place.summary}
-                    </p>
-                  )}
-                  {place.description && (
-                    <p className="text-muted-foreground whitespace-pre-wrap">
-                      {place.description}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Avis */}
-            {place.reviews.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-500" />
-                    Avis clients
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {place.reviews.slice(0, 3).map((review) => (
-                    <div key={review.id} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{review.user.name}</span>
-                        {typeof review.rating === "number" && (
-                          <div className="flex items-center">
-                            <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                            <span>{review.rating}/5</span>
-                          </div>
+            <PlaceTabs 
+              placeId={place.id}
+              aboutContent={
+                <div className="space-y-6">
+                  {/* Description */}
+                  {(place.summary || place.description) && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>À propos</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {place.summary && (
+                          <p className="text-foreground/90 font-medium">
+                            {place.summary}
+                          </p>
                         )}
-                      </div>
-                      {review.comment && (
-                        <p className="text-sm text-muted-foreground">
-                          {review.comment}
-                        </p>
-                      )}
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(review.createdAt).toLocaleDateString("fr-FR")}
-                      </div>
-                      <Separator />
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
+                        {place.description && (
+                          <p className="text-muted-foreground whitespace-pre-wrap">
+                            {place.description}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              }
+              reviewsContent={
+                <div className="space-y-6">
+                  {/* Avis clients */}
+                  {place.reviews.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Star className="w-5 h-5 text-yellow-500" />
+                          Avis clients
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {place.reviews.slice(0, 3).map((review) => (
+                          <div key={review.id} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{review.user.name}</span>
+                              {typeof review.rating === "number" && (
+                                <div className="flex items-center">
+                                  <Star className="w-4 h-4 text-yellow-500 mr-1" />
+                                  <span>{review.rating}/5</span>
+                                </div>
+                              )}
+                            </div>
+                            {review.comment && (
+                              <p className="text-sm text-muted-foreground">
+                                {review.comment}
+                              </p>
+                            )}
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(review.createdAt).toLocaleDateString("fr-FR")}
+                            </div>
+                            <Separator />
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
 
-            {/* Avis Google */}
-            <GoogleReviews
-              reviews={place.googleReviews.map((review) => ({
-                ...review,
-                createdAt: review.createdAt.toISOString(),
-              }))}
+                  {/* Avis Google */}
+                  <GoogleReviews
+                    reviews={place.googleReviews.map((review) => ({
+                      ...review,
+                      createdAt: review.createdAt.toISOString(),
+                    }))}
+                  />
+                </div>
+              }
             />
           </div>
 

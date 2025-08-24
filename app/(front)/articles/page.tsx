@@ -232,7 +232,7 @@ export default async function ArticlesPage({
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {posts.map((post) => (
-                    <PostCard key={post.id} post={post} />
+                    <PostCard key={post.id} post={post} showPlace={true} />
                   ))}
                 </div>
 

@@ -287,6 +287,8 @@ function AdminClaimsContent() {
                       <Image
                         src={claim.user.image}
                         alt={claim.user.name}
+                        width={40}
+                        height={40}
                         className="w-10 h-10 rounded-full"
                       />
                     )}

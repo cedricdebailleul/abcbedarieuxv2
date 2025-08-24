@@ -6,6 +6,11 @@ interface User {
   email: string;
   role: string;
   image?: string;
+  profile?: {
+    firstname?: string;
+    lastname?: string;
+    phone?: string;
+  };
 }
 
 interface Session {
