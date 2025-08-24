@@ -18,28 +18,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   // Récupérer les derniers articles
   const latestPostsResult = await getLatestPostsAction(6);
-  const latestPosts = latestPostsResult.success
-    ? latestPostsResult.data!.map(
-        (post: {
-          id: string;
-          name: string;
-          slug: string;
-          color: string | null;
-          _count: { posts: number };
-        }) => ({
-          id: post.id,
-          title: post.name, // Map 'name' to 'title'
-          slug: post.slug,
-          excerpt: null,
-          content: null,
-          published: true, // Default value
-          publishedAt: new Date(), // Default value
-          createdAt: new Date(), // Default value
-          author: { id: "default-id", name: "Unknown", avatar: null }, // Default author with id
-          tags: [], // Default empty tags
-        })
-      )
-    : [];
+  const latestPosts = latestPostsResult.success ? latestPostsResult.data! : [];
 
   // Récupérer les événements à venir
   const upcomingEventsResult = await getUpcomingEventsAction(5);
