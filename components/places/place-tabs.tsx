@@ -1,8 +1,9 @@
 "use client";
 
-import { FileText, Info, MessageSquare, Star } from "lucide-react";
+import { Calendar, FileText, Info, MessageSquare, Star } from "lucide-react";
 import { useState } from "react";
 import { PlaceArticlesTab } from "./place-articles-tab";
+import { PlaceEventsTab } from "./place-events-tab";
 import { cn } from "@/lib/utils";
 
 interface PlaceTabsProps {
@@ -12,7 +13,7 @@ interface PlaceTabsProps {
   ratingsContent?: React.ReactNode;
 }
 
-type TabType = "about" | "articles" | "reviews" | "ratings";
+type TabType = "about" | "articles" | "events" | "reviews" | "ratings";
 
 export function PlaceTabs({ 
   placeId, 
@@ -32,6 +33,11 @@ export function PlaceTabs({
       id: "articles" as TabType,
       label: "Articles",
       icon: FileText,
+    },
+    {
+      id: "events" as TabType,
+      label: "Événements",
+      icon: Calendar,
     },
     {
       id: "reviews" as TabType,
@@ -89,6 +95,12 @@ export function PlaceTabs({
           activeTab === "articles" ? "opacity-100" : "opacity-0 absolute pointer-events-none"
         )}>
           {activeTab === "articles" && <PlaceArticlesTab placeId={placeId} />}
+        </div>
+        <div className={cn(
+          "transition-opacity duration-200",
+          activeTab === "events" ? "opacity-100" : "opacity-0 absolute pointer-events-none"
+        )}>
+          {activeTab === "events" && <PlaceEventsTab placeId={placeId} />}
         </div>
         <div className={cn(
           "transition-opacity duration-200",

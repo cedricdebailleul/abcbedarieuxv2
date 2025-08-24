@@ -46,7 +46,21 @@ export const postSchema = z.object({
 
   // Relations
   categoryId: z.string().cuid().optional().nullable(),
-  placeId: z.string().cuid().optional().nullable(), // Articles liés à un lieu (optionnel)
+  placeId: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(
+      (val) => {
+        // Si null, undefined ou chaîne vide ou "none" = valide
+        if (!val || val === "" || val === "none") return true;
+        // Sinon doit être un CUID valide
+        return z.string().cuid().safeParse(val).success;
+      },
+      {
+        message: "Le lieu doit être sélectionné ou laissé vide pour les articles d'association",
+      }
+    ), // Articles liés à un lieu (optionnel)
   tagIds: z.array(z.string().cuid()).default([]),
 
   // Image de couverture
