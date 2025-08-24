@@ -67,7 +67,7 @@ export default function Hero({
   upcomingEvents = [],
 }: HeroProps) {
   return (
-    <section className="relative mx-auto px-8">
+    <section className="py-16 relative container mx-auto px-8">
       <div className="space-y-8">
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Left Section - Anniversary Content with Image */}

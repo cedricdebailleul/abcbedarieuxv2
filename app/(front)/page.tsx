@@ -43,7 +43,7 @@ export default async function Home() {
 
   // Récupérer les événements à venir
   const upcomingEventsResult = await getUpcomingEventsAction(5);
-  
+
   // Récupérer les places en vedette
   const featuredPlacesResult = await getFeaturedPlacesAction(6);
   const upcomingEvents = upcomingEventsResult.success
@@ -73,7 +73,9 @@ export default async function Home() {
     : [];
 
   // Traiter les places en vedette
-  const featuredPlaces = featuredPlacesResult.success ? featuredPlacesResult.data! : [];
+  const featuredPlaces = featuredPlacesResult.success
+    ? featuredPlacesResult.data!
+    : [];
 
   return (
     <>
@@ -90,12 +92,14 @@ export default async function Home() {
 
       {/* Section des places en vedette */}
       {featuredPlaces.length > 0 && (
-        <section className="py-16 mx-auto px-8 bg-muted/30">
+        <section className="py-16 container mx-auto px-8">
           <div>
             {/* En-tête de section */}
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-3xl font-bold mb-2">Établissements en vedette</h2>
+                <h2 className="text-3xl font-bold mb-2">
+                  Établissements en vedette
+                </h2>
                 <p className="text-muted-foreground">
                   Découvrez les commerces et services mis en avant à Bédarieux
                 </p>
@@ -125,7 +129,8 @@ export default async function Home() {
                     Aucun établissement en vedette
                   </h3>
                   <p className="text-muted-foreground">
-                    Les établissements mis en avant apparaîtront ici prochainement.
+                    Les établissements mis en avant apparaîtront ici
+                    prochainement.
                   </p>
                 </CardContent>
               </Card>
@@ -136,7 +141,7 @@ export default async function Home() {
 
       {/* Section des derniers articles */}
       {latestPosts.length > 0 && (
-        <section className="py-16 mx-auto px-8">
+        <section className="py-16 container mx-auto px-8">
           <div>
             {/* En-tête de section */}
             <div className="flex items-center justify-between mb-8">
