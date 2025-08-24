@@ -21,6 +21,7 @@ interface MapViewProps {
   onPlaceSelect: (place: MapPlace | null) => void;
   userLocation: { lat: number; lng: number } | null;
   categories: MapCategory[];
+  hasActiveFilters?: boolean;
 }
 
 export function MapView({
@@ -29,6 +30,7 @@ export function MapView({
   onPlaceSelect,
   userLocation,
   categories,
+  hasActiveFilters = false,
 }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -113,16 +115,11 @@ export function MapView({
               : DEFAULT_CENTER,
           zoom: places.length > 0 ? 12 : 13,
           mapTypeId: google.maps.MapTypeId.ROADMAP,
-          styles: [
-            {
-              featureType: "poi",
-              elementType: "labels",
-              stylers: [{ visibility: "off" }],
-            },
-          ],
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
+          scrollwheel: true,
+          gestureHandling: "greedy",
           zoomControlOptions: {
             position: google.maps.ControlPosition.RIGHT_CENTER,
           },
@@ -131,6 +128,15 @@ export function MapView({
         // Ajouter le Map ID si disponible
         if (env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID) {
           mapConfig.mapId = env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+        } else {
+          // Ajouter les styles seulement si pas de mapId
+          mapConfig.styles = [
+            {
+              featureType: "poi",
+              elementType: "labels",
+              stylers: [{ visibility: "off" }],
+            },
+          ];
         }
 
         const map = new google.maps.Map(mapRef.current!, mapConfig);
@@ -161,7 +167,40 @@ export function MapView({
     };
 
     initMap();
-  }, [places, isLoaded, google]);
+  }, [isLoaded, google, places]);
+
+  // Ajuster les bounds quand les places changent (sans recréer la carte)
+  useEffect(() => {
+    if (!mapInstanceRef.current || places.length === 0 || !google) return;
+
+    const timer = setTimeout(() => {
+      const placesWithCoords = places.filter((p) => p.latitude && p.longitude);
+      if (placesWithCoords.length > 0) {
+        const googleBounds = new google.maps.LatLngBounds();
+        placesWithCoords.forEach((place) => {
+          googleBounds.extend(
+            new google.maps.LatLng(place.latitude!, place.longitude!)
+          );
+        });
+
+        // N'inclure la position utilisateur que si aucun filtre actif
+        if (userLocation && !hasActiveFilters) {
+          googleBounds.extend(
+            new google.maps.LatLng(userLocation.lat, userLocation.lng)
+          );
+        }
+
+        mapInstanceRef.current?.fitBounds(googleBounds, {
+          top: 50,
+          right: 50,
+          bottom: 50,
+          left: 50,
+        });
+      }
+    }, 100); // Petit délai pour éviter les conflits
+
+    return () => clearTimeout(timer);
+  }, [places, userLocation, google, hasActiveFilters]);
 
   // Créer un marker personnalisé
   const createCustomMarker = (place: MapPlace): HTMLElement => {
@@ -171,6 +210,9 @@ export function MapView({
     // Obtenir la couleur et l'icône de la première catégorie ou du type de place
     let color = "#6366f1"; // Couleur par défaut
     let icon = "📍"; // Icône par défaut
+
+    // Style spécial pour les places à revendiquer (sans propriétaire)
+    const isClaimable = !place.ownerId;
 
     // Logique pour obtenir l'icône depuis les catégories
     if (place.categories.length > 0) {
@@ -201,15 +243,44 @@ export function MapView({
       icon = getPlaceTypeIcon(place.type);
     }
 
+    // Adapter le style pour les places à revendiquer
+    if (isClaimable) {
+      color = "#f59e0b"; // Orange pour les places à revendiquer
+      icon = "🏪"; // Icône spéciale
+    }
+
     // Créer un style plus simple et compatible avec Google Maps
     markerDiv.style.cssText = `
       position: absolute;
       transform: translate(-50%, -100%);
-      z-index: ${place.isFeatured ? 1000 : 500};
+      z-index: ${place.isFeatured ? 1000 : isClaimable ? 750 : 500};
     `;
 
     markerDiv.innerHTML = `
       <div style="position: relative;">
+        ${
+          isClaimable
+            ? `
+          <div style="
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            background-color: #dc2626;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+            font-weight: bold;
+            border: 2px solid white;
+            z-index: 1;
+          ">!</div>
+        `
+            : ""
+        }
         <div style="
           width: 36px;
           height: 36px;
@@ -218,6 +289,7 @@ export function MapView({
           display: flex;
           align-items: center;
           justify-content: center;
+          border: ${isClaimable ? "3px solid #dc2626" : "2px solid white"};
           box-shadow: 0 2px 8px rgba(0,0,0,0.3);
           cursor: pointer;
           ${
@@ -251,6 +323,12 @@ export function MapView({
       return;
     }
 
+    // Vérifier que AdvancedMarkerElement est disponible
+    if (!window.google.maps.marker?.AdvancedMarkerElement) {
+      console.error("AdvancedMarkerElement not available");
+      return;
+    }
+
     // Attendre un petit délai pour s'assurer que la carte est complètement initialisée
     const timer = setTimeout(() => {
       // Supprimer les anciens markers
@@ -263,27 +341,31 @@ export function MapView({
 
         const markerContent = createCustomMarker(place);
 
-        const marker = new window.google.maps.marker.AdvancedMarkerElement({
-          map: mapInstanceRef.current,
-          position: { lat: place.latitude ?? 0, lng: place.longitude ?? 0 },
-          content: markerContent,
-          title: place.name,
-          zIndex: place.isFeatured ? 1000 : 500,
-        });
-
-        marker.addListener("click", () => {
-          onPlaceSelect(place);
-
-          // Animer vers le marker sélectionné
-          mapInstanceRef.current?.panTo({
-            lat: place.latitude ?? 0,
-            lng: place.longitude ?? 0,
+        try {
+          const marker = new window.google.maps.marker.AdvancedMarkerElement({
+            map: mapInstanceRef.current,
+            position: { lat: place.latitude ?? 0, lng: place.longitude ?? 0 },
+            content: markerContent,
+            title: place.name,
+            zIndex: place.isFeatured ? 1000 : 500,
           });
-        });
 
-        markersRef.current.set(place.id, marker);
+          marker.addListener("click", () => {
+            onPlaceSelect(place);
+
+            // Animer vers le marker sélectionné
+            mapInstanceRef.current?.panTo({
+              lat: place.latitude ?? 0,
+              lng: place.longitude ?? 0,
+            });
+          });
+
+          markersRef.current.set(place.id, marker);
+        } catch (error) {
+          console.error("Error creating marker:", error);
+        }
       });
-    }, 50); // Réduire encore le délai
+    }, 50);
 
     return () => clearTimeout(timer);
   }, [places, onPlaceSelect, categoriesReady, forceRender]);
@@ -291,6 +373,11 @@ export function MapView({
   // Mettre à jour le marker de l'utilisateur
   useEffect(() => {
     if (!mapInstanceRef.current || !window.google) return;
+
+    // Vérifier que AdvancedMarkerElement est disponible
+    if (!window.google.maps.marker?.AdvancedMarkerElement) {
+      return;
+    }
 
     // Supprimer l'ancien marker utilisateur
     if (userMarkerRef.current) {
@@ -307,14 +394,18 @@ export function MapView({
         </div>
       `;
 
-      const userMarker = new window.google.maps.marker.AdvancedMarkerElement({
-        map: mapInstanceRef.current,
-        position: { lat: userLocation.lat, lng: userLocation.lng },
-        content: userMarkerDiv,
-        title: "Votre position",
-      });
+      try {
+        const userMarker = new window.google.maps.marker.AdvancedMarkerElement({
+          map: mapInstanceRef.current,
+          position: { lat: userLocation.lat, lng: userLocation.lng },
+          content: userMarkerDiv,
+          title: "Votre position",
+        });
 
-      userMarkerRef.current = userMarker;
+        userMarkerRef.current = userMarker;
+      } catch (error) {
+        console.error("Error creating user marker:", error);
+      }
     }
   }, [userLocation]);
 

@@ -43,7 +43,8 @@ type SearchParams = {
 };
 
 interface EventsPageProps {
-  searchParams?: SearchParams;
+  // Next 15: en Server Component, searchParams est une Promise
+  searchParams: Promise<SearchParams | undefined>;
 }
 
 /** =========================
@@ -66,17 +67,15 @@ export const metadata: Metadata = {
  * Helpers
  * ========================= */
 
-function firstOf(v?: string | string[]): string | undefined {
-  if (Array.isArray(v)) return v[0];
-  return v;
+function firstOf(v?: string | string[] | null): string | undefined {
+  return Array.isArray(v) ? v[0] : (v ?? undefined);
 }
 
 function buildQueryString(
-  base: SearchParams,
+  base: SearchParams | undefined,
   patch: Record<string, string | undefined>
 ) {
   const obj: Record<string, string> = {};
-  // On ne garde que les champs connus
   const keys: (keyof SearchParams)[] = [
     "view",
     "category",
@@ -88,7 +87,6 @@ function buildQueryString(
     const val = firstOf(base?.[k]);
     if (val) obj[k] = val;
   }
-  // Patch
   for (const [k, v] of Object.entries(patch)) {
     if (v == null || v === "") delete obj[k];
     else obj[k] = v;
@@ -100,14 +98,15 @@ function buildQueryString(
  * Page
  * ========================= */
 
-export default async function EventsPage({
-  searchParams = {},
-}: EventsPageProps) {
-  const view = firstOf(searchParams.view) || "calendar";
-  const selectedCategory = firstOf(searchParams.category);
-  const selectedCity = firstOf(searchParams.city);
-  const searchQuery = firstOf(searchParams.search);
-  const selectedDate = firstOf(searchParams.date);
+export default async function EventsPage({ searchParams }: EventsPageProps) {
+  // ⚠️ Next 15 : il faut await AVANT d’accéder aux propriétés
+  const sp = (await searchParams) ?? {};
+
+  const view = firstOf(sp.view) || "calendar";
+  const selectedCategory = firstOf(sp.category);
+  const selectedCity = firstOf(sp.city);
+  const searchQuery = firstOf(sp.search);
+  const selectedDate = firstOf(sp.date);
 
   // Période par défaut : du 1er du mois précédent à la fin du 3e mois suivant
   const today = new Date();
@@ -149,33 +148,29 @@ export default async function EventsPage({
     const end =
       typeof e.endDate === "string" ? new Date(e.endDate) : new Date(e.endDate);
 
-    // Extract place data with proper typing
-    const place = (e as { place?: { id: string; name: string; slug: string; city: string } | null }).place;
-
+    const place = (
+      e as {
+        place?: { id: string; name: string; slug: string; city: string } | null;
+      }
+    ).place;
     const slug = (e as { slug?: string }).slug || place?.slug || e.id;
 
-    // Par défaut, on alimente un _count minimal (participants)
     const count =
       (e as { _count?: { participants?: number } })._count?.participants ??
       (e as { participantCount?: number }).participantCount ??
       0;
 
-    // On fabrique un objet compatible avec Event + _count (on ne met ici que les champs utilisés par le front)
     const base = {
       id: e.id,
       title: e.title,
       slug,
       startDate: start,
       endDate: end,
-      // champs fréquents utilisés par UI
       isAllDay: (e as { isAllDay?: boolean }).isAllDay ?? false,
       isFeatured: (e as { isFeatured?: boolean }).isFeatured ?? false,
       isFree: (e as { isFree?: boolean }).isFree ?? true,
-      // place (souvent lu par EventCard)
       place,
-      // occurrences
       occurrenceId: (e as { occurrenceId?: string }).occurrenceId,
-      // compteur
       _count: { participants: count },
     } as Partial<EventWithCount>;
 
@@ -279,9 +274,7 @@ export default async function EventsPage({
             {/* Sélecteur de vue */}
             <div className="flex rounded-lg border p-1">
               <Link
-                href={`?${buildQueryString(searchParams, {
-                  view: "calendar",
-                })}`}
+                href={`?${buildQueryString(sp, { view: "calendar" })}`}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   view === "calendar"
                     ? "bg-primary text-primary-foreground"
@@ -292,7 +285,7 @@ export default async function EventsPage({
                 Calendrier
               </Link>
               <Link
-                href={`?${buildQueryString(searchParams, { view: "list" })}`}
+                href={`?${buildQueryString(sp, { view: "list" })}`}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   view === "list"
                     ? "bg-primary text-primary-foreground"
@@ -320,8 +313,8 @@ export default async function EventsPage({
           </div>
         </CardContent>
       </Card>
+
       {view === "calendar" ? (
-        // Le calendrier a souvent besoin de Date : on a converti ci-dessus
         <EventCalendar events={filteredEvents as EventWithCount[]} />
       ) : (
         <div className="space-y-6">
@@ -340,9 +333,7 @@ export default async function EventsPage({
                       <EventCard
                         key={
                           event.occurrenceId ||
-                          `${
-                            event.id
-                          }-${event.startDate.toISOString()}-featured`
+                          `${event.id}-${event.startDate.toISOString()}-featured`
                         }
                         event={event}
                       />

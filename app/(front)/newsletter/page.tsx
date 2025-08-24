@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 
 export default function NewsletterPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -334,7 +336,11 @@ export default function NewsletterPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Gérez vos préférences ou désabonnez-vous.
               </p>
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => router.push("/newsletter/manage")}
+              >
                 Gérer mon abonnement
               </Button>
             </CardContent>

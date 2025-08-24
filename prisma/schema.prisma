@@ -27,16 +27,16 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  sessions     Session[]
-  accounts     Account[]
-  profile      Profile?
-  badges       UserBadge[]
-  consent      UserConsent?
-  gdprRequests GDPRRequest[]
-  posts        Post[] // Ajout pour le contenu utilisateur
-  notifications UserNotificationStatus[] @relation("UserNotifications")
-  processedRegistrations AbcRegistration[] @relation("AbcRegistrationProcessor")
-  actions       Action[] // Actions créées par l'utilisateur
+  sessions               Session[]
+  accounts               Account[]
+  profile                Profile?
+  badges                 UserBadge[]
+  consent                UserConsent?
+  gdprRequests           GDPRRequest[]
+  posts                  Post[] // Ajout pour le contenu utilisateur
+  notifications          UserNotificationStatus[] @relation("UserNotifications")
+  processedRegistrations AbcRegistration[]        @relation("AbcRegistrationProcessor")
+  actions                Action[] // Actions créées par l'utilisateur
 
   // Modération améliorée
   role       Role       @default(user) // Enum en majuscules
@@ -53,21 +53,21 @@ model User {
   lockedUntil  DateTime?
 
   // RGPD et confidentialité
-  dataRetention DateTime? // Date d'expiration des données
-  deletedAt     DateTime? // Soft delete
-  places         Place[]            @relation("PlaceOwner")
-  reviews        Review[]
-  favorites      Favorite[]
-  placeClaims    PlaceClaim[]
-  events         Event[]            @relation("EventOrganizer")
-  eventParticipations EventParticipant[]
-  eventReminders EventReminder[]
-  newsletterCampaigns NewsletterCampaign[]
+  dataRetention         DateTime? // Date d'expiration des données
+  deletedAt             DateTime? // Soft delete
+  places                Place[]                @relation("PlaceOwner")
+  reviews               Review[]
+  favorites             Favorite[]
+  placeClaims           PlaceClaim[]
+  events                Event[]                @relation("EventOrganizer")
+  eventParticipations   EventParticipant[]
+  eventReminders        EventReminder[]
+  newsletterCampaigns   NewsletterCampaign[]
   newsletterAttachments NewsletterAttachment[]
-  abcMember          AbcMember?
-  abcMeetingsCreated AbcMeeting[]        @relation("AbcMeetingCreator")
-  abcDocumentsUploaded AbcDocument[]     @relation("AbcDocumentUploader")
-  abcBulletinsCreated AbcBulletin[]      @relation("AbcBulletinCreator")
+  abcMember             AbcMember?
+  abcMeetingsCreated    AbcMeeting[]           @relation("AbcMeetingCreator")
+  abcDocumentsUploaded  AbcDocument[]          @relation("AbcDocumentUploader")
+  abcBulletinsCreated   AbcBulletin[]          @relation("AbcBulletinCreator")
 
   // Index pour les performances
   @@unique([email])
@@ -316,9 +316,9 @@ model Post {
 
   // Relations
   authorId   String
-  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author     User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category   Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   tags       PostTag[]
   views      PostView[]
 
@@ -401,20 +401,20 @@ model PostTag {
 }
 
 model PostView {
-  id        String   @id @default(cuid())
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(cuid())
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
   // Informations de tracking
   ipAddress String
-  userAgent String   @default("")
-  referer   String   @default("")
-  
+  userAgent String @default("")
+  referer   String @default("")
+
   // Géolocalisation (optionnel)
-  country   String?
-  region    String?
-  city      String?
-  
+  country String?
+  region  String?
+  city    String?
+
   createdAt DateTime @default(now())
 
   @@index([postId])
@@ -519,33 +519,33 @@ model PlaceCategory {
   name        String  @unique
   slug        String  @unique
   description String? @db.Text
-  
+
   // Apparence visuelle
   icon        String? // Nom de l'icône Lucide ou emoji
   color       String? @default("#6B7280") // Couleur hexadécimale
   bgColor     String? @default("bg-gray-100") // Classe Tailwind background
   textColor   String? @default("text-gray-700") // Classe Tailwind texte
   borderColor String? @default("border-gray-200") // Classe Tailwind bordure
-  
+
   // Configuration
-  isActive    Boolean @default(true)
-  sortOrder   Int     @default(0) // Pour l'ordre d'affichage
-  
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0) // Pour l'ordre d'affichage
+
   // Métadonnées
-  placeCount  Int     @default(0) // Cache du nombre de places
-  
+  placeCount Int @default(0) // Cache du nombre de places
+
   // Relations hiérarchiques
-  parentId    String?
-  parent      PlaceCategory? @relation("PlaceCategoryHierarchy", fields: [parentId], references: [id])
-  children    PlaceCategory[] @relation("PlaceCategoryHierarchy")
-  
+  parentId String?
+  parent   PlaceCategory?  @relation("PlaceCategoryHierarchy", fields: [parentId], references: [id])
+  children PlaceCategory[] @relation("PlaceCategoryHierarchy")
+
   // Relations avec places
-  places      PlaceToCategory[] // Many-to-many avec Place
-  
+  places PlaceToCategory[] // Many-to-many avec Place
+
   // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([slug])
   @@index([parentId])
   @@index([isActive])
@@ -555,15 +555,15 @@ model PlaceCategory {
 
 // Table de liaison pour la relation many-to-many Place <-> PlaceCategory
 model PlaceToCategory {
-  id         String        @id @default(cuid())
+  id         String @id @default(cuid())
   placeId    String
   categoryId String
-  
-  place      Place         @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  category   PlaceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
-  createdAt  DateTime      @default(now())
-  
+
+  place    Place         @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  category PlaceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
   @@unique([placeId, categoryId])
   @@index([placeId])
   @@index([categoryId])
@@ -638,7 +638,7 @@ model GoogleReview {
   googleReviewId String  @unique
   authorName     String
   authorUrl      String?
-  googleTime     Int     // Timestamp Google
+  googleTime     Int // Timestamp Google
   relativeTime   String? // "il y a 2 mois"
 
   // Réponse propriétaire
@@ -709,42 +709,42 @@ model PlaceClaim {
 // ============================================================
 
 model Action {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   title       String
-  slug        String   @unique
-  description String?  @db.Text
-  content     String?  @db.Text
-  summary     String?  @db.VarChar(280) // Pour partage social
-  
+  slug        String  @unique
+  description String? @db.Text
+  content     String? @db.Text
+  summary     String? @db.VarChar(280) // Pour partage social
+
   // Images
-  coverImage  String? // Image de couverture principale
-  gallery     String[] // Galerie d'images
-  
+  coverImage String? // Image de couverture principale
+  gallery    String[] // Galerie d'images
+
   // Statut et visibilité
-  status      ActionStatus @default(DRAFT)
-  isActive    Boolean      @default(true)
-  isFeatured  Boolean      @default(false) // Mis en avant sur l'accueil
-  
+  status     ActionStatus @default(DRAFT)
+  isActive   Boolean      @default(true)
+  isFeatured Boolean      @default(false) // Mis en avant sur l'accueil
+
   // Dates
-  startDate   DateTime? // Date de début de l'action
-  endDate     DateTime? // Date de fin de l'action
-  
+  startDate DateTime? // Date de début de l'action
+  endDate   DateTime? // Date de fin de l'action
+
   // Métadonnées SEO
   metaTitle       String?
   metaDescription String?
-  
+
   // Ordre d'affichage
-  sortOrder   Int      @default(0)
-  
+  sortOrder Int @default(0)
+
   // Relations
   createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
-  
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
   // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
-  
+
   @@index([status])
   @@index([isActive])
   @@index([isFeatured])
@@ -909,9 +909,9 @@ enum ClaimStatus {
 // ============================================================
 
 model Event {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   title       String
-  slug        String @unique
+  slug        String  @unique
   description String? @db.Text
   summary     String? @db.VarChar(280) // Résumé court pour partage social
 
@@ -923,83 +923,83 @@ model Event {
 
   // Organisateur
   organizerId String?
-  organizer   User?  @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: SetNull)
-  
+  organizer   User?   @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: SetNull)
+
   // Place associée (optionnel)
-  placeId     String?
-  place       Place?  @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  placeId String?
+  place   Place?  @relation(fields: [placeId], references: [id], onDelete: SetNull)
 
   // Contact événement
-  email       String?
-  phone       String?
-  website     String?
-  ticketUrl   String? // URL de billetterie
+  email     String?
+  phone     String?
+  website   String?
+  ticketUrl String? // URL de billetterie
 
   // Dates et récurrence
-  startDate   DateTime
-  endDate     DateTime
-  isAllDay    Boolean @default(false)
-  timezone    String  @default("Europe/Paris")
-  
+  startDate DateTime
+  endDate   DateTime
+  isAllDay  Boolean  @default(false)
+  timezone  String   @default("Europe/Paris")
+
   // Récurrence
-  isRecurring     Boolean           @default(false)
-  recurrenceRule  RecurrenceRule?   @relation(fields: [recurrenceRuleId], references: [id])
-  recurrenceRuleId String?          @unique
-  parentEventId   String?          // Pour les instances d'événements récurrents
-  parentEvent     Event?           @relation("EventRecurrence", fields: [parentEventId], references: [id])
-  instances       Event[]          @relation("EventRecurrence")
+  isRecurring      Boolean         @default(false)
+  recurrenceRule   RecurrenceRule? @relation(fields: [recurrenceRuleId], references: [id])
+  recurrenceRuleId String?         @unique
+  parentEventId    String? // Pour les instances d'événements récurrents
+  parentEvent      Event?          @relation("EventRecurrence", fields: [parentEventId], references: [id])
+  instances        Event[]         @relation("EventRecurrence")
 
   // Localisation (si différent de la place)
-  locationName     String?
-  locationAddress  String?
-  locationCity     String?
-  locationLatitude Float?
+  locationName      String?
+  locationAddress   String?
+  locationCity      String?
+  locationLatitude  Float?
   locationLongitude Float?
 
   // Capacité et participants
-  maxParticipants  Int?
-  currentParticipants Int @default(0)
-  waitingList      Boolean @default(false)
+  maxParticipants     Int?
+  currentParticipants Int     @default(0)
+  waitingList         Boolean @default(false)
 
   // Tarification
-  isFree           Boolean @default(true)
-  price            Float?
-  priceDetails     String? // "Adulte: 15€, Enfant: 8€"
-  currency         String  @default("EUR")
+  isFree       Boolean @default(true)
+  price        Float?
+  priceDetails String? // "Adulte: 15€, Enfant: 8€"
+  currency     String  @default("EUR")
 
   // Médias
-  logo             String?
-  coverImage       String?
-  images           Json?   // ["url1", "url2"] pour galerie
-  videos           Json?   // URLs de vidéos
+  logo       String?
+  coverImage String?
+  images     Json? // ["url1", "url2"] pour galerie
+  videos     Json? // URLs de vidéos
 
   // SEO et partage social
-  metaTitle        String? @db.VarChar(60)
-  metaDescription  String? @db.VarChar(160)
-  ogImage          String?
+  metaTitle       String? @db.VarChar(60)
+  metaDescription String? @db.VarChar(160)
+  ogImage         String?
 
   // Réseaux sociaux
-  facebook         String?
-  instagram        String?
-  twitter          String?
-  linkedin         String?
-  tiktok           String?
-  
+  facebook  String?
+  instagram String?
+  twitter   String?
+  linkedin  String?
+  tiktok    String?
+
   // Tags et catégories
-  tags             Json?   // ["musique", "concert"] pour MVP
-  category         EventCategory?
+  tags     Json? // ["musique", "concert"] pour MVP
+  category EventCategory?
 
   // Statistiques
-  viewCount        Int     @default(0)
-  shareCount       Int     @default(0)
-  participantCount Int     @default(0)
+  viewCount        Int @default(0)
+  shareCount       Int @default(0)
+  participantCount Int @default(0)
 
   // Relations
-  participants     EventParticipant[]
-  reminders        EventReminder[]
+  participants EventParticipant[]
+  reminders    EventReminder[]
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([status])
@@ -1015,56 +1015,56 @@ model Event {
 
 // Règles de récurrence pour les événements
 model RecurrenceRule {
-  id       String @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Type de récurrence
-  frequency    RecurrenceFrequency // DAILY, WEEKLY, MONTHLY, YEARLY
-  interval     Int                 @default(1) // Tous les X jours/semaines/mois
-  count        Int?                // Nombre d'occurrences (optionnel)
-  until        DateTime?           // Date de fin (optionnel)
-  
+  frequency RecurrenceFrequency // DAILY, WEEKLY, MONTHLY, YEARLY
+  interval  Int                 @default(1) // Tous les X jours/semaines/mois
+  count     Int? // Nombre d'occurrences (optionnel)
+  until     DateTime? // Date de fin (optionnel)
+
   // Jours de la semaine (pour récurrence hebdomadaire)
-  byWeekDay    Json?              // [1,3,5] pour lundi, mercredi, vendredi
-  
+  byWeekDay Json? // [1,3,5] pour lundi, mercredi, vendredi
+
   // Jours du mois (pour récurrence mensuelle)
-  byMonthDay   Json?              // [1,15] pour le 1er et 15 du mois
-  
+  byMonthDay Json? // [1,15] pour le 1er et 15 du mois
+
   // Mois de l'année (pour récurrence annuelle)  
-  byMonth      Json?              // [6,12] pour juin et décembre
-  
+  byMonth Json? // [6,12] pour juin et décembre
+
   // Exceptions (dates à exclure)
-  exceptions   Json?              // ["2024-12-25", "2024-01-01"]
+  exceptions Json? // ["2024-12-25", "2024-01-01"]
 
   // Configuration avancée
   workdaysOnly Boolean @default(false) // Exclure weekends
-  
-  event        Event?
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+
+  event Event?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("recurrence_rules")
 }
 
 // Participants aux événements
 model EventParticipant {
-  id          String @id @default(cuid())
-  eventId     String
-  event       Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  status      ParticipationStatus @default(INTERESTED)
-  registeredAt DateTime           @default(now())
-  
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status       ParticipationStatus @default(INTERESTED)
+  registeredAt DateTime            @default(now())
+
   // Informations supplémentaires
   guestCount   Int     @default(0) // Nombre d'accompagnants
   specialNeeds String? // Besoins spéciaux, allergies, etc.
   notes        String? // Notes personnelles
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([eventId, userId])
   @@index([eventId])
   @@index([userId])
@@ -1074,20 +1074,20 @@ model EventParticipant {
 
 // Rappels d'événements
 model EventReminder {
-  id       String @id @default(cuid())
-  eventId  String
-  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId   String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   reminderTime DateTime // Quand envoyer le rappel
   type         ReminderType
-  sent         Boolean   @default(false)
+  sent         Boolean      @default(false)
   sentAt       DateTime?
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([eventId, userId, reminderTime])
   @@index([eventId])
   @@index([userId])
@@ -1167,118 +1167,118 @@ enum ReminderType {
 // ============================================================
 
 model NewsletterSubscriber {
-  id          String @id @default(cuid())
-  email       String @unique
-  firstName   String?
-  lastName    String?
-  
+  id        String  @id @default(cuid())
+  email     String  @unique
+  firstName String?
+  lastName  String?
+
   // Préférences d'abonnement
   preferences NewsletterPreferences?
-  
+
   // Statut
-  isActive    Boolean   @default(true)
-  isVerified  Boolean   @default(false)
+  isActive          Boolean @default(true)
+  isVerified        Boolean @default(false)
   verificationToken String? @unique
   unsubscribeToken  String? @unique
-  
+
   // Métadonnées
-  subscribedAt DateTime @default(now())
+  subscribedAt  DateTime  @default(now())
   lastEmailSent DateTime?
-  
+
   // Relations
-  campaigns   NewsletterCampaignSent[]
-  queueJobs   NewsletterQueue[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  campaigns NewsletterCampaignSent[]
+  queueJobs NewsletterQueue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("newsletter_subscribers")
 }
 
 model NewsletterPreferences {
-  id          String @id @default(cuid())
-  subscriberId String @unique
-  subscriber  NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
-  
+  id           String               @id @default(cuid())
+  subscriberId String               @unique
+  subscriber   NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
   // Types de contenus
-  events      Boolean @default(true)   // Événements et animations
-  places      Boolean @default(true)   // Nouveaux commerces
-  offers      Boolean @default(false)  // Offres et promotions
-  news        Boolean @default(true)   // Actualités association
-  
+  events Boolean @default(true) // Événements et animations
+  places Boolean @default(true) // Nouveaux commerces
+  offers Boolean @default(false) // Offres et promotions
+  news   Boolean @default(true) // Actualités association
+
   // Fréquence
-  frequency   NewsletterFrequency @default(WEEKLY)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  frequency NewsletterFrequency @default(WEEKLY)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("newsletter_preferences")
 }
 
 model NewsletterCampaign {
-  id          String @id @default(cuid())
-  title       String
-  subject     String
-  content     String @db.Text
-  
+  id      String @id @default(cuid())
+  title   String
+  subject String
+  content String @db.Text
+
   // Configuration
-  type        NewsletterType @default(NEWSLETTER)
-  status      CampaignStatus @default(DRAFT)
-  
+  type   NewsletterType @default(NEWSLETTER)
+  status CampaignStatus @default(DRAFT)
+
   // Planification
   scheduledAt DateTime?
   sentAt      DateTime?
-  
+
   // Contenu sélectionné
-  includedEvents  String[] // IDs des événements
-  includedPlaces  String[] // IDs des places
-  includedPosts   String[] // IDs des posts
-  
+  includedEvents String[] // IDs des événements
+  includedPlaces String[] // IDs des places
+  includedPosts  String[] // IDs des posts
+
   // Statistiques
-  totalRecipients     Int @default(0)
-  totalSent          Int @default(0)
-  totalDelivered     Int @default(0)
-  totalOpened        Int @default(0)
-  totalClicked       Int @default(0)
-  totalUnsubscribed  Int @default(0)
-  
+  totalRecipients   Int @default(0)
+  totalSent         Int @default(0)
+  totalDelivered    Int @default(0)
+  totalOpened       Int @default(0)
+  totalClicked      Int @default(0)
+  totalUnsubscribed Int @default(0)
+
   // Relations
   sentCampaigns NewsletterCampaignSent[]
   attachments   NewsletterAttachment[]
   queueJobs     NewsletterQueue[]
-  
+
   // Métadonnées
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("newsletter_campaigns")
 }
 
 model NewsletterCampaignSent {
-  id           String @id @default(cuid())
+  id           String               @id @default(cuid())
   campaignId   String
-  campaign     NewsletterCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign     NewsletterCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   subscriberId String
   subscriber   NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
-  
+
   // Statut de l'envoi
-  status       EmailStatus @default(PENDING)
-  sentAt       DateTime?
-  deliveredAt  DateTime?
-  openedAt     DateTime?
-  clickedAt    DateTime?
+  status         EmailStatus @default(PENDING)
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  openedAt       DateTime?
+  clickedAt      DateTime?
   unsubscribedAt DateTime?
-  
+
   // Métadonnées de l'email
   messageId    String?
   errorMessage String?
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([campaignId, subscriberId])
   @@map("newsletter_campaign_sent")
 }
@@ -1294,11 +1294,11 @@ enum NewsletterFrequency {
 }
 
 enum NewsletterType {
-  NEWSLETTER      // Newsletter régulière
-  ANNOUNCEMENT    // Annonce spéciale
-  EVENT_DIGEST    // Digest d'événements
-  PLACE_UPDATE    // Nouveaux commerces
-  PROMOTIONAL     // Offres promotionnelles
+  NEWSLETTER // Newsletter régulière
+  ANNOUNCEMENT // Annonce spéciale
+  EVENT_DIGEST // Digest d'événements
+  PLACE_UPDATE // Nouveaux commerces
+  PROMOTIONAL // Offres promotionnelles
 }
 
 enum CampaignStatus {
@@ -1327,52 +1327,52 @@ enum EmailStatus {
 // ============================================================
 
 model NewsletterAttachment {
-  id         String @id @default(cuid())
+  id         String             @id @default(cuid())
   campaignId String
   campaign   NewsletterCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  
+
   // Informations du fichier
   fileName     String
   originalName String
   fileType     String
-  fileSize     Int    // en bytes
+  fileSize     Int // en bytes
   filePath     String // chemin relatif depuis public/
-  
+
   // Métadonnées
-  uploadedBy   String
-  uploader     User   @relation(fields: [uploadedBy], references: [id])
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+  uploadedBy String
+  uploader   User   @relation(fields: [uploadedBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([campaignId])
   @@map("newsletter_attachments")
 }
 
 model NewsletterQueue {
-  id         String @id @default(cuid())
+  id         String             @id @default(cuid())
   campaignId String
   campaign   NewsletterCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  
+
   subscriberId String
   subscriber   NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
-  
+
   // Configuration de la tâche
-  priority     Int @default(0)
-  attempts     Int @default(0)
-  maxAttempts  Int @default(3)
-  
+  priority    Int @default(0)
+  attempts    Int @default(0)
+  maxAttempts Int @default(3)
+
   // Planification
-  scheduledAt  DateTime
-  processedAt  DateTime?
-  
+  scheduledAt DateTime
+  processedAt DateTime?
+
   // Statut
-  status       QueueStatus @default(PENDING)
-  error        String?
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+  status QueueStatus @default(PENDING)
+  error  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([status, scheduledAt])
   @@index([campaignId])
   @@index([subscriberId])
@@ -1391,228 +1391,228 @@ enum QueueStatus {
 // ============================================================
 
 model AbcMember {
-  id          String        @id @default(cuid())
-  userId      String        @unique
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  type        AbcMemberType
-  role        AbcMemberRole @default(MEMBRE)
-  status      AbcMemberStatus @default(ACTIVE)
-  
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type   AbcMemberType
+  role   AbcMemberRole   @default(MEMBRE)
+  status AbcMemberStatus @default(ACTIVE)
+
   // Informations adhésion
-  memberNumber String?       @unique
-  membershipDate DateTime?     // Date d'adhésion réelle (papier ou site)
-  joinedAt    DateTime      @default(now()) // Date création sur le site (pour compatibilité)
-  renewedAt   DateTime?      // Date du dernier renouvellement
-  expiresAt   DateTime?      // Date d'expiration de l'adhésion
-  
+  memberNumber   String?   @unique
+  membershipDate DateTime? // Date d'adhésion réelle (papier ou site)
+  joinedAt       DateTime  @default(now()) // Date création sur le site (pour compatibilité)
+  renewedAt      DateTime? // Date du dernier renouvellement
+  expiresAt      DateTime? // Date d'expiration de l'adhésion
+
   // Relations
-  payments    AbcPayment[]
-  meetings    AbcMeetingAttendee[]
-  documents   AbcDocumentShare[]
-  
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  
+  payments  AbcPayment[]
+  meetings  AbcMeetingAttendee[]
+  documents AbcDocumentShare[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("abc_members")
 }
 
 model AbcPayment {
-  id          String @id @default(cuid())
-  memberId    String
-  member      AbcMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  
-  amount      Float
-  mode        AbcPaymentMode
-  status      AbcPaymentStatus @default(PENDING)
-  
+  id       String    @id @default(cuid())
+  memberId String
+  member   AbcMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  amount Float
+  mode   AbcPaymentMode
+  status AbcPaymentStatus @default(PENDING)
+
   // Détails selon le mode
   checkNumber String? // Pour les chèques
   reference   String? // Pour les virements
-  
+
   // Période de cotisation
-  year        Int
-  quarter     Int?    // 1-4 pour cotisations trimestrielles
-  
+  year    Int
+  quarter Int? // 1-4 pour cotisations trimestrielles
+
   // Métadonnées
-  paidAt      DateTime?
-  notes       String?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  paidAt DateTime?
+  notes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([memberId, year, quarter])
   @@map("abc_payments")
 }
 
 model AbcMeeting {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   title       String
   description String? @db.Text
-  
-  type        AbcMeetingType @default(GENERAL)
-  status      AbcMeetingStatus @default(SCHEDULED)
-  
+
+  type   AbcMeetingType   @default(GENERAL)
+  status AbcMeetingStatus @default(SCHEDULED)
+
   // Planification
   scheduledAt DateTime
   duration    Int? // en minutes
   location    String?
-  
+
   // Ordre du jour et PV
-  agenda      String? @db.Text
-  minutes     String? @db.Text
-  
+  agenda  String? @db.Text
+  minutes String? @db.Text
+
   // Relations
-  attendees   AbcMeetingAttendee[]
-  documents   AbcDocument[]
-  bulletins   AbcBulletin[]
-  
+  attendees AbcMeetingAttendee[]
+  documents AbcDocument[]
+  bulletins AbcBulletin[]
+
   // Métadonnées
   createdById String
   createdBy   User   @relation("AbcMeetingCreator", fields: [createdById], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("abc_meetings")
 }
 
 model AbcMeetingAttendee {
-  id        String @id @default(cuid())
+  id        String     @id @default(cuid())
   meetingId String
   meeting   AbcMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   memberId  String
-  member    AbcMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  
-  status    AbcAttendanceStatus @default(INVITED)
-  
+  member    AbcMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  status AbcAttendanceStatus @default(INVITED)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([meetingId, memberId])
   @@map("abc_meeting_attendees")
 }
 
 model AbcDocument {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   title       String
   description String? @db.Text
-  
-  type        AbcDocumentType
-  fileName    String
-  filePath    String
-  fileSize    Int
-  
+
+  type     AbcDocumentType
+  fileName String
+  filePath String
+  fileSize Int
+
   // Association à une réunion (optionnel)
-  meetingId   String?
-  meeting     AbcMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
-  
+  meetingId String?
+  meeting   AbcMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
   // Partage
-  shares      AbcDocumentShare[]
-  
+  shares AbcDocumentShare[]
+
   // Métadonnées
   uploadedById String
-  uploadedBy   User @relation("AbcDocumentUploader", fields: [uploadedById], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  uploadedBy   User   @relation("AbcDocumentUploader", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("abc_documents")
 }
 
 model AbcDocumentShare {
-  id         String @id @default(cuid())
+  id         String      @id @default(cuid())
   documentId String
   document   AbcDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
   memberId   String
-  member     AbcMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  
+  member     AbcMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
   accessLevel AbcDocumentAccess @default(READ)
-  sharedAt    DateTime @default(now())
-  
+  sharedAt    DateTime          @default(now())
+
   @@unique([documentId, memberId])
   @@map("abc_document_shares")
 }
 
 model AbcBulletin {
-  id          String @id @default(cuid())
-  title       String
-  content     String @db.Text
-  
+  id      String @id @default(cuid())
+  title   String
+  content String @db.Text
+
   // Publication
-  isPublished Boolean @default(false)
+  isPublished Boolean   @default(false)
   publishedAt DateTime?
-  
+
   // Relations optionnelles
-  meetingId   String?
-  meeting     AbcMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
-  
+  meetingId String?
+  meeting   AbcMeeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
   // Métadonnées
   createdById String
-  createdBy   User @relation("AbcBulletinCreator", fields: [createdById], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  createdBy   User   @relation("AbcBulletinCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("abc_bulletins")
 }
 
 model UserNotificationStatus {
-  id           String @id @default(cuid())
-  userId       String
-  user         User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
   notificationId String // Format: "bulletin-{bulletinId}" ou autre
-  type         String // "NEW_BULLETIN", etc.
-  isRead       Boolean @default(false)
-  readAt       DateTime?
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+  type           String // "NEW_BULLETIN", etc.
+  isRead         Boolean   @default(false)
+  readAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([userId, notificationId])
   @@map("user_notification_status")
 }
 
 model AbcRegistration {
-  id                String @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Informations personnelles
-  firstName         String
-  lastName          String
-  email             String
-  phone             String?
-  birthDate         DateTime?
-  address           String?
-  city              String?
-  postalCode        String?
-  
+  firstName  String
+  lastName   String
+  email      String
+  phone      String?
+  birthDate  DateTime?
+  address    String?
+  city       String?
+  postalCode String?
+
   // Informations professionnelles
-  profession        String?
-  company           String?
-  siret             String?
-  
+  profession String?
+  company    String?
+  siret      String?
+
   // Type de membership souhaité
-  membershipType    AbcMemberType @default(ACTIF)
-  
+  membershipType AbcMemberType @default(ACTIF)
+
   // Motivations
-  motivation        String? @db.Text
-  interests         String? // JSON array of interests
-  
+  motivation String? @db.Text
+  interests  String? // JSON array of interests
+
   // Statut de la demande
-  status            AbcRegistrationStatus @default(PENDING)
-  processedAt       DateTime?
-  processedBy       String?
-  processorUser     User? @relation("AbcRegistrationProcessor", fields: [processedBy], references: [id])
-  
+  status        AbcRegistrationStatus @default(PENDING)
+  processedAt   DateTime?
+  processedBy   String?
+  processorUser User?                 @relation("AbcRegistrationProcessor", fields: [processedBy], references: [id])
+
   // Notes admin
-  adminNotes        String? @db.Text
-  
+  adminNotes String? @db.Text
+
   // Fichiers
-  pdfPath           String? // Chemin vers le PDF généré
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  pdfPath String? // Chemin vers le PDF généré
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([status])
   @@index([email])
   @@index([createdAt])
@@ -1697,15 +1697,15 @@ enum AbcDocumentAccess {
 }
 
 enum AbcRegistrationStatus {
-  PENDING     // En attente de traitement
-  APPROVED    // Approuvée
-  REJECTED    // Rejetée
-  PROCESSED   // Traitée (membre créé)
+  PENDING // En attente de traitement
+  APPROVED // Approuvée
+  REJECTED // Rejetée
+  PROCESSED // Traitée (membre créé)
 }
 
 enum ActionStatus {
-  DRAFT       // Brouillon
-  PUBLISHED   // Publié
-  SCHEDULED   // Programmé
-  ARCHIVED    // Archivé
+  DRAFT // Brouillon
+  PUBLISHED // Publié
+  SCHEDULED // Programmé
+  ARCHIVED // Archivé
 }

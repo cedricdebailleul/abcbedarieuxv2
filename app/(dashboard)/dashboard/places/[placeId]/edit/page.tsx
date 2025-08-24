@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PlaceForm } from "@/components/forms/place-form";
@@ -34,6 +34,12 @@ interface Place {
   logo?: string;
   coverImage?: string;
   images?: string[] | string; // JSON field contenant les images sauvegardées
+  openingHours?: Array<{
+    dayOfWeek: string;
+    isClosed: boolean;
+    openTime: string | null;
+    closeTime: string | null;
+  }>;
   googleBusinessData?: {
     openingHours?: { day: string; open: string; close: string }[];
     images?: string[];
@@ -46,100 +52,95 @@ interface Place {
   };
 }
 
-export default function EditPlacePage({
-  params,
-}: {
-  params: Promise<{ placeId: string }>;
-}) {
+type PlaceFormData = Omit<Partial<Place>, "openingHours"> & {
+  openingHours?: Array<{
+    dayOfWeek?: string;
+    day?: string;
+    isClosed?: boolean | string | number;
+    openTime?: string | null;
+    closeTime?: string | null;
+    slots?: Array<{ openTime?: string | null; closeTime?: string | null }>;
+  }>;
+};
+
+type OpeningHourForm = NonNullable<PlaceFormData["openingHours"]>[number];
+
+export default function EditPlacePage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const placeId = useParams().placeId;
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [placeId, setPlaceId] = useState<string>("");
-
-  useEffect(() => {
-    const resolveParams = async () => {
-      const resolvedParams = await params;
-      setPlaceId(resolvedParams.placeId);
-    };
-    resolveParams();
-  }, [params]);
 
   useEffect(() => {
     if (!placeId) return;
-
-    const fetchPlace = async () => {
+    (async () => {
       try {
-        const response = await fetch(`/api/places/${placeId}`);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError("Place non trouvée");
-            return;
-          }
-          if (response.status === 403) {
-            setError("Vous n'avez pas l'autorisation de modifier cette place");
-            return;
-          }
+        const res = await fetch(`/api/places/${placeId}`);
+        if (!res.ok) {
+          if (res.status === 404) return setError("Place non trouvée");
+          if (res.status === 403) return setError("Accès non autorisé");
           throw new Error("Erreur lors du chargement");
         }
-
-        const data = await response.json();
-        setPlace(data.place);
-      } catch (error: unknown) {
-        console.error("Erreur:", error);
-        if (error instanceof Error) {
-          setError(error.message || "Erreur lors du chargement de la place");
-        } else {
-          setError("Erreur inconnue lors du chargement de la place");
-        }
+        const data = await res.json();
+        setPlace(data as Place);
+      } catch (e: unknown) {
+        setError(
+          e instanceof Error ? e.message : String(e) || "Erreur inconnue"
+        );
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchPlace();
+    })();
   }, [placeId]);
+  const handleSubmit = async (data: PlaceFormData) => {
+    if (!placeId) {
+      toast.error("ID de la place manquant.");
+      return;
+    }
 
-  const handleSubmit = async (data: Partial<Place>) => {
+    // Normalize incoming form data to match the Place type expected by the API.
+    // In particular, ensure openingHours[].isClosed is a boolean and times are nullable.
+    const normalized = {
+      ...data,
+      openingHours: Array.isArray(data?.openingHours)
+        ? data.openingHours.map((h: OpeningHourForm) => ({
+            dayOfWeek: h.dayOfWeek ?? h.day ?? "",
+            isClosed:
+              typeof h.isClosed === "boolean"
+                ? h.isClosed
+                : Boolean(h.isClosed),
+            openTime: h.openTime ?? null,
+            closeTime: h.closeTime ?? null,
+          }))
+        : undefined,
+    } as Partial<Place>;
+
     try {
-      const response = await fetch(`/api/places/${placeId}`, {
+      const res = await fetch(`/api/places/${placeId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(normalized),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erreur lors de la modification");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de la modification");
       }
-
-      const result = await response.json();
-
-      // Si la place repasse en PENDING, informer l'utilisateur
-      if (result.place.status === "PENDING" && place?.status === "ACTIVE") {
-        toast.success(
-          "Place mise à jour! Elle sera re-vérifiée par un administrateur."
-        );
+      const result = await res.json();
+      if (result.place?.status === "PENDING" && place?.status === "ACTIVE") {
+        toast.success("Place mise à jour! Elle sera re-validée par un admin.");
       } else {
         toast.success("Place mise à jour avec succès!");
       }
-
-      // Rediriger vers la liste des places
       router.push("/dashboard/places");
-    } catch (error: unknown) {
-      console.error("Erreur:", error);
-      if (error instanceof Error) {
-        toast.error(
-          error.message || "Erreur lors de la modification de la place"
-        );
-      } else {
-        toast.error("Erreur inconnue lors de la modification de la place");
-      }
-      throw error; // Re-lancer pour que le PlaceForm gère l'état de loading
+    } catch (e: unknown) {
+      const message =
+        e instanceof Error
+          ? e.message
+          : String(e) || "Erreur lors de la modification";
+      toast.error(message);
+      throw e instanceof Error ? e : new Error(message); // pour que PlaceForm stoppe son spinner si besoin
     }
   };
 
@@ -231,13 +232,24 @@ export default function EditPlacePage({
     coverImage: place.coverImage || "",
     // Images sauvegardées en base de données (priorité sur Google Business)
     images: parseImages(place.images) || place.googleBusinessData?.images || [],
-    // Données Google Business
+    // Données Google Business ou horaires existantes
     openingHours:
-      place.googleBusinessData?.openingHours?.map((hour) => ({
-        dayOfWeek: hour.day,
-        openTime: hour.open,
-        closeTime: hour.close,
-      })) || [],
+      place.openingHours && place.openingHours.length > 0
+        ? place.openingHours.map((hour) => ({
+            dayOfWeek: hour.dayOfWeek,
+            isClosed: hour.isClosed,
+            openTime: hour.openTime,
+            closeTime: hour.closeTime,
+            slots:
+              hour.openTime && hour.closeTime
+                ? [{ openTime: hour.openTime, closeTime: hour.closeTime }]
+                : [],
+          }))
+        : place.googleBusinessData?.openingHours?.map((hour) => ({
+            dayOfWeek: hour.day,
+            openTime: hour.open,
+            closeTime: hour.close,
+          })) || [],
   };
 
   const getStatusText = (status: string) => {

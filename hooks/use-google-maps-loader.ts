@@ -4,7 +4,7 @@ import { useLoadScript } from "@react-google-maps/api";
 import { env } from "@/lib/env";
 
 // Configuration centralisée des libraries Google Maps
-const libraries: ("places" | "geometry")[] = ["places"];
+const libraries: ("places" | "geometry" | "marker")[] = ["places", "marker"];
 
 // Hook centralisé pour charger l'API Google Maps
 export const useGoogleMapsLoader = () => {

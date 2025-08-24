@@ -107,7 +107,7 @@ type Slot = { openTime: string; closeTime: string };
 function groupOpeningHours(
   items: Array<{
     dayOfWeek: string;
-    isClosed: boolean;
+    isClosed?: boolean;
     openTime: string | null;
     closeTime: string | null;
   }>
@@ -115,7 +115,9 @@ function groupOpeningHours(
   const byDay: Record<string, Slot[]> = {};
   for (const d of DAY_ORDER) byDay[d] = [];
   for (const h of items) {
-    if (!h.isClosed && h.openTime && h.closeTime) {
+    // Si isClosed n'est pas défini, considérer ouvert si openTime et closeTime existent
+    const isClosed = h.isClosed ?? false;
+    if (!isClosed && h.openTime && h.closeTime) {
       byDay[h.dayOfWeek].push({ openTime: h.openTime, closeTime: h.closeTime });
     }
   }
@@ -266,7 +268,7 @@ export async function generateMetadata({
 export default async function PlacePage({ params }: PageProps) {
   const { slug } = await params;
   const place = await prisma.place.findFirst({
-    where: { slug, status: PlaceStatus.ACTIVE, isActive: true },
+    where: { slug, status: PlaceStatus.ACTIVE },
     include: {
       owner: {
         select: {

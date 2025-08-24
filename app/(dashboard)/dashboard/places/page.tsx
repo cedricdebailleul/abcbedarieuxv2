@@ -50,6 +50,9 @@ interface ApiResponse {
 
 export default function MyPlacesPage() {
   const { data: status } = useSession();
+  const role = status?.user?.role ?? "user";
+  const isAdmin = role === "admin";
+  const [showClaimable, setShowClaimable] = useState(false);
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,13 +72,16 @@ export default function MyPlacesPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: "12",
+        scope: isAdmin && showClaimable ? "claimable" : "mine",
       });
 
       if (statusFilter !== "all") {
         params.append("status", statusFilter);
       }
 
-      const response = await fetch(`/api/places?${params}`);
+      const response = await fetch(`/api/places?${params}`, {
+        cache: "no-store",
+      });
       if (!response.ok) throw new Error("Erreur lors du chargement");
 
       const data: ApiResponse = await response.json();
@@ -88,7 +94,7 @@ export default function MyPlacesPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, statusFilter, lastFetchTime]);
+  }, [currentPage, statusFilter, lastFetchTime, isAdmin, showClaimable]);
 
   useEffect(() => {
     if (status && status.user) {
@@ -204,7 +210,7 @@ export default function MyPlacesPage() {
       </div>
 
       {/* Filtres */}
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-4 items-center">
         <select
           value={statusFilter}
           onChange={(e) => {
@@ -219,8 +225,21 @@ export default function MyPlacesPage() {
           <option value="DRAFT">Brouillon</option>
           <option value="INACTIVE">Inactif</option>
         </select>
-      </div>
 
+        {isAdmin && (
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={showClaimable}
+              onChange={(e) => {
+                setShowClaimable(e.target.checked);
+                setCurrentPage(1);
+              }}
+            />
+            Voir les places à revendiquer
+          </label>
+        )}
+      </div>
       {/* Liste des places */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -281,9 +300,7 @@ export default function MyPlacesPage() {
                   <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
                     {place.name}
                   </h3>
-                  <span
-                    className={getStatusBadge(place.status)}
-                  >
+                  <span className={getStatusBadge(place.status)}>
                     {getStatusText(place.status)}
                   </span>
                 </div>

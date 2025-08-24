@@ -10,12 +10,21 @@ export default function AdminNewPlacePage() {
   const router = useRouter();
   const { data: session } = useSession();
 
+  type OpeningHour = {
+    day?: string;
+    open?: string;
+    close?: string;
+    closed?: boolean;
+    [key: string]: unknown;
+  };
+
   interface PlaceData {
     name: string;
     type: string;
     street: string;
     postalCode: string;
     city: string;
+    website?: string;
     createForClaim?: boolean;
     category?: string;
     categories?: string[];
@@ -24,7 +33,10 @@ export default function AdminNewPlacePage() {
     latitude?: number;
     longitude?: number;
     published?: boolean;
-    [key: string]: string | boolean | string[] | number | undefined; // Adjust this type based on expected properties
+    // openingHours and other structured fields from PlaceForm (e.g. RawHour[]) may be objects/arrays,
+    // so allow flexible types for additional properties coming from the form.
+    openingHours?: OpeningHour[] | Record<string, unknown> | unknown;
+    [key: string]: unknown;
   }
 
   const handleSubmit = async (data: PlaceData) => {

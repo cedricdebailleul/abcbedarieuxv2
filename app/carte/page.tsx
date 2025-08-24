@@ -33,16 +33,7 @@ async function getMapData() {
   // Récupérer les places actives avec leurs catégories
   const places = await prisma.place.findMany({
     where: {
-      status: PlaceStatus.ACTIVE,
-      isActive: true,
-      AND: [
-        {
-          OR: [
-            { latitude: { not: null } },
-            { longitude: { not: null } },
-          ]
-        }
-      ]
+      status: { in: [PlaceStatus.ACTIVE, PlaceStatus.PENDING] },
     },
     select: {
       id: true,
@@ -57,10 +48,17 @@ async function getMapData() {
       latitude: true,
       longitude: true,
       phone: true,
+      email: true,
       website: true,
+      facebook: true,
+      instagram: true,
+      twitter: true,
+      linkedin: true,
+      tiktok: true,
       coverImage: true,
       logo: true,
       isFeatured: true,
+      ownerId: true,
       categories: {
         include: {
           category: {
@@ -91,6 +89,14 @@ async function getMapData() {
           closeTime: true,
         },
         orderBy: { dayOfWeek: "asc" }
+      },
+      reviews: {
+        select: { rating: true },
+        where: { status: "APPROVED" }
+      },
+      googleReviews: {
+        select: { rating: true },
+        where: { status: "APPROVED" }
       },
       _count: {
         select: {

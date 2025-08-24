@@ -1,6 +1,18 @@
 import type { ShareData } from "@/components/shared/social-share";
 
 /**
+ * Normalise une chaîne de caractères en supprimant les accents
+ * et en convertissant en minuscules pour la recherche
+ */
+export function normalizeForSearch(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize("NFD") // Décompose les caractères accentués
+    .replace(/[\u0300-\u036f]/g, "") // Supprime les diacritiques
+    .replace(/[^\w\s]/g, ""); // Supprime la ponctuation (garde lettres, chiffres, espaces)
+}
+
+/**
  * Génère les données de partage pour un événement
  * Inclut les métadonnées nécessaires pour Facebook Events
  */
