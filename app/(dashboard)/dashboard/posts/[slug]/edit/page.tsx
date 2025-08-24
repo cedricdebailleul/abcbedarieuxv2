@@ -104,6 +104,7 @@ export default async function EditPostPage({
     excerpt: post.excerpt ?? undefined,
     published: post.published ?? undefined,
     categoryId: post.category?.id ?? undefined,
+    placeId: post.placeId ?? undefined,
     tags: post.tags ?? undefined,
     coverImage: post.coverImage ?? undefined,
     metaTitle: post.metaTitle ?? undefined,

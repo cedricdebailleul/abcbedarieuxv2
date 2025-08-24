@@ -8,6 +8,7 @@ import {
   Globe,
   Image as ImageIcon,
   Loader2,
+  MapPin as MapPinIcon,
   Save,
   Settings,
   Tag as TagIcon,
@@ -30,7 +31,9 @@ import {
   getTagsAction,
   updatePostAction,
 } from "@/actions/post";
+import { getUserPlacesAction, getAllPlacesAction } from "@/actions/place-select";
 import { TipTapEditor } from "@/components/editors/tiptap-editor";
+import { usePermissions } from "@/hooks/use-permissions";
 import { ImageUpload } from "@/components/media/image-upload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,6 +84,14 @@ interface Tag {
   color?: string;
 }
 
+interface Place {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  city?: string;
+}
+
 interface PostFormProps {
   initialData?: {
     id?: string;
@@ -90,6 +101,7 @@ interface PostFormProps {
     excerpt?: string;
     published?: boolean;
     categoryId?: string;
+    placeId?: string;
     tags?: { tag: { id: string } }[];
     coverImage?: string;
     metaTitle?: string;
@@ -229,9 +241,12 @@ export function PostForm({ initialData, mode }: PostFormProps) {
   const [isPending, startTransition] = useTransition();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [previewSlug, setPreviewSlug] = useState("");
   const [tagRefreshTrigger, setTagRefreshTrigger] = useState(0);
   const { showBadge } = useBadgeCelebration();
+  const { isAdmin } = usePermissions();
 
   // Configuration du formulaire selon le mode
   type PostFormValues = {
@@ -242,6 +257,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
     excerpt?: string | null;
     published?: boolean;
     categoryId?: string | null;
+    placeId?: string | null;
     tagIds: string[];
     coverImage?: string;
     metaTitle?: string;
@@ -265,6 +281,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
             excerpt: "",
             published: false,
             categoryId: "none",
+            placeId: "none",
             tagIds: [],
             metaTitle: "",
             metaDescription: "",
@@ -280,6 +297,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
             excerpt: initialData?.excerpt || "",
             published: initialData?.published || false,
             categoryId: initialData?.categoryId || "none",
+            placeId: initialData?.placeId || "none",
             tagIds:
               initialData?.tags?.map(
                 (t: { tag: { id: string } }) => t.tag.id
@@ -315,6 +333,34 @@ export function PostForm({ initialData, mode }: PostFormProps) {
 
     loadCategories();
   }, []);
+
+  // Charger les lieux selon le rôle utilisateur
+  useEffect(() => {
+    const loadPlaces = async () => {
+      try {
+        let result;
+        if (isAdmin) {
+          // Admins voient tous les lieux
+          result = await getAllPlacesAction();
+        } else {
+          // Utilisateurs voient seulement leurs lieux
+          result = await getUserPlacesAction();
+        }
+        
+        if (result.success && result.data) {
+          setPlaces(result.data);
+        } else {
+          console.error("Erreur lors du chargement des lieux:", result.error);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des lieux:", error);
+      } finally {
+        setIsLoadingPlaces(false);
+      }
+    };
+
+    loadPlaces();
+  }, [isAdmin]);
 
   // Générer automatiquement le slug à partir du titre
   const watchTitle = form.watch("title");
@@ -782,6 +828,73 @@ export function PostForm({ initialData, mode }: PostFormProps) {
                           </Select>
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Sélecteur de lieu */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPinIcon className="h-5 w-5" />
+                    Lieu associé
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {isAdmin 
+                      ? "Associer cet article à un établissement (optionnel)"
+                      : "Associer cet article à un de vos établissements"}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="placeId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Select
+                            value={field.value || "none"}
+                            onValueChange={field.onChange}
+                            disabled={isLoadingPlaces}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner un lieu" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">
+                                {isAdmin 
+                                  ? "Article de l'association (non lié à un lieu)"
+                                  : "Article général (non lié à un lieu)"}
+                              </SelectItem>
+                              {places.map((place) => (
+                                <SelectItem
+                                  key={place.id}
+                                  value={place.id}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+                                    {place.name} ({place.type})
+                                    {place.city && isAdmin && (
+                                      <span className="text-xs text-muted-foreground">
+                                        - {place.city}
+                                      </span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                        {places.length === 0 && !isLoadingPlaces && (
+                          <p className="text-sm text-muted-foreground">
+                            {isAdmin 
+                              ? "Aucun lieu disponible dans le système."
+                              : "Vous n'avez aucun lieu enregistré. Les articles sans lieu associé seront considérés comme des articles généraux."}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />

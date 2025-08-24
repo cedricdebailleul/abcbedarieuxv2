@@ -1,4 +1,4 @@
-import { ArrowRight, Calendar, ChevronRight, Eye, Folder, Tag, User } from "lucide-react";
+import { ArrowRight, Calendar, ChevronRight, Eye, Folder, MapPin, Tag, User } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,13 @@ interface PostCardProps {
       slug: string;
       color?: string | null;
     } | null;
+    place?: {
+      id: string;
+      name: string;
+      slug: string;
+      type: string;
+      city?: string | null;
+    } | null;
     tags: {
       tag: {
         id: string;
@@ -45,6 +52,7 @@ interface PostCardProps {
   showExcerpt?: boolean;
   showTags?: boolean;
   showCategory?: boolean;
+  showPlace?: boolean;
   showViewCount?: boolean;
   className?: string;
 }
@@ -56,6 +64,7 @@ export function PostCard({
   showExcerpt = true,
   showTags = true,
   showCategory = true,
+  showPlace = false,
   showViewCount = true,
   className = "",
 }: PostCardProps) {
@@ -87,19 +96,33 @@ export function PostCard({
       <Card className={`group hover:shadow-md transition-shadow ${className}`}>
         <CardContent className="p-4">
           <div className="space-y-3">
-            {/* Catégorie et date */}
+            {/* Catégorie, lieu et date */}
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              {showCategory && post.category && (
-                <div className="flex items-center space-x-1">
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{
-                      backgroundColor: post.category.color || "#6B7280",
-                    }}
-                  />
-                  <span>{post.category.name}</span>
-                </div>
-              )}
+              <div className="flex items-center space-x-3">
+                {showCategory && post.category && (
+                  <div className="flex items-center space-x-1">
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        backgroundColor: post.category.color || "#6B7280",
+                      }}
+                    />
+                    <span>{post.category.name}</span>
+                  </div>
+                )}
+                {showPlace && post.place && (
+                  <Link 
+                    href={`/places/${post.place.slug}`}
+                    className="flex items-center space-x-1 hover:text-primary transition-colors"
+                  >
+                    <MapPin className="h-3 w-3" />
+                    <span className="hover:underline">{post.place.name}</span>
+                    {post.place.city && (
+                      <span className="opacity-75">• {post.place.city}</span>
+                    )}
+                  </Link>
+                )}
+              </div>
               <div className="flex items-center space-x-1">
                 <Calendar className="h-3 w-3" />
                 <span>{displayDate.toLocaleDateString("fr-FR")}</span>

@@ -4,6 +4,7 @@ import {
   Clock,
   Eye,
   Folder,
+  MapPin,
   Tag,
   User,
 } from "lucide-react";
@@ -70,6 +71,15 @@ export default async function PostPage({
           name: true,
           slug: true,
           color: true,
+        },
+      },
+      place: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          type: true,
+          city: true,
         },
       },
       tags: {
@@ -199,9 +209,9 @@ export default async function PostPage({
               </Button>
             </div>
 
-            {/* Category Badge */}
-            {post.category && (
-              <div className="mb-6">
+            {/* Category & Place Badges */}
+            <div className="mb-6 flex flex-wrap gap-3">
+              {post.category && (
                 <Badge
                   className="bg-white/15 backdrop-blur-md border-white/20 text-white hover:bg-white/25"
                   style={{
@@ -212,8 +222,25 @@ export default async function PostPage({
                   <Folder className="h-3 w-3 mr-2" />
                   {post.category.name}
                 </Badge>
-              </div>
-            )}
+              )}
+              {post.place && (
+                <Link href={`/places/${post.place.slug}`}>
+                  <Badge
+                    className="bg-white/15 backdrop-blur-md border-white/20 text-white hover:bg-white/30 transition-colors cursor-pointer"
+                    style={{
+                      borderLeftColor: "#22c55e",
+                      borderLeftWidth: "4px",
+                    }}
+                  >
+                    <MapPin className="h-3 w-3 mr-2" />
+                    {post.place.name}
+                    {post.place.city && (
+                      <span className="ml-1 opacity-75">• {post.place.city}</span>
+                    )}
+                  </Badge>
+                </Link>
+              )}
+            </div>
 
             {/* Title */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight max-w-4xl">

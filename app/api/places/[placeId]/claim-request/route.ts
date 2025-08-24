@@ -13,7 +13,7 @@ const claimRequestSchema = z.object({
 
   // Revendication
   message: z.string().min(20, "Le message doit faire au moins 20 caractères"),
-  proof: z.string().url().optional(), // URL vers une preuve (document, photo, etc.)
+  proof: z.string().optional(), // URL vers une preuve (document, photo, etc.)
   relationship: z
     .enum(["owner", "manager", "employee", "family", "other"])
     .default("owner"),
@@ -73,6 +73,12 @@ export async function POST(
     }
 
     const body = await request.json();
+    
+    // Nettoyer le proof avant validation
+    if (body.proof && body.proof.trim() === "") {
+      body.proof = undefined;
+    }
+    
     const validatedData = claimRequestSchema.parse(body);
 
     // Créer un message enrichi avec les informations personnelles

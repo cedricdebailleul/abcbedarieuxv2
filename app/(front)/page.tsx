@@ -144,6 +144,7 @@ export default async function Home() {
                 post={latestPosts[0]}
                 variant="featured"
                 className="max-w-none"
+                showPlace={true}
               />
             </div>
 
@@ -151,7 +152,7 @@ export default async function Home() {
             {latestPosts.length > 1 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {latestPosts.slice(1).map((post) => (
-                  <PostCard key={post.id} post={post} />
+                  <PostCard key={post.id} post={post} showPlace={true} />
                 ))}
               </div>
             )}

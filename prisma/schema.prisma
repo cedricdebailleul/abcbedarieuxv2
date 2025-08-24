@@ -319,6 +319,8 @@ model Post {
   author     User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   categoryId String?
   category   Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  placeId    String?    // Articles liés à un lieu (optionnel - null pour articles de l'association)
+  place      Place?     @relation("PlacePosts", fields: [placeId], references: [id], onDelete: SetNull)
   tags       PostTag[]
   views      PostView[]
 
@@ -347,6 +349,7 @@ model Post {
 
   @@index([slug])
   @@index([authorId])
+  @@index([placeId])
   @@index([published])
   @@index([status])
   @@index([publishedAt])
@@ -497,6 +500,7 @@ model Place {
   claims        PlaceClaim[]
   categories    PlaceToCategory[] // Many-to-many avec PlaceCategory
   events        Event[] // Événements organisés dans cette place
+  posts         Post[]  @relation("PlacePosts") // Articles liés à ce lieu
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
