@@ -104,7 +104,12 @@ export default async function EditPostPage({
     excerpt: post.excerpt ?? undefined,
     published: post.published ?? undefined,
     categoryId: post.category?.id ?? undefined,
-    tagIds: post.tags?.map((pt) => pt.tag.id) ?? undefined,
+    tags: post.tags ?? undefined,
+    coverImage: post.coverImage ?? undefined,
+    metaTitle: post.metaTitle ?? undefined,
+    metaDescription: post.metaDescription ?? undefined,
+    ogImage: post.ogImage ?? undefined,
+    canonicalUrl: post.canonicalUrl ?? undefined,
     status: post.status ?? undefined,
   };
 

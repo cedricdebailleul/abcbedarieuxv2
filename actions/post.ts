@@ -946,10 +946,18 @@ export async function getLatestPostsAction(
   ActionResult<
     {
       id: string;
-      name: string;
+      title: string;
       slug: string;
-      color: string | null;
-      _count: { posts: number };
+      excerpt?: string | null;
+      content?: string | null;
+      published: boolean;
+      publishedAt?: Date | null;
+      createdAt: Date;
+      updatedAt: Date;
+      coverImage?: string | null;
+      author: { id: string; name: string; image?: string | null };
+      category?: { id: string; name: string; slug: string; color?: string | null } | null;
+      tags: Array<{ tag: { id: string; name: string; slug: string; color?: string | null } }>;
     }[]
   >
 > {
@@ -999,12 +1007,34 @@ export async function getLatestPostsAction(
       success: true,
       data: posts.map((post) => ({
         id: post.id,
-        name: post.title,
+        title: post.title,
         slug: post.slug,
-        color: post.category?.color || null,
-        _count: {
-          posts: post.tags.length,
+        excerpt: post.excerpt,
+        content: post.content,
+        published: post.published,
+        publishedAt: post.publishedAt,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+        coverImage: post.coverImage,
+        author: {
+          id: post.author.id,
+          name: post.author.name || "Utilisateur",
+          image: post.author.image,
         },
+        category: post.category ? {
+          id: post.category.id,
+          name: post.category.name,
+          slug: post.category.slug,
+          color: post.category.color,
+        } : null,
+        tags: post.tags.map((tag) => ({
+          tag: {
+            id: tag.tag.id,
+            name: tag.tag.name,
+            slug: tag.tag.slug,
+            color: tag.tag.color,
+          },
+        })),
       })),
     };
   } catch (error) {
