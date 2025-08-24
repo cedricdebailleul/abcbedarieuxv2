@@ -29,6 +29,7 @@ import { PlaceSchema } from "@/components/structured-data/place-schema";
 import { OpenGraphDebug } from "@/components/debug/og-debug";
 import { PrintHeader } from "@/components/print/print-header";
 import { PlaceTabs } from "@/components/places/place-tabs";
+import { ContactForm } from "@/components/places/contact-form";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
@@ -638,6 +639,33 @@ export default async function PlacePage({ params }: PageProps) {
                   )}
                 </CardContent>
               </Card>
+            )}
+
+            {/* Debug info (temporaire) */}
+            {process.env.NODE_ENV === 'development' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Debug Info</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="text-xs bg-muted p-2 rounded">
+                    {JSON.stringify({
+                      hasOwner: !!place.owner,
+                      ownerEmail: place.owner?.email,
+                      placeEmail: place.email
+                    }, null, 2)}
+                  </pre>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Formulaire de contact */}
+            {(place.owner?.email || place.email) && (
+              <ContactForm
+                placeId={place.id}
+                placeName={place.name}
+                ownerEmail={place.owner?.email || place.email || ''}
+              />
             )}
 
             {/* Horaires + état actuel */}
