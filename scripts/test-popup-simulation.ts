@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { BadgeSystem } from "@/lib/badge-system";
+import { triggerPostCreationBadges } from "@/lib/services/badge-trigger-service";
 
 async function testPopupSimulation() {
   console.log("🎭 Simulation du test de popup de badge...\n");
@@ -50,17 +50,26 @@ async function testPopupSimulation() {
 
   console.log(`✅ Article temporaire créé avec l'ID: ${tempPost.id}`);
 
-  // Maintenant tester la fonction onPostCreated
-  console.log(`\n🧪 Appel de onPostCreated après création d'article...`);
-  const result = await BadgeSystem.onPostCreated(testUser.authorId);
-  console.log(`📤 Résultat de onPostCreated:`, JSON.stringify(result, null, 2));
+  // Maintenant tester le nouveau système de badges
+  console.log(`\n🧪 Déclenchement du système de badges après création d'article...`);
+  await triggerPostCreationBadges(testUser.authorId, tempPost.id);
+  
+  // Récupérer les badges de l'utilisateur pour vérifier
+  const userBadges = await prisma.userBadge.findMany({
+    where: { userId: testUser.authorId },
+    include: { badge: true },
+    orderBy: { earnedAt: 'desc' },
+    take: 5
+  });
 
-  if (result.length > 0) {
-    console.log(`\n🎉 SUCCESS! La fonction retourne des badges:`);
-    result.forEach((badgeData, index) => {
-      console.log(`  ${index + 1}. Badge: "${badgeData.badge.title}"`);
-      console.log(`     Raison: "${badgeData.reason}"`);
-      console.log(`     Rareté: ${badgeData.badge.rarity}`);
+  console.log(`📤 Badges trouvés pour l'utilisateur:`, userBadges.length);
+
+  if (userBadges.length > 0) {
+    console.log(`\n🎉 SUCCESS! L'utilisateur a des badges:`);
+    userBadges.forEach((userBadge, index) => {
+      console.log(`  ${index + 1}. Badge: "${userBadge.badge.title}"`);
+      console.log(`     Raison: "${userBadge.reason || 'Non spécifiée'}"`);
+      console.log(`     Rareté: ${userBadge.badge.rarity}`);
     });
     console.log(`\n💡 Ces données devraient déclencher la popup de célébration !`);
   } else {

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { BadgeSystem } from "@/lib/badge-system";
+import { triggerPostCreationBadges } from "@/lib/services/badge-trigger-service";
 
 async function testFiveArticles() {
   console.log("🎯 Test d'attribution du badge 5 articles...\n");
@@ -51,22 +51,33 @@ async function testFiveArticles() {
     createdPosts.push(tempPost);
     console.log(`✅ Article ${i}/${articlesToCreate} créé`);
 
-    // Tester onPostCreated après chaque article
+    // Tester le nouveau système de badges après le 5ème article
     if (i === articlesToCreate) {
-      console.log(`\n🧪 Test de onPostCreated après le ${5}ème article...`);
-      const result = await BadgeSystem.onPostCreated(testUser.authorId);
-      console.log(`📤 Résultat:`, JSON.stringify(result, null, 2));
+      console.log(`\n🧪 Test du nouveau système après le ${5}ème article...`);
+      
+      // Déclencher les badges
+      await triggerPostCreationBadges(testUser.authorId, tempPost.id);
+      
+      // Vérifier les badges obtenus
+      const userBadges = await prisma.userBadge.findMany({
+        where: { userId: testUser.authorId },
+        include: { badge: true },
+        orderBy: { earnedAt: 'desc' },
+        take: 3
+      });
 
-      if (result.length > 0) {
-        console.log(`\n🎉 SUCCESS! Badge attribué:`);
-        result.forEach((badgeData) => {
-          console.log(`  - Badge: "${badgeData.badge.title}"`);
-          console.log(`  - Raison: "${badgeData.reason}"`);
-          console.log(`  - Rareté: ${badgeData.badge.rarity}`);
-          console.log(`  - Description: ${badgeData.badge.description}`);
+      console.log(`📤 Badges trouvés:`, userBadges.length);
+
+      if (userBadges.length > 0) {
+        console.log(`\n🎉 SUCCESS! Badge(s) trouvé(s):`);
+        userBadges.forEach((userBadge) => {
+          console.log(`  - Badge: "${userBadge.badge.title}"`);
+          console.log(`  - Raison: "${userBadge.reason || 'Non spécifiée'}"`);
+          console.log(`  - Rareté: ${userBadge.badge.rarity}`);
+          console.log(`  - Description: ${userBadge.badge.description}`);
         });
       } else {
-        console.log(`❌ Aucun badge attribué même avec 5 articles`);
+        console.log(`❌ Aucun badge trouvé pour cet utilisateur`);
       }
     }
   }

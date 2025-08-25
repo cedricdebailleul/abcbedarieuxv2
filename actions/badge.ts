@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { BadgeSystem } from "@/lib/badge-system";
+// Badge system functionality is now handled by the new badge engine
 import {
   createBadgeSchema,
   updateBadgeSchema,
@@ -83,8 +83,7 @@ export async function createBadgeAction(
       },
     });
 
-    // Vider le cache des badges
-    BadgeSystem.clearCache();
+    // Le nouveau système de badges n'utilise plus de cache global
 
     revalidatePath("/dashboard/admin/badges");
 
@@ -313,8 +312,7 @@ export async function updateBadgeAction(
       },
     });
 
-    // Vider le cache des badges
-    BadgeSystem.clearCache();
+    // Le nouveau système de badges n'utilise plus de cache global
 
     revalidatePath("/dashboard/admin/badges");
 
@@ -378,8 +376,7 @@ export async function deleteBadgeAction(
       where: { id: badgeId },
     });
 
-    // Vider le cache des badges
-    BadgeSystem.clearCache();
+    // Le nouveau système de badges n'utilise plus de cache global
 
     revalidatePath("/dashboard/admin/badges");
 
