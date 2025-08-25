@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { BadgeSystem } from "@/lib/badge-system";
+import { triggerPostCreationBadges } from "@/lib/services/badge-trigger-service";
 import {
   createPostSchema,
   updatePostSchema,
@@ -165,7 +165,19 @@ export async function createPostAction(input: CreatePostInput): Promise<
     }
 
     // Attribution automatique des badges pour les articles
-    const newBadges = await BadgeSystem.onPostCreated(user.id);
+    await triggerPostCreationBadges(user.id, post.id);
+    
+    // Pour des raisons de compatibilité, on retourne un tableau vide pour newBadges
+    const newBadges: Array<{
+      badge: {
+        title: string;
+        description: string;
+        iconUrl?: string | null;
+        color?: string | null;
+        rarity: string;
+      };
+      reason: string;
+    }> = [];
 
     revalidatePath("/dashboard/posts");
     revalidatePath("/posts");

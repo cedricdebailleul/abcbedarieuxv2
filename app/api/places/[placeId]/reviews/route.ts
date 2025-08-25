@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { triggerReviewCreationBadges } from "@/lib/services/badge-trigger-service";
 
 const reviewSchema = z.object({
   rating: z.number().min(1).max(5),
@@ -80,6 +81,12 @@ export async function POST(
           },
         },
       },
+    });
+
+    // Déclencher l'évaluation des badges pour la création d'avis
+    await triggerReviewCreationBadges(session.user.id, review.id).catch((error) => {
+      console.error('Error triggering review creation badges:', error);
+      // Ne pas faire échouer la création d'avis si les badges échouent
     });
 
     return NextResponse.json({

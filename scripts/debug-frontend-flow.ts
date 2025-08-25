@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createPostAction } from "@/actions/post";
+import { triggerPostCreationBadges } from "@/lib/services/badge-trigger-service";
 
 async function debugFrontendFlow() {
   console.log("🎭 Debug du flux frontend complet...\n");
@@ -82,28 +83,50 @@ async function debugFrontendFlow() {
 
     console.log(`✅ 5ème article créé avec l'ID: ${newPost.id}`);
 
-    // Tester le système de badges
+    // Tester le nouveau système de badges
     console.log(`\n🧪 Test du système de badges...`);
-    const badgeResult = await BadgeSystem.onPostCreated(testUser.id);
+    
+    console.log(`🔄 Déclenchement des badges pour le post...`);
+    await triggerPostCreationBadges(testUser.id, newPost.id);
+    
+    // Récupérer les badges de l'utilisateur pour vérifier
+    const userBadges = await prisma.userBadge.findMany({
+      where: { userId: testUser.id },
+      include: {
+        badge: true
+      },
+      orderBy: { earnedAt: 'desc' },
+      take: 5 // Les 5 derniers badges
+    });
 
     console.log(
-      `📤 Résultat de BadgeSystem.onPostCreated:`,
-      JSON.stringify(badgeResult, null, 2)
+      `📤 Badges obtenus:`,
+      JSON.stringify(userBadges.map(ub => ({ 
+        title: ub.badge.title, 
+        reason: ub.reason,
+        earnedAt: ub.earnedAt 
+      })), null, 2)
     );
 
-    if (badgeResult.length > 0) {
+    if (userBadges.length > 0) {
       console.log(
-        `\n🎉 SUCCESS! Le système retourne ${badgeResult.length} badge(s):`
+        `\n🎉 SUCCESS! L'utilisateur a maintenant ${userBadges.length} badge(s):`
       );
-      badgeResult.forEach((badgeData, index) => {
+      userBadges.forEach((userBadge, index) => {
         console.log(
-          `  ${index + 1}. ${badgeData.badge.title} (${badgeData.badge.rarity})`
+          `  ${index + 1}. ${userBadge.badge.title} (${userBadge.badge.rarity})`
         );
-        console.log(`     Description: ${badgeData.badge.description}`);
-        console.log(`     Raison: ${badgeData.reason}`);
+        console.log(`     Description: ${userBadge.badge.description}`);
+        console.log(`     Raison: ${userBadge.reason || 'Non spécifiée'}`);
         console.log(`     Structure complète pour frontend:`, {
-          badge: badgeData.badge,
-          reason: badgeData.reason,
+          badge: {
+            title: userBadge.badge.title,
+            description: userBadge.badge.description,
+            iconUrl: userBadge.badge.iconUrl,
+            color: userBadge.badge.color,
+            rarity: userBadge.badge.rarity
+          },
+          reason: userBadge.reason || 'Non spécifiée',
         });
       });
 

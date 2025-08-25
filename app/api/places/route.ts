@@ -6,6 +6,7 @@ import { promises as fsp } from "node:fs";
 import { join, resolve, dirname, sep, parse } from "node:path";
 import { PlaceType } from "@/lib/generated/prisma";
 import type { PlaceStatus, Prisma, DayOfWeek } from "@/lib/generated/prisma";
+import { triggerPlaceCreationBadges } from "@/lib/services/badge-trigger-service";
 
 /* ====================== Utils types ====================== */
 type Primitive = string | number | boolean | undefined;
@@ -587,6 +588,14 @@ export async function POST(req: NextRequest) {
             })),
           });
         }
+      }
+
+      // Déclencher l'évaluation des badges pour la création de place
+      if (ownerId) {
+        await triggerPlaceCreationBadges(ownerId, created.id).catch((error) => {
+          console.error('Error triggering place creation badges:', error);
+          // Ne pas faire échouer la création de place si les badges échouent
+        });
       }
 
       return NextResponse.json(
