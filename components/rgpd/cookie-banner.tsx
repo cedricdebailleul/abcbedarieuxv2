@@ -35,22 +35,40 @@ export function SimpleCookieBanner() {
   const saveConsent = async (consentData: ConsentState) => {
     setIsLoading(true);
 
-    const formData = new FormData();
-    Object.entries(consentData).forEach(([key, value]) => {
-      formData.append(key, value.toString());
-    });
+    // Toujours sauvegarder dans localStorage pour les utilisateurs non connectés
+    localStorage.setItem("cookie-consent", "given");
+    localStorage.setItem("cookie-preferences", JSON.stringify(consentData));
 
-    const result = await updateConsentAction(formData);
+    try {
+      // Essayer de sauvegarder sur le serveur uniquement si l'utilisateur est connecté
+      const formData = new FormData();
+      Object.entries(consentData).forEach(([key, value]) => {
+        formData.append(key, value.toString());
+      });
 
-    if (result.errors) {
-      toast.error("Impossible de sauvegarder vos préférences");
-    } else {
-      localStorage.setItem("cookie-consent", "given");
-      setShowBanner(false);
-      setShowDetails(false);
-      toast.success("Préférences sauvegardées");
+      const result = await updateConsentAction(formData);
+
+      if (result.errors) {
+        // Si l'erreur est "Non authentifié", c'est normal pour un utilisateur déconnecté
+        const isAuthError =
+          "general" in result.errors &&
+          result.errors.general.includes("Non authentifié");
+        if (!isAuthError) {
+          toast.error(
+            "Impossible de sauvegarder vos préférences sur le serveur"
+          );
+        }
+      } else {
+        toast.success("Préférences sauvegardées");
+      }
+    } catch (error) {
+      // Les erreurs de serveur n'empêchent pas la fermeture de la bannière
+      console.warn("Erreur de sauvegarde serveur:", error);
     }
 
+    // Fermer la bannière dans tous les cas
+    setShowBanner(false);
+    setShowDetails(false);
     setIsLoading(false);
   };
 
@@ -90,10 +108,19 @@ export function SimpleCookieBanner() {
 
                   <div className="flex flex-col gap-2">
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={acceptAll} disabled={isLoading}>
+                      <Button
+                        size="sm"
+                        onClick={acceptAll}
+                        disabled={isLoading}
+                      >
                         Accepter
                       </Button>
-                      <Button size="sm" variant="outline" onClick={rejectAll} disabled={isLoading}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={rejectAll}
+                        disabled={isLoading}
+                      >
                         Refuser
                       </Button>
                     </div>
@@ -112,7 +139,11 @@ export function SimpleCookieBanner() {
                 <>
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-medium">Préférences</h4>
-                    <Button size="sm" variant="ghost" onClick={() => setShowDetails(false)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowDetails(false)}
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -121,7 +152,9 @@ export function SimpleCookieBanner() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Fonctionnels</p>
-                        <p className="text-xs text-muted-foreground">Nécessaires</p>
+                        <p className="text-xs text-muted-foreground">
+                          Nécessaires
+                        </p>
                       </div>
                       <Switch checked={true} disabled />
                     </div>
@@ -129,7 +162,9 @@ export function SimpleCookieBanner() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Préférences</p>
-                        <p className="text-xs text-muted-foreground">Mémorisation</p>
+                        <p className="text-xs text-muted-foreground">
+                          Mémorisation
+                        </p>
                       </div>
                       <Switch
                         checked={consent.cookies}
@@ -142,7 +177,9 @@ export function SimpleCookieBanner() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Analytics</p>
-                        <p className="text-xs text-muted-foreground">Statistiques</p>
+                        <p className="text-xs text-muted-foreground">
+                          Statistiques
+                        </p>
                       </div>
                       <Switch
                         checked={consent.analytics}
@@ -158,7 +195,9 @@ export function SimpleCookieBanner() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Marketing</p>
-                        <p className="text-xs text-muted-foreground">Publicités</p>
+                        <p className="text-xs text-muted-foreground">
+                          Publicités
+                        </p>
                       </div>
                       <Switch
                         checked={consent.marketing}

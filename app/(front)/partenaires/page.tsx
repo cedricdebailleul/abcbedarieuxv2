@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { PartnersSection } from "@/components/partners/partners-section";
 import {
   Handshake,
   Building2,
@@ -10,8 +10,6 @@ import {
   Target,
   Heart,
   Calendar,
-  Star,
-  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -191,170 +189,16 @@ export default function PartnersPage() {
         </div>
       </section>
 
-      {/* Partner Types */}
+      {/* Partners Section dynamique */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Types de partenariats
-            </h2>
-            <p className="text-lg text-gray-600">
-              Différentes formes de collaboration pour un impact maximal
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {partnerTypes.map((type) => (
-              <Card
-                key={type.title}
-                className="text-center hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <div
-                    className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${type.color}`}
-                  >
-                    <type.icon className="w-8 h-8" />
-                  </div>
-                  <Badge variant="outline" className="mx-auto mb-2">
-                    {type.count} partenaires
-                  </Badge>
-                  <CardTitle className="text-lg text-gray-900">
-                    {type.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {type.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Institutional Partners */}
-      <section className="py-16 px-4 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Partenaires institutionnels
-            </h2>
-            <p className="text-lg text-gray-600">
-              Le soutien des collectivités locales et organismes publics
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {institutionalPartners.map((partner) => (
-              <Card
-                key={partner.name}
-                className="hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center border-2 border-gray-100 flex-shrink-0">
-                      <Building2 className="w-8 h-8 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <Badge variant="outline" className="mb-2">
-                        {partner.category}
-                      </Badge>
-                      <CardTitle className="text-xl text-gray-900 mb-2">
-                        {partner.name}
-                      </CardTitle>
-                      <p className="text-gray-600 text-sm">
-                        {partner.description}
-                      </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">
-                        Collaboration
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {partner.collaboration}
-                      </p>
-                    </div>
-                    {partner.website !== "#" && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link
-                          href={partner.website}
-                          target="_blank"
-                          rel="noopener"
-                        >
-                          Visiter le site{" "}
-                          <ExternalLink className="w-3 h-3 ml-1" />
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Business Partners */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Partenaires économiques
-            </h2>
-            <p className="text-lg text-gray-600">
-              L&apos;expertise des chambres consulaires et associations
-              professionnelles
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {businessPartners.map((partner) => (
-              <Card
-                key={partner.name}
-                className="text-center hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <div className="w-20 h-20 mx-auto mb-4 bg-white rounded-xl flex items-center justify-center border-2 border-gray-100">
-                    <Users className="w-10 h-10 text-green-600" />
-                  </div>
-                  <Badge variant="outline" className="mb-2">
-                    {partner.category}
-                  </Badge>
-                  <CardTitle className="text-xl text-gray-900">
-                    {partner.name}
-                  </CardTitle>
-                  <p className="text-gray-600 text-sm mt-2">
-                    {partner.description}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">
-                        Services proposés
-                      </h4>
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {partner.services.map((service) => (
-                          <Badge
-                            key={service}
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {service}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <PartnersSection
+            title="Tous nos partenaires"
+            subtitle="Découvrez les entreprises, institutions et organisations qui nous accompagnent"
+            showFilters={true}
+            showStats={true}
+            size="md"
+          />
         </div>
       </section>
 
@@ -372,79 +216,20 @@ export default function PartnersPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {benefits.map((benefit) => (
-              <Card
+              <div
                 key={benefit.title}
-                className="text-center hover:shadow-lg transition-shadow"
+                className="text-center p-6 bg-white rounded-lg hover:shadow-lg transition-shadow"
               >
-                <CardHeader>
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                    <benefit.icon className="w-8 h-8 text-primary" />
-                  </div>
-                  <CardTitle className="text-lg text-gray-900">
-                    {benefit.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {benefit.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Ils nous font confiance
-            </h2>
-            <p className="text-lg text-gray-600">
-              Les témoignages de nos partenaires
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial) => (
-              <Card
-                key={testimonial.name}
-                className="hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <div className="flex items-center gap-1 mb-3">
-                    {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-4 h-4 text-yellow-500 fill-current"
-                      />
-                    ))}
-                  </div>
-                  <p className="text-gray-600 italic leading-relaxed">
-                    &quot;{testimonial.content}&quot;
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Users className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {testimonial.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {testimonial.role}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {testimonial.company}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                  <benefit.icon className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {benefit.title}
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {benefit.description}
+                </p>
+              </div>
             ))}
           </div>
         </div>

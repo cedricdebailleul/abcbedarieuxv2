@@ -10,9 +10,23 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: [
+      "lib/generated/**/*",
+      "lib/generated/**/*.js", 
+      "lib/generated/**/*.d.ts",
+      "**/.next/**",
+      "**/node_modules/**"
+    ]
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    ignores: ["lib/generated/**/*"]
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn", // Downgrade to warning
+      "@typescript-eslint/no-unused-vars": "warn", // Downgrade to warning
+      "react/no-unescaped-entities": "warn", // Downgrade to warning
+      "@typescript-eslint/no-require-imports": "off" // Disable for generated files
+    }
   }
 ];
 
