@@ -1998,3 +1998,56 @@ enum DiscountType {
   FREE_SHIPPING // Livraison gratuite
   BUY_X_GET_Y // Achetez X obtenez Y
 }
+
+// ============================================================
+//                        PARTENAIRES
+// ============================================================
+
+model Partner {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String? @db.Text
+  logo        String?
+  website     String?
+  email       String?
+  phone       String?
+  
+  // Informations de partenariat
+  partnerType PartnerType @default(COMMERCIAL)
+  category    String?
+  priority    Int         @default(0) // Pour l'ordre d'affichage
+  
+  // Statut
+  isActive    Boolean @default(true)
+  isFeatured  Boolean @default(false)
+  
+  // Dates importantes
+  startDate   DateTime?
+  endDate     DateTime?
+  
+  // Métadonnées
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  
+  // Index pour les performances
+  @@index([slug])
+  @@index([partnerType])
+  @@index([isActive])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("partner")
+}
+
+// Énumération pour les types de partenaires
+enum PartnerType {
+  COMMERCIAL    // Partenaire commercial
+  INSTITUTIONAL // Partenaire institutionnel
+  MEDIA         // Partenaire média
+  TECHNICAL     // Partenaire technique
+  SPONSOR       // Sponsor
+  SUPPLIER      // Fournisseur
+  OTHER         // Autre
+}

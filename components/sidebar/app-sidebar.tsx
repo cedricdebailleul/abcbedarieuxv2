@@ -118,6 +118,10 @@ const data = {
           title: "Actions",
           url: "/dashboard/admin/actions",
         },
+        {
+          title: "Partenaires",
+          url: "/dashboard/admin/partners",
+        },
       ],
     },
     {
@@ -203,8 +207,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               ["admin", "moderator"].includes(session.user.role)
             );
           }
-          // Newsletter et Badges : admin seulement
-          if (["Newsletter", "Badges"].includes(subItem.title)) {
+          // Newsletter, Badges et Partenaires : admin seulement
+          if (["Newsletter", "Badges", "Partenaires"].includes(subItem.title)) {
             return session?.user?.role === "admin";
           }
           // Utilisateurs, Réclamations et Places : admin et modérateur
