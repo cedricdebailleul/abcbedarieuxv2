@@ -26,7 +26,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventParticipationButton } from "@/components/events/event-participation-button";
 import { SocialShare } from "@/components/shared/social-share";
 import { EventSchema } from "@/components/structured-data/event-schema";
-import { OpenGraphDebug } from "@/components/debug/og-debug";
 import { PrintHeader } from "@/components/print/print-header";
 
 import { EventCategory, EventStatus } from "@/lib/generated/prisma";
@@ -934,14 +933,6 @@ export default async function EventPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Debug Open Graph (dev seulement) */}
-        <div className="mt-8">
-          <OpenGraphDebug
-            url={`${
-              process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
-            }/events/${event.slug}`}
-          />
-        </div>
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
 import {
+  Building,
+  CheckCircle,
   Clock,
   ExternalLink,
   Facebook,
@@ -16,7 +18,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ClaimPlaceButton } from "@/components/claim-place-button";
 import { GalleryLightbox } from "@/components/gallery-lightbox";
-import GoogleReviews from "@/components/google-reviews";
 import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,15 +27,16 @@ import { PlaceCategoriesBadges } from "@/components/places/place-categories-badg
 import { FavoriteButton } from "@/components/places/favorite-button";
 import { SocialShare } from "@/components/shared/social-share";
 import { PlaceSchema } from "@/components/structured-data/place-schema";
-import { OpenGraphDebug } from "@/components/debug/og-debug";
 import { PrintHeader } from "@/components/print/print-header";
 import { PlaceTabs } from "@/components/places/place-tabs";
+import { PlaceAboutTab } from "@/components/places/place-about-tab";
 import { ContactForm } from "@/components/places/contact-form";
+import { PlaceReviewsTab } from "@/components/places/place-reviews-tab";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
 // Force dynamic rendering
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 import { generatePlaceShareData } from "@/lib/share-utils";
 
 // ---------- helpers ----------
@@ -94,7 +96,9 @@ function formatHm(t: string) {
   return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
 }
 
-function parseSocials(socialsJson: string | Record<string, string> | null | undefined): Record<string, string> {
+function parseSocials(
+  socialsJson: string | Record<string, string> | null | undefined
+): Record<string, string> {
   if (!socialsJson) return {};
   try {
     if (typeof socialsJson === "string") {
@@ -341,6 +345,22 @@ export default async function PlacePage({ params }: PageProps) {
       ? `https://www.google.com/maps?daddr=${place.latitude},${place.longitude}`
       : `https://www.google.com/maps?daddr=${encodeURIComponent(fullAddress)}`;
 
+  // Calcul de la note moyenne
+  const averageRating =
+    place.reviews && place.reviews.length > 0
+      ? place.reviews.reduce((acc, review) => acc + (review.rating || 0), 0) /
+        place.reviews.length
+      : 0;
+
+  const normalizedPlace = {
+    ...place,
+    images: Array.isArray(place.images)
+      ? place.images.filter((img): img is string => typeof img === "string")
+      : typeof place.images === "string"
+        ? [place.images]
+        : [],
+  };
+
   return (
     <div className="relative">
       {/* Données structurées pour SEO et réseaux sociaux */}
@@ -353,236 +373,284 @@ export default async function PlacePage({ params }: PageProps) {
         date={fullAddress}
       />
 
-      {/* Cover full-bleed sous le header */}
-      <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
-        <div className="relative h-[80vh] bg-muted">
-          {cover ? (
-            <SafeImage
-              src={cover}
-              alt={`Couverture — ${place.name}`}
-              fill
-              className="object-cover"
-              sizes="80vw"
-              fallbackClassName="w-full h-full bg-gradient-to-br from-muted to-muted/50"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-        </div>
+      {/* Cover hero section */}
+      <div className="relative h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] bg-muted z-0">
+        {cover ? (
+          <SafeImage
+            src={cover}
+            alt={`Couverture — ${place.name}`}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 1200px"
+            fallbackClassName="w-full h-full bg-gradient-to-br from-muted to-muted/50"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
       </div>
 
       {/* Contenu */}
-      <div className="max-w-7xl mx-auto">
-        {/* Titre + logo + meta */}
-        <div className="w-full flex flex-col gap-4 bg-white mx-auto px-8">
-          <div className="flex items-end gap-4">
-            <div className="relative size-20 -mt-12 md:size-24 rounded-2xl overflow-hidden border bg-background shadow">
-              {logo ? (
-                <SafeImage
-                  src={logo}
-                  alt={`Logo — ${place.name}`}
-                  fill
-                  className="object-cover"
-                  sizes="96px"
-                  fallbackClassName="w-full h-full bg-muted"
-                />
-              ) : (
-                <div className="w-full h-full bg-muted" />
-              )}
-            </div>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header amélioré avec logo, titre et actions */}
+        <div className="bg-white rounded-lg shadow-lg border -mt-16 p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="flex flex-col md:flex-row items-start gap-4 md:gap-6">
+            {/* Logo et titre */}
+            <div className="flex items-start gap-3 md:gap-4 flex-1 w-full">
+              <div className="relative size-16 sm:size-20 md:size-24 rounded-xl md:rounded-2xl overflow-hidden border-2 border-white bg-background shadow-lg flex-shrink-0">
+                {logo ? (
+                  <SafeImage
+                    src={logo}
+                    alt={`Logo — ${place.name}`}
+                    fill
+                    className="object-cover"
+                    sizes="112px"
+                    fallbackClassName="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                    <Building className="h-12 w-12 text-primary/50" />
+                  </div>
+                )}
+              </div>
 
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-2 leading-tight">
                   {place.name}
                 </h1>
-                {/* Boutons actions mobile */}
-                <div className="md:hidden flex items-center gap-2">
-                  <SocialShare
-                    data={generatePlaceShareData(place)}
-                    variant="ghost"
-                    size="icon"
-                    showLabel={false}
-                  />
-                  <FavoriteButton
-                    placeId={place.id}
-                    placeName={place.name}
-                    variant="ghost"
-                    size="icon"
-                    showText={false}
-                  />
-                </div>
-              </div>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
-                <Badge variant="outline">{place.type}</Badge>
-                {place.isFeatured && (
-                  <Badge variant="secondary">À la une</Badge>
-                )}
-                <span className="inline-flex items-center">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  <span className="leading-none">{fullAddress}</span>
-                </span>
-              </div>
 
-              {/* Catégories de la place */}
-              {place.categories && place.categories.length > 0 && (
-                <div className="mt-3">
-                  <PlaceCategoriesBadges
-                    categories={place.categories}
-                    maxDisplay={5}
-                    size="default"
-                  />
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3">
+                  <Badge variant="outline" className="text-sm">
+                    {place.type}
+                  </Badge>
+                  {place.isFeatured && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-yellow-100 text-yellow-800 border-yellow-300"
+                    >
+                      <Star className="h-3 w-3 mr-1 fill-current" />À la une
+                    </Badge>
+                  )}
+                  {place.isActive && (
+                    <Badge
+                      variant="default"
+                      className="bg-green-100 text-green-800 border-green-300"
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Vérifié
+                    </Badge>
+                  )}
                 </div>
-              )}
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-muted-foreground">
+                  <span className="inline-flex items-center text-sm">
+                    <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span className="leading-none break-words">
+                      {fullAddress}
+                    </span>
+                  </span>
+
+                  {/* Note moyenne */}
+                  {averageRating > 0 && (
+                    <span className="inline-flex items-center text-sm">
+                      <Star className="w-4 h-4 mr-1 fill-yellow-400 text-yellow-400" />
+                      <span className="leading-none font-medium">
+                        {averageRating.toFixed(1)}
+                      </span>
+                      <span className="leading-none text-muted-foreground ml-1">
+                        ({place.reviews?.length || 0})
+                      </span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Boutons de contact */}
+                <div className="flex flex-wrap items-center gap-2 mt-3 sm:mt-4">
+                  {place.phone && (
+                    <Button asChild size="sm" variant="outline">
+                      <a href={`tel:${place.phone}`}>
+                        <Phone className="w-4 h-4 mr-2" />
+                        Appeler
+                      </a>
+                    </Button>
+                  )}
+
+                  {place.website && (
+                    <Button asChild size="sm" variant="outline">
+                      <a
+                        href={place.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Globe className="w-4 h-4 mr-2" />
+                        Site web
+                      </a>
+                    </Button>
+                  )}
+
+                  <Button asChild size="sm" variant="outline">
+                    <a
+                      href={directionsHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Itinéraire
+                    </a>
+                  </Button>
+                </div>
+
+                {/* Catégories de la place */}
+                {place.categories && place.categories.length > 0 && (
+                  <div className="mt-4">
+                    <PlaceCategoriesBadges
+                      categories={place.categories}
+                      maxDisplay={5}
+                      size="default"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Statut ouverture et actions */}
-            <div className="hidden md:flex flex-col items-end gap-2">
-              {/* Boutons actions */}
-              <div className="flex items-center gap-2">
+            {/* Actions et statut */}
+            <div className="flex flex-col md:items-end gap-3 md:gap-4 w-full md:w-auto order-last md:order-none">
+              {/* Boutons d'action */}
+              <div className="flex items-center gap-2 w-full md:w-auto">
                 <SocialShare
                   data={generatePlaceShareData(place)}
                   variant="outline"
                   size="sm"
+                  className="flex-1 md:flex-initial"
                 />
                 <FavoriteButton
                   placeId={place.id}
                   placeName={place.name}
                   variant="outline"
                   size="sm"
+                  className="flex-1 md:flex-initial"
                 />
               </div>
 
-              <div
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  open
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-rose-100 text-rose-700"
-                }`}
-                aria-live="polite"
-              >
-                {open
-                  ? pause
-                    ? "En pause bientôt"
-                    : "Ouvert maintenant"
-                  : pause
-                  ? "En pause"
-                  : "Fermé pour le moment"}
+              {/* Statut d'ouverture amélioré */}
+              <div className="bg-gray-50 border rounded-lg p-3 shadow-sm w-full md:w-auto md:min-w-[180px]">
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      open ? "bg-emerald-500" : "bg-rose-500"
+                    }`}
+                  />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Statut
+                  </span>
+                </div>
+
+                <div
+                  className={`text-sm font-semibold ${
+                    open ? "text-emerald-700" : "text-rose-700"
+                  }`}
+                  aria-live="polite"
+                >
+                  {open
+                    ? pause
+                      ? "En pause bientôt"
+                      : "Ouvert maintenant"
+                    : pause
+                      ? "En pause"
+                      : "Fermé"}
+                </div>
+
+                {nextChange && (
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {nextChange.at.includes(" ") ? (
+                      // Format avec jour: "Ouvre Mardi à 10:00h"
+                      <>
+                        {nextChange.type === "close" ? "Ferme" : "Ouvre"}{" "}
+                        {nextChange.at.split(" ")[0]} à{" "}
+                        {formatHm(nextChange.at.split(" ")[1])}h
+                      </>
+                    ) : (
+                      // Format heure seule: "Ferme à 17:30h"
+                      <>
+                        {nextChange.type === "close" ? "Ferme à" : "Ouvre à"}{" "}
+                        {formatHm(nextChange.at)}h
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-              {nextChange && (
-                <span className="text-xs text-muted-foreground mt-1">
-                  {nextChange.at.includes(" ") ? (
-                    // Format avec jour: "Ouvre Mardi à 10:00h"
-                    <>
-                      {nextChange.type === "close" ? "Ferme" : "Ouvre"}{" "}
-                      {nextChange.at.split(" ")[0]} à{" "}
-                      {formatHm(nextChange.at.split(" ")[1])}h
-                    </>
-                  ) : (
-                    // Format heure seule: "Ferme à 17:30h"
-                    <>
-                      {nextChange.type === "close" ? "Ferme à" : "Ouvre à"}{" "}
-                      {formatHm(nextChange.at)}h
-                    </>
-                  )}
-                </span>
-              )}
             </div>
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="mt-4 sm:mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 relative z-10">
           {/* Colonne principale avec onglets */}
-          <div className="lg:col-span-2 space-y-6">
-            <PlaceTabs 
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 relative z-10">
+            <PlaceTabs
               placeId={place.id}
+              placeName={place.name}
+              isOwner={!!place.owner}
               aboutContent={
-                <div className="space-y-6">
-                  {/* Description */}
-                  {(place.summary || place.description) && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>À propos</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {place.summary && (
-                          <p className="text-foreground/90 font-medium">
-                            {place.summary}
-                          </p>
-                        )}
-                        {place.description && (
-                          <p className="text-muted-foreground whitespace-pre-wrap">
-                            {place.description}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
+                <PlaceAboutTab
+                  place={{
+                    ...normalizedPlace,
+                    categories: (place.categories || []).map((c) => c.category),
+                  }}
+                  gallery={gallery}
+                />
               }
               reviewsContent={
-                <div className="space-y-6">
-                  {/* Avis clients */}
-                  {place.reviews.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Star className="w-5 h-5 text-yellow-500" />
-                          Avis clients
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {place.reviews.slice(0, 3).map((review) => (
-                          <div key={review.id} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{review.user.name}</span>
-                              {typeof review.rating === "number" && (
-                                <div className="flex items-center">
-                                  <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                                  <span>{review.rating}/5</span>
-                                </div>
-                              )}
-                            </div>
-                            {review.comment && (
-                              <p className="text-sm text-muted-foreground">
-                                {review.comment}
-                              </p>
-                            )}
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(review.createdAt).toLocaleDateString("fr-FR")}
-                            </div>
-                            <Separator />
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  )}
+                <PlaceReviewsTab
+                  placeId={place.id}
+                  placeName={place.name}
+                  reviews={place.reviews}
+                  googleReviews={place.googleReviews.map((review) => {
+                    // narrow the shape safely without using `any`
+                    const rev = review as unknown as Record<string, unknown>;
+                    const authorField = rev["author"];
+                    const fallbackName =
+                      (rev["authorName"] as string | undefined) ??
+                      (rev["author_name"] as string | undefined) ??
+                      null;
 
-                  {/* Avis Google */}
-                  <GoogleReviews
-                    reviews={place.googleReviews.map((review) => ({
+                    // Ensure we provide a string name for `author` to match GoogleReview type
+                    const authorName =
+                      typeof authorField === "string"
+                        ? authorField
+                        : typeof authorField === "object" &&
+                            authorField !== null &&
+                            "name" in (authorField as object)
+                          ? ((authorField as { name?: string | null }).name ??
+                            fallbackName ??
+                            "")
+                          : (fallbackName ?? "");
+
+                    return {
                       ...review,
                       createdAt: review.createdAt.toISOString(),
-                    }))}
-                  />
-                </div>
+                      author: authorName,
+                    };
+                  })}
+                />
               }
             />
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 relative z-10">
             {/* Bouton de revendication pour les places sans propriétaire */}
             {!place.ownerId && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Cette place n&apos;a pas de propriétaire</CardTitle>
+                  <CardTitle>
+                    Cette place n&apos;a pas de propriétaire
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Cette fiche a été créée par l&apos;administration et peut être
-                    revendiquée. En la revendiquant, vous deviendrez
+                    Cette fiche a été créée par l&apos;administration et peut
+                    être revendiquée. En la revendiquant, vous deviendrez
                     propriétaire et pourrez la gérer.
                   </p>
                   <ClaimPlaceButton
@@ -641,30 +709,12 @@ export default async function PlacePage({ params }: PageProps) {
               </Card>
             )}
 
-            {/* Debug info (temporaire) */}
-            {process.env.NODE_ENV === 'development' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Debug Info</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <pre className="text-xs bg-muted p-2 rounded">
-                    {JSON.stringify({
-                      hasOwner: !!place.owner,
-                      ownerEmail: place.owner?.email,
-                      placeEmail: place.email
-                    }, null, 2)}
-                  </pre>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Formulaire de contact */}
             {(place.owner?.email || place.email) && (
               <ContactForm
                 placeId={place.id}
                 placeName={place.name}
-                ownerEmail={place.owner?.email || place.email || ''}
+                ownerEmail={place.owner?.email || place.email || ""}
               />
             )}
 
@@ -691,8 +741,8 @@ export default async function PlacePage({ params }: PageProps) {
                         ? "En pause bientôt"
                         : "Ouvert maintenant"
                       : pause
-                      ? "En pause"
-                      : "Fermé pour le moment"}
+                        ? "En pause"
+                        : "Fermé pour le moment"}
                     {nextChange && (
                       <span className="ml-2 text-foreground/70">
                         •{" "}
@@ -764,7 +814,7 @@ export default async function PlacePage({ params }: PageProps) {
                   <MapPin className="w-4 h-4 mr-2 mt-0.5" />
                   <span>{fullAddress}</span>
                 </div>
-                <div className="overflow-hidden rounded-xl border">
+                <div className="overflow-hidden rounded-xl border relative z-0">
                   <iframe
                     title={`Carte — ${place.name}`}
                     src={mapSrc}
@@ -878,10 +928,13 @@ export default async function PlacePage({ params }: PageProps) {
                   {(() => {
                     const socials = parseSocials(
                       typeof place.owner.profile.socials === "string" ||
-                      (typeof place.owner.profile.socials === "object" &&
-                        !Array.isArray(place.owner.profile.socials) &&
-                        place.owner.profile.socials !== null)
-                        ? (place.owner.profile.socials as Record<string, string>)
+                        (typeof place.owner.profile.socials === "object" &&
+                          !Array.isArray(place.owner.profile.socials) &&
+                          place.owner.profile.socials !== null)
+                        ? (place.owner.profile.socials as Record<
+                            string,
+                            string
+                          >)
                         : null
                     );
                     const hasSocials = Object.keys(socials).some(
@@ -1012,15 +1065,6 @@ export default async function PlacePage({ params }: PageProps) {
               </Card>
             )}
           </div>
-        </div>
-
-        {/* Debug Open Graph (dev seulement) */}
-        <div className="mt-8">
-          <OpenGraphDebug
-            url={`${
-              process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
-            }/places/${place.slug}`}
-          />
         </div>
       </div>
     </div>

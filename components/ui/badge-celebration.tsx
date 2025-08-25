@@ -229,7 +229,7 @@ export function BadgeCelebration({
           >
             <Button
               onClick={onClose}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-2 rounded-full transition-all duration-300 transform hover:scale-105"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-2 rounded-full transition-all duration-300 transform"
             >
               Formidable ! ✨
             </Button>

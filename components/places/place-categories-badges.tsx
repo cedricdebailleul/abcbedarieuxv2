@@ -57,7 +57,7 @@ export function PlaceCategoriesBadges({
         ${size === "sm" ? "text-xs" : "text-sm"} 
         flex items-center
         ${
-          clickable ? "hover:scale-105 transition-transform cursor-pointer" : ""
+          clickable ? "cursor-pointer" : ""
         }
       `}
       style={{

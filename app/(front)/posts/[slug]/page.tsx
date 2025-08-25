@@ -339,7 +339,7 @@ export default async function PostPage({
                         <Badge
                           key={postTag.tag.id}
                           variant="outline"
-                          className="hover:scale-105 transition-transform cursor-pointer"
+                          className="transition-transform cursor-pointer"
                           style={{
                             borderColor: postTag.tag.color || "#6B7280",
                             color: postTag.tag.color || "#6B7280",

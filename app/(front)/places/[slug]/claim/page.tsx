@@ -54,7 +54,6 @@ export default function ClaimPlacePage({
     const resolveParams = async () => {
       try {
         const resolvedParams = await paramsPromise;
-        console.log("🔍 Slug résolu:", resolvedParams.slug);
         setSlug(resolvedParams.slug);
       } catch (error) {
         console.error("❌ Erreur résolution params:", error);

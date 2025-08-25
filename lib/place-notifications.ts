@@ -291,9 +291,6 @@ export async function notifyAdminsNewPlace(
       });
     }
 
-    console.log(
-      `Notification envoyée à ${adminEmails.length} admin(s) pour la nouvelle place: ${placeName}`
-    );
   } catch (error) {
     console.error("Erreur lors de l'envoi des notifications admin:", error);
   }
@@ -322,9 +319,6 @@ export async function notifyAdminsPlaceClaimed(
       });
     }
 
-    console.log(
-      `Notification envoyée à ${adminEmails.length} admin(s) pour la revendication de: ${placeName}`
-    );
   } catch (error) {
     console.error("Erreur lors de l'envoi des notifications admin:", error);
   }
@@ -345,9 +339,6 @@ export async function notifyUserPlaceApproved(
       html: template.html,
     });
 
-    console.log(
-      `Notification d'approbation envoyée à ${userEmail} pour: ${placeName}`
-    );
   } catch (error) {
     console.error(
       "Erreur lors de l'envoi de la notification d'approbation:",
@@ -370,9 +361,6 @@ export async function notifyUserPlaceRejected(
       html: template.html,
     });
 
-    console.log(
-      `Notification de rejet envoyée à ${userEmail} pour: ${placeName}`
-    );
   } catch (error) {
     console.error("Erreur lors de l'envoi de la notification de rejet:", error);
   }
@@ -392,9 +380,6 @@ export async function notifyUserClaimApproved(
       html: template.html,
     });
 
-    console.log(
-      `Notification de revendication approuvée envoyée à ${userEmail} pour: ${placeName}`
-    );
   } catch (error) {
     console.error(
       "Erreur lors de l'envoi de la notification de revendication approuvée:",
@@ -417,9 +402,6 @@ export async function notifyUserClaimRejected(
       html: template.html,
     });
 
-    console.log(
-      `Notification de revendication rejetée envoyée à ${userEmail} pour: ${placeName}`
-    );
   } catch (error) {
     console.error(
       "Erreur lors de l'envoi de la notification de revendication rejetée:",

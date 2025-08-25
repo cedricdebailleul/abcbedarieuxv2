@@ -52,7 +52,7 @@ export default async function PublicPlacesPage() {
             <Link
               key={place.id}
               href={`/places/${place.slug}`}
-              className="block hover:transform hover:scale-105 transition-transform"
+              className="block transition-transform"
             >
               <Card className="h-full">
                 <CardHeader>

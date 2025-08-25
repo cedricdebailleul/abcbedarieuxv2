@@ -501,6 +501,9 @@ model Place {
   categories    PlaceToCategory[] // Many-to-many avec PlaceCategory
   events        Event[] // Événements organisés dans cette place
   posts         Post[]  @relation("PlacePosts") // Articles liés à ce lieu
+  products      Product[] @relation("PlaceProducts") // Produits proposés
+  services      Service[] @relation("PlaceServices") // Services proposés
+  offers        Offer[] @relation("PlaceOffers") // Offres et promotions
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -512,6 +515,228 @@ model Place {
   @@index([postalCode, city])
   @@index([latitude, longitude])
   @@map("places")
+}
+
+// ============================================================
+//                    PRODUITS ET SERVICES
+// ============================================================
+
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String
+  description String? @db.Text
+  summary     String? @db.VarChar(280)
+
+  // Prix et détails
+  price       Float?
+  priceType   ProductPriceType @default(FIXED)
+  currency    String           @default("EUR")
+  unit        String? // "par heure", "par kg", etc.
+  
+  // Statut et visibilité
+  status     ProductStatus @default(DRAFT)
+  isActive   Boolean       @default(true)
+  isFeatured Boolean       @default(false)
+  
+  // Disponibilité
+  isAvailable   Boolean @default(true)
+  stock         Int?
+  minQuantity   Int?    @default(1)
+  maxQuantity   Int?
+  
+  // Médias
+  coverImage String? // Image principale du produit
+  images Json? // ["url1", "url2"] galerie d'images
+  
+  // Catégorisation
+  category    String?
+  tags        Json? // ["tag1", "tag2"] pour MVP
+  
+  // Caractéristiques techniques
+  specifications Json? // Spécifications techniques libres
+  
+  // Relation avec la place
+  placeId String
+  place   Place  @relation("PlaceProducts", fields: [placeId], references: [id], onDelete: Cascade)
+  
+  // Statistiques
+  viewCount  Int @default(0)
+  orderCount Int @default(0)
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String? @db.VarChar(160)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations avec les offres
+  offers ProductOffer[]
+
+  @@index([placeId])
+  @@index([status])
+  @@index([isActive])
+  @@index([category])
+  @@index([slug])
+  @@map("products")
+}
+
+model Service {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String
+  description String? @db.Text
+  summary     String? @db.VarChar(280)
+
+  // Prix et détails
+  price     Float?
+  priceType ServicePriceType @default(FIXED)
+  currency  String           @default("EUR")
+  unit      String? // "par heure", "par intervention", etc.
+  duration  Int? // Durée en minutes
+  
+  // Statut et visibilité
+  status     ServiceStatus @default(DRAFT)
+  isActive   Boolean       @default(true)
+  isFeatured Boolean       @default(false)
+  
+  // Disponibilité
+  isAvailable    Boolean @default(true)
+  requiresBooking Boolean @default(false)
+  
+  // Médias
+  coverImage String? // Image principale du produit
+  images Json? // ["url1", "url2"] galerie d'images
+  
+  // Catégorisation
+  category String?
+  tags     Json? // ["tag1", "tag2"] pour MVP
+  
+  // Caractéristiques
+  features Json? // Caractéristiques du service
+  
+  // Relation avec la place
+  placeId String
+  place   Place  @relation("PlaceServices", fields: [placeId], references: [id], onDelete: Cascade)
+  
+  // Statistiques
+  viewCount    Int @default(0)
+  bookingCount Int @default(0)
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String? @db.VarChar(160)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations avec les offres
+  offers ServiceOffer[]
+
+  @@index([placeId])
+  @@index([status])
+  @@index([isActive])
+  @@index([category])
+  @@index([slug])
+  @@map("services")
+}
+
+model Offer {
+  id          String  @id @default(cuid())
+  title       String
+  slug        String
+  description String? @db.Text
+  summary     String? @db.VarChar(280)
+
+  // Type d'offre
+  type OfferType @default(DISCOUNT)
+  
+  // Réduction
+  discountType       DiscountType @default(PERCENTAGE)
+  discountValue      Float
+  discountMaxAmount  Float? // Montant max pour % 
+  minimumPurchase    Float? // Achat minimum requis
+  
+  // Validité
+  status    OfferStatus @default(DRAFT)
+  isActive  Boolean     @default(true)
+  startDate DateTime?
+  endDate   DateTime?
+  
+  // Limitations
+  maxUses         Int? // Nombre max d'utilisations total
+  maxUsesPerUser  Int? @default(1)
+  currentUses     Int  @default(0)
+  
+  // Code promotionnel
+  code        String? @unique
+  requiresCode Boolean @default(false)
+  
+  // Médias
+  coverImage String? // Image principale de l'offre
+  images Json? // ["url1", "url2"] galerie d'images
+  
+  // Relation avec la place
+  placeId String
+  place   Place  @relation("PlaceOffers", fields: [placeId], references: [id], onDelete: Cascade)
+  
+  // Relations avec produits/services
+  products ProductOffer[]
+  services ServiceOffer[]
+  
+  // Statistiques
+  viewCount Int @default(0)
+  useCount  Int @default(0)
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String? @db.VarChar(160)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([placeId])
+  @@index([status])
+  @@index([isActive])
+  @@index([code])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([slug])
+  @@map("offers")
+}
+
+// Tables de liaison pour les offres
+model ProductOffer {
+  id        String @id @default(cuid())
+  productId String
+  offerId   String
+  
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  offer   Offer   @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([productId, offerId])
+  @@index([productId])
+  @@index([offerId])
+  @@map("product_offers")
+}
+
+model ServiceOffer {
+  id        String @id @default(cuid())
+  serviceId String
+  offerId   String
+  
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  offer   Offer   @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([serviceId, offerId])
+  @@index([serviceId])
+  @@index([offerId])
+  @@map("service_offers")
 }
 
 // ============================================================
@@ -1712,4 +1937,64 @@ enum ActionStatus {
   PUBLISHED // Publié
   SCHEDULED // Programmé
   ARCHIVED // Archivé
+}
+
+// ============================================================
+//                    PRODUITS ET SERVICES ENUMS
+// ============================================================
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  OUT_OF_STOCK
+  DISCONTINUED
+  ARCHIVED
+}
+
+enum ProductPriceType {
+  FIXED // Prix fixe
+  VARIABLE // Prix variable
+  ON_REQUEST // Sur demande
+  FREE // Gratuit
+}
+
+enum ServiceStatus {
+  DRAFT
+  PUBLISHED
+  UNAVAILABLE
+  DISCONTINUED
+  ARCHIVED
+}
+
+enum ServicePriceType {
+  FIXED // Prix fixe
+  HOURLY // Par heure
+  DAILY // Par jour
+  VARIABLE // Prix variable
+  ON_REQUEST // Sur demande
+  FREE // Gratuit
+}
+
+enum OfferType {
+  DISCOUNT // Réduction
+  FREEBIE // Produit gratuit
+  BUNDLE // Pack
+  LOYALTY // Fidélité
+  SEASONAL // Saisonnière
+  LIMITED_TIME // Durée limitée
+}
+
+enum OfferStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED
+  ARCHIVED
+}
+
+enum DiscountType {
+  PERCENTAGE // Pourcentage
+  FIXED_AMOUNT // Montant fixe
+  FREE_SHIPPING // Livraison gratuite
+  BUY_X_GET_Y // Achetez X obtenez Y
 }

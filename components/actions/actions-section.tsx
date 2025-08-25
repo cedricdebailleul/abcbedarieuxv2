@@ -160,7 +160,7 @@ function ActionCard({
               <Image
                 src={action.coverImage}
                 alt={action.title}
-                className="w-full md:h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full md:h-full object-cover transition-transform duration-300"
                 fill
               />
               {action.isFeatured && (
@@ -231,7 +231,7 @@ function ActionCard({
           <Image
             src={action.coverImage}
             alt={action.title}
-            className="w-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-2xl"
+            className="w-full object-cover transition-transform duration-300 rounded-2xl"
             fill
           />
           {action.isFeatured && (

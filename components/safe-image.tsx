@@ -36,18 +36,8 @@ export function SafeImage({
 }: SafeImageProps) {
   const [hasError, setHasError] = useState(false);
 
-  // Logs pour debugging
-  console.log(`[SafeImage] Tentative de chargement:`, {
-    src,
-    alt,
-    hasError,
-    isEmpty: !src || src.trim() === "",
-    fullSrc: src ? (src.startsWith('/') ? src : `/${src}`) : 'null'
-  });
-
   // Si src est vide ou invalide, afficher directement le fallback
   if (!src || src.trim() === "" || hasError) {
-    console.log(`[SafeImage] Fallback activé pour:`, { src, hasError });
     return <div className={fallbackClassName}>Image non disponible</div>;
   }
 
@@ -61,14 +51,7 @@ export function SafeImage({
       className={className}
       unoptimized={unoptimized ?? (isExternal(src) || isDataUrl(src))}
       sizes={sizes}
-      onError={(e) => {
-        console.log(`[SafeImage] ERREUR de chargement:`, {
-          src,
-          alt,
-          error: e.currentTarget.src,
-          naturalWidth: e.currentTarget.naturalWidth,
-          naturalHeight: e.currentTarget.naturalHeight
-        });
+      onError={() => {
         setHasError(true);
       }}
     />
