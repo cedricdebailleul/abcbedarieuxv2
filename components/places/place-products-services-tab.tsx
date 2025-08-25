@@ -654,15 +654,9 @@ export function PlaceProductsServicesTab({
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec actions */}
+      {/* En-tête */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Produits, Services & Offres</h2>
-        {isOwner && (
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Ajouter
-          </Button>
-        )}
       </div>
 
       {/* Statistiques */}
@@ -820,17 +814,9 @@ export function PlaceProductsServicesTab({
               <h3 className="text-lg font-semibold mb-2">
                 Aucun produit ou service
               </h3>
-              <p className="text-muted-foreground mb-4">
-                {isOwner
-                  ? "Commencez par ajouter vos premiers produits ou services !"
-                  : "Ce lieu n'a pas encore ajouté de produits ou services."}
+              <p className="text-muted-foreground">
+                Ce lieu n'a pas encore ajouté de produits ou services.
               </p>
-              {isOwner && (
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Ajouter un produit ou service
-                </Button>
-              )}
             </div>
           )}
         </TabsContent>
