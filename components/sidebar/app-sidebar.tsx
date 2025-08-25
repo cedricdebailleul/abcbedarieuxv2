@@ -122,6 +122,10 @@ const data = {
           title: "Partenaires",
           url: "/dashboard/admin/partners",
         },
+        {
+          title: "Notre Histoire",
+          url: "/dashboard/admin/history",
+        },
       ],
     },
     {

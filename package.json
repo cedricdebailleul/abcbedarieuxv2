@@ -23,6 +23,7 @@
     "db:seed-production": "tsx scripts/seed-production-simple.ts",
     "db:seed-live": "tsx scripts/seed-live.ts",
     "db:seed-admin": "tsx scripts/seed-admin.ts",
+    "db:seed-history": "node scripts/seed-history.js",
     "test:categories-system": "tsx scripts/test-full-categories-flow.ts",
     "test:categories-pages": "tsx scripts/test-categories-pages.ts",
     "db:reset": "prisma migrate reset",

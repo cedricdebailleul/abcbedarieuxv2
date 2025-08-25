@@ -37,6 +37,7 @@ model User {
   notifications          UserNotificationStatus[] @relation("UserNotifications")
   processedRegistrations AbcRegistration[]        @relation("AbcRegistrationProcessor")
   actions                Action[] // Actions créées par l'utilisateur
+  historyConfigs         HistoryConfig[] // Configurations d'histoire modifiées
 
   // Modération améliorée
   role       Role       @default(user) // Enum en majuscules
@@ -2050,4 +2051,79 @@ enum PartnerType {
   SPONSOR       // Sponsor
   SUPPLIER      // Fournisseur
   OTHER         // Autre
+}
+
+// ============================================================
+//                        HISTOIRE / CMS
+// ============================================================
+
+// Configuration générale de l'histoire
+model HistoryConfig {
+  id          String   @id @default(cuid())
+  title       String   // Titre principal de la page
+  subtitle    String?  // Sous-titre
+  description String?  // Description meta
+  heroImage   String?  // Image hero
+  
+  // Vision future
+  visionTitle       String? // "Et demain ?"
+  visionDescription String? // Description de la vision
+  visionImage       String? // Image pour la vision
+  
+  // Boutons d'action
+  primaryButtonText String? // "Découvrir nos partenaires"
+  primaryButtonUrl  String? // URL du bouton principal
+  secondaryButtonText String? // "Nous rejoindre"
+  secondaryButtonUrl  String? // URL du bouton secondaire
+  
+  // Métadonnées
+  isActive  Boolean  @default(true)
+  updatedBy String   // ID de l'utilisateur qui a modifié
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  milestones      HistoryMilestone[]
+  timelineEvents  HistoryTimelineEvent[]
+  updatedByUser   User @relation(fields: [updatedBy], references: [id])
+  
+  @@map("history_config")
+}
+
+// Étapes importantes (chiffres clés)
+model HistoryMilestone {
+  id          String   @id @default(cuid())
+  configId    String
+  number      String   // "2019", "200+", etc.
+  label       String   // "Année de création", etc.
+  icon        String   // Nom de l'icône Lucide
+  order       Int      // Ordre d'affichage
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  config HistoryConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  
+  @@index([configId, order])
+  @@map("history_milestone")
+}
+
+// Événements de la timeline
+model HistoryTimelineEvent {
+  id          String   @id @default(cuid())
+  configId    String
+  year        String   // "2019", "2020", etc.
+  title       String   // "L'idée prend forme"
+  description String   // Description détaillée
+  icon        String   // Nom de l'icône Lucide
+  color       String   // Classe CSS pour la couleur
+  order       Int      // Ordre d'affichage
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  config HistoryConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  
+  @@index([configId, order])
+  @@map("history_timeline_event")
 }

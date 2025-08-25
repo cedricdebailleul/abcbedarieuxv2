@@ -52,64 +52,7 @@ const partnerTypes = [
   },
 ];
 
-const institutionalPartners = [
-  {
-    name: "Mairie de Bédarieux",
-    category: "Collectivité locale",
-    description: "Partenaire principal pour le développement économique local",
-    logo: "/images/partners/mairie-bedarieux.svg",
-    website: "https://bedarieux.fr",
-    collaboration: "Promotion du territoire et événements locaux",
-  },
-  {
-    name: "Communauté de Communes",
-    category: "Intercommunalité",
-    description: "Soutien au développement économique intercommunal",
-    logo: "/images/partners/cc-orb-libron.svg",
-    website: "#",
-    collaboration: "Extension territoriale et coordination",
-  },
-  {
-    name: "Conseil Départemental",
-    category: "Collectivité départementale",
-    description: "Accompagnement des initiatives économiques locales",
-    logo: "/images/partners/herault.svg",
-    website: "https://herault.fr",
-    collaboration: "Subventions et accompagnement technique",
-  },
-  {
-    name: "Région Occitanie",
-    category: "Collectivité régionale",
-    description: "Soutien aux projets de digitalisation territoriale",
-    logo: "/images/partners/region-occitanie.svg",
-    website: "https://laregion.fr",
-    collaboration: "Financement et promotion régionale",
-  },
-];
 
-const businessPartners = [
-  {
-    name: "CCI Hérault",
-    category: "Chambre de Commerce",
-    description: "Accompagnement des entreprises locales",
-    logo: "/images/partners/cci-herault.svg",
-    services: ["Formation", "Conseil", "Networking"],
-  },
-  {
-    name: "CMA Hérault",
-    category: "Chambre des Métiers",
-    description: "Soutien aux artisans du territoire",
-    logo: "/images/partners/cma-herault.svg",
-    services: ["Formation", "Accompagnement", "Promotion"],
-  },
-  {
-    name: "Association des Commerçants",
-    category: "Association professionnelle",
-    description: "Fédération des commerçants de Bédarieux",
-    logo: "/images/partners/commercants-bedarieux.svg",
-    services: ["Animation", "Promotion", "Événements"],
-  },
-];
 
 const benefits = [
   {
@@ -137,32 +80,6 @@ const benefits = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Marie Dubois",
-    role: "Présidente Association des Commerçants",
-    company: "Bédarieux Centre-Ville",
-    content:
-      "ABC Bédarieux a révolutionné la visibilité de nos commerces. Un outil indispensable pour notre territoire.",
-    rating: 5,
-  },
-  {
-    name: "Jean-Pierre Martin",
-    role: "Responsable Économique",
-    company: "Mairie de Bédarieux",
-    content:
-      "Un partenariat fructueux qui contribue vraiment au développement économique local et à l'attractivité de notre ville.",
-    rating: 5,
-  },
-  {
-    name: "Sophie Leclerc",
-    role: "Conseillère CCI",
-    company: "CCI Hérault",
-    content:
-      "ABC Bédarieux est un exemple réussi de digitalisation territoriale. Nous sommes fiers de les accompagner.",
-    rating: 5,
-  },
-];
 
 export default function PartnersPage() {
   return (
@@ -199,6 +116,32 @@ export default function PartnersPage() {
             showStats={true}
             size="md"
           />
+
+          {/* Partner types overview (uses partnerTypes to avoid unused variable) */}
+          <div className="mt-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Types de partenaires
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {partnerTypes.map((type) => (
+                <div
+                  key={type.title}
+                  className="p-6 bg-white rounded-lg hover:shadow-lg transition-shadow flex flex-col items-start"
+                >
+                  <div
+                    className={`w-12 h-12 mb-4 rounded-full flex items-center justify-center ${type.color}`}
+                  >
+                    <type.icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    {type.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-3">{type.description}</p>
+                  <span className="text-sm text-gray-500">{type.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
