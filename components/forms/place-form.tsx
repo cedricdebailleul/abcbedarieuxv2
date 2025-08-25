@@ -262,7 +262,6 @@ export function PlaceForm({
       metaTitle: "",
       metaDescription: "",
       published: false,
-      ...initialData,
     },
   });
 
@@ -300,6 +299,52 @@ export function PlaceForm({
       ? `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
       : ""
   );
+
+  // Reset le formulaire quand initialData change
+  useEffect(() => {
+    if (initialData && mode === "edit") {
+      console.log("PlaceForm - Raw initialData:", initialData);
+      
+      // Map the data explicitly to ensure proper field matching
+      const formData = {
+        name: initialData.name || "",
+        type: initialData.type || "",
+        category: initialData.category || "",
+        categories: initialData.categories || [],
+        description: initialData.description || "",
+        summary: initialData.summary || "",
+        street: initialData.street || "",
+        streetNumber: initialData.streetNumber || "",
+        postalCode: initialData.postalCode || "",
+        city: initialData.city || "",
+        latitude: initialData.latitude,
+        longitude: initialData.longitude,
+        logo: initialData.logo || "",
+        coverImage: initialData.coverImage || "",
+        photos: initialData.images || [], // Note: using images as photos
+        email: initialData.email || "",
+        phone: initialData.phone || "",
+        website: initialData.website || "",
+        facebook: initialData.facebook || "",
+        instagram: initialData.instagram || "",
+        twitter: initialData.twitter || "",
+        linkedin: initialData.linkedin || "",
+        tiktok: initialData.tiktok || "",
+        googlePlaceId: initialData.googlePlaceId || "",
+        googleMapsUrl: initialData.googleMapsUrl || "",
+        metaTitle: initialData.metaTitle || "",
+        metaDescription: initialData.metaDescription || "",
+        published: false, // Default for edit mode
+      };
+      
+      console.log("PlaceForm - Mapped formData:", formData);
+      console.log("PlaceForm - Current form values before reset:", form.getValues());
+      
+      form.reset(formData);
+      
+      console.log("PlaceForm - Form values after reset:", form.getValues());
+    }
+  }, [initialData, mode, form]);
 
   // Préremplir images & horaires en EDIT
   useEffect(() => {
@@ -546,7 +591,6 @@ export function PlaceForm({
   };
 
   const onInvalid: SubmitErrorHandler<PlaceFormData> = (errors) => {
-    console.log("Form errors:", errors);
     const first = Object.entries(errors)[0];
     if (first) {
       const [name, err] = first as [string, { message?: string }];

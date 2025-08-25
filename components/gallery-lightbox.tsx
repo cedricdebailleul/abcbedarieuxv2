@@ -37,7 +37,7 @@ export function GalleryLightbox({ images, placeName }: GalleryLightboxProps) {
                 src={src}
                 alt={`Photo ${i + 1} — ${placeName}`}
                 fill
-                className="object-cover transition group-hover:scale-105"
+                className="object-cover transition"
                 unoptimized={isExternal(src)}
                 sizes="200px"
               />

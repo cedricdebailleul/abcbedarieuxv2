@@ -361,7 +361,7 @@ export default function BadgeCollection({
                     <Dialog key={badge.id}>
                       <DialogTrigger asChild>
                         <div
-                          className={`relative cursor-pointer p-4 rounded-lg border-2 transition-all hover:scale-105 ${
+                          className={`relative cursor-pointer p-4 rounded-lg border-2 transition-all ${
                             badge.isEarned ? "opacity-100" : "opacity-60"
                           } ${badge.isEarned ? "shadow-md" : "shadow-sm"}`}
                           style={{

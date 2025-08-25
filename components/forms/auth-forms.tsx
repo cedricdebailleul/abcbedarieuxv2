@@ -131,23 +131,15 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      console.log("LoginForm - Tentative de connexion avec client Better Auth");
-
       // Utiliser le client Better Auth directement
       const result = await authClient.signIn.email({
         email: data.email,
         password: data.password,
       });
 
-      console.log("LoginForm - Résultat connexion client:", result);
-
       if (result.error) {
-        console.log("LoginForm - Erreur:", result.error);
         toast.error("Email ou mot de passe incorrect");
       } else {
-        console.log(
-          "LoginForm - Connexion réussie, redirection vers dashboard"
-        );
         toast.success("Connexion réussie");
         router.push("/dashboard");
       }

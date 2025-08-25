@@ -147,8 +147,6 @@ export function CreatePaymentDialog({ onSuccess }: CreatePaymentDialogProps) {
         paymentData.reference = reference;
       }
 
-      console.log("Sending payment data:", paymentData);
-
       const response = await fetch("/api/admin/abc/payments", {
         method: "POST",
         headers: {

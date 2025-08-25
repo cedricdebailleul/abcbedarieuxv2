@@ -11,6 +11,9 @@ interface Place {
   name: string;
   type: string;
   category?: string;
+  categories?: Array<{ 
+    category: { id: string; name: string; slug: string; color?: string | null; parentId?: string | null }
+  }>;
   description?: string;
   summary?: string;
   street: string;
@@ -52,7 +55,8 @@ interface Place {
   };
 }
 
-type PlaceFormData = Omit<Partial<Place>, "openingHours"> & {
+type PlaceFormData = Omit<Partial<Place>, "openingHours" | "categories"> & {
+  categories?: string[]; // Array of category IDs for the form
   openingHours?: Array<{
     dayOfWeek?: string;
     day?: string;
@@ -84,7 +88,8 @@ export default function EditPlacePage() {
           throw new Error("Erreur lors du chargement");
         }
         const data = await res.json();
-        setPlace(data as Place);
+        console.log("EditPage - API Response:", data);
+        setPlace(data.place as Place);
       } catch (e: unknown) {
         setError(
           e instanceof Error ? e.message : String(e) || "Erreur inconnue"
@@ -207,6 +212,7 @@ export default function EditPlacePage() {
     name: place.name,
     type: place.type,
     category: place.category || "",
+    categories: place.categories ? place.categories.map(cat => cat.category.id) : [],
     description: place.description || "",
     summary: place.summary || "",
     street: place.street,
@@ -251,6 +257,8 @@ export default function EditPlacePage() {
             closeTime: hour.close,
           })) || [],
   };
+
+  console.log("EditPage - initialData prepared for form:", initialData);
 
   const getStatusText = (status: string) => {
     switch (status) {

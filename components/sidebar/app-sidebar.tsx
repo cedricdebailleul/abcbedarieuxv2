@@ -9,6 +9,7 @@ import {
   IconSettings,
   IconBuilding,
   IconBell,
+  IconPackage,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import type * as React from "react";
@@ -49,6 +50,21 @@ const data = {
       title: "Articles",
       url: "/dashboard/posts",
       icon: IconFileDescription,
+    },
+    {
+      title: "Produits & Services",
+      url: "#",
+      icon: IconPackage,
+      items: [
+        {
+          title: "Ajouter",
+          url: "/dashboard/products-services",
+        },
+        {
+          title: "Gérer",
+          url: "/dashboard/products-services/manage",
+        },
+      ],
     },
     {
       title: "Favoris",

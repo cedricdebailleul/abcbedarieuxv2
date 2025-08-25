@@ -3,6 +3,7 @@
 import { Calendar, Euro, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { getPlaceEventsAction } from "@/actions/place-events";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,25 @@ interface EventData {
   } | null;
   _count: { participants: number };
 }
+
+const getGradientForId = (id: string): string => {
+  const gradients = [
+    'from-blue-400 to-blue-600',
+    'from-purple-400 to-purple-600',
+    'from-green-400 to-green-600',
+    'from-orange-400 to-orange-600',
+    'from-red-400 to-red-600',
+    'from-pink-400 to-pink-600',
+    'from-indigo-400 to-indigo-600',
+    'from-teal-400 to-teal-600',
+    'from-cyan-400 to-cyan-600',
+    'from-yellow-400 to-yellow-600',
+    'from-emerald-400 to-emerald-600',
+    'from-violet-400 to-violet-600'
+  ];
+  const index = id.charCodeAt(0) % gradients.length;
+  return gradients[index];
+};
 
 function formatEventDate(
   startDate: Date,
@@ -201,97 +221,91 @@ export function PlaceEventsTab({ placeId }: PlaceEventsTabProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 items-start">
           {events.map((event) => (
-            <Card
-              key={event.id}
-              className="group hover:shadow-md transition-shadow"
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
-                      <Link href={`/events/${event.slug}`}>{event.title}</Link>
-                    </CardTitle>
+            <Link key={event.id} href={`/events/${event.slug}`}>
+              <Card className="group transition-all duration-200 hover:shadow-md cursor-pointer overflow-hidden h-full flex flex-col">
+                {/* Image de couverture ou dégradé */}
+                <div className="relative h-48 w-full overflow-hidden">
+                  {event.coverImage ? (
+                    <Image
+                      src={event.coverImage}
+                      alt={event.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  ) : (
+                    <div className={`h-full w-full bg-gradient-to-br ${getGradientForId(event.id)} flex items-center justify-center`}>
+                      <div className="text-white/80 text-center p-4">
+                        <Calendar className="h-12 w-12 mx-auto mb-2 opacity-60" />
+                        <p className="text-sm font-medium opacity-80">{event.title.substring(0, 30)}...</p>
+                      </div>
+                    </div>
+                  )}
+                  {event.category && (
+                    <div className="absolute top-3 left-3">
+                      <Badge className="bg-white/90 text-black border-0 text-xs">
+                        <div
+                          className="w-2 h-2 rounded-full mr-1"
+                          style={{ backgroundColor: event.category.color || "#6B7280" }}
+                        />
+                        {event.category.name}
+                      </Badge>
+                    </div>
+                  )}
+                  {event.isFree && (
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-green-500 text-white border-0 text-xs">
+                        Gratuit
+                      </Badge>
+                    </div>
+                  )}
+                </div>
 
-                    <div className="flex items-center gap-2 mt-2">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg flex items-center gap-2 group-hover:text-primary transition-colors">
+                        <Calendar className="h-5 w-5 text-primary" />
+                        {event.title}
+                      </CardTitle>
+                      {event.summary && (
+                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                          {event.summary}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-0 mt-auto">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">
-                        {formatEventDate(
-                          event.startDate,
-                          event.endDate,
-                          event.isAllDay
+                        {formatEventDate(event.startDate, event.endDate, event.isAllDay)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-4">
+                        {!event.isFree && event.price && (
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Euro className="h-4 w-4" />
+                            <span>{event.price} {event.currency || "EUR"}</span>
+                          </div>
                         )}
-                      </span>
-                    </div>
-                  </div>
-
-                  {event.category && (
-                    <Badge
-                      variant="secondary"
-                      style={{
-                        backgroundColor: event.category.color
-                          ? `${event.category.color}15`
-                          : undefined,
-                        color: event.category.color || undefined,
-                        borderColor: event.category.color || undefined,
-                      }}
-                    >
-                      {event.category.name}
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-3">
-                {event.summary && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {event.summary}
-                  </p>
-                )}
-
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-4">
-                    {event.isFree ? (
-                      <span className="text-green-600 font-medium">
-                        Gratuit
-                      </span>
-                    ) : (
-                      event.price && (
                         <div className="flex items-center gap-1 text-muted-foreground">
-                          <Euro className="h-4 w-4" />
-                          <span>
-                            {event.price} {event.currency || "EUR"}
-                          </span>
+                          <Users className="h-4 w-4" />
+                          <span>{event._count.participants}</span>
                         </div>
-                      )
-                    )}
-
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>{event._count.participants}</span>
+                      </div>
                     </div>
                   </div>
-
-                  {event.organizer.slug && (
-                    <Link
-                      href={`/profile/${event.organizer.slug}`}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      par {event.organizer.name}
-                    </Link>
-                  )}
-                </div>
-
-                <div className="pt-2 border-t">
-                  <Button asChild size="sm" className="w-full">
-                    <Link href={`/events/${event.slug}`}>
-                      Voir l&apos;événement
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

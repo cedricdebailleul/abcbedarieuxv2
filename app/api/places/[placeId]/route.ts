@@ -148,6 +148,13 @@ export async function GET(
       include: {
         owner: { select: { id: true, name: true, email: true, image: true } },
         openingHours: { orderBy: { dayOfWeek: "asc" } },
+        categories: {
+          include: {
+            category: {
+              select: { id: true, name: true, slug: true, color: true, parentId: true }
+            }
+          }
+        },
         reviews: {
           include: { user: { select: { id: true, name: true, image: true } } },
           where: session?.user?.role === "admin" ? {} : { status: "APPROVED" },

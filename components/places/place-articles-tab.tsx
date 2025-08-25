@@ -4,7 +4,7 @@ import { FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getPlacePostsAction } from "@/actions/place-posts";
 import { PostCard } from "@/components/posts/post-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface PlaceArticlesTabProps {
   placeId: string;
@@ -22,9 +22,22 @@ interface PostData {
   updatedAt: Date;
   coverImage?: string | null;
   author: { id: string; name: string; image?: string | null };
-  category?: { id: string; name: string; slug: string; color?: string | null } | null;
-  place?: { id: string; name: string; slug: string; type: string; city?: string | null } | null;
-  tags: Array<{ tag: { id: string; name: string; slug: string; color?: string | null } }>;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+    color?: string | null;
+  } | null;
+  place?: {
+    id: string;
+    name: string;
+    slug: string;
+    type: string;
+    city?: string | null;
+  } | null;
+  tags: Array<{
+    tag: { id: string; name: string; slug: string; color?: string | null };
+  }>;
 }
 
 export function PlaceArticlesTab({ placeId }: PlaceArticlesTabProps) {
@@ -64,7 +77,9 @@ export function PlaceArticlesTab({ placeId }: PlaceArticlesTabProps) {
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Chargement des articles...</p>
+            <p className="text-sm text-muted-foreground">
+              Chargement des articles...
+            </p>
           </div>
         </div>
       </div>
@@ -105,7 +120,7 @@ export function PlaceArticlesTab({ placeId }: PlaceArticlesTabProps) {
           )}
         </h2>
       </div>
-      
+
       {posts.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
@@ -115,14 +130,14 @@ export function PlaceArticlesTab({ placeId }: PlaceArticlesTabProps) {
               </div>
               <h3 className="text-lg font-semibold mb-2">Aucun article</h3>
               <p className="text-muted-foreground max-w-sm mx-auto">
-                Aucun article n'a encore été publié pour cet établissement. 
+                Aucun article n&apos;a encore été publié pour cet établissement.
                 Revenez plus tard pour découvrir du nouveau contenu !
               </p>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {posts.map((post) => (
             <PostCard
               key={post.id}

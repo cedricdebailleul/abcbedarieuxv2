@@ -132,7 +132,7 @@ export function FavoriteButton({
         className={cn(
           size === "icon" ? "h-4 w-4" : "h-4 w-4 mr-2",
           "transition-all duration-200",
-          isFavorite ? "fill-current scale-110" : "hover:scale-105"
+          isFavorite ? "fill-current scale-110" : ""
         )} 
       />
       {showText && size !== "icon" && (

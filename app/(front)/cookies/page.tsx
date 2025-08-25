@@ -115,7 +115,6 @@ export default function CookiesPage() {
     // Sauvegarder les préférences en localStorage
     localStorage.setItem("cookiePreferences", JSON.stringify(prefs));
     // Ici vous pouvez ajouter la logique pour activer/désactiver les cookies
-    console.log("Préférences sauvegardées:", prefs);
   };
 
   const handleSavePreferences = () => {
