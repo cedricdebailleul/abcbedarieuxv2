@@ -5,6 +5,7 @@ import { MapPin, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { MapPlace, MapCategory } from "./interactive-map";
+import type { PlaceCluster } from "@/lib/map-utils";
 import {
   DEFAULT_CENTER,
   getPlacesBounds,
@@ -16,7 +17,7 @@ import { useGoogleMapsLoader } from "@/hooks/use-google-maps-loader";
 import { env } from "@/lib/env";
 
 interface MapViewProps {
-  places: MapPlace[];
+  places: (MapPlace | PlaceCluster)[];
   selectedPlace: MapPlace | null;
   onPlaceSelect: (place: MapPlace | null) => void;
   userLocation: { lat: number; lng: number } | null;
@@ -317,6 +318,54 @@ export function MapView({
     return markerDiv;
   };
 
+  // Créer un marker de cluster
+  const createClusterMarker = (cluster: PlaceCluster): HTMLElement => {
+    const markerDiv = document.createElement("div");
+    markerDiv.className = "cluster-marker";
+
+    const placeCount = cluster.places.length;
+    const color = "#10b981"; // Vert pour les clusters
+
+    // Créer un style adapté aux clusters
+    markerDiv.style.cssText = `
+      position: absolute;
+      transform: translate(-50%, -100%);
+      z-index: 800;
+    `;
+
+    markerDiv.innerHTML = `
+      <div style="position: relative;">
+        <div style="
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background-color: ${color};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 3px solid white;
+          box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+          cursor: pointer;
+        ">
+          <span style="color: white; font-size: 14px; font-weight: bold; line-height: 1;">${placeCount}</span>
+        </div>
+        <div style="
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          margin-left: -6px;
+          width: 0;
+          height: 0;
+          border-left: 6px solid transparent;
+          border-right: 6px solid transparent;
+          border-top: 8px solid ${color};
+        "></div>
+      </div>
+    `;
+
+    return markerDiv;
+  };
+
   // Mettre à jour les markers des places
   useEffect(() => {
     if (!mapInstanceRef.current || !window.google || !categoriesReady) {
@@ -335,34 +384,75 @@ export function MapView({
       markersRef.current.forEach((marker) => (marker.map = null));
       markersRef.current.clear();
 
-      // Créer les nouveaux markers
-      places.forEach((place) => {
-        if (!place.latitude || !place.longitude) return;
+      // Créer les nouveaux markers (places individuelles et clusters)
+      places.forEach((item) => {
+        if (!item.latitude || !item.longitude) return;
 
-        const markerContent = createCustomMarker(place);
+        // Vérifier si c'est un cluster ou une place individuelle
+        const isCluster = 'isCluster' in item && item.isCluster;
 
-        try {
-          const marker = new window.google.maps.marker.AdvancedMarkerElement({
-            map: mapInstanceRef.current,
-            position: { lat: place.latitude ?? 0, lng: place.longitude ?? 0 },
-            content: markerContent,
-            title: place.name,
-            zIndex: place.isFeatured ? 1000 : 500,
-          });
+        if (isCluster) {
+          // Créer un marker de cluster
+          const cluster = item as PlaceCluster;
+          const markerContent = createClusterMarker(cluster);
 
-          marker.addListener("click", () => {
-            onPlaceSelect(place);
-
-            // Animer vers le marker sélectionné
-            mapInstanceRef.current?.panTo({
-              lat: place.latitude ?? 0,
-              lng: place.longitude ?? 0,
+          try {
+            const marker = new window.google.maps.marker.AdvancedMarkerElement({
+              map: mapInstanceRef.current,
+              position: { lat: cluster.latitude ?? 0, lng: cluster.longitude ?? 0 },
+              content: markerContent,
+              title: `${cluster.places.length} établissements à ${cluster.address}`,
+              zIndex: 800,
             });
-          });
 
-          markersRef.current.set(place.id, marker);
-        } catch (error) {
-          console.error("Error creating marker:", error);
+            // Gérer le clic sur le cluster (afficher le premier établissement ou une liste)
+            marker.addListener("click", () => {
+              // Pour le moment, sélectionner le premier établissement du cluster
+              // Dans une version future, on pourrait afficher une liste des établissements
+              const firstPlace = cluster.places[0];
+              if (firstPlace) {
+                onPlaceSelect(firstPlace);
+              }
+
+              // Animer vers le cluster
+              mapInstanceRef.current?.panTo({
+                lat: cluster.latitude ?? 0,
+                lng: cluster.longitude ?? 0,
+              });
+            });
+
+            markersRef.current.set(cluster.id, marker);
+          } catch (error) {
+            console.error("Error creating cluster marker:", error);
+          }
+        } else {
+          // Créer un marker de place individuelle
+          const place = item as MapPlace;
+          const markerContent = createCustomMarker(place);
+
+          try {
+            const marker = new window.google.maps.marker.AdvancedMarkerElement({
+              map: mapInstanceRef.current,
+              position: { lat: place.latitude ?? 0, lng: place.longitude ?? 0 },
+              content: markerContent,
+              title: place.name,
+              zIndex: place.isFeatured ? 1000 : 500,
+            });
+
+            marker.addListener("click", () => {
+              onPlaceSelect(place);
+
+              // Animer vers le marker sélectionné
+              mapInstanceRef.current?.panTo({
+                lat: place.latitude ?? 0,
+                lng: place.longitude ?? 0,
+              });
+            });
+
+            markersRef.current.set(place.id, marker);
+          } catch (error) {
+            console.error("Error creating marker:", error);
+          }
         }
       });
     }, 50);

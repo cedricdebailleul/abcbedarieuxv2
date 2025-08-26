@@ -7,7 +7,7 @@ import { PlaceCard } from "./place-card";
 import { MobileMapFilters } from "./mobile-map-filters";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
-import { calculateDistance } from "@/lib/map-utils";
+import { calculateDistance, clusterPlacesByAddress, PlaceCluster } from "@/lib/map-utils";
 import { computeOpeningStatus } from "@/lib/opening-hours-utils";
 import { getPlaceTypeLabel, normalizeForSearch } from "@/lib/share-utils";
 
@@ -272,6 +272,26 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
     return filtered;
   }, [places, filters]);
 
+  // Appliquer le clustering sur les places filtrées
+  const clusteredItems = useMemo(() => {
+    return clusterPlacesByAddress(filteredPlaces);
+  }, [filteredPlaces]);
+
+  // Obtenir uniquement les places pour l'affichage en liste (déplier les clusters)
+  const placesForList = useMemo(() => {
+    const result: MapPlace[] = [];
+    clusteredItems.forEach(item => {
+      if ('isCluster' in item && item.isCluster) {
+        // C'est un cluster, ajouter toutes les places qu'il contient
+        result.push(...(item as PlaceCluster).places);
+      } else {
+        // C'est une place individuelle
+        result.push(item as MapPlace);
+      }
+    });
+    return result;
+  }, [clusteredItems]);
+
   // Vérifier s'il y a des filtres actifs
   const hasActiveFilters = !!(
     filters.search ||
@@ -289,7 +309,7 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           categories={categories}
-          placesCount={filteredPlaces.length}
+          placesCount={placesForList.length}
           totalPlaces={places.length}
           userLocation={userLocation}
         />
@@ -299,7 +319,7 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
       <div className="flex-1 relative">
         <MapView
           key={`map-${mapKey}`}
-          places={filteredPlaces}
+          places={clusteredItems}
           selectedPlace={selectedPlace}
           onPlaceSelect={setSelectedPlace}
           userLocation={userLocation}
@@ -349,7 +369,7 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           categories={categories}
-          placesCount={filteredPlaces.length}
+          placesCount={placesForList.length}
           totalPlaces={places.length}
           userLocation={userLocation}
           onClose={() => setShowMobileFilters(false)}
