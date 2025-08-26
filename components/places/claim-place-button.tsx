@@ -8,6 +8,7 @@ interface ClaimPlaceButtonProps {
   placeId: string;
   placeName: string;
   hasOwner: boolean;
+  placeType?: string;
 }
 
 interface ClaimStatus {
@@ -26,6 +27,7 @@ export function ClaimPlaceButton({
   placeId,
   placeName,
   hasOwner,
+  placeType,
 }: ClaimPlaceButtonProps) {
   const { data: status } = useSession();
   const [claimStatus, setClaimStatus] = useState<ClaimStatus | null>(null);
@@ -335,15 +337,21 @@ export function ClaimPlaceButton({
 
   // Bouton pour ouvrir le formulaire de revendication
   if (claimStatus.canClaim) {
+    const isAssociation = placeType === 'ASSOCIATION';
+    
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <h3 className="font-medium text-blue-900 mb-1">
-              Cette place vous appartient ?
+              {isAssociation 
+                ? "Vous êtes membre ou responsable de cette association ?" 
+                : "Cette place vous appartient ?"}
             </h3>
             <p className="text-sm text-blue-800">
-              Revendiquez-la pour la gérer et recevoir les avis clients.
+              {isAssociation
+                ? "Revendiquez-la pour la gérer et informer vos membres et le public."
+                : "Revendiquez-la pour la gérer et recevoir les avis clients."}
             </p>
           </div>
           <button
