@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// Configuration de la page pour le rendu statique avec revalidation
+export const revalidate = 3600; // Revalide toutes les heures
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -121,7 +124,7 @@ async function getHistoryData(): Promise<HistoryApiResponse> {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/api/history`,
       {
-        cache: "no-store", // Toujours récupérer les données fraîches
+        next: { revalidate: 3600 }, // Cache pendant 1 heure
       }
     );
 

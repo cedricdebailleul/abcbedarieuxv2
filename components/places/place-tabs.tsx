@@ -40,36 +40,36 @@ export function PlaceTabs({
 }: PlaceTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("about");
 
-  const allTabs = [
-    {
-      id: "about" as TabType,
-      label: "À propos",
-      icon: Info,
-    },
-    {
-      id: "articles" as TabType,
-      label: "Articles",
-      icon: FileText,
-    },
-    {
-      id: "events" as TabType,
-      label: "Événements",
-      icon: Calendar,
-    },
-    {
-      id: "products-services" as TabType,
-      label: "Produits & Services",
-      icon: ShoppingBag,
-    },
-    {
-      id: "reviews" as TabType,
-      label: "Avis",
-      icon: MessageSquare,
-    },
-  ];
-
   // Filtrer les onglets selon le type de place (mémorisé pour éviter les boucles)
   const tabs = useMemo(() => {
+    const allTabs = [
+      {
+        id: "about" as TabType,
+        label: "À propos",
+        icon: Info,
+      },
+      {
+        id: "articles" as TabType,
+        label: "Articles",
+        icon: FileText,
+      },
+      {
+        id: "events" as TabType,
+        label: "Événements",
+        icon: Calendar,
+      },
+      {
+        id: "products-services" as TabType,
+        label: "Produits & Services",
+        icon: ShoppingBag,
+      },
+      {
+        id: "reviews" as TabType,
+        label: "Avis",
+        icon: MessageSquare,
+      },
+    ];
+    
     return allTabs.filter(tab => {
       // Masquer l'onglet "Produits & Services" pour les associations
       if (tab.id === "products-services" && placeType === "ASSOCIATION") {

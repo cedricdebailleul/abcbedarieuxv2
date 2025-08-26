@@ -14,6 +14,7 @@ import {
   IconMail,
   IconFlag,
   IconTrendingUp,
+  IconDownload,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
@@ -137,6 +138,27 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         </Link>
+
+        {/* Export des données */}
+        <Link href="/dashboard/admin/export">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <IconDownload className="h-5 w-5 text-cyan-500" />
+                Export des données
+              </CardTitle>
+              <CardDescription>
+                Exporter les données de la plateforme pour sauvegarde
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <IconTrendingUp className="h-4 w-4" />
+                Sauvegarde et archivage
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <Card>
@@ -181,6 +203,13 @@ export default function AdminPage() {
             >
               <IconAward className="h-4 w-4 text-yellow-500" />
               <span className="text-sm font-medium">Attribuer des badges</span>
+            </Link>
+            <Link
+              href="/dashboard/admin/export"
+              className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+            >
+              <IconDownload className="h-4 w-4 text-cyan-500" />
+              <span className="text-sm font-medium">Exporter les données</span>
             </Link>
           </div>
         </CardContent>
