@@ -3,19 +3,20 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { 
+import {
   PartnerCreateSchema,
   PartnerFilters,
   PartnerWhereCondition,
   PartnerListResponse,
-  PARTNER_TYPES,
-  PartnerType,
   isValidPartnerType,
-  preparePartnerForDatabase
+  preparePartnerForDatabase,
 } from "@/lib/types/partners";
+import { Prisma } from "@/lib/generated/prisma";
 
 // GET - Récupérer tous les partenaires avec filtres et pagination
-export async function GET(request: NextRequest): Promise<NextResponse<PartnerListResponse | { error: string }>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<PartnerListResponse | { error: string }>> {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
@@ -38,7 +39,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<PartnerLis
       page: parseInt(url.searchParams.get("page") || "1", 10),
       limit: parseInt(url.searchParams.get("limit") || "10", 10),
       sortBy: url.searchParams.get("sortBy") || "createdAt",
-      sortOrder: (url.searchParams.get("sortOrder") as "asc" | "desc") || "desc",
+      sortOrder:
+        (url.searchParams.get("sortOrder") as "asc" | "desc") || "desc",
     };
 
     // Construction des filtres de base de données
@@ -52,7 +54,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<PartnerLis
       ];
     }
 
-    if (filters.type && filters.type !== "all" && isValidPartnerType(filters.type)) {
+    if (
+      filters.type &&
+      filters.type !== "all" &&
+      isValidPartnerType(filters.type)
+    ) {
       where.partnerType = filters.type;
     }
 
@@ -63,12 +69,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<PartnerLis
     // Récupération des partenaires avec pagination
     const [partners, totalCount] = await Promise.all([
       prisma.partner.findMany({
-        where: where as any, // Cast nécessaire pour la compatibilité Prisma
-        orderBy: { [filters.sortBy!]: filters.sortOrder },
+        where: where as Prisma.PartnerWhereInput, // Use a specific Prisma type instead of any
+        orderBy: { [filters.sortBy!]: filters.sortOrder as Prisma.SortOrder },
         skip: ((filters.page || 1) - 1) * (filters.limit || 10),
         take: filters.limit || 10,
       }),
-      prisma.partner.count({ where: where as any }),
+      prisma.partner.count({ where: where as Prisma.PartnerWhereInput }),
     ]);
 
     // Statistiques pour le dashboard
@@ -90,7 +96,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PartnerLis
       },
       stats: {
         total: totalCount,
-        featured: partners.filter(p => p.isFeatured).length,
+        featured: partners.filter((p) => p.isFeatured).length,
         byType: stats.reduce(
           (acc, stat) => {
             acc[stat.partnerType] = stat._count.id;
@@ -145,7 +151,7 @@ export async function POST(request: NextRequest) {
     };
 
     const partner = await prisma.partner.create({
-      data: partnerData as any, // Cast nécessaire pour la compatibilité Prisma
+      data: partnerData as Prisma.PartnerCreateInput, // Use specific Prisma type instead of any
     });
 
     return NextResponse.json(partner, { status: 201 });

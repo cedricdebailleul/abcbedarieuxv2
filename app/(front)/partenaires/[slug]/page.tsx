@@ -15,7 +15,6 @@ import {
   Star,
   Building2,
   Users,
-  Award,
   TrendingUp,
   Handshake,
   Package,
@@ -50,7 +49,7 @@ const partnerTypeLabels = {
   COMMERCIAL: "Partenaire Commercial",
   INSTITUTIONAL: "Partenaire Institutionnel",
   MEDIA: "Partenaire Média",
-  TECHNICAL: "Partenaire Technique", 
+  TECHNICAL: "Partenaire Technique",
   SPONSOR: "Sponsor",
   SUPPLIER: "Fournisseur",
   OTHER: "Autre Partenaire",
@@ -76,16 +75,21 @@ const partnerTypeIcons = {
   OTHER: Building2,
 };
 
-async function getPartner(slug: string): Promise<{ partner: Partner; similarPartners: Partner[] } | null> {
+async function getPartner(
+  slug: string
+): Promise<{ partner: Partner; similarPartners: Partner[] } | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/partners/${slug}`, {
-      next: { revalidate: 3600 } // Cache for 1 hour
-    });
-    
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/partners/${slug}`,
+      {
+        next: { revalidate: 3600 }, // Cache for 1 hour
+      }
+    );
+
     if (!response.ok) {
       return null;
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error("Error fetching partner:", error);
@@ -93,7 +97,9 @@ async function getPartner(slug: string): Promise<{ partner: Partner; similarPart
   }
 }
 
-export async function generateMetadata({ params }: PartnerPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PartnerPageProps): Promise<Metadata> {
   const data = await getPartner(params.slug);
 
   if (!data) {
@@ -106,7 +112,9 @@ export async function generateMetadata({ params }: PartnerPageProps): Promise<Me
 
   return {
     title: `${partner.name} - Partenaire ABC Bédarieux`,
-    description: partner.description || `Découvrez ${partner.name}, ${partnerTypeLabels[partner.partnerType as keyof typeof partnerTypeLabels]} d'ABC Bédarieux`,
+    description:
+      partner.description ||
+      `Découvrez ${partner.name}, ${partnerTypeLabels[partner.partnerType as keyof typeof partnerTypeLabels]} d'ABC Bédarieux`,
     openGraph: {
       title: `${partner.name} - Partenaire ABC Bédarieux`,
       description: partner.description,
@@ -130,7 +138,8 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
   }
 
   const { partner, similarPartners } = data;
-  const TypeIcon = partnerTypeIcons[partner.partnerType as keyof typeof partnerTypeIcons];
+  const TypeIcon =
+    partnerTypeIcons[partner.partnerType as keyof typeof partnerTypeIcons];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fr-FR", {
@@ -197,9 +206,13 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
                   className={`${partnerTypeColors[partner.partnerType as keyof typeof partnerTypeColors]} font-medium`}
                 >
                   <TypeIcon className="w-3 h-3 mr-1" />
-                  {partnerTypeLabels[partner.partnerType as keyof typeof partnerTypeLabels]}
+                  {
+                    partnerTypeLabels[
+                      partner.partnerType as keyof typeof partnerTypeLabels
+                    ]
+                  }
                 </Badge>
-                
+
                 {partner.isFeatured && (
                   <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
                     <Star className="w-3 h-3 mr-1 fill-current" />
@@ -208,9 +221,7 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
                 )}
 
                 {partner.category && (
-                  <Badge variant="secondary">
-                    {partner.category}
-                  </Badge>
+                  <Badge variant="secondary">{partner.category}</Badge>
                 )}
               </div>
 
@@ -344,7 +355,11 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
                     Type de partenariat
                   </p>
                   <p className="text-sm">
-                    {partnerTypeLabels[partner.partnerType as keyof typeof partnerTypeLabels]}
+                    {
+                      partnerTypeLabels[
+                        partner.partnerType as keyof typeof partnerTypeLabels
+                      ]
+                    }
                   </p>
                 </div>
 
@@ -411,7 +426,8 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
             Vous aussi, rejoignez nos partenaires
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            Découvrez les avantages d&apos;un partenariat avec ABC Bédarieux et développez votre activité localement.
+            Découvrez les avantages d&apos;un partenariat avec ABC Bédarieux et
+            développez votre activité localement.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Button asChild size="lg">
@@ -421,9 +437,7 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
               </Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
-              <Link href="/partenaires">
-                Voir tous les partenaires
-              </Link>
+              <Link href="/partenaires">Voir tous les partenaires</Link>
             </Button>
           </div>
         </div>
