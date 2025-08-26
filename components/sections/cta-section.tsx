@@ -8,7 +8,7 @@ import { ArrowRight, Users, Heart, Star } from "lucide-react";
 export function CTASection() {
   return (
     <section className="py-16 bg-gradient-to-br from-primary/5 via-background to-primary/10">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-8">
         <Card className="overflow-hidden border-2 border-primary/20 shadow-xl p-6">
           <CardContent className="p-0">
             <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -63,9 +63,9 @@ export function CTASection() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col gap-4">
                     <RegistrationDialog size="lg" className="flex-1">
-                      <Button size="lg" className="w-1/2 xl:w-full group">
+                      <Button size="lg" className="w-full">
                         Adhérer maintenant
                         <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
@@ -75,7 +75,7 @@ export function CTASection() {
                       variant="outline"
                       size="lg"
                       asChild
-                      className="flex-1"
+                      className="w-full"
                     >
                       <a href="/contact">En savoir plus</a>
                     </Button>
@@ -84,7 +84,7 @@ export function CTASection() {
               </div>
 
               {/* Section visuelle */}
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center rounded-2xl">
+              <div className="bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center rounded-2xl py-6">
                 <div className="text-center">
                   <div className="inline-flex items-center justify-center size-24 bg-primary/10  mb-6">
                     <Users className="size-12 text-primary" />
