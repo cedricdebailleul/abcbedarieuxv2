@@ -18,6 +18,7 @@ interface Place {
   street: string;
   city: string;
   slug: string;
+  type?: string;
 }
 
 interface ClaimPlacePageProps {
@@ -222,15 +223,20 @@ export default function ClaimPlacePage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Revendiquer la place : {place.name}</CardTitle>
+          <CardTitle>
+            {place.type === 'ASSOCIATION' 
+              ? `Revendiquer l'association : ${place.name}`
+              : `Revendiquer la place : ${place.name}`}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-4">
             {place.street}, {place.city}
           </p>
           <p className="text-sm text-muted-foreground mb-6">
-            Pour revendiquer cette place, veuillez fournir des informations
-            détaillées prouvant votre lien avec cet établissement.
+            {place.type === 'ASSOCIATION'
+              ? "Pour revendiquer cette association, veuillez fournir des informations détaillées prouvant votre lien avec cette organisation (membre actif, responsable, président, etc.)."
+              : "Pour revendiquer cette place, veuillez fournir des informations détaillées prouvant votre lien avec cet établissement."}
           </p>
         </CardContent>
       </Card>
@@ -310,7 +316,9 @@ export default function ClaimPlacePage({
 
             <div>
               <Label htmlFor="relationship">
-                Votre relation avec l&apos;établissement *
+                {place.type === 'ASSOCIATION'
+                  ? "Votre relation avec l'association *"
+                  : "Votre relation avec l'établissement *"}
               </Label>
               <select
                 id="relationship"
@@ -329,11 +337,23 @@ export default function ClaimPlacePage({
                 className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 required
               >
-                <option value="owner">Propriétaire</option>
-                <option value="manager">Gérant</option>
-                <option value="employee">Employé</option>
-                <option value="family">Membre de la famille</option>
-                <option value="other">Autre</option>
+                {place.type === 'ASSOCIATION' ? (
+                  <>
+                    <option value="owner">Président / Responsable</option>
+                    <option value="manager">Membre du bureau</option>
+                    <option value="employee">Membre actif</option>
+                    <option value="family">Membre</option>
+                    <option value="other">Autre</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="owner">Propriétaire</option>
+                    <option value="manager">Gérant</option>
+                    <option value="employee">Employé</option>
+                    <option value="family">Membre de la famille</option>
+                    <option value="other">Autre</option>
+                  </>
+                )}
               </select>
             </div>
 
@@ -345,7 +365,9 @@ export default function ClaimPlacePage({
                 onChange={(e) =>
                   setFormData({ ...formData, message: e.target.value })
                 }
-                placeholder="Expliquez votre relation avec cet établissement et pourquoi vous souhaitez le revendiquer. Minimum 20 caractères."
+                placeholder={place.type === 'ASSOCIATION'
+                  ? "Expliquez votre relation avec cette association et pourquoi vous souhaitez la revendiquer. Minimum 20 caractères."
+                  : "Expliquez votre relation avec cet établissement et pourquoi vous souhaitez le revendiquer. Minimum 20 caractères."}
                 className="min-h-[120px] mt-2"
                 required
               />
@@ -377,11 +399,24 @@ export default function ClaimPlacePage({
                 Types de preuves acceptées :
               </h4>
               <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Kbis ou documents officiels de l&apos;entreprise</li>
-                <li>• Factures ou contrats au nom de l&apos;établissement</li>
-                <li>• Photos de vous dans l&apos;établissement</li>
-                <li>• Attestation d&apos;emploi ou contrat de travail</li>
-                <li>• Tout autre document prouvant votre lien</li>
+                {place.type === 'ASSOCIATION' ? (
+                  <>
+                    <li>• Statuts de l&apos;association</li>
+                    <li>• Récépissé de déclaration en préfecture</li>
+                    <li>• PV d&apos;assemblée générale ou de réunion de bureau</li>
+                    <li>• Carte de membre ou attestation de membership</li>
+                    <li>• Documents officiels au nom de l&apos;association</li>
+                    <li>• Photos d&apos;événements ou d&apos;activités</li>
+                  </>
+                ) : (
+                  <>
+                    <li>• Kbis ou documents officiels de l&apos;entreprise</li>
+                    <li>• Factures ou contrats au nom de l&apos;établissement</li>
+                    <li>• Photos de vous dans l&apos;établissement</li>
+                    <li>• Attestation d&apos;emploi ou contrat de travail</li>
+                    <li>• Tout autre document prouvant votre lien</li>
+                  </>
+                )}
               </ul>
             </div>
 

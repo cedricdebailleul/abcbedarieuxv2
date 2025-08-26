@@ -21,6 +21,7 @@ export async function GET(
         slug: true,
         street: true,
         city: true,
+        type: true,
         ownerId: true,
       },
     });
