@@ -7,7 +7,7 @@ import {
   MessageSquare,
   ShoppingBag,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { PlaceArticlesTab } from "./place-articles-tab";
 import { PlaceEventsTab } from "./place-events-tab";
 import { PlaceProductsServicesWrapper } from "./place-products-services-wrapper";
@@ -20,6 +20,7 @@ interface PlaceTabsProps {
   reviewsContent?: React.ReactNode;
   ratingsContent?: React.ReactNode;
   isOwner?: boolean;
+  placeType?: string;
 }
 
 type TabType =
@@ -35,10 +36,11 @@ export function PlaceTabs({
   aboutContent,
   reviewsContent,
   isOwner = false,
+  placeType,
 }: PlaceTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("about");
 
-  const tabs = [
+  const allTabs = [
     {
       id: "about" as TabType,
       label: "À propos",
@@ -65,6 +67,25 @@ export function PlaceTabs({
       icon: MessageSquare,
     },
   ];
+
+  // Filtrer les onglets selon le type de place (mémorisé pour éviter les boucles)
+  const tabs = useMemo(() => {
+    return allTabs.filter(tab => {
+      // Masquer l'onglet "Produits & Services" pour les associations
+      if (tab.id === "products-services" && placeType === "ASSOCIATION") {
+        return false;
+      }
+      return true;
+    });
+  }, [placeType]);
+
+  // Rediriger vers "about" si l'onglet actif n'est plus disponible
+  useEffect(() => {
+    // Seulement vérifier quand le type de place change
+    if (placeType === "ASSOCIATION" && activeTab === "products-services") {
+      setActiveTab("about");
+    }
+  }, [placeType, activeTab]);
 
   return (
     <div className="space-y-4 sm:space-y-6 relative z-20">
