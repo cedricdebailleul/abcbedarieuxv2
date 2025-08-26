@@ -203,6 +203,7 @@ export default function EnhancedHeader({ className }: HeaderProps) {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [activeMobileSection, setActiveMobileSection] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_focusedItem, setFocusedItem] = useState<string | null>(null);
 
@@ -340,6 +341,7 @@ export default function EnhancedHeader({ className }: HeaderProps) {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+    setActiveMobileSection(null);
     setAnnounceText("Menu mobile fermé.");
     mobileMenuButtonRef.current?.focus();
   };
@@ -384,6 +386,10 @@ export default function EnhancedHeader({ className }: HeaderProps) {
       event.preventDefault();
       handleSectionClick(sectionId);
     }
+  };
+
+  const handleMobileSectionToggle = (sectionId: string) => {
+    setActiveMobileSection(activeMobileSection === sectionId ? null : sectionId);
   };
 
   const getColorClasses = (color: string) => {
@@ -817,58 +823,121 @@ export default function EnhancedHeader({ className }: HeaderProps) {
 
                 {/* Navigation */}
                 <div className="flex-1 overflow-y-auto bg-white">
-                  <div className="p-4 space-y-4">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Menu Principal</h2>
-                    
-                    <Link 
-                      href="/" 
-                      onClick={handleMenuItemClick}
-                      className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg border"
-                    >
-                      <Home className="w-6 h-6 text-blue-600" />
-                      <span className="font-medium text-gray-900">Accueil</span>
-                    </Link>
-                    
-                    <Link 
-                      href="/places" 
-                      onClick={handleMenuItemClick}
-                      className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg border"
-                    >
-                      <MapPin className="w-6 h-6 text-green-600" />
-                      <span className="font-medium text-gray-900">Établissements</span>
-                    </Link>
-                    
-                    <Link 
-                      href="/events" 
-                      onClick={handleMenuItemClick}
-                      className="flex items-center space-x-3 p-4 bg-purple-50 rounded-lg border"
-                    >
-                      <Calendar className="w-6 h-6 text-purple-600" />
-                      <span className="font-medium text-gray-900">Événements</span>
-                    </Link>
-                    
-                    <Link 
-                      href="/carte" 
-                      onClick={handleMenuItemClick}
-                      className="flex items-center space-x-3 p-4 bg-orange-50 rounded-lg border"
-                    >
-                      <Map className="w-6 h-6 text-orange-600" />
-                      <span className="font-medium text-gray-900">Carte</span>
-                    </Link>
-                    
-                    <Link 
-                      href="/contact" 
-                      onClick={handleMenuItemClick}
-                      className="flex items-center space-x-3 p-4 bg-red-50 rounded-lg border"
-                    >
-                      <Users className="w-6 h-6 text-red-600" />
-                      <span className="font-medium text-gray-900">Contact</span>
-                    </Link>
-                    
-                    <div className="pt-4 border-t">
-                      <h3 className="text-lg font-semibold mb-3">Découvrir</h3>
-                      <Link href="/histoire" onClick={handleMenuItemClick} className="block p-2 text-gray-700">Notre Histoire</Link>
-                      <Link href="/about" onClick={handleMenuItemClick} className="block p-2 text-gray-700">À propos</Link>
+                  <div className="p-4 space-y-3">
+                    {/* Liens rapides */}
+                    <div className="space-y-2 mb-6">
+                      {quickLinks.map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          onClick={handleMenuItemClick}
+                          className="block p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
+
+                    {/* Sections du menu avec sous-menus */}
+                    <div className="space-y-2">
+                      {menuData.map((section) => {
+                        const Icon = section.icon;
+                        const isOpen = activeMobileSection === section.id;
+                        
+                        return (
+                          <div key={section.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                            {/* Header de section */}
+                            <button
+                              onClick={() => handleMobileSectionToggle(section.id)}
+                              className={cn(
+                                "w-full flex items-center justify-between p-4 text-left transition-colors",
+                                isOpen ? "bg-gray-50" : "bg-white hover:bg-gray-50"
+                              )}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className={cn(
+                                  "w-10 h-10 rounded-lg flex items-center justify-center",
+                                  getColorClasses(section.color)
+                                )}>
+                                  <Icon className="w-5 h-5" />
+                                </div>
+                                <span className="font-medium text-gray-900">{section.title}</span>
+                              </div>
+                              <ChevronDown className={cn(
+                                "w-5 h-5 text-gray-500 transition-transform",
+                                isOpen && "rotate-180"
+                              )} />
+                            </button>
+
+                            {/* Sous-menu */}
+                            <AnimatePresence>
+                              {isOpen && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="bg-gray-50 p-3 space-y-2">
+                                    {section.items.map((item) => {
+                                      const ItemIcon = item.icon || section.icon;
+                                      return (
+                                        <Link
+                                          key={item.id}
+                                          href={item.href}
+                                          onClick={handleMenuItemClick}
+                                          className={cn(
+                                            "flex items-center space-x-3 p-3 rounded-lg transition-colors",
+                                            "hover:bg-white hover:shadow-sm",
+                                            item.featured && "bg-white border border-primary/20"
+                                          )}
+                                        >
+                                          <ItemIcon className="w-4 h-4 text-gray-500" />
+                                          <div className="flex-1">
+                                            <div className="font-medium text-gray-900">
+                                              {item.label}
+                                              {item.featured && (
+                                                <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary text-white">
+                                                  ★
+                                                </span>
+                                              )}
+                                            </div>
+                                            {item.description && (
+                                              <div className="text-xs text-gray-600 mt-1">
+                                                {item.description}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </Link>
+                                      );
+                                    })}
+
+                                    {/* Item featured en bas */}
+                                    {section.featured && (
+                                      <Link
+                                        href={section.featured.href}
+                                        onClick={handleMenuItemClick}
+                                        className="block p-3 mt-3 bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-lg"
+                                      >
+                                        <div className="flex items-center space-x-3">
+                                          {section.featured.icon && (
+                                            <section.featured.icon className="w-4 h-4 text-primary" />
+                                          )}
+                                          <div>
+                                            <div className="font-medium text-gray-900">{section.featured.label}</div>
+                                            <div className="text-xs text-gray-600">{section.featured.description}</div>
+                                          </div>
+                                        </div>
+                                      </Link>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
