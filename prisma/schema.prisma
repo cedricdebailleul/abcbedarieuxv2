@@ -69,6 +69,7 @@ model User {
   abcMeetingsCreated    AbcMeeting[]           @relation("AbcMeetingCreator")
   abcDocumentsUploaded  AbcDocument[]          @relation("AbcDocumentUploader")
   abcBulletinsCreated   AbcBulletin[]          @relation("AbcBulletinCreator")
+  whatsappBotConfigs    WhatsAppBotConfig[]
 
   // Index pour les performances
   @@unique([email])
@@ -2126,4 +2127,173 @@ model HistoryTimelineEvent {
   
   @@index([configId, order])
   @@map("history_timeline_event")
+}
+
+// ============================================================
+//                      CHATBOT WHATSAPP
+// ============================================================
+
+// Conversations WhatsApp
+model WhatsAppConversation {
+  id          String   @id @default(cuid())
+  phoneNumber String   // Numéro de téléphone du contact
+  name        String?  // Nom du contact (optionnel)
+  isActive    Boolean  @default(true)
+  lastMessage DateTime @default(now())
+  
+  // Métadonnées
+  metadata    Json?    // Informations supplémentaires sur le contact
+  
+  // Relations
+  messages    WhatsAppMessage[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([phoneNumber])
+  @@index([phoneNumber])
+  @@index([isActive])
+  @@index([lastMessage])
+  @@map("whatsapp_conversations")
+}
+
+// Messages WhatsApp
+model WhatsAppMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  messageId      String?  // ID du message WhatsApp (optionnel)
+  
+  // Contenu du message
+  content        String
+  messageType    WhatsAppMessageType @default(TEXT)
+  
+  // Direction du message
+  isFromBot      Boolean  @default(false)
+  
+  // Statut du message
+  status         WhatsAppMessageStatus @default(PENDING)
+  
+  // Métadonnées
+  metadata       Json?    // Pièces jointes, coordonnées, etc.
+  
+  // Relations
+  conversation   WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([conversationId])
+  @@index([messageId])
+  @@index([isFromBot])
+  @@index([status])
+  @@index([createdAt])
+  @@map("whatsapp_messages")
+}
+
+// Sessions de bot pour suivre le contexte
+model WhatsAppBotSession {
+  id             String   @id @default(cuid())
+  phoneNumber    String   
+  currentFlow    String?  // Flux actuel (ex: "search_place", "get_events")
+  currentStep    String?  // Étape actuelle dans le flux
+  context        Json?    // Contexte de la conversation (données temporaires)
+  
+  // État de la session
+  isActive       Boolean  @default(true)
+  expiresAt      DateTime // Expiration de la session
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@unique([phoneNumber])
+  @@index([phoneNumber])
+  @@index([isActive])
+  @@index([expiresAt])
+  @@map("whatsapp_bot_sessions")
+}
+
+// Configuration du chatbot
+model WhatsAppBotConfig {
+  id             String   @id @default(cuid())
+  
+  // Configuration générale
+  isEnabled      Boolean  @default(true)
+  welcomeMessage String   @default("Bonjour ! Je suis l'assistant d'ABC Bédarieux. Comment puis-je vous aider ?")
+  
+  // Messages prédéfinis
+  messages       Json     // Messages pour différentes situations
+  
+  // Configuration des flux
+  flows          Json     // Définition des flux conversationnels
+  
+  // Paramètres
+  sessionTimeout Int      @default(3600) // Timeout en secondes
+  maxMessages    Int      @default(100)  // Max messages par heure par utilisateur
+  
+  // Métadonnées
+  updatedBy      String   // ID de l'admin qui a modifié
+  updatedByUser  User     @relation(fields: [updatedBy], references: [id])
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@map("whatsapp_bot_config")
+}
+
+// Statistiques du chatbot
+model WhatsAppBotStats {
+  id               String   @id @default(cuid())
+  date             DateTime @db.Date
+  
+  // Métriques quotidiennes
+  totalMessages    Int      @default(0)
+  totalUsers       Int      @default(0)
+  newUsers         Int      @default(0)
+  activeUsers      Int      @default(0)
+  
+  // Métriques par type
+  textMessages     Int      @default(0)
+  imageMessages    Int      @default(0)
+  locationMessages Int      @default(0)
+  contactMessages  Int      @default(0)
+  
+  // Métriques de flux
+  searchQueries    Int      @default(0)
+  eventQueries     Int      @default(0)
+  placeQueries     Int      @default(0)
+  helpRequests     Int      @default(0)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@unique([date])
+  @@index([date])
+  @@map("whatsapp_bot_stats")
+}
+
+// ============================================================
+//                      ENUMS WHATSAPP
+// ============================================================
+
+enum WhatsAppMessageType {
+  TEXT
+  IMAGE
+  AUDIO
+  VIDEO
+  DOCUMENT
+  LOCATION
+  CONTACT
+  STICKER
+  INTERACTIVE
+  BUTTON
+  LIST
+}
+
+enum WhatsAppMessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  EXPIRED
 }
