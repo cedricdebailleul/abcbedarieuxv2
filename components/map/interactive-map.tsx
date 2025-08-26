@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MapFilters } from "./map-filters";
 import { MapView } from "./map-view";
 import { PlaceCard } from "./place-card";
+import { ClusterCard } from "./cluster-card";
 import { MobileMapFilters } from "./mobile-map-filters";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
@@ -113,6 +114,7 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
   });
 
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
+  const [selectedCluster, setSelectedCluster] = useState<PlaceCluster | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [userLocation, setUserLocation] = useState<{
     lat: number;
@@ -321,7 +323,14 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
           key={`map-${mapKey}`}
           places={clusteredItems}
           selectedPlace={selectedPlace}
-          onPlaceSelect={setSelectedPlace}
+          onPlaceSelect={(place) => {
+            setSelectedPlace(place);
+            setSelectedCluster(null); // Fermer le cluster si une place est sélectionnée
+          }}
+          onClusterSelect={(cluster) => {
+            setSelectedCluster(cluster);
+            setSelectedPlace(null); // Fermer la place si un cluster est sélectionné
+          }}
           userLocation={userLocation}
           categories={categories}
           hasActiveFilters={hasActiveFilters}
@@ -351,12 +360,30 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
 
       {/* Place Card Popup */}
       {selectedPlace && (
-        <div className="absolute inset-0 z-50 lg:inset-auto lg:right-4 lg:top-4 lg:bottom-4 lg:w-96 pointer-events-none">
+        <div className="absolute inset-0 z-50 lg:inset-auto lg:right-4 lg:top-24 lg:bottom-4 lg:w-96 pointer-events-none">
           <div className="h-full pointer-events-auto">
             <PlaceCard
               place={selectedPlace}
               onClose={() => setSelectedPlace(null)}
               userLocation={userLocation}
+              className="h-full lg:h-auto lg:max-h-full lg:shadow-xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Cluster Card Popup */}
+      {selectedCluster && (
+        <div className="absolute inset-0 z-[60] lg:inset-auto lg:right-4 lg:top-24 lg:bottom-4 lg:w-96 pointer-events-none">
+          <div className="h-full pointer-events-auto">
+            <ClusterCard
+              places={selectedCluster.places}
+              address={selectedCluster.address}
+              onClose={() => setSelectedCluster(null)}
+              onPlaceSelect={(place) => {
+                setSelectedPlace(place);
+                setSelectedCluster(null);
+              }}
               className="h-full lg:h-auto lg:max-h-full lg:shadow-xl"
             />
           </div>

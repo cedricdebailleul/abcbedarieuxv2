@@ -20,6 +20,7 @@ interface MapViewProps {
   places: (MapPlace | PlaceCluster)[];
   selectedPlace: MapPlace | null;
   onPlaceSelect: (place: MapPlace | null) => void;
+  onClusterSelect?: (cluster: PlaceCluster) => void;
   userLocation: { lat: number; lng: number } | null;
   categories: MapCategory[];
   hasActiveFilters?: boolean;
@@ -29,6 +30,7 @@ export function MapView({
   places,
   selectedPlace,
   onPlaceSelect,
+  onClusterSelect,
   userLocation,
   categories,
   hasActiveFilters = false,
@@ -405,13 +407,16 @@ export function MapView({
               zIndex: 800,
             });
 
-            // Gérer le clic sur le cluster (afficher le premier établissement ou une liste)
+            // Gérer le clic sur le cluster (afficher la liste des établissements)
             marker.addListener("click", () => {
-              // Pour le moment, sélectionner le premier établissement du cluster
-              // Dans une version future, on pourrait afficher une liste des établissements
-              const firstPlace = cluster.places[0];
-              if (firstPlace) {
-                onPlaceSelect(firstPlace);
+              if (onClusterSelect) {
+                onClusterSelect(cluster);
+              } else {
+                // Fallback: sélectionner le premier établissement
+                const firstPlace = cluster.places[0];
+                if (firstPlace) {
+                  onPlaceSelect(firstPlace);
+                }
               }
 
               // Animer vers le cluster
@@ -576,7 +581,7 @@ export function MapView({
         <Button
           onClick={centerOnUser}
           size="icon"
-          className="absolute top-24 right-4 shadow-lg z-40"
+          className="absolute top-24 left-4 shadow-lg z-40"
           title="Recentrer sur ma position"
         >
           <Navigation className="w-4 h-4" />
