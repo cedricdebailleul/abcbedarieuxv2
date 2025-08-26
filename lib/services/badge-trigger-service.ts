@@ -27,16 +27,16 @@ export class BadgeTriggerService {
    */
   public async triggerUserRegistration(userId: string): Promise<void> {
     console.log(`🎖️ Triggering user registration badges for user: ${userId}`);
-    
+
     // EventContext reserved for future event tracking enhancement
 
     try {
       const engine = getBadgeEngine();
-      const results = await engine.awardEligibleBadges(userId, 'USER_CREATED');
-      
-      this.logBadgeResults('User Registration', results);
+      const results = await engine.awardEligibleBadges(userId, "USER_CREATED");
+
+      this.logBadgeResults("User Registration", results);
     } catch (error) {
-      console.error('Error triggering user registration badges:', error);
+      console.error("Error triggering user registration badges:", error);
     }
   }
 
@@ -45,25 +45,33 @@ export class BadgeTriggerService {
    */
   public async triggerProfileUpdate(userId: string): Promise<void> {
     console.log(`🎖️ Triggering profile update badges for user: ${userId}`);
-    
+
     // EventContext reserved for future event tracking enhancement
 
     try {
       const engine = getBadgeEngine();
-      const results = await engine.awardEligibleBadges(userId, 'PROFILE_COMPLETED');
-      
-      this.logBadgeResults('Profile Update', results);
+      const results = await engine.awardEligibleBadges(
+        userId,
+        "PROFILE_COMPLETED"
+      );
+
+      this.logBadgeResults("Profile Update", results);
     } catch (error) {
-      console.error('Error triggering profile update badges:', error);
+      console.error("Error triggering profile update badges:", error);
     }
   }
 
   /**
    * Déclenche l'évaluation des badges lors de la création d'une place
    */
-  public async triggerPlaceCreation(userId: string, placeId: string): Promise<void> {
-    console.log(`🎖️ Triggering place creation badges for user: ${userId}, place: ${placeId}`);
-    
+  public async triggerPlaceCreation(
+    userId: string,
+    placeId: string
+  ): Promise<void> {
+    console.log(
+      `🎖️ Triggering place creation badges for user: ${userId}, place: ${placeId}`
+    );
+
     // const eventContext: EventContext = {
     //   type: 'PLACE_CREATED',
     //   entityId: placeId,
@@ -74,20 +82,25 @@ export class BadgeTriggerService {
 
     try {
       const engine = getBadgeEngine();
-      const results = await engine.awardEligibleBadges(userId, 'PLACE_CREATED');
-      
-      this.logBadgeResults('Place Creation', results);
+      const results = await engine.awardEligibleBadges(userId, "PLACE_CREATED");
+
+      this.logBadgeResults("Place Creation", results);
     } catch (error) {
-      console.error('Error triggering place creation badges:', error);
+      console.error("Error triggering place creation badges:", error);
     }
   }
 
   /**
    * Déclenche l'évaluation des badges lors de la création d'un article
    */
-  public async triggerPostCreation(userId: string, postId: string): Promise<void> {
-    console.log(`🎖️ Triggering post creation badges for user: ${userId}, post: ${postId}`);
-    
+  public async triggerPostCreation(
+    userId: string,
+    postId: string
+  ): Promise<void> {
+    console.log(
+      `🎖️ Triggering post creation badges for user: ${userId}, post: ${postId}`
+    );
+
     // const eventContext: EventContext = {
     //   type: 'POST_CREATED',
     //   entityId: postId,
@@ -98,20 +111,25 @@ export class BadgeTriggerService {
 
     try {
       const engine = getBadgeEngine();
-      const results = await engine.awardEligibleBadges(userId, 'POST_CREATED');
-      
-      this.logBadgeResults('Post Creation', results);
+      const results = await engine.awardEligibleBadges(userId, "POST_CREATED");
+
+      this.logBadgeResults("Post Creation", results);
     } catch (error) {
-      console.error('Error triggering post creation badges:', error);
+      console.error("Error triggering post creation badges:", error);
     }
   }
 
   /**
    * Déclenche l'évaluation des badges lors de la publication d'un article
    */
-  public async triggerPostPublication(userId: string, postId: string): Promise<void> {
-    console.log(`🎖️ Triggering post publication badges for user: ${userId}, post: ${postId}`);
-    
+  public async triggerPostPublication(
+    userId: string,
+    postId: string
+  ): Promise<void> {
+    console.log(
+      `🎖️ Triggering post publication badges for user: ${userId}, post: ${postId}`
+    );
+
     // const eventContext: EventContext = {
     //   type: 'POST_PUBLISHED',
     //   entityId: postId,
@@ -122,20 +140,28 @@ export class BadgeTriggerService {
 
     try {
       const engine = getBadgeEngine();
-      const results = await engine.awardEligibleBadges(userId, 'POST_PUBLISHED');
-      
-      this.logBadgeResults('Post Publication', results);
+      const results = await engine.awardEligibleBadges(
+        userId,
+        "POST_PUBLISHED"
+      );
+
+      this.logBadgeResults("Post Publication", results);
     } catch (error) {
-      console.error('Error triggering post publication badges:', error);
+      console.error("Error triggering post publication badges:", error);
     }
   }
 
   /**
    * Déclenche l'évaluation des badges lors de la création d'un avis
    */
-  public async triggerReviewCreation(userId: string, reviewId: string): Promise<void> {
-    console.log(`🎖️ Triggering review creation badges for user: ${userId}, review: ${reviewId}`);
-    
+  public async triggerReviewCreation(
+    userId: string,
+    reviewId: string
+  ): Promise<void> {
+    console.log(
+      `🎖️ Triggering review creation badges for user: ${userId}, review: ${reviewId}`
+    );
+
     // const eventContext: EventContext = {
     //   type: 'REVIEW_CREATED',
     //   entityId: reviewId,
@@ -146,20 +172,28 @@ export class BadgeTriggerService {
 
     try {
       const engine = getBadgeEngine();
-      const results = await engine.awardEligibleBadges(userId, 'REVIEW_CREATED');
-      
-      this.logBadgeResults('Review Creation', results);
+      const results = await engine.awardEligibleBadges(
+        userId,
+        "REVIEW_CREATED"
+      );
+
+      this.logBadgeResults("Review Creation", results);
     } catch (error) {
-      console.error('Error triggering review creation badges:', error);
+      console.error("Error triggering review creation badges:", error);
     }
   }
 
   /**
    * Déclenche l'évaluation des badges lors de la création d'un événement
    */
-  public async triggerEventCreation(userId: string, eventId: string): Promise<void> {
-    console.log(`🎖️ Triggering event creation badges for user: ${userId}, event: ${eventId}`);
-    
+  public async triggerEventCreation(
+    userId: string,
+    eventId: string
+  ): Promise<void> {
+    console.log(
+      `🎖️ Triggering event creation badges for user: ${userId}, event: ${eventId}`
+    );
+
     // const eventContext: EventContext = {
     //   type: 'EVENT_CREATED',
     //   entityId: eventId,
@@ -170,20 +204,25 @@ export class BadgeTriggerService {
 
     try {
       const engine = getBadgeEngine();
-      const results = await engine.awardEligibleBadges(userId, 'EVENT_CREATED');
-      
-      this.logBadgeResults('Event Creation', results);
+      const results = await engine.awardEligibleBadges(userId, "EVENT_CREATED");
+
+      this.logBadgeResults("Event Creation", results);
     } catch (error) {
-      console.error('Error triggering event creation badges:', error);
+      console.error("Error triggering event creation badges:", error);
     }
   }
 
   /**
    * Déclenche l'évaluation des badges lors de la création d'un produit
    */
-  public async triggerProductCreation(userId: string, productId: string): Promise<void> {
-    console.log(`🎖️ Triggering product creation badges for user: ${userId}, product: ${productId}`);
-    
+  public async triggerProductCreation(
+    userId: string,
+    productId: string
+  ): Promise<void> {
+    console.log(
+      `🎖️ Triggering product creation badges for user: ${userId}, product: ${productId}`
+    );
+
     // const eventContext: EventContext = {
     //   type: 'PRODUCT_CREATED',
     //   entityId: productId,
@@ -194,20 +233,28 @@ export class BadgeTriggerService {
 
     try {
       const engine = getBadgeEngine();
-      const results = await engine.awardEligibleBadges(userId, 'PRODUCT_CREATED');
-      
-      this.logBadgeResults('Product Creation', results);
+      const results = await engine.awardEligibleBadges(
+        userId,
+        "PRODUCT_CREATED"
+      );
+
+      this.logBadgeResults("Product Creation", results);
     } catch (error) {
-      console.error('Error triggering product creation badges:', error);
+      console.error("Error triggering product creation badges:", error);
     }
   }
 
   /**
    * Déclenche l'évaluation des badges lors de la création d'un service
    */
-  public async triggerServiceCreation(userId: string, serviceId: string): Promise<void> {
-    console.log(`🎖️ Triggering service creation badges for user: ${userId}, service: ${serviceId}`);
-    
+  public async triggerServiceCreation(
+    userId: string,
+    serviceId: string
+  ): Promise<void> {
+    console.log(
+      `🎖️ Triggering service creation badges for user: ${userId}, service: ${serviceId}`
+    );
+
     // const eventContext: EventContext = {
     //   type: 'SERVICE_CREATED',
     //   entityId: serviceId,
@@ -218,11 +265,14 @@ export class BadgeTriggerService {
 
     try {
       const engine = getBadgeEngine();
-      const results = await engine.awardEligibleBadges(userId, 'SERVICE_CREATED');
-      
-      this.logBadgeResults('Service Creation', results);
+      const results = await engine.awardEligibleBadges(
+        userId,
+        "SERVICE_CREATED"
+      );
+
+      this.logBadgeResults("Service Creation", results);
     } catch (error) {
-      console.error('Error triggering service creation badges:', error);
+      console.error("Error triggering service creation badges:", error);
     }
   }
 
@@ -230,22 +280,26 @@ export class BadgeTriggerService {
    * Vérifie et attribue les badges basés sur le temps (à exécuter périodiquement)
    */
   public async checkTimeBadges(userId?: string): Promise<void> {
-    console.log(`🎖️ Checking time-based badges${userId ? ` for user: ${userId}` : ' for all users'}`);
-    
+    console.log(
+      `🎖️ Checking time-based badges${userId ? ` for user: ${userId}` : " for all users"}`
+    );
+
     try {
       const engine = getBadgeEngine();
-      
+
       if (userId) {
         // Check for specific user
         const results = await engine.awardEligibleBadges(userId);
-        this.logBadgeResults('Time-based Check (User)', results);
+        this.logBadgeResults("Time-based Check (User)", results);
       } else {
         // This would be a more complex implementation for all users
         // For now, we'll skip the implementation of checking all users
-        console.log('Time-based check for all users not implemented in this version');
+        console.log(
+          "Time-based check for all users not implemented in this version"
+        );
       }
     } catch (error) {
-      console.error('Error checking time-based badges:', error);
+      console.error("Error checking time-based badges:", error);
     }
   }
 
@@ -253,26 +307,33 @@ export class BadgeTriggerService {
    * Attribution manuelle d'un badge spécial
    */
   public async awardSpecialBadge(
-    userId: string, 
-    badgeId: string, 
+    userId: string,
+    badgeId: string,
     reason: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _adminId?: string
   ): Promise<boolean> {
-    console.log(`🎖️ Manually awarding special badge: ${badgeId} to user: ${userId}`);
-    
+    console.log(
+      `🎖️ Manually awarding special badge: ${badgeId} to user: ${userId}`
+    );
+
     try {
       const engine = getBadgeEngine();
       const result = await engine.awardBadge(userId, badgeId, reason);
-      
+
       if (result.success) {
-        console.log(`✅ Successfully awarded badge "${result.badgeTitle}" to user ${userId}`);
+        console.log(
+          `✅ Successfully awarded badge "${result.badgeTitle}" to user ${userId}`
+        );
         return true;
       } else {
-        console.log(`❌ Failed to award badge: ${result.error || 'Unknown error'}`);
+        console.log(
+          `❌ Failed to award badge: ${result.error || "Unknown error"}`
+        );
         return false;
       }
     } catch (error) {
-      console.error('Error manually awarding badge:', error);
+      console.error("Error manually awarding badge:", error);
       return false;
     }
   }
@@ -282,14 +343,14 @@ export class BadgeTriggerService {
    */
   public async checkAllBadgesForUser(userId: string): Promise<void> {
     console.log(`🎖️ Running complete badge check for user: ${userId}`);
-    
+
     try {
       const engine = getBadgeEngine();
       const results = await engine.awardEligibleBadges(userId);
-      
-      this.logBadgeResults('Complete Badge Check', results);
+
+      this.logBadgeResults("Complete Badge Check", results);
     } catch (error) {
-      console.error('Error during complete badge check:', error);
+      console.error("Error during complete badge check:", error);
     }
   }
 
@@ -298,23 +359,26 @@ export class BadgeTriggerService {
   // ============================================================
 
   private logBadgeResults(context: string, results: BadgeAwardResult[]): void {
-    const successful = results.filter(r => r.success);
-    const failed = results.filter(r => !r.success);
-    
+    const successful = results.filter((r) => r.success);
+    const failed = results.filter((r) => !r.success);
+
     console.log(`📊 ${context} - Badges processed:`, {
       total: results.length,
       successful: successful.length,
       failed: failed.length,
-      awarded: successful.map(r => r.badgeTitle).join(', ') || 'None'
+      awarded: successful.map((r) => r.badgeTitle).join(", ") || "None",
     });
 
     // Log failed attempts for debugging
     if (failed.length > 0) {
-      console.log('❌ Failed badge awards:', failed.map(f => ({
-        badge: f.badgeTitle,
-        error: f.error,
-        alreadyOwned: f.alreadyOwned
-      })));
+      console.log(
+        "❌ Failed badge awards:",
+        failed.map((f) => ({
+          badge: f.badgeTitle,
+          error: f.error,
+          alreadyOwned: f.alreadyOwned,
+        }))
+      );
     }
   }
 }
@@ -326,7 +390,9 @@ export class BadgeTriggerService {
 /**
  * Fonction utilitaire pour déclencher les badges lors de l'inscription
  */
-export async function triggerUserRegistrationBadges(userId: string): Promise<void> {
+export async function triggerUserRegistrationBadges(
+  userId: string
+): Promise<void> {
   const service = BadgeTriggerService.getInstance();
   await service.triggerUserRegistration(userId);
 }
@@ -334,7 +400,9 @@ export async function triggerUserRegistrationBadges(userId: string): Promise<voi
 /**
  * Fonction utilitaire pour déclencher les badges lors de la mise à jour du profil
  */
-export async function triggerProfileUpdateBadges(userId: string): Promise<void> {
+export async function triggerProfileUpdateBadges(
+  userId: string
+): Promise<void> {
   const service = BadgeTriggerService.getInstance();
   await service.triggerProfileUpdate(userId);
 }
@@ -342,7 +410,10 @@ export async function triggerProfileUpdateBadges(userId: string): Promise<void> 
 /**
  * Fonction utilitaire pour déclencher les badges lors de la création d'une place
  */
-export async function triggerPlaceCreationBadges(userId: string, placeId: string): Promise<void> {
+export async function triggerPlaceCreationBadges(
+  userId: string,
+  placeId: string
+): Promise<void> {
   const service = BadgeTriggerService.getInstance();
   await service.triggerPlaceCreation(userId, placeId);
 }
@@ -350,7 +421,10 @@ export async function triggerPlaceCreationBadges(userId: string, placeId: string
 /**
  * Fonction utilitaire pour déclencher les badges lors de la création d'un article
  */
-export async function triggerPostCreationBadges(userId: string, postId: string): Promise<void> {
+export async function triggerPostCreationBadges(
+  userId: string,
+  postId: string
+): Promise<void> {
   const service = BadgeTriggerService.getInstance();
   await service.triggerPostCreation(userId, postId);
 }
@@ -358,7 +432,10 @@ export async function triggerPostCreationBadges(userId: string, postId: string):
 /**
  * Fonction utilitaire pour déclencher les badges lors de la publication d'un article
  */
-export async function triggerPostPublicationBadges(userId: string, postId: string): Promise<void> {
+export async function triggerPostPublicationBadges(
+  userId: string,
+  postId: string
+): Promise<void> {
   const service = BadgeTriggerService.getInstance();
   await service.triggerPostPublication(userId, postId);
 }
@@ -366,7 +443,10 @@ export async function triggerPostPublicationBadges(userId: string, postId: strin
 /**
  * Fonction utilitaire pour déclencher les badges lors de la création d'un avis
  */
-export async function triggerReviewCreationBadges(userId: string, reviewId: string): Promise<void> {
+export async function triggerReviewCreationBadges(
+  userId: string,
+  reviewId: string
+): Promise<void> {
   const service = BadgeTriggerService.getInstance();
   await service.triggerReviewCreation(userId, reviewId);
 }
@@ -374,7 +454,10 @@ export async function triggerReviewCreationBadges(userId: string, reviewId: stri
 /**
  * Fonction utilitaire pour déclencher les badges lors de la création d'un événement
  */
-export async function triggerEventCreationBadges(userId: string, eventId: string): Promise<void> {
+export async function triggerEventCreationBadges(
+  userId: string,
+  eventId: string
+): Promise<void> {
   const service = BadgeTriggerService.getInstance();
   await service.triggerEventCreation(userId, eventId);
 }
@@ -383,8 +466,8 @@ export async function triggerEventCreationBadges(userId: string, eventId: string
  * Fonction utilitaire pour attribuer un badge spécial manuellement
  */
 export async function awardSpecialBadge(
-  userId: string, 
-  badgeId: string, 
+  userId: string,
+  badgeId: string,
   reason: string,
   adminId?: string
 ): Promise<boolean> {
@@ -395,7 +478,10 @@ export async function awardSpecialBadge(
 /**
  * Fonction utilitaire pour déclencher les badges lors de la création d'un produit
  */
-export async function triggerProductCreationBadges(userId: string, productId: string): Promise<void> {
+export async function triggerProductCreationBadges(
+  userId: string,
+  productId: string
+): Promise<void> {
   const service = BadgeTriggerService.getInstance();
   await service.triggerProductCreation(userId, productId);
 }
@@ -403,7 +489,10 @@ export async function triggerProductCreationBadges(userId: string, productId: st
 /**
  * Fonction utilitaire pour déclencher les badges lors de la création d'un service
  */
-export async function triggerServiceCreationBadges(userId: string, serviceId: string): Promise<void> {
+export async function triggerServiceCreationBadges(
+  userId: string,
+  serviceId: string
+): Promise<void> {
   const service = BadgeTriggerService.getInstance();
   await service.triggerServiceCreation(userId, serviceId);
 }

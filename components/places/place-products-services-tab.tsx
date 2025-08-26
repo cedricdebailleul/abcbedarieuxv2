@@ -8,7 +8,6 @@ import {
   Star,
   Clock,
   Package,
-  Plus,
   Edit3,
   Eye,
   Calendar,
@@ -128,7 +127,6 @@ export function PlaceProductsServicesTab({
   products,
   services,
   offers,
-  isOwner = false,
 }: PlaceProductsServicesTabProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -815,7 +813,7 @@ export function PlaceProductsServicesTab({
                 Aucun produit ou service
               </h3>
               <p className="text-muted-foreground">
-                Ce lieu n'a pas encore ajouté de produits ou services.
+                Ce lieu n&apos;a pas encore ajouté de produits ou services.
               </p>
             </div>
           )}

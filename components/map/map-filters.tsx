@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MapPin, Clock, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, MapPin, Clock, X, ChevronDown, ChevronRight, Building } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -71,11 +71,12 @@ export function MapFilters({
       search: '',
       categories: [],
       distance: null,
-      showOpenOnly: false
+      showOpenOnly: false,
+      showAssociations: false
     });
   };
 
-  const hasActiveFilters = filters.search || filters.categories.length > 0 || filters.distance || filters.showOpenOnly;
+  const hasActiveFilters = filters.search || filters.categories.length > 0 || filters.distance || filters.showOpenOnly || filters.showAssociations;
 
   return (
     <div className="h-full flex flex-col">
@@ -171,6 +172,19 @@ export function MapFilters({
             <Label htmlFor="open-only" className="flex items-center cursor-pointer">
               <Clock className="w-4 h-4 mr-2 text-emerald-600" />
               Ouvert maintenant
+            </Label>
+          </div>
+
+          {/* Afficher les associations */}
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-associations"
+              checked={filters.showAssociations}
+              onCheckedChange={(checked) => updateFilters({ showAssociations: checked })}
+            />
+            <Label htmlFor="show-associations" className="flex items-center cursor-pointer">
+              <Building className="w-4 h-4 mr-2 text-blue-600" />
+              Afficher les associations
             </Label>
           </div>
 

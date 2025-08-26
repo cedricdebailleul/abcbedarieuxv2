@@ -93,6 +93,7 @@ export interface MapFilters {
   userLocation: { lat: number; lng: number } | null;
   sortBy: "name" | "distance" | "featured";
   showOpenOnly: boolean;
+  showAssociations: boolean;
 }
 
 interface InteractiveMapProps {
@@ -108,6 +109,7 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
     userLocation: null,
     sortBy: "featured",
     showOpenOnly: false,
+    showAssociations: false,
   });
 
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
@@ -220,6 +222,11 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
         if (!status.isOpen) return false;
       }
 
+      // Filtre par type association
+      if (!filters.showAssociations && place.type === 'ASSOCIATION') {
+        return false;
+      }
+
       return true;
     });
 
@@ -270,7 +277,8 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
     filters.search ||
     filters.categories.length > 0 ||
     filters.distance ||
-    filters.showOpenOnly
+    filters.showOpenOnly ||
+    filters.showAssociations
   );
 
   return (
@@ -311,7 +319,8 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
             {(filters.categories.length > 0 ||
               filters.search ||
               filters.distance ||
-              filters.showOpenOnly) && (
+              filters.showOpenOnly ||
+              filters.showAssociations) && (
               <span className="ml-1 bg-primary-foreground text-primary rounded-full w-2 h-2 text-xs flex items-center justify-center">
                 •
               </span>

@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { 
+import {
   PartnerFilters,
-  PartnerWhereCondition,
   PartnerListResponse,
-  isValidPartnerType
+  isValidPartnerType,
 } from "@/lib/types/partners";
+import { Prisma } from "@/lib/generated/prisma";
 
-export async function GET(request: NextRequest): Promise<NextResponse<PartnerListResponse | { error: string }>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<PartnerListResponse | { error: string }>> {
   try {
     const { searchParams } = new URL(request.url);
-    
+
     // Récupération et validation des paramètres
     const filters: PartnerFilters = {
       type: searchParams.get("type") || "all",
@@ -18,9 +20,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<PartnerLis
       limit: parseInt(searchParams.get("limit") || "50"),
       search: searchParams.get("search") || "",
     };
-
     // Construction des filtres de base de données pour les partenaires actifs
-    const where: any = {
+    const where: Prisma.PartnerWhereInput = {
       isActive: true,
       // Filtrer par dates si nécessaire
       OR: [{ startDate: null }, { startDate: { lte: new Date() } }],
@@ -31,7 +32,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<PartnerLis
       ],
     };
 
-    if (filters.type && filters.type !== "all" && isValidPartnerType(filters.type)) {
+    if (
+      filters.type &&
+      filters.type !== "all" &&
+      isValidPartnerType(filters.type)
+    ) {
       where.partnerType = filters.type;
     }
 
