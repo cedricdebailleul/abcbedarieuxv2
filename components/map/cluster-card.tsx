@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import type { MapPlace } from "./interactive-map";
-import { getPlaceTypeLabel } from "@/lib/share-utils";
 import { computeOpeningStatus } from "@/lib/opening-hours-utils";
 
 interface ClusterCardProps {
@@ -49,7 +48,6 @@ export function ClusterCard({
       <CardContent className="space-y-3 flex-1 overflow-y-auto lg:max-h-80 scrollbar-primary">
         {places.map((place) => {
           const openingStatus = computeOpeningStatus(place.openingHours);
-          const placeTypeLabel = getPlaceTypeLabel(place.type);
 
           return (
             <div

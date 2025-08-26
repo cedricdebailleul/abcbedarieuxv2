@@ -463,7 +463,7 @@ export function MapView({
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [places, onPlaceSelect, categoriesReady, forceRender]);
+  }, [places, onPlaceSelect, onClusterSelect, categoriesReady, forceRender]);
 
   // Mettre à jour le marker de l'utilisateur
   useEffect(() => {

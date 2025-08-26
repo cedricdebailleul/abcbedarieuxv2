@@ -58,15 +58,8 @@ export default function MyPlacesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   const fetchPlaces = useCallback(async () => {
-    // Éviter les appels trop fréquents (debounce de 500ms)
-    const now = Date.now();
-    if (now - lastFetchTime < 500) {
-      return;
-    }
-
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -87,20 +80,19 @@ export default function MyPlacesPage() {
       const data: ApiResponse = await response.json();
       setPlaces(data.places);
       setTotalPages(data.pagination.pages);
-      setLastFetchTime(now);
     } catch (error) {
       console.error("Erreur:", error);
       toast.error("Erreur lors du chargement des places");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, statusFilter, lastFetchTime, isAdmin, showClaimable]);
+  }, [currentPage, statusFilter, isAdmin, showClaimable]);
 
   useEffect(() => {
     if (status && status.user) {
       fetchPlaces();
     }
-  }, [status, fetchPlaces]);
+  }, [status?.user?.id, fetchPlaces, status]);
 
   const handleDelete = async (placeId: string, placeName: string) => {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer "${placeName}" ?`)) {

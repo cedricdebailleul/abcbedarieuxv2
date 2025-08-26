@@ -126,6 +126,10 @@ const data = {
           title: "Notre Histoire",
           url: "/dashboard/admin/history",
         },
+        {
+          title: "Sauvegarde",
+          url: "/dashboard/admin/export",
+        },
       ],
     },
     {
@@ -211,8 +215,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               ["admin", "moderator"].includes(session.user.role)
             );
           }
-          // Newsletter, Badges et Partenaires : admin seulement
-          if (["Newsletter", "Badges", "Partenaires"].includes(subItem.title)) {
+          // Newsletter, Badges, Partenaires et Sauvegarde : admin seulement
+          if (
+            ["Newsletter", "Badges", "Partenaires", "Sauvegarde"].includes(
+              subItem.title
+            )
+          ) {
             return session?.user?.role === "admin";
           }
           // Utilisateurs, Réclamations et Places : admin et modérateur

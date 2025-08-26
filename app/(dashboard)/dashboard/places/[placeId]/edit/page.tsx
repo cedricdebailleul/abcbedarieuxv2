@@ -76,6 +76,7 @@ export default function EditPlacePage() {
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [makingClaimable, setMakingClaimable] = useState(false);
 
   useEffect(() => {
     if (!placeId) return;
@@ -146,6 +147,38 @@ export default function EditPlacePage() {
           : String(e) || "Erreur lors de la modification";
       toast.error(message);
       throw e instanceof Error ? e : new Error(message); // pour que PlaceForm stoppe son spinner si besoin
+    }
+  };
+
+  const handleMakeClaimable = async () => {
+    if (!placeId || !place) return;
+
+    if (!confirm(`Êtes-vous sûr de vouloir mettre "${place.name}" en revendiquer ? Cette action retirera votre propriété de la place et permettra à d'autres utilisateurs de la revendiquer.`)) {
+      return;
+    }
+
+    setMakingClaimable(true);
+    try {
+      const response = await fetch(`/api/places/${placeId}/make-claimable`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Erreur API make-claimable:", errorData);
+        throw new Error(errorData.details || errorData.error || "Erreur lors de la mise à disposition");
+      }
+
+      toast.success("Place mise à disposition pour revendication avec succès!");
+      router.push("/dashboard/places");
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast.error(error instanceof Error ? error.message : "Une erreur est survenue");
+    } finally {
+      setMakingClaimable(false);
     }
   };
 
@@ -303,13 +336,38 @@ export default function EditPlacePage() {
               Modifiez les informations de votre établissement
             </p>
           </div>
-          <span
-            className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-              place.status
-            )}`}
-          >
-            {getStatusText(place.status)}
-          </span>
+          <div className="flex items-center gap-3">
+            <span
+              className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
+                place.status
+              )}`}
+            >
+              {getStatusText(place.status)}
+            </span>
+            
+            {/* Bouton "Mettre en revendiquer" pour les admins */}
+            {session?.user?.role === "admin" && place.owner?.id === session.user.id && (
+              <button
+                onClick={handleMakeClaimable}
+                disabled={makingClaimable}
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 hover:text-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {makingClaimable ? (
+                  <>
+                    <div className="w-4 h-4 mr-2 border-2 border-orange-300 border-t-orange-600 rounded-full animate-spin"></div>
+                    Mise à disposition...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    Mettre en revendiquer
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
