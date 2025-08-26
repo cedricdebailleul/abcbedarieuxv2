@@ -591,6 +591,7 @@ export default async function PlacePage({ params }: PageProps) {
               placeId={place.id}
               placeName={place.name}
               isOwner={!!place.owner}
+              placeType={place.type}
               aboutContent={
                 <PlaceAboutTab
                   place={{
