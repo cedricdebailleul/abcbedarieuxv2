@@ -134,7 +134,12 @@ export function SearchMenu({ className }: SearchMenuProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 top-12 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden"
+            className="absolute top-16 bg-white rounded-lg shadow-xl border border-gray-200 z-[99999] overflow-hidden"
+            style={{ 
+              right: '-1rem',
+              width: '300px',
+              transform: 'translateX(-50px)'
+            }}
           >
             {/* Header avec barre de recherche */}
             <div className="p-4 border-b border-gray-100">

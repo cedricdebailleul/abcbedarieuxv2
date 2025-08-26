@@ -1,5 +1,5 @@
 import FooterSection from "@/components/front/footer";
-import Header from "@/components/front/header/header";
+import EnhancedHeader from "@/components/front/header/enhanced-header";
 import { SimpleCookieBanner } from "@/components/rgpd/cookie-banner";
 
 export default function FrontLayout({
@@ -9,8 +9,8 @@ export default function FrontLayout({
 }) {
   return (
     <>
-      <Header />
-      <main id="contenu" className="mx-auto bg-background">
+      <EnhancedHeader />
+      <main id="main-content" className="pt-20 mx-auto bg-background">
         {children}
       </main>
       <SimpleCookieBanner />

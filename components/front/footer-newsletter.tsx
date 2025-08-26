@@ -69,7 +69,7 @@ export default function FooterNewsletter() {
 
   return (
     <motion.div
-      className="flex justify-end h-full"
+      className="flex justify-start lg:justify-end h-full"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 100, damping: 12 }}
@@ -86,34 +86,18 @@ export default function FooterNewsletter() {
             </h3>
 
             {!showForm ? (
-              <div className="flex gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-1"
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  onClick={() => setShowForm(true)}
+                  className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-full w-full"
                 >
-                  <Button
-                    onClick={() => setShowForm(true)}
-                    className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-full w-full"
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    S&apos;abonner à la newsletter
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-1"
-                >
-                  <Button
-                    variant="outline"
-                    className="border-blue-300 text-gray-900 hover:bg-pink-50 px-6 py-2 rounded-full w-full bg-transparent"
-                    asChild
-                  >
-                    <Link href="/contact">S&apos;abonner aux avis</Link>
-                  </Button>
-                </motion.div>
-              </div>
+                  <Mail className="w-4 h-4 mr-2" />
+                  S&apos;abonner à la newsletter
+                </Button>
+              </motion.div>
             ) : (
               <motion.form
                 onSubmit={handleSubscribe}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -51,6 +51,12 @@ export function PlaceCard({
   className,
 }: PlaceCardProps) {
   const [showFullHours, setShowFullHours] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 1024);
+  }, []);
 
   // Calculer la distance si l'utilisateur a partagé sa position
   const distance =
@@ -107,14 +113,14 @@ export function PlaceCard({
     },
   };
 
-  const mobileSlideVariants = {
+  const mobileBottomSheetVariants = {
     initial: {
       opacity: 0,
       y: "100%",
     },
     animate: {
       opacity: 1,
-      y: 0,
+      y: isExpanded ? "5%" : "35%",
       transition: {
         type: "spring" as const,
         stiffness: 300,
@@ -129,6 +135,19 @@ export function PlaceCard({
         duration: 0.3,
       },
     },
+  };
+
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { y: number }; velocity: { y: number } }) => {
+    const threshold = 150;
+    const velocity = info.velocity.y;
+    
+    if (info.offset.y > threshold || velocity > 500) {
+      onClose();
+    } else if (info.offset.y < -threshold || velocity < -500) {
+      setIsExpanded(true);
+    } else if (info.offset.y > 50) {
+      setIsExpanded(false);
+    }
   };
 
   return (
@@ -146,20 +165,30 @@ export function PlaceCard({
         {/* Card */}
         <motion.div
           variants={
-            window.innerWidth < 1024 ? mobileSlideVariants : cardVariants
+            isMobile ? mobileBottomSheetVariants : cardVariants
           }
           initial="initial"
           animate="animate"
           exit="exit"
+          drag={isMobile ? "y" : false}
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={0.2}
+          onDragEnd={handleDragEnd}
           className={cn(
             "bg-background border shadow-lg overflow-hidden",
             "lg:rounded-xl lg:max-w-md",
             "fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto",
-            "z-50",
+            "z-50 lg:z-auto",
+            "rounded-t-xl lg:rounded-xl",
             className
           )}
         >
           <Card className="border-0 shadow-none h-full flex flex-col">
+            {/* Drag Handle - Mobile uniquement */}
+            <div className="lg:hidden flex justify-center py-2 bg-background">
+              <div className="w-12 h-1 bg-gray-300 rounded-full" />
+            </div>
+            
             {/* Header avec image */}
             <div className="relative h-48 lg:h-40 overflow-hidden">
               {place.coverImage || place.logo ? (
@@ -181,14 +210,31 @@ export function PlaceCard({
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
               {/* Bouton fermer */}
-              <Button
-                variant="secondary"
-                size="icon"
-                className="absolute top-3 right-3 z-10 bg-red-600 text-white hover:bg-red-700 shadow-lg"
-                onClick={onClose}
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              <div className="absolute top-3 right-3 z-10 flex gap-2">
+                {/* Bouton Expand/Collapse - Mobile uniquement */}
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="lg:hidden bg-white/90 text-gray-700 hover:bg-white shadow-lg"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronUp className="w-4 h-4" />
+                  )}
+                </Button>
+                
+                {/* Bouton Fermer */}
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="bg-red-600 text-white hover:bg-red-700 shadow-lg"
+                  onClick={onClose}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
 
               {/* Badge featured */}
               {place.isFeatured && (
@@ -225,7 +271,10 @@ export function PlaceCard({
             </div>
 
             {/* Contenu */}
-            <CardContent className="flex-1 p-4 space-y-4 overflow-y-auto">
+            <CardContent className={cn(
+              "flex-1 p-4 space-y-4 overflow-y-auto",
+              !isExpanded && isMobile && "max-h-96"
+            )}>
               {/* Titre et type */}
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-1">

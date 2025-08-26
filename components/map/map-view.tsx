@@ -486,7 +486,7 @@ export function MapView({
         <Button
           onClick={centerOnUser}
           size="icon"
-          className="absolute bottom-4 right-4 shadow-lg"
+          className="absolute top-24 right-4 shadow-lg z-40"
           title="Recentrer sur ma position"
         >
           <Navigation className="w-4 h-4" />

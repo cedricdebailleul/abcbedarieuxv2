@@ -1,4 +1,4 @@
-import Header from "@/components/front/header/header";
+import EnhancedHeader from "@/components/front/header/enhanced-header";
 
 export default async function MapLayout({
   children,
@@ -7,8 +7,8 @@ export default async function MapLayout({
 }) {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-4"> {/* Reduced offset for complex header */}
+      <EnhancedHeader />
+      <main id="main-content" className="pt-4">
         {children}
       </main>
     </div>
