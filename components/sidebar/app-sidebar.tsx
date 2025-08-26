@@ -130,6 +130,10 @@ const data = {
           title: "Sauvegarde",
           url: "/dashboard/admin/export",
         },
+        {
+          title: "Chatbot WhatsApp",
+          url: "/dashboard/admin/whatsapp",
+        },
       ],
     },
     {
