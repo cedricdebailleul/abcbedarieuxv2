@@ -6,7 +6,7 @@ import { MapView } from "./map-view";
 import { PlaceCard } from "./place-card";
 import { MobileMapFilters } from "./mobile-map-filters";
 import { Button } from "@/components/ui/button";
-import { Filter, X } from "lucide-react";
+import { Filter } from "lucide-react";
 import { calculateDistance } from "@/lib/map-utils";
 import { computeOpeningStatus } from "@/lib/opening-hours-utils";
 import { getPlaceTypeLabel, normalizeForSearch } from "@/lib/share-utils";
@@ -138,13 +138,12 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
     }
   }, []);
 
-
   // Forcer le re-rendu quand les filtres changent (catégories ou recherche)
   const handleFiltersChange = (newFilters: MapFilters) => {
     const categoriesChanged =
       newFilters.categories.length !== filters.categories.length ||
       newFilters.categories.some((cat) => !filters.categories.includes(cat));
-    
+
     const searchChanged = newFilters.search !== filters.search;
 
     setFilters(newFilters);
@@ -164,19 +163,26 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
       // Filtre par recherche textuelle
       if (filters.search) {
         const searchTerm = normalizeForSearch(filters.search);
-        const frenchTypeLabel = normalizeForSearch(getPlaceTypeLabel(place.type));
+        const frenchTypeLabel = normalizeForSearch(
+          getPlaceTypeLabel(place.type)
+        );
         const matchesSearch =
           normalizeForSearch(place.name).includes(searchTerm) ||
-          (place.summary && normalizeForSearch(place.summary).includes(searchTerm)) ||
+          (place.summary &&
+            normalizeForSearch(place.summary).includes(searchTerm)) ||
           place.categories.some(
             (pc) =>
               normalizeForSearch(pc.category.name).includes(searchTerm) ||
               (pc.category.parent &&
-                normalizeForSearch(pc.category.parent.name).includes(searchTerm))
+                normalizeForSearch(pc.category.parent.name).includes(
+                  searchTerm
+                ))
           ) ||
           normalizeForSearch(place.type).includes(searchTerm) ||
           frenchTypeLabel.includes(searchTerm) ||
-          normalizeForSearch(`${place.street} ${place.city}`).includes(searchTerm);
+          normalizeForSearch(`${place.street} ${place.city}`).includes(
+            searchTerm
+          );
 
         if (!matchesSearch) return false;
       }
@@ -193,7 +199,12 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
       }
 
       // Filtre par distance (seulement pour les places avec coordonnées)
-      if (filters.distance && filters.userLocation && place.latitude && place.longitude) {
+      if (
+        filters.distance &&
+        filters.userLocation &&
+        place.latitude &&
+        place.longitude
+      ) {
         const distance = calculateDistance(
           filters.userLocation.lat,
           filters.userLocation.lng,
@@ -255,7 +266,12 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
   }, [places, filters]);
 
   // Vérifier s'il y a des filtres actifs
-  const hasActiveFilters = !!(filters.search || filters.categories.length > 0 || filters.distance || filters.showOpenOnly);
+  const hasActiveFilters = !!(
+    filters.search ||
+    filters.categories.length > 0 ||
+    filters.distance ||
+    filters.showOpenOnly
+  );
 
   return (
     <div className="h-full flex relative">
@@ -284,11 +300,11 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
         />
 
         {/* Mobile Filter Button */}
-        <div className="lg:hidden absolute top-4 left-4 z-10">
+        <div className="lg:hidden absolute top-24 left-4 z-40">
           <Button
             onClick={() => setShowMobileFilters(true)}
             size="sm"
-            className="shadow-lg"
+            className="shadow-lg bg-white/95 backdrop-blur-sm text-gray-900 hover:bg-white"
           >
             <Filter className="w-4 h-4 mr-2" />
             Filtres
@@ -320,29 +336,15 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
 
       {/* Mobile Filters */}
       {showMobileFilters && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-background">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="text-lg font-semibold">Filtres</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowMobileFilters(false)}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <MobileMapFilters
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              categories={categories}
-              placesCount={filteredPlaces.length}
-              totalPlaces={places.length}
-              userLocation={userLocation}
-              onClose={() => setShowMobileFilters(false)}
-            />
-          </div>
-        </div>
+        <MobileMapFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          categories={categories}
+          placesCount={filteredPlaces.length}
+          totalPlaces={places.length}
+          userLocation={userLocation}
+          onClose={() => setShowMobileFilters(false)}
+        />
       )}
     </div>
   );

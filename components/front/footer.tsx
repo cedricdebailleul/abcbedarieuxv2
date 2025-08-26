@@ -150,7 +150,9 @@ export default function FooterSection() {
           </div>
 
           {/* Right Section - Newsletter */}
-          <FooterNewsletter />
+          <div>
+            <FooterNewsletter />
+          </div>
         </motion.div>
 
         {/* Bottom Section */}
