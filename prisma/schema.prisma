@@ -436,7 +436,7 @@ model Place {
   id          String    @id @default(cuid())
   name        String
   slug        String    @unique
-  type        PlaceType
+  type        PlaceType @default(OTHER)
   category    String? // Sous-catégorie libre pour flexibilité (deprecated, use categories relation)
   description String?   @db.Text
   summary     String?   @db.VarChar(280) // Pour partage Twitter

@@ -10,6 +10,16 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   output: 'standalone',
+  // Redirection pour bloquer les URLs Google Photos problématiques
+  async redirects() {
+    return [
+      {
+        source: '/maps.googleapis.com/:path*',
+        destination: 'https://via.placeholder.com/400x300/e5e7eb/6b7280?text=Image+bloquee',
+        permanent: false,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

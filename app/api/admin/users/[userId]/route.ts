@@ -384,20 +384,38 @@ export async function DELETE(
 
     if (hardDelete) {
       // Suppression complète (pour le RGPD)
-      await prisma.user.delete({
-        where: { id: resolvedParams.userId },
+      await prisma.$transaction(async (tx) => {
+        // Libérer les places possédées par cet utilisateur (les rendre disponibles à la revendication)
+        await tx.place.updateMany({
+          where: { ownerId: resolvedParams.userId },
+          data: { ownerId: null },
+        });
+
+        // Supprimer l'utilisateur
+        await tx.user.delete({
+          where: { id: resolvedParams.userId },
+        });
       });
     } else {
       // Suppression logique
-      await prisma.user.update({
-        where: { id: resolvedParams.userId },
-        data: {
-          deletedAt: new Date(),
-          status: "DELETED",
-          // Optionnel : anonymiser certaines données
-          email: `deleted-user-${resolvedParams.userId}@deleted.local`,
-          name: `Utilisateur supprimé`,
-        },
+      await prisma.$transaction(async (tx) => {
+        // Libérer les places possédées par cet utilisateur (les rendre disponibles à la revendication)
+        await tx.place.updateMany({
+          where: { ownerId: resolvedParams.userId },
+          data: { ownerId: null },
+        });
+
+        // Marquer l'utilisateur comme supprimé
+        await tx.user.update({
+          where: { id: resolvedParams.userId },
+          data: {
+            deletedAt: new Date(),
+            status: "DELETED",
+            // Optionnel : anonymiser certaines données
+            email: `deleted-user-${resolvedParams.userId}@deleted.local`,
+            name: `Utilisateur supprimé`,
+          },
+        });
       });
     }
 

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PlaceForm } from "@/components/forms/place-form";
 import { useSession } from "@/hooks/use-session";
+import { sanitizeImageUrls, filterGooglePhotosUrls } from "@/lib/image-utils";
 
 interface Place {
   id: string;
@@ -107,21 +108,54 @@ export default function EditPlacePage() {
     }
 
     // Normalize incoming form data to match the Place type expected by the API.
-    // In particular, ensure openingHours[].isClosed is a boolean and times are nullable.
+    // Handle both old format (openTime/closeTime) and new format (slots)
+    
+    // Filtrer les images pour ne garder que celles déjà uploadées (qui commencent par /uploads/)
+    // Les URLs Google sont laissées dans le state du formulaire mais pas envoyées à l'API
+    const filteredImages = Array.isArray(data.images) 
+      ? data.images.filter(img => 
+          typeof img === 'string' && 
+          (img.startsWith('/uploads/') || img.startsWith('data:') || !img.includes('googleusercontent.com'))
+        )
+      : [];
+
+    console.log("Original images:", data.images);
+    console.log("Filtered images:", filteredImages);
+    console.log("EditPage - data.type before normalization:", data.type);
+    
     const normalized = {
       ...data,
+      // Ne pas envoyer les URLs Google à l'API - seulement les images déjà uploadées
+      images: filteredImages,
       openingHours: Array.isArray(data?.openingHours)
-        ? data.openingHours.map((h: OpeningHourForm) => ({
-            dayOfWeek: h.dayOfWeek ?? h.day ?? "",
-            isClosed:
-              typeof h.isClosed === "boolean"
-                ? h.isClosed
-                : Boolean(h.isClosed),
-            openTime: h.openTime ?? null,
-            closeTime: h.closeTime ?? null,
-          }))
+        ? data.openingHours.map((h: OpeningHourForm) => {
+            console.log("Normalizing opening hour:", h);
+            
+            // New format with slots
+            if (h.slots && Array.isArray(h.slots)) {
+              return {
+                dayOfWeek: h.dayOfWeek ?? h.day ?? "",
+                isClosed: Boolean(h.isClosed),
+                slots: h.slots.map(slot => ({
+                  openTime: slot.openTime,
+                  closeTime: slot.closeTime,
+                })),
+              };
+            }
+            
+            // Old format fallback
+            return {
+              dayOfWeek: h.dayOfWeek ?? h.day ?? "",
+              isClosed: Boolean(h.isClosed),
+              openTime: h.openTime ?? null,
+              closeTime: h.closeTime ?? null,
+            };
+          })
         : undefined,
     } as Partial<Place>;
+    
+    console.log("Normalized data with openingHours:", normalized);
+    console.log("EditPage - normalized.type:", normalized.type);
 
     try {
       const res = await fetch(`/api/places/${placeId}`, {
@@ -243,7 +277,7 @@ export default function EditPlacePage() {
   const initialData = {
     id: place.id, // Ajout de l'ID pour l'import des avis
     name: place.name,
-    type: place.type,
+    type: place.type || "COMMERCE", // Défaut COMMERCE si vide
     category: place.category || "",
     categories: place.categories ? place.categories.map(cat => cat.category.id) : [],
     description: place.description || "",
@@ -266,29 +300,70 @@ export default function EditPlacePage() {
     googleMapsUrl: place.googleMapsUrl || "",
     metaTitle: place.metaTitle || "",
     metaDescription: place.metaDescription || "",
-    // Images et logo
-    logo: place.logo || "",
-    coverImage: place.coverImage || "",
-    // Images sauvegardées en base de données (priorité sur Google Business)
-    images: parseImages(place.images) || place.googleBusinessData?.images || [],
+    // Images et logo (nettoyées des URLs Google problématiques)
+    logo: place.logo ? (place.logo.includes('maps.googleapis.com') ? "" : place.logo) : "",
+    coverImage: place.coverImage ? (place.coverImage.includes('maps.googleapis.com') ? "" : place.coverImage) : "",
+    // Images sauvegardées en base de données (filtrées et dédupliquées)
+    images: (() => {
+      const placeImages = parseImages(place.images);
+      const googleBusinessImages = place.googleBusinessData?.images || [];
+      
+      console.log("EditPage - Raw place.images:", place.images);
+      console.log("EditPage - Parsed place images:", placeImages);
+      console.log("EditPage - Google business images:", googleBusinessImages);
+      
+      // Combiner les images et supprimer les doublons
+      const allImages = [...placeImages, ...googleBusinessImages];
+      const uniqueImages = Array.from(new Set(allImages)); // Supprime les doublons
+      
+      console.log("EditPage - All images before dedup:", allImages);
+      console.log("EditPage - Unique images after dedup:", uniqueImages);
+      
+      // Filtrer les URLs Google problématiques
+      const filteredImages = filterGooglePhotosUrls(uniqueImages);
+      console.log("EditPage - Final filtered images:", filteredImages);
+      
+      return filteredImages;
+    })(),
     // Données Google Business ou horaires existantes
     openingHours:
       place.openingHours && place.openingHours.length > 0
-        ? place.openingHours.map((hour) => ({
-            dayOfWeek: hour.dayOfWeek,
-            isClosed: hour.isClosed,
-            openTime: hour.openTime,
-            closeTime: hour.closeTime,
-            slots:
-              hour.openTime && hour.closeTime
-                ? [{ openTime: hour.openTime, closeTime: hour.closeTime }]
-                : [],
-          }))
+        ? place.openingHours.map((hour: any) => {
+            console.log("EditPage - Processing hour from DB:", hour);
+            
+            // Si l'horaire a déjà des slots, les utiliser
+            if (hour.slots && Array.isArray(hour.slots) && hour.slots.length > 0) {
+              return {
+                dayOfWeek: hour.dayOfWeek,
+                isClosed: hour.isClosed,
+                openTime: hour.openTime, // pour compatibilité
+                closeTime: hour.closeTime, // pour compatibilité
+                slots: hour.slots, // utiliser les slots existants
+              };
+            }
+            
+            // Sinon, créer un slot depuis openTime/closeTime seulement s'ils existent
+            const slots = hour.openTime && hour.closeTime
+              ? [{ openTime: hour.openTime, closeTime: hour.closeTime }]
+              : [];
+              
+            return {
+              dayOfWeek: hour.dayOfWeek,
+              isClosed: hour.isClosed,
+              openTime: hour.openTime,
+              closeTime: hour.closeTime,
+              slots: slots,
+            };
+          })
         : place.googleBusinessData?.openingHours?.map((hour) => ({
             dayOfWeek: hour.day,
             openTime: hour.open,
             closeTime: hour.close,
+            slots: hour.open && hour.close ? [{ openTime: hour.open, closeTime: hour.close }] : [],
           })) || [],
+    // Champs de publication
+    published: place.status === "ACTIVE", // true si la place est active
+    isFeatured: (place as any).isFeatured || false, // préserver la valeur existante
   };
 
   console.log("EditPage - initialData prepared for form:", initialData);

@@ -6,8 +6,14 @@ import { env } from "@/lib/env";
 // Configuration centralisée des libraries Google Maps
 const libraries: ("places" | "geometry" | "marker")[] = ["places", "marker"];
 
+interface UseGoogleMapsLoaderReturn {
+  isLoaded: boolean;
+  loadError: Error | undefined;
+  google: typeof google | null;
+}
+
 // Hook centralisé pour charger l'API Google Maps
-export const useGoogleMapsLoader = () => {
+export const useGoogleMapsLoader = (): UseGoogleMapsLoaderReturn => {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     libraries,
@@ -20,13 +26,6 @@ export const useGoogleMapsLoader = () => {
     isLoaded,
     loadError,
     // Exposer google pour les composants qui en ont besoin
-    google: typeof window !== "undefined" && isLoaded ? window.google : null,
+    google: typeof window !== "undefined" && isLoaded ? window.google || null : null,
   };
 };
-
-// Type pour window.google
-declare global {
-  interface Window {
-    google?: typeof globalThis.google;
-  }
-}

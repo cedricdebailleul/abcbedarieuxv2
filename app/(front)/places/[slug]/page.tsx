@@ -2,7 +2,6 @@ import {
   Building,
   CheckCircle,
   Clock,
-  ExternalLink,
   Facebook,
   Globe,
   Instagram,
@@ -32,6 +31,7 @@ import { PlaceTabs } from "@/components/places/place-tabs";
 import { PlaceAboutTab } from "@/components/places/place-about-tab";
 import { ContactForm } from "@/components/places/contact-form";
 import { PlaceReviewsTab } from "@/components/places/place-reviews-tab";
+import { ContactButtons } from "@/components/places/contact-buttons";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
@@ -374,7 +374,7 @@ export default async function PlacePage({ params }: PageProps) {
       />
 
       {/* Cover hero section */}
-      <div className="relative h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] bg-muted z-0">
+      <div className="relative h-[400px] sm:h-[500px] md:h-[600px] lg:h-[800px] bg-muted z-0">
         {cover ? (
           <SafeImage
             src={cover}
@@ -670,42 +670,12 @@ export default async function PlacePage({ params }: PageProps) {
                 <CardHeader>
                   <CardTitle>Contact</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {place.phone && (
-                    <div className="flex items-center">
-                      <Phone className="w-4 h-4 mr-3 text-muted-foreground" />
-                      <a
-                        href={`tel:${place.phone}`}
-                        className="text-primary hover:underline"
-                      >
-                        {place.phone}
-                      </a>
-                    </div>
-                  )}
-                  {place.email && (
-                    <div className="flex items-center">
-                      <Mail className="w-4 h-4 mr-3 text-muted-foreground" />
-                      <a
-                        href={`mailto:${place.email}`}
-                        className="text-primary hover:underline"
-                      >
-                        {place.email}
-                      </a>
-                    </div>
-                  )}
-                  {place.website && (
-                    <div className="flex items-center">
-                      <Globe className="w-4 h-4 mr-3 text-muted-foreground" />
-                      <a
-                        href={place.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline inline-flex items-center"
-                      >
-                        Site web <ExternalLink className="w-3 h-3 ml-1" />
-                      </a>
-                    </div>
-                  )}
+                <CardContent>
+                  <ContactButtons
+                    phone={place.phone}
+                    email={place.email}
+                    website={place.website}
+                  />
                 </CardContent>
               </Card>
             )}

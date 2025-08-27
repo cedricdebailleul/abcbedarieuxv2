@@ -374,10 +374,14 @@ export const useGooglePlaces = ({
             place.address_components || []
           );
 
-          // Formater les photos
+          // Importer les URLs des photos Google (même si elles sont cassées en aperçu)
+          // L'important c'est d'avoir les URLs pour pouvoir les uploader sur notre serveur
           const photos = place.photos
             ?.slice(0, 10)
-            .map((photo) => photo.getUrl({ maxWidth: 1200, maxHeight: 800 }));
+            .map((photo) => {
+              const originalUrl = photo.getUrl({ maxWidth: 2400, maxHeight: 1600 });
+              return originalUrl; // URL directe Google (sans proxy)
+            }) || [];
 
           // Récupérer la description Google Business si disponible
           interface EditorialSummary {
@@ -534,7 +538,7 @@ export const useGooglePlaces = ({
             address: address,
             region: defaultCountry,
           },
-          (results, status) => {
+          (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
             if (status === google.maps.GeocoderStatus.OK && results?.[0]) {
               const location = results[0].geometry.location;
               resolve({
