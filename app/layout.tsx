@@ -19,46 +19,50 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(env.NEXT_PUBLIC_URL || "http://localhost:3000"),
   title: "ABC Bédarieux",
-  description: "Site de la ville de Bédarieux",
+  description: "Site des Commerçants et Artisans de Bédarieux",
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
     shortcut: "/favicon-32x32.png",
   },
   openGraph: {
-    type: 'website',
-    locale: 'fr_FR',
+    type: "website",
+    locale: "fr_FR",
     url: env.NEXT_PUBLIC_URL || "http://localhost:3000",
-    siteName: 'ABC Bédarieux',
-    title: 'ABC Bédarieux',
-    description: 'Site de la ville de Bédarieux',
+    siteName: "ABC Bédarieux",
+    title: "ABC Bédarieux",
+    description: "Site des Commerçants et Artisans de Bédarieux",
     images: [
       {
-        url: '/images/og-default.jpg',
+        url: "/images/og-default.jpg",
         width: 1200,
         height: 630,
-        alt: 'ABC Bédarieux',
+        alt: "ABC Bédarieux",
       },
     ],
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'ABC Bédarieux',
-    description: 'Site de la ville de Bédarieux',
-    images: ['/images/og-default.jpg'],
-    creator: '@abc_bedarieux',
+    card: "summary_large_image",
+    title: "ABC Bédarieux",
+    description: "Site des Commerçants et Artisans de Bédarieux",
+    images: ["/images/og-default.jpg"],
+    creator: "@blackbearstudio",
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} id="top" suppressHydrationWarning>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-        >
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        id="top"
+        suppressHydrationWarning
+      >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
           <Toaster closeButton position="bottom-center" />
           <BadgeProvider />
