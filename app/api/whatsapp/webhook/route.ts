@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
 import { headers } from "next/headers";
 import crypto from "crypto";
+import type { Prisma } from "@/lib/generated/prisma";
 
 // Configuration WhatsApp Business API
 const VERIFY_TOKEN = env.WHATSAPP_VERIFY_TOKEN;
@@ -206,7 +207,7 @@ async function processIncomingMessage(message: WhatsAppMessage, contacts: WhatsA
         messageType: messageType as "TEXT" | "IMAGE" | "AUDIO" | "VIDEO" | "DOCUMENT" | "LOCATION" | "CONTACT",
         isFromBot: false,
         status: "DELIVERED",
-        metadata: metadata,
+        metadata: metadata as Prisma.InputJsonValue,
         createdAt: timestamp
       }
     });

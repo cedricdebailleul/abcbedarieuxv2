@@ -59,6 +59,7 @@ async function getMapData() {
       logo: true,
       isFeatured: true,
       ownerId: true,
+      updatedAt: true,
       categories: {
         include: {
           category: {

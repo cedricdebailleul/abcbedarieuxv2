@@ -36,6 +36,7 @@ export interface MapPlace {
   logo?: string | null;
   isFeatured: boolean;
   ownerId?: string | null;
+  updatedAt: Date;
   categories: Array<{
     category: {
       id: string;
