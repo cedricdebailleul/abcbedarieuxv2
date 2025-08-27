@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ActionsSection } from "@/components/actions/actions-section";
 import { CTASection } from "@/components/sections/cta-section";
 import { PartnersSection } from "@/components/sections/partners-section";
+import { WhatsAppButton } from "@/components/whatsapp/whatsapp-button";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -178,6 +179,9 @@ export default async function Home() {
       {/* Section call-to-action */}
       <CTASection />
       <PartnersSection />
+
+      {/* Bouton WhatsApp flottant - Groupe Commerce Local */}
+      <WhatsAppButton />
     </>
   );
 }

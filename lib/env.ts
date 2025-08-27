@@ -48,6 +48,7 @@ export const env = createEnv({
     NEXT_PUBLIC_S3_BUCKET_NAME_VIDEOS: z.string().optional(),
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().min(1),
     NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: z.string().optional(),
+    NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().optional(),
     NEXT_PUBLIC_PRIVACY_POLICY_URL: z.string().optional(),
   },
 
@@ -92,6 +93,7 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_S3_BUCKET_NAME_VIDEOS,
     GDPR_NOTIFICATION_EMAIL: process.env.GDPR_NOTIFICATION_EMAIL,
     NEXT_PUBLIC_PRIVACY_POLICY_URL: process.env.NEXT_PUBLIC_PRIVACY_POLICY_URL,
+    NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
     DATA_RETENTION_DAYS: process.env.DATA_RETENTION_DAYS,
     WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN,
     WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN,
