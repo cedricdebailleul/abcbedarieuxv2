@@ -12,6 +12,9 @@ WHATSAPP_VERIFY_TOKEN=mon_token_verification_123
 WHATSAPP_ACCESS_TOKEN=votre_access_token_facebook
 WHATSAPP_PHONE_NUMBER_ID=votre_phone_number_id
 WHATSAPP_WEBHOOK_SECRET=votre_secret_optionnel
+
+# WhatsApp Button (Visible côté client)
+NEXT_PUBLIC_WHATSAPP_NUMBER=33651430377
 ```
 
 ### 2. Migration base de données
