@@ -3,8 +3,60 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { 
+  Search,
+  Eye,
+  Edit,
+  UserMinus,
+  UserPlus,
+  MoreHorizontal,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Building2,
+  User,
+  MapPin,
+  Calendar,
+  Star,
+  Heart,
+  Flag
+} from "lucide-react";
 import { AdminGuard } from "@/components/auth/admin-guard";
 import { useSession } from "@/hooks/use-session";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Place {
   id: string;
@@ -15,6 +67,7 @@ interface Place {
   city: string;
   street: string;
   isVerified: boolean;
+  isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
   owner?: {
@@ -26,6 +79,16 @@ interface Place {
     reviews: number;
     favorites: number;
     claims: number;
+  };
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+  _count?: {
+    ownedPlaces: number;
   };
 }
 
@@ -44,59 +107,93 @@ interface ApiResponse {
 
 const getStatusBadge = (status: string, isVerified?: boolean) => {
   const base = "px-2 py-1 text-xs font-medium rounded-full";
+  
   if (isVerified) {
-    return `${base} bg-blue-100 text-blue-800`; // Example for verified status
+    return (
+      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+        <CheckCircle className="w-3 h-3 mr-1" />
+        Vérifié
+      </Badge>
+    );
   }
+  
   switch (status) {
     case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+      return (
+        <Badge variant="secondary" className="bg-green-100 text-green-800">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Actif
+        </Badge>
+      );
     case "PENDING":
-      return `${base} bg-yellow-100 text-yellow-800`;
+      return (
+        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+          <AlertCircle className="w-3 h-3 mr-1" />
+          En attente
+        </Badge>
+      );
     case "DRAFT":
-      return `${base} bg-gray-100 text-gray-800`;
+      return (
+        <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+          Brouillon
+        </Badge>
+      );
     case "INACTIVE":
-      return `${base} bg-red-100 text-red-800`;
+      return (
+        <Badge variant="secondary" className="bg-red-100 text-red-800">
+          <XCircle className="w-3 h-3 mr-1" />
+          Inactif
+        </Badge>
+      );
     default:
-      return `${base} bg-gray-100 text-gray-800`;
+      return <Badge variant="outline">{status}</Badge>;
   }
 };
 
 const getStatusText = (status: string) => {
   switch (status) {
-    case "ACTIVE":
-      return "Actif";
-    case "PENDING":
-      return "En attente";
-    case "DRAFT":
-      return "Brouillon";
-    case "INACTIVE":
-      return "Inactif";
-    default:
-      return status;
+    case "ACTIVE": return "Actif";
+    case "PENDING": return "En attente";
+    case "DRAFT": return "Brouillon";
+    case "INACTIVE": return "Inactif";
+    default: return status;
   }
 };
 
-function AdminPlacesContent() {
+export default function AdminPlacesPage() {
   const { data: session, status } = useSession();
+  
+  // États
   const [places, setPlaces] = useState<Place[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>("PENDING");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const [pendingCount, setPendingCount] = useState(0);
+  
+  // Gestion des propriétaires
+  const [showOwnerDialog, setShowOwnerDialog] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [ownerAction, setOwnerAction] = useState<"assign" | "remove">("assign");
+  const [searchUsers, setSearchUsers] = useState("");
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingOwnerAction, setLoadingOwnerAction] = useState(false);
 
-  // Abort les requêtes en vol si les deps changent
+  // Refs
   const abortRef = useRef<AbortController | null>(null);
-
-  // Debounce 300 ms pour la recherche
+  const searchTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
+  
+  // Debounced search
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 500);
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Construit l’URL de façon mémoïsée (utile pour debug)
+  // Query string pour l'API
   const queryString = useMemo(() => {
     const params = new URLSearchParams({
       page: currentPage.toString(),
@@ -108,9 +205,8 @@ function AdminPlacesContent() {
     return params.toString();
   }, [currentPage, statusFilter, debouncedQuery]);
 
-  // fetchPlaces MEMOISÉE (dépend des filtres/page)
+  // Fetch places
   const fetchPlaces = useCallback(async () => {
-    // annule la requête précédente si existante
     if (abortRef.current) {
       abortRef.current.abort();
     }
@@ -132,7 +228,6 @@ function AdminPlacesContent() {
       setTotalPages(data.pagination.pages);
       setPendingCount(data.stats.pendingCount);
     } catch (error: unknown) {
-      // Ignore l'erreur si c’est un abort
       if (error instanceof DOMException && error.name === "AbortError") return;
       console.error("Erreur:", error);
       toast.error("Erreur lors du chargement des places");
@@ -145,11 +240,51 @@ function AdminPlacesContent() {
     if (status === "authenticated" && session?.user?.role === "admin") {
       fetchPlaces();
     }
-    // cleanup: abort si on quitte la page
     return () => {
       if (abortRef.current) abortRef.current.abort();
     };
   }, [status, session?.user?.role, fetchPlaces]);
+
+  // Search users
+  const searchUsersAPI = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setUsers([]);
+      return;
+    }
+
+    setLoadingUsers(true);
+    try {
+      const response = await fetch(`/api/admin/users/search?q=${encodeURIComponent(query)}`);
+      if (!response.ok) throw new Error("Erreur lors de la recherche");
+      
+      const data = await response.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error("Erreur recherche utilisateurs:", error);
+      toast.error("Erreur lors de la recherche d'utilisateurs");
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
+
+  // Debounced user search
+  useEffect(() => {
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+    
+    searchTimeout.current = setTimeout(() => {
+      if (searchUsers && showOwnerDialog) {
+        searchUsersAPI(searchUsers);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+    };
+  }, [searchUsers, showOwnerDialog, searchUsersAPI]);
 
   // Actions
   const handleValidation = async (
@@ -182,6 +317,51 @@ function AdminPlacesContent() {
     }
   };
 
+  const handleOwnerAction = async () => {
+    if (!selectedPlace) return;
+
+    if (ownerAction === "assign" && !selectedUser) {
+      toast.error("Veuillez sélectionner un utilisateur");
+      return;
+    }
+
+    setLoadingOwnerAction(true);
+    try {
+      const response = await fetch(`/api/admin/places/${selectedPlace.id}/ownership`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: ownerAction,
+          userId: selectedUser?.id,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Erreur lors de l'action");
+
+      const result = await response.json();
+      toast.success(result.message);
+      setShowOwnerDialog(false);
+      setSelectedPlace(null);
+      setSelectedUser(null);
+      setSearchUsers("");
+      fetchPlaces();
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast.error("Erreur lors de l'action sur le propriétaire");
+    } finally {
+      setLoadingOwnerAction(false);
+    }
+  };
+
+  const openOwnerDialog = (place: Place, action: "assign" | "remove") => {
+    setSelectedPlace(place);
+    setOwnerAction(action);
+    setSelectedUser(null);
+    setSearchUsers("");
+    setUsers([]);
+    setShowOwnerDialog(true);
+  };
+
   // Loading auth
   if (status === "loading") {
     return (
@@ -191,400 +371,363 @@ function AdminPlacesContent() {
     );
   }
 
-  /* =======================
-     Render
-     ======================= */
-
   return (
-    <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Administration des Places
-          </h1>
-          <p className="text-gray-600">
-            Gérez et validez les places du répertoire
-          </p>
+    <AdminGuard>
+      <div className="space-y-6">
+        {/* En-tête */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Administration des Places
+            </h1>
+            <p className="text-muted-foreground">
+              Gérez et validez les places du répertoire ({places.length} places)
+            </p>
+            {pendingCount > 0 && (
+              <Badge variant="outline" className="mt-2 bg-yellow-100 text-yellow-800">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                {pendingCount} place{pendingCount > 1 ? "s" : ""} en attente
+              </Badge>
+            )}
+          </div>
+
+          <Link
+            href="/dashboard/admin/places/new"
+            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            <Building2 className="w-4 h-4 mr-2" />
+            Créer une place
+          </Link>
         </div>
 
-        <Link
-          href="/dashboard/admin/places/new"
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            role="img"
-            aria-label="Icône d'ajout"
-          >
-            <title>Ajouter une nouvelle place</title>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
+        {/* Filtres & recherche */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Rechercher par nom, ville ou propriétaire..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
             />
-          </svg>
-          Créer une place
-        </Link>
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrer par statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="ACTIVE">Actif</SelectItem>
+              <SelectItem value="PENDING">En attente</SelectItem>
+              <SelectItem value="DRAFT">Brouillon</SelectItem>
+              <SelectItem value="INACTIVE">Inactif</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-        {pendingCount > 0 && (
-          <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg">
-            <span className="font-medium">{pendingCount}</span> place
-            {pendingCount > 1 ? "s" : ""} en attente
+        {/* Table */}
+        <div className="bg-card rounded-lg border border-border overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center p-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          ) : places.length === 0 ? (
+            <div className="text-center py-12">
+              <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-foreground mb-2">
+                Aucune place trouvée
+              </h3>
+              <p className="text-muted-foreground">
+                {debouncedQuery
+                  ? "Aucun résultat pour cette recherche."
+                  : "Aucune place dans le système."}
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Place</TableHead>
+                  <TableHead>Propriétaire</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Statistiques</TableHead>
+                  <TableHead>Créée</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {places.map((place) => (
+                  <TableRow key={place.id}>
+                    {/* Place info */}
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-foreground">{place.name}</h3>
+                          {place.isFeatured && (
+                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                              <Star className="w-3 h-3 mr-1" />
+                              Vedette
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {place.type} • {place.city}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{place.street}</p>
+                      </div>
+                    </TableCell>
+
+                    {/* Owner */}
+                    <TableCell>
+                      {place.owner ? (
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-foreground flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {place.owner.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{place.owner.email}</p>
+                        </div>
+                      ) : (
+                        <Badge variant="outline" className="text-orange-600 border-orange-200">
+                          <Flag className="w-3 h-3 mr-1" />
+                          Peut être revendiquée
+                        </Badge>
+                      )}
+                    </TableCell>
+
+                    {/* Status */}
+                    <TableCell>
+                      {getStatusBadge(place.status, place.isVerified)}
+                    </TableCell>
+
+                    {/* Stats */}
+                    <TableCell>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Star className="w-3 h-3" />
+                          {place._count.reviews}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Heart className="w-3 h-3" />
+                          {place._count.favorites}
+                        </span>
+                        {place._count.claims > 0 && (
+                          <Badge variant="outline" className="text-orange-600 border-orange-200">
+                            {place._count.claims} revendication{place._count.claims > 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Created */}
+                    <TableCell>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(place.createdAt).toLocaleDateString("fr-FR")}
+                      </div>
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {place.status === "PENDING" && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              onClick={() => handleValidation(place.id, "approve", place.name)}
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Approuver
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleValidation(place.id, "reject", place.name)}
+                            >
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Rejeter
+                            </Button>
+                          </>
+                        )}
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                              <Link href={`/places/${place.slug}`} target="_blank">
+                                <Eye className="w-4 h-4 mr-2" />
+                                Voir
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/places/${place.id}/edit`}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Modifier
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {place.owner ? (
+                              <DropdownMenuItem
+                                onClick={() => openOwnerDialog(place, "remove")}
+                                className="text-orange-600"
+                              >
+                                <UserMinus className="w-4 h-4 mr-2" />
+                                Retirer le propriétaire
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                onClick={() => openOwnerDialog(place, "assign")}
+                                className="text-green-600"
+                              >
+                                <UserPlus className="w-4 h-4 mr-2" />
+                                Assigner un propriétaire
+                              </DropdownMenuItem>
+                            )}
+                            {place._count.claims > 0 && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/dashboard/admin/claims?place=${place.id}`}>
+                                    <Flag className="w-4 h-4 mr-2" />
+                                    Voir revendications ({place._count.claims})
+                                  </Link>
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Page {currentPage} sur {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(currentPage - 1)}
+              >
+                Précédent
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(currentPage + 1)}
+              >
+                Suivant
+              </Button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Filtres & recherche */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="PENDING">En attente ({pendingCount})</option>
-          <option value="all">Tous les statuts</option>
-          <option value="ACTIVE">Actif</option>
-          <option value="DRAFT">Brouillon</option>
-          <option value="INACTIVE">Inactif</option>
-        </select>
+      {/* Dialog de gestion des propriétaires */}
+      <Dialog open={showOwnerDialog} onOpenChange={setShowOwnerDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {ownerAction === "assign" ? "Assigner un propriétaire" : "Retirer le propriétaire"}
+            </DialogTitle>
+            <DialogDescription>
+              {ownerAction === "assign" 
+                ? `Recherchez et sélectionnez un utilisateur pour devenir propriétaire de "${selectedPlace?.name}".`
+                : `Confirmer la suppression du propriétaire de "${selectedPlace?.name}". La place deviendra disponible à la revendication.`
+              }
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="flex-1">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            placeholder="Rechercher par nom, ville ou propriétaire..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      </div>
-
-      {/* Liste */}
-      {loading ? (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="animate-pulse">
-            {[...Array(10)].map((_, i) => (
-              <div key={i} className="border-b border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <div className="h-8 bg-gray-200 rounded w-20"></div>
-                    <div className="h-8 bg-gray-200 rounded w-20"></div>
-                  </div>
-                </div>
+          {ownerAction === "assign" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Rechercher un utilisateur</label>
+                <Input
+                  placeholder="Nom ou email de l'utilisateur..."
+                  value={searchUsers}
+                  onChange={(e) => setSearchUsers(e.target.value)}
+                />
               </div>
-            ))}
-          </div>
-        </div>
-      ) : places.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <svg
-            className="w-16 h-16 text-gray-300 mx-auto mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            role="img"
-            aria-label="Aucune place trouvée"
-          >
-            <title>Aucune place</title>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1}
-              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-            />
-          </svg>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">
-            Aucune place trouvée
-          </h3>
-          <p className="text-gray-600">
-            {debouncedQuery
-              ? "Aucun résultat pour cette recherche."
-              : statusFilter === "all"
-              ? "Aucune place dans le système."
-              : `Aucune place avec le statut "${getStatusText(statusFilter)}".`}
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="divide-y divide-gray-200">
-            {places.map((place) => (
-              <div key={place.id} className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                          {place.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {place.type} • {place.city}
-                        </p>
-                        <p className="text-sm text-gray-500 mb-2">
-                          {place.street}
-                        </p>
 
-                        {place.owner ? (
-                          <p className="text-sm text-gray-500">
-                            Propriétaire: {place.owner.name} (
-                            {place.owner.email})
-                          </p>
-                        ) : (
-                          <p className="text-sm text-orange-600 font-medium">
-                            🔓 Sans propriétaire - Peut être revendiquée
-                          </p>
-                        )}
+              {loadingUsers && (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                </div>
+              )}
 
-                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                          <span>{place._count.reviews} avis</span>
-                          <span>{place._count.favorites} favoris</span>
-                          {place._count.claims > 0 && (
-                            <span className="text-orange-600 font-medium">
-                              {place._count.claims} revendication
-                              {place._count.claims > 1 ? "s" : ""}
-                            </span>
+              {users.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Sélectionner un utilisateur</label>
+                  <div className="border rounded-lg max-h-48 overflow-y-auto">
+                    {users.map((user) => (
+                      <div
+                        key={user.id}
+                        className={`p-3 cursor-pointer hover:bg-muted border-b last:border-b-0 ${
+                          selectedUser?.id === user.id ? "bg-primary/10" : ""
+                        }`}
+                        onClick={() => setSelectedUser(user)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{user.name}</p>
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                          </div>
+                          {user._count?.ownedPlaces && (
+                            <Badge variant="outline">
+                              {user._count.ownedPlaces} place{user._count.ownedPlaces > 1 ? "s" : ""}
+                            </Badge>
                           )}
                         </div>
                       </div>
-
-                      <div className="text-right">
-                        <span
-                          className={getStatusBadge(
-                            place.status,
-                            place.isVerified
-                          )}
-                        >
-                          {getStatusText(place.status)}
-                        </span>
-                        <p className="text-xs text-gray-500 mt-2">
-                          Créé le{" "}
-                          {new Date(place.createdAt).toLocaleDateString(
-                            "fr-FR"
-                          )}
-                        </p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex space-x-2">
-                    <Link
-                      href={`/places/${place.slug}`}
-                      target="_blank"
-                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
-                    >
-                      Voir
-                    </Link>
-                    <Link
-                      href={`/dashboard/places/${place.id}/edit`}
-                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
-                    >
-                      Modifier
-                    </Link>
-                    {place._count.claims > 0 && (
-                      <Link
-                        href={`/dashboard/admin/claims?place=${place.id}`}
-                        className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-md transition-colors"
-                      >
-                        Voir revendications
-                      </Link>
-                    )}
-                  </div>
-
-                  {place.status === "PENDING" && (
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() =>
-                          handleValidation(place.id, "approve", place.name)
-                        }
-                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-                      >
-                        Approuver
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleValidation(place.id, "reject", place.name)
-                        }
-                        className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
-                      >
-                        Rejeter
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
-          <div className="flex flex-1 justify-between sm:hidden">
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Précédent
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Suivant
-            </button>
-          </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Page <span className="font-medium">{currentPage}</span> sur{" "}
-                <span className="font-medium">{totalPages}</span>
-              </p>
+              )}
             </div>
-            <div>
-              <nav
-                className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                aria-label="Pagination"
-              >
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <span className="sr-only">Précédent</span>
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
+          )}
 
-                {Math.min(5, totalPages) === totalPages ? (
-                  [...Array(totalPages)]
-                    .map((_, i) => i + 1)
-                    .map((page) => (
-                      <button
-                        key={page}
-                        type="button"
-                        onClick={() => setCurrentPage(page)}
-                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                          page === currentPage
-                            ? "z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                            : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentPage(1)}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                        currentPage === 1
-                          ? "z-10 bg-blue-600 text-white"
-                          : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      1
-                    </button>
-                    {currentPage > 3 && (
-                      <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">
-                        ...
-                      </span>
-                    )}
-                    {currentPage > 2 && currentPage < totalPages - 1 && (
-                      <button
-                        onClick={() => setCurrentPage(currentPage)}
-                        className="z-10 bg-blue-600 text-white relative inline-flex items-center px-4 py-2 text-sm font-semibold"
-                      >
-                        {currentPage}
-                      </button>
-                    )}
-                    {currentPage < totalPages - 2 && (
-                      <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">
-                        ...
-                      </span>
-                    )}
-                    <button
-                      onClick={() => setCurrentPage(totalPages)}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                        currentPage === totalPages
-                          ? "z-10 bg-blue-600 text-white"
-                          : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      {totalPages}
-                    </button>
-                  </>
-                )}
-
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <span className="sr-only">Suivant</span>
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* =======================
-   Page wrapper (Guard)
-   ======================= */
-
-export default function AdminPlacesPage() {
-  return (
-    <AdminGuard>
-      <AdminPlacesContent />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowOwnerDialog(false)}
+              disabled={loadingOwnerAction}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleOwnerAction}
+              disabled={loadingOwnerAction || (ownerAction === "assign" && !selectedUser)}
+              className={ownerAction === "remove" ? "bg-orange-600 hover:bg-orange-700" : ""}
+            >
+              {loadingOwnerAction ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+              ) : null}
+              {ownerAction === "assign" ? "Assigner" : "Retirer le propriétaire"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminGuard>
   );
 }

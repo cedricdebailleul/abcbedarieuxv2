@@ -88,9 +88,65 @@ type RawHour =
       slots?: { openTime: string; closeTime: string }[];
     };
 
-/* ---------------------- Horaires utilitaire ----------------------- */
+/* ---------------------- Horaires utilitaires ----------------------- */
+
+// Transformer les horaires DB vers le format avec slots
+function groupOpeningHoursByDay(dbHours: any[]) {
+  if (!dbHours?.length) return [];
+  
+  const groupedByDay: Record<string, any[]> = {};
+  
+  // Grouper par jour
+  for (const hour of dbHours) {
+    const day = hour.dayOfWeek;
+    if (!groupedByDay[day]) {
+      groupedByDay[day] = [];
+    }
+    groupedByDay[day].push(hour);
+  }
+  
+  // Convertir en format avec slots
+  const result = Object.entries(groupedByDay).map(([dayOfWeek, hours]) => {
+    // Vérifier s'il y a des créneaux fermés
+    const hasClosedHour = hours.some(h => h.isClosed);
+    
+    if (hasClosedHour || hours.length === 0) {
+      return {
+        dayOfWeek,
+        isClosed: true,
+        openTime: null,
+        closeTime: null,
+        slots: []
+      };
+    }
+    
+    // Créer les slots depuis les horaires valides
+    const slots = hours
+      .filter(h => !h.isClosed && h.openTime && h.closeTime)
+      .map(h => ({
+        openTime: h.openTime,
+        closeTime: h.closeTime
+      }));
+    
+    return {
+      dayOfWeek,
+      isClosed: false,
+      openTime: slots[0]?.openTime || null, // Pour compatibilité
+      closeTime: slots[slots.length - 1]?.closeTime || null, // Pour compatibilité
+      slots
+    };
+  });
+  
+  console.log("groupOpeningHoursByDay - Input:", dbHours.length, "hours");
+  console.log("groupOpeningHoursByDay - Output:", result.length, "days with slots");
+  
+  return result;
+}
+
 function toOpeningRows(placeId: string, openingHours?: RawHour[]) {
   if (!openingHours?.length) return [];
+  
+  console.log("toOpeningRows - Input openingHours:", JSON.stringify(openingHours, null, 2));
 
   const rows: {
     placeId: string;
@@ -105,8 +161,10 @@ function toOpeningRows(placeId: string, openingHours?: RawHour[]) {
     const closed = !!item.isClosed;
 
     if (Array.isArray(item.slots) && item.slots.length) {
+      console.log(`toOpeningRows - Processing ${item.slots.length} slots for ${day}:`, item.slots);
       for (const s of item.slots) {
         if (!closed && s?.openTime && s?.closeTime) {
+          console.log(`toOpeningRows - Adding slot for ${day}:`, s);
           rows.push({
             placeId,
             dayOfWeek: day,
@@ -130,6 +188,7 @@ function toOpeningRows(placeId: string, openingHours?: RawHour[]) {
     }
   }
 
+  console.log("toOpeningRows - Final rows:", rows.length, "rows created");
   return rows.filter((r) => r.openTime && r.closeTime);
 }
 
@@ -181,7 +240,13 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ place });
+    // Transformer les horaires pour regrouper les créneaux multiples par jour
+    const transformedPlace = {
+      ...place,
+      openingHours: groupOpeningHoursByDay(place.openingHours)
+    };
+
+    return NextResponse.json({ place: transformedPlace });
   } catch (error) {
     console.error("Erreur lors de la récupération de la place:", error);
     return NextResponse.json(

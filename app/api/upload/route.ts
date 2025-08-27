@@ -144,14 +144,40 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Optimiser l'image
+    // Optimiser l'image avec des tailles différentes selon le type
+    let maxWidth = 2000;
+    let maxHeight = 2000;
+    let quality = 85;
+    
+    // Paramètres spécifiques selon le type d'image
+    switch (imageType) {
+      case "cover":
+        maxWidth = 2400; // Plus large pour la cover
+        maxHeight = 1600; // Plus haut pour une meilleure résolution
+        quality = 90; // Qualité supérieure pour la cover
+        break;
+      case "logo":
+        maxWidth = 800;
+        maxHeight = 800;
+        quality = 95; // Haute qualité pour le logo
+        break;
+      case "gallery":
+        maxWidth = 1800;
+        maxHeight = 1800;
+        quality = 85;
+        break;
+      default:
+        // Garder les valeurs par défaut
+        break;
+    }
+    
     const optimizedBuffer = await sharp(imageBuffer)
-      .resize(2000, 2000, {
+      .resize(maxWidth, maxHeight, {
         fit: "inside",
         withoutEnlargement: true,
       })
       .jpeg({
-        quality: 85,
+        quality: quality,
         progressive: true,
       })
       .toBuffer();

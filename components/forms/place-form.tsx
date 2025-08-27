@@ -11,6 +11,7 @@ import {
   MapPin,
   RefreshCw,
   Settings,
+  Upload,
 } from "lucide-react";
 import React, {
   useCallback,
@@ -58,6 +59,7 @@ import {
   useGooglePlaces,
 } from "@/hooks/use-google-places";
 import { OpeningHoursForm } from "./opening-hours-form";
+import { PlaceFormMap as PlaceFormMapUltraSimple } from "./place-form-map-ultra-simple";
 import { generateSlug } from "@/lib/validations/post";
 import { getPlaceCategoriesAction } from "@/actions/place-category";
 import Image from "next/image";
@@ -83,7 +85,11 @@ type RawHour = {
 
 /* -------------------- Normalisation horaires -------------------- */
 function toDaySchedule(raw: RawHour[]): DaySchedule[] {
+  console.log("toDaySchedule - Raw input:", raw);
+  
   return (raw ?? []).map((h) => {
+    console.log("toDaySchedule - Processing hour:", h);
+    
     // slots depuis tableau
     const slotsFromArray: OpeningSlot[] = (h.slots ?? [])
       .map((s) => ({
@@ -92,18 +98,28 @@ function toDaySchedule(raw: RawHour[]): DaySchedule[] {
       }))
       .filter((s) => s.openTime && s.closeTime);
 
-    // slot unique depuis champs à plat
+    // slot unique depuis champs à plat (seulement si pas de slots dans le tableau)
     const slotFromFlat: OpeningSlot[] =
-      h.openTime && h.closeTime
+      slotsFromArray.length === 0 && h.openTime && h.closeTime
         ? [{ openTime: h.openTime, closeTime: h.closeTime }]
         : [];
 
     const slots = [...slotsFromArray, ...slotFromFlat];
+    
+    // Dédupliquer les slots au cas où il y aurait des doublons
+    const uniqueSlots = slots.filter((slot, index, arr) => 
+      arr.findIndex(s => s.openTime === slot.openTime && s.closeTime === slot.closeTime) === index
+    );
+    
+    // Ne pas marquer comme fermé si on a des créneaux valides
+    const isClosed = h.isClosed === true ? true : uniqueSlots.length === 0;
+    
+    console.log("toDaySchedule - Result for", h.dayOfWeek, ":", { isClosed, slots: uniqueSlots });
 
     return {
       dayOfWeek: String(h.dayOfWeek).toUpperCase(),
-      isClosed: !!h.isClosed || slots.length === 0,
-      slots,
+      isClosed,
+      slots: uniqueSlots,
     };
   });
 }
@@ -235,7 +251,7 @@ export function PlaceForm({
     resolver: zodResolver(placeSchema) as Resolver<PlaceFormData, unknown>,
     defaultValues: {
       name: "",
-      type: "",
+      type: "OTHER", // Type par défaut (correspond au @default(OTHER) de Prisma)
       category: "",
       categories: [],
       description: "",
@@ -261,12 +277,14 @@ export function PlaceForm({
       googleMapsUrl: "",
       metaTitle: "",
       metaDescription: "",
-      published: false,
+      published: userRole === "admin" ? true : false, // Auto-publier pour les admins
+      isFeatured: false,
     },
   });
 
   // watch (évite les warnings de deps complexes dans useEffect)
   const streetW = useWatch({ control: form.control, name: "street" });
+  const streetNumberW = useWatch({ control: form.control, name: "streetNumber" });
   const cityW = useWatch({ control: form.control, name: "city" });
   const postalCodeW = useWatch({ control: form.control, name: "postalCode" });
 
@@ -306,22 +324,44 @@ export function PlaceForm({
       console.log("PlaceForm - Raw initialData:", initialData);
       
       // Map the data explicitly to ensure proper field matching
+      // Générer automatiquement les métadonnées si manquantes
+      const placeName = initialData.name || "";
+      const placeCity = initialData.city || "";
+      const placeType = initialData.type || "COMMERCE";
+      
+      console.log("PlaceForm - initialData.type:", initialData.type);
+      console.log("PlaceForm - placeType after fallback:", placeType);
+      
+      const autoMetaTitle = placeName 
+        ? `${placeName} - ${placeCity} | ABC Bédarieux`
+        : "Commerce - ABC Bédarieux";
+      
+      const autoMetaDescription = placeName
+        ? `Découvrez ${placeName} à ${placeCity}. ${initialData.description ? initialData.description.substring(0, 120) + '...' : `${placeType.toLowerCase()} situé à ${placeCity}.`}`
+        : `Découvrez ce ${placeType.toLowerCase()} à ${placeCity}.`;
+        
+      const autoSummary = placeName && initialData.description
+        ? initialData.description.length > 200 
+          ? initialData.description.substring(0, 197) + '...'
+          : initialData.description
+        : `${placeName} - ${placeType.toLowerCase()} à ${placeCity}`;
+
       const formData = {
-        name: initialData.name || "",
-        type: initialData.type || "",
+        name: placeName,
+        type: initialData.type || "COMMERCE",
         category: initialData.category || "",
         categories: initialData.categories || [],
         description: initialData.description || "",
-        summary: initialData.summary || "",
+        summary: initialData.summary || autoSummary,
         street: initialData.street || "",
         streetNumber: initialData.streetNumber || "",
         postalCode: initialData.postalCode || "",
-        city: initialData.city || "",
+        city: placeCity,
         latitude: initialData.latitude,
         longitude: initialData.longitude,
         logo: initialData.logo || "",
         coverImage: initialData.coverImage || "",
-        photos: initialData.images || [], // Note: using images as photos
+        photos: initialData.images || [],
         email: initialData.email || "",
         phone: initialData.phone || "",
         website: initialData.website || "",
@@ -332,12 +372,14 @@ export function PlaceForm({
         tiktok: initialData.tiktok || "",
         googlePlaceId: initialData.googlePlaceId || "",
         googleMapsUrl: initialData.googleMapsUrl || "",
-        metaTitle: initialData.metaTitle || "",
-        metaDescription: initialData.metaDescription || "",
-        published: false, // Default for edit mode
+        metaTitle: initialData.metaTitle || autoMetaTitle,
+        metaDescription: initialData.metaDescription || autoMetaDescription,
+        published: initialData.published ?? (userRole === "admin" ? true : false), // Conserver la valeur existante
+        isFeatured: initialData.isFeatured ?? false, // Conserver la valeur existante
       };
       
       console.log("PlaceForm - Mapped formData:", formData);
+      console.log("PlaceForm - formData.type specifically:", formData.type);
       console.log("PlaceForm - Current form values before reset:", form.getValues());
       
       form.reset(formData);
@@ -346,17 +388,31 @@ export function PlaceForm({
     }
   }, [initialData, mode, form]);
 
+  // Forcer le type par défaut si vide
+  useEffect(() => {
+    const currentType = form.getValues("type");
+    if (!currentType || currentType === "") {
+      console.log("PlaceForm - Type is empty, setting default COMMERCE");
+      form.setValue("type", "COMMERCE");
+    }
+  }, [form, initialData]);
+
   // Préremplir images & horaires en EDIT
   useEffect(() => {
     if (mode === "edit") {
       if (Array.isArray(initialData?.images)) {
-        setImages(initialData!.images!);
+        // Dédupliquer les images avant de les définir dans le state
+        const uniqueImages = Array.from(new Set(initialData.images));
+        console.log("PlaceForm EDIT - Original images count:", initialData.images.length);
+        console.log("PlaceForm EDIT - Unique images count:", uniqueImages.length);
+        console.log("PlaceForm EDIT - Setting images:", uniqueImages);
+        setImages(uniqueImages);
       }
       if (initialData?.openingHours) {
         setOpeningHours(toDaySchedule(initialData.openingHours as RawHour[]));
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [mode, initialData?.images, initialData?.openingHours]);
 
   // Charger catégories
@@ -416,6 +472,13 @@ export function PlaceForm({
       setIsGeocoding(false);
     }
   }, [form, geocodeAddress]);
+
+  // Gérer les changements de coordonnées depuis la carte
+  const handleMapCoordinatesChange = useCallback((lat: number, lng: number) => {
+    form.setValue("latitude", lat);
+    form.setValue("longitude", lng);
+    toast.success("Position mise à jour depuis la carte");
+  }, [form]);
 
   // Géocodage automatique en création
   useEffect(() => {
@@ -480,9 +543,20 @@ export function PlaceForm({
 
   const fillFormWithGoogleData = useCallback(
     async (place: FormattedPlaceData) => {
-      // Base
+      // Base - préserver les valeurs existantes si Google n'en fournit pas
       form.setValue("name", place.name ?? "");
-      form.setValue("type", place.type ?? "");
+      
+      // Type : utiliser Google si disponible, sinon garder la valeur existante ou "OTHER" par défaut
+      if (place.type && place.type.trim() !== "") {
+        form.setValue("type", place.type);
+      } else {
+        // Si pas de type Google et pas de type existant, utiliser "OTHER" par défaut
+        const currentType = form.getValues("type");
+        if (!currentType || currentType === "") {
+          form.setValue("type", "OTHER");
+        }
+      }
+      
       form.setValue("category", place.category ?? "");
 
       // Adresse
@@ -493,18 +567,77 @@ export function PlaceForm({
       form.setValue("latitude", place.latitude);
       form.setValue("longitude", place.longitude);
 
-      // Logo (upload auto)
-      if (place.logo?.startsWith("http")) {
+      // Logo (upload auto) - ne pas écraser si on a déjà un logo local
+      const currentLogo = form.getValues("logo");
+      if (place.logo?.startsWith("http") && (!currentLogo || currentLogo.startsWith("http"))) {
         const uploadedLogo = await uploadGoogleImage(place.logo, "logo");
         form.setValue("logo", uploadedLogo || place.logo);
-      } else {
-        form.setValue("logo", place.logo ?? "");
+      } else if (place.logo && !currentLogo) {
+        form.setValue("logo", place.logo);
       }
-      // Couverture : laisser vide par défaut
-      form.setValue("coverImage", "");
+      // Couverture : proposer la première photo Google comme couverture potentielle
+      if (place.photos && place.photos.length > 0) {
+        // Prendre la première photo comme suggestion de couverture
+        const suggestedCover = place.photos[0];
+        // Ne définir que si on n'a pas déjà une couverture
+        const currentCover = form.getValues("coverImage");
+        if (!currentCover || currentCover === "") {
+          form.setValue("coverImage", suggestedCover);
+        }
+      }
 
-      // Galerie
-      setImages(place.photos ?? []);
+      // Galerie - en mode édition, conserver les images existantes et ajouter les nouvelles
+      if (mode === "create") {
+        // En création, remplacer complètement
+        setImages(place.photos ?? []);
+      } else {
+        // En édition, ajouter seulement les nouvelles photos Google qui ne sont pas déjà présentes
+        const existingImages = images;
+        const newGooglePhotos = place.photos ?? [];
+        
+        // Filtrer les nouvelles photos Google pour éviter les doublons
+        const uniqueNewPhotos = newGooglePhotos.filter((photo) => {
+          // Exclure si l'URL est déjà présente
+          if (existingImages.includes(photo)) return false;
+          
+          // Extraire l'ID de la photo Google pour une détection plus robuste
+          const photoId = photo.match(/CmRaAAAA[\w-]+/)?.[0] || 
+                          photo.match(/\/([^\/]+)(?:\?|$)/)?.[1] ||
+                          photo.match(/photo-(\d+)/)?.[1];
+          
+          if (photoId) {
+            // Vérifier si on a déjà une version uploadée de cette photo
+            const hasUploadedVersion = existingImages.some(img => {
+              // Vérifier les images uploadées qui contiennent l'ID
+              return img.startsWith('/uploads/') && img.includes(photoId);
+            });
+            if (hasUploadedVersion) return false;
+          }
+          
+          // Vérifier aussi par nom de fichier pour les cas où l'ID n'est pas détecté
+          const fileName = photo.split('/').pop()?.split('?')[0];
+          if (fileName) {
+            const hasSimilarFile = existingImages.some(img => 
+              img.includes(fileName.substring(0, 10)) // Comparer les 10 premiers caractères
+            );
+            if (hasSimilarFile) return false;
+          }
+          
+          return true;
+        });
+        
+        if (uniqueNewPhotos.length > 0) {
+          setImages([...existingImages, ...uniqueNewPhotos]);
+          toast.success(`${uniqueNewPhotos.length} nouvelles images ajoutées depuis Google`);
+        } else {
+          const totalGooglePhotos = newGooglePhotos.length;
+          if (totalGooglePhotos > 0) {
+            toast.info(`${totalGooglePhotos} images Google détectées mais déjà présentes`);
+          } else {
+            toast.info("Aucune image trouvée depuis Google");
+          }
+        }
+      }
 
       // Contact
       form.setValue("phone", place.phone ?? "");
@@ -550,6 +683,9 @@ export function PlaceForm({
   }, [form, fetchOpeningHours]);
 
   const onSubmitForm: SubmitHandler<PlaceFormData> = (data) => {
+    console.log("PlaceForm - Submitting data:", data);
+    console.log("PlaceForm - data.type specifically:", data.type);
+    
     startTransition(async () => {
       try {
         // Convertit l’état DaySchedule -> RawHour pour l’API (slots only)
@@ -746,11 +882,11 @@ export function PlaceForm({
                           <FormLabel>Type *</FormLabel>
                           <FormControl>
                             <Select
-                              value={field.value}
+                              value={field.value || "COMMERCE"}
                               onValueChange={field.onChange}
                             >
                               <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner…" />
+                                <SelectValue placeholder="Sélectionner un type…" />
                               </SelectTrigger>
                               <SelectContent>
                                 {PLACE_TYPES.map((t) => (
@@ -875,53 +1011,77 @@ export function PlaceForm({
                   </div>
 
                   {(lat || lng) && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="latitude"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-muted-foreground">
-                              Latitude
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                value={field.value?.toString() || ""}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    parseFloat(e.target.value) || undefined
-                                  )
-                                }
-                                readOnly
-                                className="bg-muted"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="longitude"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-muted-foreground">
-                              Longitude
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                value={field.value?.toString() || ""}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    parseFloat(e.target.value) || undefined
-                                  )
-                                }
-                                readOnly
-                                className="bg-muted"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="latitude"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-muted-foreground">
+                                Latitude
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || undefined
+                                    )
+                                  }
+                                  readOnly
+                                  className="bg-muted"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="longitude"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-muted-foreground">
+                                Longitude
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  value={field.value?.toString() || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || undefined
+                                    )
+                                  }
+                                  readOnly
+                                  className="bg-muted"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      {mode === "edit" && (
+                        <div className="flex justify-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGeocodeAddress}
+                            disabled={isGeocoding || !isLoaded}
+                            className="gap-2"
+                          >
+                            {isGeocoding ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-4 h-4" />
+                            )}
+                            {isGeocoding
+                              ? "Actualisation..."
+                              : "Actualiser les coordonnées GPS"}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -946,6 +1106,21 @@ export function PlaceForm({
                       </Button>
                     </div>
                   )}
+
+                  {/* Carte interactive pour ajustement de position */}
+                  <div className="space-y-3">
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">
+                        Ajustement de position
+                      </h4>
+                      <PlaceFormMapUltraSimple
+                        latitude={lat || 43.6284}
+                        longitude={lng || 3.1631}
+                        onCoordinatesChange={handleMapCoordinatesChange}
+                        address={`${streetW} ${streetNumberW}, ${postalCodeW} ${cityW}`.trim().replace(/^,\s*/, '')}
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1118,7 +1293,13 @@ export function PlaceForm({
                             const googleImages = images.filter((i) =>
                               i.startsWith("http")
                             );
-                            if (googleImages.length === 0) return;
+                            
+                            // Éviter les doublons dans les URLs Google elles-mêmes
+                            const uniqueGoogleImages = googleImages.filter((img, index, arr) => 
+                              arr.indexOf(img) === index
+                            );
+                            
+                            if (uniqueGoogleImages.length === 0) return;
                             startTransition(async () => {
                               try {
                                 const response = await fetch(
@@ -1129,7 +1310,7 @@ export function PlaceForm({
                                       "Content-Type": "application/json",
                                     },
                                     body: JSON.stringify({
-                                      images: googleImages,
+                                      images: uniqueGoogleImages,
                                       slug: uploadSlug,
                                       type: "places",
                                     }),
@@ -1138,12 +1319,19 @@ export function PlaceForm({
                                 if (!response.ok)
                                   throw new Error("Erreur lors de l'upload");
                                 const result = await response.json();
-                                setImages((prev) => [
-                                  ...prev.filter(
+                                setImages((prev) => {
+                                  // Conserver les images non-Google existantes
+                                  const nonGoogleImages = prev.filter(
                                     (img) => !img.startsWith("http")
-                                  ),
-                                  ...result.uploadedImages,
-                                ]);
+                                  );
+                                  
+                                  // Ajouter les nouvelles images uploadées en évitant les doublons
+                                  const newUploadedImages = result.uploadedImages.filter((newImg: string) =>
+                                    !nonGoogleImages.includes(newImg)
+                                  );
+                                  
+                                  return [...nonGoogleImages, ...newUploadedImages];
+                                });
                                 toast.success(
                                   `${result.uploadedCount}/${result.totalCount} images uploadées`
                                 );
@@ -1163,6 +1351,60 @@ export function PlaceForm({
                         </Button>
                       </div>
                     )}
+
+                    {/* Upload multiple */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h5 className="text-sm font-medium text-muted-foreground">
+                          Upload multiple d'images
+                        </h5>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Créer un input file multiple
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.multiple = true;
+                            input.accept = 'image/*';
+                            input.onchange = async (e) => {
+                              const files = (e.target as HTMLInputElement).files;
+                              if (files && files.length > 0) {
+                                toast.info(`Upload de ${files.length} image(s) en cours...`);
+                                for (const file of files) {
+                                  try {
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    formData.append('type', 'places');
+                                    formData.append('slug', uploadSlug);
+                                    formData.append('subFolder', 'gallery');
+                                    formData.append('imageType', 'gallery');
+                                    
+                                    const response = await fetch('/api/upload', {
+                                      method: 'POST',
+                                      body: formData,
+                                    });
+                                    
+                                    if (response.ok) {
+                                      const result = await response.json();
+                                      setImages(prev => [...prev, result.url]);
+                                    }
+                                  } catch (error) {
+                                    console.error('Erreur upload:', error);
+                                  }
+                                }
+                                toast.success('Images uploadées !');
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Sélectionner plusieurs images
+                        </Button>
+                      </div>
+                    </div>
 
                     {/* Upload unité galerie */}
                     <div className="space-y-2">
@@ -1578,10 +1820,35 @@ export function PlaceForm({
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setShowGoogleSearch(true)}
+                          onClick={() => {
+                            const googlePlaceId = form.getValues("googlePlaceId");
+                            if (googlePlaceId) {
+                              // Réimporter les données de l'établissement Google existant
+                              startTransition(async () => {
+                                try {
+                                  toast.info("Réimportation des données Google en cours...");
+                                  await getPlaceDetails(googlePlaceId);
+                                } catch (error) {
+                                  console.error("Erreur réimportation:", error);
+                                  toast.error("Erreur lors de la réimportation des données Google");
+                                }
+                              });
+                            } else {
+                              // Pas d'établissement Google existant, afficher la recherche
+                              setShowGoogleSearch(true);
+                              toast.info("💡 Sélectionnez un établissement, puis réimportez les avis", {
+                                duration: 5000
+                              });
+                            }
+                          }}
                           className="w-full"
+                          disabled={isPending}
                         >
-                          <RefreshCw className="h-4 w-4 mr-2" />
+                          {isPending ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                          )}
                           Réimporter depuis Google
                         </Button>
 

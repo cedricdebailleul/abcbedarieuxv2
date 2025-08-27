@@ -71,7 +71,11 @@ export function ImageUpload({
         };
       case "cover":
         return {
-          aspectRatios: [{ label: "Facebook Cover 1.91:1", value: 1.91 }],
+          aspectRatios: [
+            { label: "Cover Standard 2:1", value: 2 },
+            { label: "Cover Élargi 2.4:1", value: 2.4 },
+            { label: "Facebook Cover 1.91:1", value: 1.91 }
+          ],
           showCrop: true,
           autoOpenCrop: true,
         };
