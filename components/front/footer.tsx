@@ -92,7 +92,7 @@ export default function FooterSection() {
 
   return (
     <footer ref={ref} className="bg-gray-900 text-white mt-16 px-8 mx-auto">
-      <div className="py-12">
+      <div className="py-12 container mx-auto">
         <motion.div
           className="grid lg:grid-cols-2 gap-12 items-start"
           variants={containerVariants}
@@ -102,7 +102,10 @@ export default function FooterSection() {
           {/* Left Section */}
           <div className="space-y-8">
             {/* Logo */}
-            <motion.div className="flex items-center gap-3" variants={itemVariants}>
+            <motion.div
+              className="flex items-center gap-3"
+              variants={itemVariants}
+            >
               <Logo width={50} height={50} />
               <span className="text-md text-primary font-bold">
                 Association Bédaricienne <br />
@@ -112,7 +115,9 @@ export default function FooterSection() {
 
             {/* Social Media */}
             <motion.div variants={itemVariants}>
-              <h3 className="text-sm font-semibold mb-4 tracking-wide">SUIVEZ-NOUS</h3>
+              <h3 className="text-sm font-semibold mb-4 tracking-wide">
+                SUIVEZ-NOUS
+              </h3>
               <div className="flex gap-3">
                 {socialButtons.map((social, index) => (
                   <motion.div
@@ -142,7 +147,10 @@ export default function FooterSection() {
                 whileHover={{ y: -2 }}
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
-                <Link href="/faq" className="text-gray-300 hover:text-white transition-colors">
+                <Link
+                  href="/faq"
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
                   Foire aux questions
                 </Link>
               </motion.div>
@@ -168,14 +176,27 @@ export default function FooterSection() {
             variants={itemVariants}
           >
             <p className="text-sm text-gray-400">
-              © ABC - Association Bédaricienne des Commerçants, {new Date().getFullYear()}
+              © {new Date().getFullYear()}{" "}
+              <span className="text-primary">
+                ABC - Association Bédaricienne des Commerçants
+              </span>
+              , propulsé par{" "}
+              <Link
+                className="text-primary hover:text-white transition-colors"
+                href="https://blackbearstudio.fr"
+              >
+                Black Bear Studio
+              </Link>
             </p>
             <div className="flex gap-6 text-sm">
               <motion.div
                 whileHover={{ y: -1 }}
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
-                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/privacy"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Politique d&apos;utilisation
                 </Link>
               </motion.div>
@@ -183,7 +204,10 @@ export default function FooterSection() {
                 whileHover={{ y: -1 }}
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
-                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/privacy"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Politique de confidentialité
                 </Link>
               </motion.div>
