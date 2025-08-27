@@ -302,13 +302,19 @@ export function clusterPlacesByAddress(places: MapPlace[]): (MapPlace | PlaceClu
       result.push(placesAtAddress[0]);
     } else {
       // Plusieurs places à la même adresse, créer un cluster
-      const firstPlace = placesAtAddress[0];
+      // Utiliser la place avec la date de mise à jour la plus récente pour l'adresse du cluster
+      const mostRecentPlace = placesAtAddress.reduce((latest, current) => {
+        const latestDate = latest.updatedAt ? new Date(latest.updatedAt) : new Date(0);
+        const currentDate = current.updatedAt ? new Date(current.updatedAt) : new Date(0);
+        return currentDate > latestDate ? current : latest;
+      });
+      
       const cluster: PlaceCluster = {
         id: `cluster-${addressKey}`,
         places: placesAtAddress,
-        address: `${firstPlace.streetNumber ? firstPlace.streetNumber + " " : ""}${firstPlace.street}, ${firstPlace.city}`,
-        latitude: firstPlace.latitude,
-        longitude: firstPlace.longitude,
+        address: `${mostRecentPlace.streetNumber ? mostRecentPlace.streetNumber + " " : ""}${mostRecentPlace.street}, ${mostRecentPlace.city}`,
+        latitude: mostRecentPlace.latitude,
+        longitude: mostRecentPlace.longitude,
         isCluster: true,
       };
       result.push(cluster);
