@@ -104,27 +104,7 @@ export async function PATCH(
     // Déterminer le type de mise à jour selon les champs présents
     const isStatusUpdate = body.status !== undefined;
     
-    let updateData: Partial<{
-      status: "PENDING" | "APPROVED" | "REJECTED" | "PROCESSED";
-      adminNotes: string;
-      processedAt: Date;
-      processedBy: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      phone: string;
-      birthDate: Date;
-      address: string;
-      city: string;
-      postalCode: string;
-      profession: string;
-      company: string;
-      siret: string;
-      membershipType: "ACTIF" | "ARTISAN" | "AUTO_ENTREPRENEUR" | "PARTENAIRE" | "BIENFAITEUR";
-      motivation: string;
-      interests: string;
-      updatedAt: Date;
-    }> = {};
+    let updateData: any = {};
     
     if (isStatusUpdate) {
       // Mise à jour du statut seulement
