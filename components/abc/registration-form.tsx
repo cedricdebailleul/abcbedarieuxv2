@@ -206,7 +206,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
   }
 
   return (
-    <Card className="max-w-4xl mx-auto">
+    <Card className="w-full mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-2xl">
           <IconUserPlus className="h-6 w-6" />
@@ -218,7 +218,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
         </p>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -226,9 +226,9 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
           )}
 
           {/* Informations personnelles */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h3 className="text-lg font-semibold">Informations personnelles</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <Label htmlFor="firstName">Prénom *</Label>
                 <Input
@@ -285,10 +285,10 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
           </div>
 
           {/* Adresse */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h3 className="text-lg font-semibold">Adresse</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="md:col-span-2 lg:col-span-2">
                 <Label htmlFor="address">Adresse</Label>
                 <Input
                   id="address"
@@ -318,11 +318,11 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
           </div>
 
           {/* Informations professionnelles */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h3 className="text-lg font-semibold">
               Informations professionnelles (optionnel)
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <Label htmlFor="profession">Profession</Label>
                 <Input
@@ -341,7 +341,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
                   onChange={(e) => handleInputChange("company", e.target.value)}
                 />
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 lg:col-span-3">
                 <Label htmlFor="siret">SIRET (pour les entreprises)</Label>
                 <Input
                   id="siret"
@@ -380,9 +380,9 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
           </div>
 
           {/* Centres d'intérêt */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h3 className="text-lg font-semibold">Centres d&apos;intérêt</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {interestOptions.map((interest) => (
                 <div key={interest} className="flex items-center space-x-2">
                   <Checkbox
@@ -399,7 +399,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
           </div>
 
           {/* Motivation */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h3 className="text-lg font-semibold">Motivation</h3>
             <div>
               <Label htmlFor="motivation">
