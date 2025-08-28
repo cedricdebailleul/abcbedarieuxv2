@@ -242,9 +242,7 @@ export async function POST(
     const pdfBuffer = generateRegistrationPDF({
       ...registration,
       phone: registration.phone ?? undefined,
-      birthDate: registration.birthDate
-        ? registration.birthDate.toISOString()
-        : undefined,
+      birthDate: registration.birthDate || undefined,
       address: registration.address ?? undefined,
       city: registration.city ?? undefined,
       postalCode: registration.postalCode ?? undefined,
@@ -281,9 +279,11 @@ export async function POST(
           }</p>
           ${
             registration.processedAt
-              ? `<p style="margin: 5px 0 0 0;"><strong>Traité le :</strong> ${new Date(
-                  registration.processedAt
-                ).toLocaleDateString("fr-FR")}</p>`
+              ? `<p style="margin: 5px 0 0 0;"><strong>Traité le :</strong> ${
+                  typeof registration.processedAt === 'string' 
+                    ? new Date(registration.processedAt).toLocaleDateString("fr-FR")
+                    : registration.processedAt.toLocaleDateString("fr-FR")
+                }</p>`
               : ""
           }
         </div>

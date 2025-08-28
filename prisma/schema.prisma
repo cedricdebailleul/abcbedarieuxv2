@@ -1808,16 +1808,22 @@ model AbcRegistration {
   id String @id @default(cuid())
 
   // Informations personnelles
-  firstName  String
-  lastName   String
-  email      String
-  phone      String?
-  birthDate  DateTime?
-  address    String?
-  city       String?
-  postalCode String?
+  firstName      String
+  lastName       String
+  commercialName String? // Dénomination commerciale
+  email          String
+  phone          String?
+  birthDate      String? // Changé en String pour plus de flexibilité
 
-  // Informations professionnelles
+  // Adresse (obligatoire selon le formulaire)
+  address    String
+  postalCode String
+  city       String
+
+  // Site Internet
+  website String?
+
+  // Informations professionnelles (optionnelles, pour compatibilité)
   profession String?
   company    String?
   siret      String?
@@ -1825,9 +1831,18 @@ model AbcRegistration {
   // Type de membership souhaité
   membershipType AbcMemberType @default(ACTIF)
 
-  // Motivations
+  // Cotisation
+  cotisationAmount Float
+  paymentMethod    AbcPaymentMethod @default(CHEQUE)
+
+  // Motivations (optionnel)
   motivation String? @db.Text
   interests  String? // JSON array of interests
+
+  // Déclarations et acceptations
+  acceptsStatuts     Boolean @default(false)
+  acceptsReglement   Boolean @default(false)
+  acceptsCotisation  Boolean @default(false)
 
   // Statut de la demande
   status        AbcRegistrationStatus @default(PENDING)
@@ -1860,6 +1875,12 @@ enum AbcMemberType {
   AUTO_ENTREPRENEUR
   PARTENAIRE
   BIENFAITEUR
+}
+
+enum AbcPaymentMethod {
+  CHEQUE
+  VIREMENT
+  ESPECES
 }
 
 enum AbcMemberRole {
