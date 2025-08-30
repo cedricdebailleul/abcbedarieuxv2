@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MapPin, Clock, X, ChevronDown, ChevronRight, Building } from "lucide-react";
+import { Search, Clock, X, ChevronDown, ChevronRight, Building, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";

@@ -5,7 +5,6 @@ import {
   ChevronDown,
   Menu,
   X,
-  MapPin,
   Calendar,
   Star,
   Newspaper,
@@ -17,8 +16,7 @@ import {
   Map,
   Users,
   FileText,
-  Clock,
-} from "lucide-react";
+  Clock} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
@@ -90,7 +88,7 @@ const menuData: MenuSection[] = [
   {
     id: "places",
     title: "Établissements",
-    icon: MapPin,
+    icon: Menu,
     color: "blue-600",
     items: [
       {
@@ -98,7 +96,7 @@ const menuData: MenuSection[] = [
         label: "Tous les établissements",
         href: "/places",
         description: "Explorez tous nos partenaires",
-        icon: MapPin,
+        icon: Menu,
         featured: true,
       },
       {

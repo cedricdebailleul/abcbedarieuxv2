@@ -101,25 +101,27 @@ export function PlaceFormMap({
 
           setDebugInfo('Création du marker...');
 
+          // Load the marker library
+          const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+
           // Créer le marker
-          const marker = new google.maps.Marker({
+          const marker = new AdvancedMarkerElement({
             position: center,
             map: map,
             title: "Position de l'établissement",
-            draggable: true,
+            gmpDraggable: true,
           });
 
           // Événements
-          marker.addListener("dragend", () => {
-            const position = marker.getPosition();
-            if (position) {
-              onCoordinatesChange(position.lat(), position.lng());
+          marker.addListener("dragend", (event: google.maps.MapMouseEvent) => {
+            if (event.latLng) {
+              onCoordinatesChange(event.latLng.lat(), event.latLng.lng());
             }
           });
 
           map.addListener("click", (event: google.maps.MapMouseEvent) => {
             if (event.latLng) {
-              marker.setPosition(event.latLng);
+              marker.position = event.latLng;
               onCoordinatesChange(event.latLng.lat(), event.latLng.lng());
             }
           });
@@ -140,7 +142,7 @@ export function PlaceFormMap({
     };
 
     initializeMap();
-  }, []); // Aucune dépendance
+  }, [latitude, longitude, onCoordinatesChange]); // Aucune dépendance
 
   if (status === 'error') {
     return (

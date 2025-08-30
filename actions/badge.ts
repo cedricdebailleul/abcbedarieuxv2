@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { requireAdmin } from "@/lib/auth-extended";
 import { revalidatePath } from "next/cache";
 // Badge system functionality is now handled by the new badge engine
 import {
@@ -34,19 +35,8 @@ type ActionResult<T = unknown> = {
 
 // Utilitaire pour vérifier les permissions admin
 async function checkAdminPermissions() {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) {
-    throw new Error("Non authentifié");
-  }
-
-  const user = session.user;
-
-  if (user.role !== "admin") {
-    throw new Error("Permissions administrateur requises");
-  }
-
-  return { user };
+  const session = await requireAdmin();
+  return { user: session.user };
 }
 
 // CREATE - Créer un nouveau badge

@@ -11,9 +11,8 @@ export type SeoInput = {
 };
 
 function absoluteUrl(path = "") {
-  const base = siteConfig.baseUrl.replace(/\/$/, "");
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${p}`;
+    const p = path.startsWith("/") ? path : `/${path}`;
+  return `${siteConfig.baseUrl}${p}`;
 }
 
 export function buildMetadata(input: SeoInput = {}): Metadata {

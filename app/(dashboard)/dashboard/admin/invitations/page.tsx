@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import InviteUserDialog from "../users/_components/invite-user-dialog";
 import InvitationsTable from "./_components/invitations-table";
 
@@ -15,7 +16,7 @@ export default async function AdminInvitationsPage() {
   });
 
   // Vérifier que l'utilisateur a les permissions d'administration
-  if (!session?.user?.role || !["admin", "moderator", "editor"].includes(session.user.role)) {
+  if (!session?.user?.role || !["admin", "moderator", "editor"].includes(safeUserCast(session.user).role)) {
     redirect("/dashboard");
   }
 

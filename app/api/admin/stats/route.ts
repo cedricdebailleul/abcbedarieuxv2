@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { withCache, getCacheKey } from "@/lib/cache";
 
@@ -11,7 +12,7 @@ export async function GET() {
 
     if (
       !session?.user ||
-      !["admin", "moderator"].includes(session.user.role || "")
+      !["admin", "moderator"].includes(safeUserCast(session.user).role || "")
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },

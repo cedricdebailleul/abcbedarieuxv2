@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Search,
-  MapPin,
   Calendar,
   Star,
   Megaphone,
@@ -13,7 +12,7 @@ import {
   Smartphone,
   Globe,
   Heart,
-} from "lucide-react";
+  Briefcase} from "lucide-react";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -37,7 +36,7 @@ const mainServices = [
     color: "bg-blue-100 text-blue-600",
   },
   {
-    icon: MapPin,
+    icon: Briefcase,
     title: "Géolocalisation",
     description:
       "Intégration cartographique pour faciliter l'accès à votre établissement et améliorer votre visibilité locale.",

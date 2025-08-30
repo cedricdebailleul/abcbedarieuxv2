@@ -7,10 +7,9 @@ import {
   ChevronRight,
   Calendar,
   Clock,
-  MapPin,
   Users,
   Euro,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

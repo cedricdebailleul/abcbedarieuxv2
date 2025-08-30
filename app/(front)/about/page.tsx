@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, MapPin, Target, Award } from "lucide-react";
+import { Heart, Users, Target, Award, MapPin } from "lucide-react";
 import Link from "next/link";
 
 export const metadata: Metadata = {

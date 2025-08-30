@@ -15,11 +15,11 @@ import {
   AlertCircle,
   Building2,
   User,
-  MapPin,
   Calendar,
   Star,
   Heart,
-  Flag
+  Flag,
+  MapPin
 } from "lucide-react";
 import { AdminGuard } from "@/components/auth/admin-guard";
 import { useSession } from "@/hooks/use-session";
@@ -106,9 +106,7 @@ interface ApiResponse {
 }
 
 const getStatusBadge = (status: string, isVerified?: boolean) => {
-  const base = "px-2 py-1 text-xs font-medium rounded-full";
-  
-  if (isVerified) {
+    if (isVerified) {
     return (
       <Badge variant="secondary" className="bg-blue-100 text-blue-800">
         <CheckCircle className="w-3 h-3 mr-1" />
@@ -150,15 +148,6 @@ const getStatusBadge = (status: string, isVerified?: boolean) => {
   }
 };
 
-const getStatusText = (status: string) => {
-  switch (status) {
-    case "ACTIVE": return "Actif";
-    case "PENDING": return "En attente";
-    case "DRAFT": return "Brouillon";
-    case "INACTIVE": return "Inactif";
-    default: return status;
-  }
-};
 
 export default function AdminPlacesPage() {
   const { data: session, status } = useSession();

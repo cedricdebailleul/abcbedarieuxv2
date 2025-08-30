@@ -14,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { IconLoader2, IconUpload } from "@tabler/icons-react";
+import { IconUpload, IconLoader2 } from "@tabler/icons-react";
 
 interface CreateDocumentDialogProps {
   onSuccess: () => void;

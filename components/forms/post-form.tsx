@@ -7,13 +7,12 @@ import {
   Folder,
   Globe,
   Image as ImageIcon,
-  Loader2,
-  MapPin as MapPinIcon,
+  MapPin,
   Save,
   Settings,
   Tag as TagIcon,
   X,
-} from "lucide-react";
+  Loader2} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import {
@@ -412,7 +411,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
             if (createData.newBadges && createData.newBadges.length > 0) {
               setTimeout(() => {
                 createData.newBadges!.forEach((badgeData) => {
-                  showBadge(badgeData.badge, badgeData.reason);
+                  showBadge(badgeData.badge as import("@/types/membership").BadgeCelebration, badgeData.reason);
                 });
               }, 1000);
             }
@@ -838,7 +837,7 @@ export function PostForm({ initialData, mode }: PostFormProps) {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <MapPinIcon className="h-5 w-5" />
+                    <MapPin className="h-5 w-5" />
                     Lieu associé
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">

@@ -22,8 +22,7 @@ import {
   Handshake,
   Package,
   Star,
-  Loader2,
-} from "lucide-react";
+  Loader2} from "lucide-react";
 import Link from "next/link";
 
 interface Partner {

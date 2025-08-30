@@ -7,12 +7,11 @@ import {
   Instagram,
   Linkedin,
   Mail,
-  MapPin,
   Phone,
   Star,
   Twitter,
   User,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ClaimPlaceButton } from "@/components/claim-place-button";

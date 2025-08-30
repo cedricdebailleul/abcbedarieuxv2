@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -54,7 +55,7 @@ export async function GET(
     const session = await auth.api.getSession({ headers: await headers() });
     if (
       !session?.user ||
-      (session.user.role !== "admin" && session.user.role !== "moderator")
+      (safeUserCast(session.user).role !== "admin" && safeUserCast(session.user).role !== "moderator")
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
@@ -98,7 +99,7 @@ export async function PUT(
     const session = await auth.api.getSession({ headers: await headers() });
     if (
       !session?.user ||
-      (session.user.role !== "admin" && session.user.role !== "moderator")
+      (safeUserCast(session.user).role !== "admin" && safeUserCast(session.user).role !== "moderator")
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
@@ -195,7 +196,7 @@ export async function DELETE(
 ) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || safeUserCast(session.user).role !== "admin") {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 401 }

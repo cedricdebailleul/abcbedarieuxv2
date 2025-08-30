@@ -69,13 +69,11 @@ import {
   EyeOff,
   ThumbsUp,
   ThumbsDown,
-  MessageCircle,
   Share,
   Download,
   Upload,
   Link,
-  ExternalLink,
-} from "lucide-react";
+  ExternalLink} from "lucide-react";
 import { HistoryTimelineEvent } from "@/lib/types/history";
 
 interface TimelineEventListProps {
@@ -133,7 +131,6 @@ const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   EyeOff,
   ThumbsUp,
   ThumbsDown,
-  MessageCircle,
   Share,
   Download,
   Upload,

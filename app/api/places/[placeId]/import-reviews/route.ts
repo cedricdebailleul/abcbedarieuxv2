@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import crypto from "node:crypto";
 import { env } from "@/lib/env";
@@ -49,7 +50,7 @@ export async function POST(
     }
 
     const isOwner = place.ownerId === session.user.id;
-    const isAdmin = session.user.role === "admin";
+    const isAdmin = safeUserCast(session.user).role === "admin";
     if (!isOwner && !isAdmin) {
       return NextResponse.json(
         { error: "Permissions insuffisantes" },

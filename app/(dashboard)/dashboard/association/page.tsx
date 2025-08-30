@@ -16,11 +16,10 @@ import {
   IconUsers,
   IconBell,
   IconCalendar,
-  IconFileText,
   IconEye,
   IconDownload,
   IconUserCheck,
-} from "@tabler/icons-react";
+  IconFileText} from "@tabler/icons-react";
 
 interface Bulletin {
   id: string;

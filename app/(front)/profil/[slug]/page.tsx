@@ -5,12 +5,11 @@ import {
   Instagram,
   Linkedin,
   Mail,
-  MapPin,
   Phone,
   Trophy,
   Twitter,
   User,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";

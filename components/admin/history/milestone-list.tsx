@@ -69,13 +69,11 @@ import {
   EyeOff,
   ThumbsUp,
   ThumbsDown,
-  MessageCircle,
   Share,
   Download,
   Upload,
   Link,
-  ExternalLink,
-} from "lucide-react";
+  ExternalLink} from "lucide-react";
 import { HistoryMilestone } from "@/lib/types/history";
 
 interface MilestoneListProps {
@@ -136,7 +134,6 @@ const iconMap: Record<
   EyeOff,
   ThumbsUp,
   ThumbsDown,
-  MessageCircle,
   Share,
   Download,
   Upload,

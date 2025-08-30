@@ -10,7 +10,6 @@ import {
   ExternalLink,
   Mail,
   Phone,
-  MapPin,
   Calendar,
   Star,
   Building2,
@@ -18,7 +17,7 @@ import {
   TrendingUp,
   Handshake,
   Package,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 

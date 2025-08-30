@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { mkdir, writeFile, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user)
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-    if (!["admin", "moderator", "editor"].includes(session.user.role ?? "")) {
+    if (!["admin", "moderator", "editor"].includes(safeUserCast(session.user).role ?? "")) {
       return NextResponse.json(
         { error: "Permissions insuffisantes" },
         { status: 403 }
@@ -123,7 +124,7 @@ export async function DELETE(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user)
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-    if (!["admin", "moderator", "editor"].includes(session.user.role ?? "")) {
+    if (!["admin", "moderator", "editor"].includes(safeUserCast(session.user).role ?? "")) {
       return NextResponse.json(
         { error: "Permissions insuffisantes" },
         { status: 403 }

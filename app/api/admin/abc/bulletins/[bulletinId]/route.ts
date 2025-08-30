@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
 const updateBulletinSchema = z.object({
@@ -21,7 +22,7 @@ export async function GET(
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (!session?.user || !safeUserCast(session.user).role || !["admin", "moderator"].includes(safeUserCast(session.user).role)) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -69,7 +70,7 @@ export async function PUT(
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (!session?.user || !safeUserCast(session.user).role || !["admin", "moderator"].includes(safeUserCast(session.user).role)) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -167,7 +168,7 @@ export async function DELETE(
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (!session?.user || !safeUserCast(session.user).role || !["admin", "moderator"].includes(safeUserCast(session.user).role)) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -187,7 +188,7 @@ export async function DELETE(
     }
 
     // Empêcher la suppression si le bulletin est publié (sauf pour les admins)
-    if (bulletin.isPublished && session.user.role !== "admin") {
+    if (bulletin.isPublished && safeUserCast(session.user).role !== "admin") {
       return NextResponse.json(
         { error: "Seuls les administrateurs peuvent supprimer un bulletin publié" },
         { status: 403 }

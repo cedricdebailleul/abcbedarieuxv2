@@ -42,8 +42,8 @@ export function replaceGooglePhotosUrl(url: string): string {
 /**
  * Nettoie un objet contenant des URLs d'images en filtrant les URLs Google Photos
  */
-export function sanitizeImageUrls<T extends Record<string, any>>(obj: T): T {
-  const result = { ...obj } as any;
+export function sanitizeImageUrls<T extends Record<string, unknown>>(obj: T): T {
+  const result = { ...obj } as Record<string, unknown>;
   
   // Nettoyer les champs d'images courants
   const imageFields = ['images', 'photos', 'coverImage', 'logo'];

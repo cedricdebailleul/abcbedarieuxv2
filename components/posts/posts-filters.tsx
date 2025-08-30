@@ -3,13 +3,12 @@
 import {
   Filter,
   Folder,
-  Loader2,
   RotateCcw,
   Search,
   SlidersHorizontal,
   Tag as TagIcon,
   X,
-} from "lucide-react";
+  Loader2} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { getCategoriesAction, getTagsAction } from "@/actions/post";

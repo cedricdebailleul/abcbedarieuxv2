@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -20,7 +21,7 @@ export async function GET() {
         OR: [
           { ownerId: session.user.id },
           // Si l'utilisateur est admin/moderator, il peut voir tous les lieux
-          ...(["admin", "moderator"].includes(session.user.role || "")
+          ...(["admin", "moderator"].includes(safeUserCast(session.user).role || "")
             ? [{}]
             : []),
         ],
@@ -41,7 +42,7 @@ export async function GET() {
     return NextResponse.json({
       places,
       total: places.length,
-      userRole: session.user.role,
+      userRole: safeUserCast(session.user).role,
     });
   } catch (error) {
     console.error("Erreur récupération lieux utilisateur:", error);

@@ -8,11 +8,10 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Loader2,
   RefreshCw,
   Users,
   Mail,
-} from "lucide-react";
+  Loader2} from "lucide-react";
 
 interface QueueStatusData {
   pending?: number;

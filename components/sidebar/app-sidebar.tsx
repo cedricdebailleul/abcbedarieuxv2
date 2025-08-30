@@ -13,6 +13,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import type * as React from "react";
+import { safeUserCast } from "@/lib/auth-helpers-client";
 import { NavDocuments } from "@/components/sidebar/nav-documents";
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavSecondary } from "@/components/sidebar/nav-secondary";
@@ -203,7 +204,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       if (item.title === "Administration" || item.title === "ABC") {
         return (
           session?.user?.role &&
-          ["admin", "moderator"].includes(session.user.role)
+          ["admin", "moderator"].includes(safeUserCast(session.user).role)
         );
       }
       return true;
@@ -216,7 +217,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           if (subItem.title === "Vue d'ensemble") {
             return (
               session?.user?.role &&
-              ["admin", "moderator"].includes(session.user.role)
+              ["admin", "moderator"].includes(safeUserCast(session.user).role)
             );
           }
           // Newsletter, Badges, Partenaires et Sauvegarde : admin seulement
@@ -233,13 +234,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           ) {
             return (
               session?.user?.role &&
-              ["admin", "moderator"].includes(session.user.role)
+              ["admin", "moderator"].includes(safeUserCast(session.user).role)
             );
           }
           // Catégories : tous les rôles admin/moderator
           return (
             session?.user?.role &&
-            ["admin", "moderator"].includes(session.user.role)
+            ["admin", "moderator"].includes(safeUserCast(session.user).role)
           );
         });
         return { ...item, items: filteredItems };

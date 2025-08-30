@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   Calendar, 
-  MapPin, 
   FileText, 
   ExternalLink,
   User,
@@ -14,7 +13,7 @@ import {
   Globe,
   Image as ImageIcon,
   Clock,
-  MapPinIcon
+  MapPin
 } from "lucide-react";
 import { ContentItem } from "../_hooks/useAvailableContent";
 import Image from "next/image";
@@ -227,7 +226,7 @@ function ContentCard({ item, isSelected, onToggle }: ContentCardProps) {
               )}
               {item.location && (
                 <span className="flex items-center gap-1">
-                  <MapPinIcon className="w-3 h-3" />
+                  <MapPin className="w-3 h-3" />
                   {item.location}
                 </span>
               )}
@@ -239,7 +238,7 @@ function ContentCard({ item, isSelected, onToggle }: ContentCardProps) {
             <>
               {item.location && (
                 <span className="flex items-center gap-1">
-                  <MapPinIcon className="w-3 h-3" />
+                  <MapPin className="w-3 h-3" />
                   {item.location}
                 </span>
               )}

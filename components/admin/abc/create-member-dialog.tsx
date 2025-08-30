@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { IconLoader2, IconSearch } from "@tabler/icons-react";
+import { IconSearch, IconLoader2 } from "@tabler/icons-react";
 
 interface User {
   id: string;

@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import InviteUserDialog from "./_components/invite-user-dialog";
 import UsersStats from "./_components/users-stats";
 import UsersTable from "./_components/users-table";
@@ -24,7 +25,7 @@ export default async function AdminUsersPage() {
   // Vérifier que l'utilisateur a les permissions d'administration
   if (
     !session?.user?.role ||
-    !["admin", "moderator", "editor"].includes(session.user.role)
+    !["admin", "moderator", "editor"].includes(safeUserCast(session.user).role)
   ) {
     redirect("/dashboard");
   }

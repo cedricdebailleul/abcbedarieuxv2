@@ -124,13 +124,8 @@ export default function NewPlacePage() {
       router.push("/dashboard/places");
     } catch (err: unknown) {
       console.error(err);
-      const message =
-        err instanceof Error
-          ? err.message
-          : typeof err === "string"
-            ? err
-            : "Erreur lors de la création de la place";
-      toast.error(message);
+      const errorMessage = err instanceof Error ? err.message : "Erreur lors de la création";
+      toast.error(errorMessage);
       throw err;
     }
   };

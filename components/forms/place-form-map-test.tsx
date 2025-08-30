@@ -51,7 +51,7 @@ export function PlaceFormMap({
 
     // Délai pour laisser le DOM se construire
     setTimeout(checkDOM, 100);
-  }, [mapId]);
+  }, [mapId, onCoordinatesChange]);
 
   return (
     <div className={`space-y-3 ${className}`}>
@@ -65,7 +65,7 @@ export function PlaceFormMap({
       >
         <div className="text-center text-gray-600">
           <MapPin className="w-8 h-8 mx-auto mb-2" />
-          <p className="text-sm">En attente de l'initialisation...</p>
+          <p className="text-sm">En attente de l&apos;initialisation...</p>
           <p className="text-xs">ID: {mapId}</p>
         </div>
       </div>

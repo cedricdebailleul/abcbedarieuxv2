@@ -18,7 +18,7 @@ export function PlaceFormMapFinal({
   const { isLoaded, loadError } = useGoogleMapsLoader();
   const [isReady, setIsReady] = useState(false);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
-  const [markerInstance, setMarkerInstance] = useState<google.maps.Marker | null>(null);
+  const [markerInstance, setMarkerInstance] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
   
   // ID stable pour la carte
   const mapId = useMemo(() => `map-final-${Math.random().toString(36).substr(2, 9)}`, []);
@@ -32,7 +32,7 @@ export function PlaceFormMapFinal({
     
     console.log('PlaceFormMapFinal - Starting initialization...');
     
-    const initMap = () => {
+    const initMap = async () => {
       console.log('PlaceFormMapFinal - Looking for element with ID:', mapId);
       const mapElement = document.getElementById(mapId);
       
@@ -54,10 +54,13 @@ export function PlaceFormMapFinal({
           fullscreenControl: false,
         });
 
-        const marker = new window.google.maps.Marker({
+        // Load the marker library
+        const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+
+        const marker = new AdvancedMarkerElement({
           position: center,
           map,
-          draggable: true,
+          gmpDraggable: true,
           title: "Glissez pour repositionner",
         });
 
@@ -74,7 +77,7 @@ export function PlaceFormMapFinal({
           if (event.latLng) {
             const lat = event.latLng.lat();
             const lng = event.latLng.lng();
-            marker.setPosition({ lat, lng });
+            marker.position = { lat, lng };
             onPositionChange(lat, lng);
           }
         });
@@ -94,13 +97,16 @@ export function PlaceFormMapFinal({
     let attempts = 0;
     const maxAttempts = 30;
     
-    const tryInit = () => {
+    const tryInit = async () => {
       attempts++;
       console.log(`PlaceFormMapFinal - Attempt ${attempts}/${maxAttempts}`);
       
-      if (initMap()) {
+      try {
+        await initMap();
         // Succès
         return;
+      } catch (error) {
+        console.error('PlaceFormMapFinal - Init error:', error);
       }
       
       if (attempts < maxAttempts) {
@@ -113,13 +119,13 @@ export function PlaceFormMapFinal({
 
     // Démarrer après un petit délai
     setTimeout(tryInit, 100);
-  }, [isLoaded, mapId]); // Dépendances minimales pour éviter les re-initialisations
+  }, [isLoaded, mapId, initialLat, initialLng, isReady, mapInstance, onPositionChange]); // Dépendances minimales pour éviter les re-initialisations
 
   // Mettre à jour la position du marqueur
   useEffect(() => {
     if (mapInstance && markerInstance) {
       const newPosition = { lat: initialLat, lng: initialLng };
-      markerInstance.setPosition(newPosition);
+      markerInstance.position = newPosition;
       mapInstance.setCenter(newPosition);
     }
   }, [initialLat, initialLng, mapInstance, markerInstance]);

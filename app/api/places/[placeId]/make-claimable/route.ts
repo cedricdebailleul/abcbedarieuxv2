@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { headers } from "next/headers";
 
 export async function POST(
@@ -24,7 +25,7 @@ export async function POST(
     }
 
     // Vérifier que l'utilisateur est admin
-    if (session.user.role !== "admin") {
+    if (safeUserCast(session.user).role !== "admin") {
       return NextResponse.json({ error: "Seuls les administrateurs peuvent effectuer cette action" }, { status: 403 });
     }
 

@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { PartnerForm } from "../_components/partner-form";
@@ -14,7 +15,7 @@ export const metadata = {
 export default async function NewPartnerPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session?.user || session.user.role !== "admin") {
+  if (!session?.user || safeUserCast(session.user).role !== "admin") {
     redirect("/dashboard");
   }
 

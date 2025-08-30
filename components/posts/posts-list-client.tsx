@@ -5,13 +5,12 @@ import {
   Eye,
   Folder,
   Globe,
-  Loader2,
   Lock,
   MoreHorizontal,
   Tag as TagIcon,
   Trash2,
   User,
-} from "lucide-react";
+  Loader2} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -169,15 +168,7 @@ export function PostsListClient({
   //   return <Edit className="h-3 w-3" />;
   // };
 
-  // const getStatusText = (status: string, published: boolean) => {
-  //   if (published && status === "PUBLISHED") return "Publié";
-  //   if (status === "PENDING_REVIEW") return "En attente";
-  //   if (status === "REJECTED") return "Rejeté";
-  //   if (status === "ARCHIVED") return "Archivé";
-  //   return "Brouillon";
-  // };
-
-  // Gestion de la sélection
+  //   // Gestion de la sélection
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedPosts(posts.map((post) => post.id));

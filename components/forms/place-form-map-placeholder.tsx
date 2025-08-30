@@ -14,7 +14,6 @@ export function PlaceFormMap({
   latitude,
   longitude, 
   address,
-  onCoordinatesChange,
   className = "",
 }: PlaceFormMapProps) {
   return (

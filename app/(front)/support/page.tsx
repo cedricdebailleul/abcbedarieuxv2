@@ -6,7 +6,6 @@ import {
   HelpCircle, 
   Mail, 
   Phone, 
-  MessageCircle, 
   Clock, 
   Users,
   FileText,
@@ -43,7 +42,7 @@ const supportChannels = [
     color: "bg-green-100 text-green-600"
   },
   {
-    icon: MessageCircle,
+    icon: HelpCircle,
     title: "Chat en ligne",
     description: "Discutez directement avec notre équipe",
     action: "Démarrer le chat",

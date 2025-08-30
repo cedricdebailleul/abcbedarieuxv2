@@ -5,11 +5,10 @@ import {
   Edit,
   EyeOff,
   Mail,
-  MapPin,
   Phone,
   Trophy,
   User,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

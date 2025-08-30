@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { UPLOADS_ROOT } from "@/lib/path";
 import { promises as fs } from "node:fs";
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier les permissions
-    const userRole = session.user.role;
+    const userRole = safeUserCast(session.user).role;
     if (!userRole || !["admin", "editor", "user"].includes(userRole)) {
       return NextResponse.json(
         { error: "Permissions insuffisantes" },
@@ -238,14 +239,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Règle d’auto-service : user peut supprimer seulement ses fichiers temporaires
-type SessionLike = { user?: { role?: string | null } | null };
-
 /**
  * Check whether the current session is allowed to delete the given relative path.
  * Using a narrow SessionLike type instead of `any`.
  */
-function canDelete(session: SessionLike | null | undefined, relPath: string) {
+function canDelete(session: { user?: { role?: string | null } | null }, relPath: string) {
   const role = session?.user?.role;
   if (role === "admin" || role === "editor") return true;
   const norm = relPath.replace(/\\/g, "/");

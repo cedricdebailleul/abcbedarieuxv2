@@ -3,13 +3,12 @@
 import {
   Globe,
   Mail,
-  MapPin,
   Phone,
   Save,
   Settings,
   User,
   X,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";

@@ -4,10 +4,9 @@ import {
   Clock,
   Eye,
   Folder,
-  MapPin,
   Tag,
   User,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";

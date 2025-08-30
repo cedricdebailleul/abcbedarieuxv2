@@ -2,10 +2,9 @@ import {
   IconTrendingDown,
   IconTrendingUp,
   IconUsers,
-  IconFileText,
   IconBuilding,
-  IconMail,
-} from "@tabler/icons-react";
+  IconFileText,
+  IconMail} from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
 import {

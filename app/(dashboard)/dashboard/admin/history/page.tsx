@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Settings, Calendar, MapPin, Plus, AlertCircle } from "lucide-react";
+import { Settings, Calendar, Plus, AlertCircle, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { HistoryConfigForm } from "@/components/admin/history/history-config-form";
 import { MilestoneForm } from "@/components/admin/history/milestone-form";

@@ -1,6 +1,6 @@
 "use client";
 
-import { X, MapPin, Phone, Globe, Clock } from "lucide-react";
+import { X, Phone, Globe, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

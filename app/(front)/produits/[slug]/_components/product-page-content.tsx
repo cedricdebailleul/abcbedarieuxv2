@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Package,
-  MapPin,
   Phone,
   Mail,
   Globe,
@@ -17,7 +16,7 @@ import {
   ShoppingCart,
   Share2,
   Heart,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 

@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
 // ⚠️ Adapte si tes enums Prisma sont ailleurs :
@@ -172,13 +173,20 @@ async function checkAuth(): Promise<{ user: SessionUser }> {
   if (!session?.user || typeof session.user.id !== "string") {
     throw new Error("Authentification requise");
   }
+  
+  // Récupérer le rôle depuis la base de données
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, slug: true },
+  });
+  
   // On borne aux champs utilisés
   const user: SessionUser = {
     id: session.user.id,
-    role: session.user.role ?? null,
+    role: dbUser?.role ?? null,
     name: session.user.name ?? null,
     email: session.user.email ?? null,
-    slug: (session.user as Record<string, unknown>)?.slug as string | null,
+    slug: dbUser?.slug ?? null,
   };
   return { user };
 }

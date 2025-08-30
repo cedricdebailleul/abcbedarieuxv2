@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -15,7 +16,7 @@ export async function GET(): Promise<NextResponse<HistoryMilestone[] | { error: 
 
     if (
       !session?.user ||
-      (session.user.role !== "admin" && session.user.role !== "moderator")
+      (safeUserCast(session.user).role !== "admin" && safeUserCast(session.user).role !== "moderator")
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || safeUserCast(session.user).role !== "admin") {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -117,7 +118,7 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || safeUserCast(session.user).role !== "admin") {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }

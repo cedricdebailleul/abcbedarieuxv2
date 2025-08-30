@@ -1,41 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MessageCircle, X, Users } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { X, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSession } from "@/hooks/use-session";
 
 interface WhatsAppButtonProps {
   groupUrl?: string;
-  message?: string;
   position?: "bottom-right" | "bottom-left";
   showLabel?: boolean;
   requireAuth?: boolean;
-  requireVerification?: boolean;
 }
 
 export function WhatsAppButton({ 
   groupUrl = "https://chat.whatsapp.com/JC7fygRmrxnK2lGbQQHZWM",
-  message = "Bonjour ! J'aimerais rejoindre la communauté ABC Bédarieux pour poser des questions sur le commerce local 🏪",
   position = "bottom-right",
   showLabel = true,
-  requireAuth = true,
-  requireVerification = true
+  requireAuth = true
 }: WhatsAppButtonProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const { data: session, status } = useSession();
 
   // Vérifier les permissions utilisateur
-  const isUserAllowed = () => {
+  const isUserAllowed = useCallback(() => {
     if (!requireAuth) return true;
     if (!session?.user) return false;
     
     // Pour l'instant, on autorise tous les utilisateurs connectés
     // La vérification d'email sera ajoutée plus tard si nécessaire
     return true;
-  };
+  }, [requireAuth, session?.user]);
 
   // Afficher le bouton après un délai et si l'utilisateur est autorisé
   useEffect(() => {
@@ -45,7 +41,7 @@ export function WhatsAppButton({
       const timer = setTimeout(() => setIsVisible(true), 1000);
       return () => clearTimeout(timer);
     }
-  }, [status, session]);
+  }, [status, session, isUserAllowed]);
 
   // Auto-afficher le tooltip après quelques secondes
   useEffect(() => {

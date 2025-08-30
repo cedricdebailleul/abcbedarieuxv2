@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 
 const badges = [
   {
+    id: "welcome",
     title: "Bienvenue",
     description: "Badge obtenu lors de l'inscription sur la plateforme",
     color: "#3B82F6",
@@ -11,6 +12,7 @@ const badges = [
     rarity: BadgeRarity.COMMON,
   },
   {
+    id: "first_place",
     title: "Premier pas",
     description: "Badge obtenu lors de la première connexion",
     color: "#10B981",
@@ -18,6 +20,7 @@ const badges = [
     rarity: BadgeRarity.COMMON,
   },
   {
+    id: "profile_complete",
     title: "Profil complété",
     description: "Badge obtenu lorsque le profil est entièrement rempli",
     color: "#F59E0B",
