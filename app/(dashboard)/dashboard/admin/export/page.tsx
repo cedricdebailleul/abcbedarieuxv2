@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Mail } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,13 +17,11 @@ import {
   IconDatabase,
   IconUsers,
   IconBuilding,
-  IconMail,
   IconCalendarEvent,
   IconArticle,
-  IconLoader2,
   IconUpload,
   IconArchive,
-} from "@tabler/icons-react";
+  IconLoader2} from "@tabler/icons-react";
 import { toast } from "sonner";
 
 interface ExportOption {
@@ -71,7 +70,7 @@ const exportOptions: ExportOption[] = [
     id: "newsletter",
     name: "Newsletter",
     description: "Abonnés, campagnes et statistiques d'envoi",
-    icon: IconMail,
+    icon: Mail,
     color: "text-indigo-500",
     estimatedSize: "~1-2 MB"
   }

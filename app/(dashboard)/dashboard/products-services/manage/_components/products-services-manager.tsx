@@ -17,12 +17,11 @@ import {
   Package,
   Wrench,
   Tag,
-  MapPin,
   Plus,
   Edit3,
   Eye,
   Search,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 

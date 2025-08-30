@@ -20,13 +20,12 @@ import {
 } from "@/components/ui/form";
 // import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
-  IconLoader2,
   IconUserPlus,
-  IconMail,
-  IconFileText,
   IconCheck,
   IconCurrencyEuro,
-} from "@tabler/icons-react";
+  IconLoader2} from "@tabler/icons-react";
+import { MembershipCelebration } from "@/components/ui/membership-celebration";
+import type { MembershipCelebrationData } from "@/types/membership";
 
 // Schéma Zod pour le formulaire d'adhésion
 const membershipFormSchema = z.object({
@@ -125,6 +124,8 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationData, setCelebrationData] = useState<MembershipCelebrationData | null>(null);
 
   const form = useForm<MembershipFormData>({
     resolver: zodResolver(membershipFormSchema),
@@ -186,6 +187,13 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
       const result = await response.json();
 
       if (response.ok) {
+        // Préparer les données pour la célébration
+        setCelebrationData({
+          membershipType: data.membershipType,
+          amount: data.cotisationAmount,
+          email: data.email,
+        });
+        setShowCelebration(true);
         setSuccess(true);
         onSuccess?.();
         form.reset();
@@ -200,6 +208,12 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
     }
   };
 
+  // Fonction pour fermer la célébration
+  const handleCloseCelebration = () => {
+    setShowCelebration(false);
+    setCelebrationData(null);
+  };
+
   if (success) {
     return (
       <Card className="w-full mx-auto border-none shadow-none">
@@ -211,34 +225,8 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
             Inscription envoyée !
           </h3>
           <p className="text-muted-foreground mb-4">
-            Votre demande d&apos;adhésion à l&apos;association ABC Bédarieux a
-            été envoyée avec succès.
+            Merci pour votre adhésion ! Vous devriez recevoir un email de confirmation dans quelques minutes.
           </p>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center justify-center space-x-2">
-              <IconMail className="h-4 w-4" />
-              <span>Un email de confirmation vous a été envoyé</span>
-            </div>
-            <div className="flex items-center justify-center space-x-2">
-              <IconFileText className="h-4 w-4" />
-              <span>
-                Le bulletin d&apos;inscription PDF est joint à l&apos;email
-              </span>
-            </div>
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">
-                Informations de paiement :
-              </h4>
-              <div className="text-sm text-blue-800">
-                <p>
-                  <strong>IBAN :</strong> FR76 1005 7190 4300 0142 6820 108
-                </p>
-                <p>
-                  <strong>CODE BIC :</strong> CMCIFR
-                </p>
-              </div>
-            </div>
-          </div>
           <Button className="mt-6" onClick={() => setSuccess(false)}>
             Nouvelle inscription
           </Button>
@@ -248,6 +236,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
   }
 
   return (
+    <>
     <Card className="w-full mx-auto border-none shadow-none">
       <CardContent className="p-0">
         <Form {...form}>
@@ -683,5 +672,17 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps = {}) {
         </Form>
       </CardContent>
     </Card>
+    
+    {/* Popup de célébration d'adhésion */}
+    {showCelebration && celebrationData && (
+      <MembershipCelebration
+        isOpen={showCelebration}
+        onClose={handleCloseCelebration}
+        membershipType={celebrationData.membershipType}
+        amount={celebrationData.amount}
+        email={celebrationData.email}
+      />
+    )}
+  </>
   );
 }

@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Tag,
-  MapPin,
   Phone,
   Mail,
   Globe,
@@ -18,7 +17,7 @@ import {
   Share2,
   Heart,
   Percent,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 

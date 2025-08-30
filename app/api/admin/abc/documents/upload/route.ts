@@ -1,6 +1,7 @@
 // app/api/admin/abc/documents/upload/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const session = await auth.api.getSession({ headers: request.headers });
     if (
       !session?.user ||
-      !["admin", "moderator"].includes(session.user.role ?? "")
+      !["admin", "moderator"].includes(safeUserCast(session.user).role ?? "")
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },

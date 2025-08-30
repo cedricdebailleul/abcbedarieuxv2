@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PlaceForm } from "@/components/forms/place-form";
 import { useSession } from "@/hooks/use-session";
-import { sanitizeImageUrls, filterGooglePhotosUrls } from "@/lib/image-utils";
+import { filterGooglePhotosUrls } from "@/lib/image-utils";
+import { OpeningHour, PlaceData } from "@/lib/schemas/common";
 
 interface Place {
   id: string;
@@ -175,12 +176,9 @@ export default function EditPlacePage() {
       }
       router.push("/dashboard/places");
     } catch (e: unknown) {
-      const message =
-        e instanceof Error
-          ? e.message
-          : String(e) || "Erreur lors de la modification";
-      toast.error(message);
-      throw e instanceof Error ? e : new Error(message); // pour que PlaceForm stoppe son spinner si besoin
+      const errorMessage = e instanceof Error ? e.message : "Erreur lors de la modification";
+      toast.error(errorMessage);
+      throw e instanceof Error ? e : new Error(errorMessage); // pour que PlaceForm stoppe son spinner si besoin
     }
   };
 
@@ -328,7 +326,7 @@ export default function EditPlacePage() {
     // Données Google Business ou horaires existantes
     openingHours:
       place.openingHours && place.openingHours.length > 0
-        ? place.openingHours.map((hour: any) => {
+        ? place.openingHours.map((hour: OpeningHour) => {
             console.log("EditPage - Processing hour from DB:", hour);
             
             // Si l'horaire a déjà des slots, les utiliser
@@ -363,7 +361,7 @@ export default function EditPlacePage() {
           })) || [],
     // Champs de publication
     published: place.status === "ACTIVE", // true si la place est active
-    isFeatured: (place as any).isFeatured || false, // préserver la valeur existante
+    isFeatured: (place as PlaceData).isFeatured || false, // préserver la valeur existante
   };
 
   console.log("EditPage - initialData prepared for form:", initialData);

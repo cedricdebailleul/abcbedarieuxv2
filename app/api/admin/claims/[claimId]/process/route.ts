@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { ClaimStatus, PlaceStatus } from "@/lib/generated/prisma";
 import {
   notifyUserClaimApproved,
@@ -24,7 +25,7 @@ export async function POST(
     });
     const { claimId } = params;
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || safeUserCast(session.user).role !== "admin") {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }

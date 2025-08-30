@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { PrismaClient } from "@/lib/generated/prisma";
 
 // Create a direct Prisma client instance as fallback
@@ -22,7 +23,7 @@ export async function GET() {
         place: {
           OR: [
             { ownerId: session.user.id },
-            ...(["admin", "moderator"].includes(session.user.role || "")
+            ...(["admin", "moderator"].includes(safeUserCast(session.user).role || "")
               ? [{}]
               : []),
           ],
@@ -50,7 +51,7 @@ export async function GET() {
     return NextResponse.json({
       products,
       total: products.length,
-      userRole: session.user.role,
+      userRole: safeUserCast(session.user).role,
     });
   } catch (error) {
     console.error("Erreur récupération produits utilisateur:", error);

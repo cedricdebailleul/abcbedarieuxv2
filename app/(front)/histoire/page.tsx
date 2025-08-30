@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { prisma } from "@/lib/prisma";
 
 // Configuration de la page pour le rendu statique avec revalidation
 export const revalidate = 3600; // Revalide toutes les heures
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Calendar,
-  MapPin,
   Lightbulb,
   Rocket,
   Users,
@@ -53,12 +53,11 @@ import {
   EyeOff,
   ThumbsUp,
   ThumbsDown,
-  MessageCircle,
   Share,
   Download,
   Upload,
   ExternalLink,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import Link from "next/link";
 import { HistoryApiResponse } from "@/lib/types/history";
 
@@ -111,30 +110,47 @@ const iconMap: Record<string, typeof Calendar> = {
   EyeOff,
   ThumbsUp,
   ThumbsDown,
-  MessageCircle,
   Share,
   Download,
   Upload,
   ExternalLink,
 };
 
-// Récupérer les données depuis l'API
+// Récupérer les données directement depuis la base de données
 async function getHistoryData(): Promise<HistoryApiResponse> {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/api/history`,
-      {
-        next: { revalidate: 3600 }, // Cache pendant 1 heure
+    // Récupérer la configuration active directement depuis la base de données
+    const config = await prisma.historyConfig.findFirst({
+      where: { isActive: true },
+      include: {
+        milestones: {
+          where: { isActive: true },
+          orderBy: { order: 'asc' }
+        },
+        timelineEvents: {
+          where: { isActive: true },
+          orderBy: { order: 'asc' }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
       }
-    );
+    });
 
-    if (!response.ok) {
-      throw new Error("Erreur lors de la récupération des données");
-    }
+    const milestones = config?.milestones || [];
+    const timelineEvents = config?.timelineEvents || [];
 
-    return response.json();
+    return {
+      config: config || null,
+      milestones,
+      timelineEvents
+    };
   } catch (error) {
-    console.error("Erreur:", error);
+    console.error("Erreur lors de la récupération de l'histoire:", error);
     // Retourner des données par défaut en cas d'erreur
     return {
       config: null,

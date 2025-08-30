@@ -14,8 +14,7 @@ import {
   AlertCircle,
   Users,
   Calendar,
-  MapPin,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 
 export default function NewsletterPage() {
   const router = useRouter();

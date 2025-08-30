@@ -6,12 +6,11 @@ import { toast } from "sonner";
 import {
   Calendar,
   Clock,
-  MapPin,
   Users,
   MoreHorizontal,
   Plus,
   Filter,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 
 import { Button } from "@/components/ui/button";

@@ -8,14 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Search,
-  MapPin,
   Calendar,
   FileText,
   Target,
   Filter,
   X,
-  Loader2,
-} from "lucide-react";
+  Loader2} from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 // import { normalizeForSearch } from "@/lib/share-utils";
@@ -36,7 +34,7 @@ interface SearchResult {
 const categoryConfig = {
   place: {
     label: "Établissements",
-    icon: MapPin,
+    icon: Search,
     color: "text-blue-600 bg-blue-50",
   },
   event: {

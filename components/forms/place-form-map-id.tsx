@@ -56,7 +56,7 @@ export function PlaceFormMap({
           setDebugInfo('Chargement du script Google Maps...');
           
           const script = document.createElement('script');
-          script.src = `https://maps.googleapis.com/maps/api/js?key=${env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=marker`;
           script.async = true;
           
           await new Promise<void>((resolve, reject) => {
@@ -87,22 +87,24 @@ export function PlaceFormMap({
           center: center,
         });
 
-        const marker = new google.maps.Marker({
+        // Load the marker library
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+
+        const marker = new AdvancedMarkerElement({
           position: center,
           map: map,
-          draggable: true,
+          gmpDraggable: true,
         });
 
-        marker.addListener("dragend", () => {
-          const pos = marker.getPosition();
-          if (pos) {
-            onCoordinatesChange(pos.lat(), pos.lng());
+        marker.addListener("dragend", (event: google.maps.MapMouseEvent) => {
+          if (event.latLng) {
+            onCoordinatesChange(event.latLng.lat(), event.latLng.lng());
           }
         });
 
         map.addListener("click", (e: google.maps.MapMouseEvent) => {
           if (e.latLng) {
-            marker.setPosition(e.latLng);
+            marker.position = e.latLng;
             onCoordinatesChange(e.latLng.lat(), e.latLng.lng());
           }
         });
@@ -119,7 +121,7 @@ export function PlaceFormMap({
 
     // Petit délai pour s'assurer que le DOM est prêt
     setTimeout(initializeMap, 50);
-  }, [mapId]); // Dépendance sur mapId uniquement
+  }, [mapId, latitude, longitude, onCoordinatesChange]); // Dépendance sur mapId uniquement
 
   if (status === 'error') {
     return (

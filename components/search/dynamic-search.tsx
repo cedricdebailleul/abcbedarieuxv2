@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, MapPin, Calendar, Users } from "lucide-react";
+import { Search, Calendar, Users, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";

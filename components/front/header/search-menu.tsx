@@ -4,13 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Search,
-  MapPin,
   Calendar,
   FileText,
   Target,
   Check,
-  Loader2,
-} from "lucide-react";
+  Loader2} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +27,7 @@ const searchCategories: SearchCategory[] = [
   {
     value: "places",
     label: "Établissements",
-    icon: MapPin,
+    icon: Search,
     description: "Commerces, restaurants, services",
     color: "text-blue-600 bg-blue-50 hover:bg-blue-100",
   },

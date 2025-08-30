@@ -3,8 +3,10 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { emailOTP } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { magicLink } from "better-auth/plugins/magic-link";
+import { createAuthMiddleware } from "better-auth/api";
 import { sendEmail, sendEmailOTP } from "./mailer";
 import { prisma } from "./prisma";
+import { triggerUserRegistrationBadges, triggerProfileUpdateBadges } from "./services/badge-trigger-service";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -16,7 +18,6 @@ export const auth = betterAuth({
         type: "string",
         defaultValue: "user",
         input: true,
-        output: true,
       },
     },
   },
@@ -117,16 +118,35 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // 5 minutes
     },
   },
-  cookies: {
-    sessionToken: {
-      name: "session",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      try {
+        // Déclencher les badges lors de l'inscription
+        if (ctx.path === "/sign-up/email" && ctx.context.newSession) {
+          const userId = ctx.context.newSession.user.id;
+          console.log(`🎖️ Triggering registration badges for new user: ${userId}`);
+          await triggerUserRegistrationBadges(userId);
+        }
+        
+        // Déclencher les badges lors de la mise à jour du profil
+        if (ctx.path === "/update-user" && ctx.context.session) {
+          const userId = ctx.context.session.user.id;
+          console.log(`🎖️ Triggering profile update badges for user: ${userId}`);
+          await triggerProfileUpdateBadges(userId);
+        }
+        
+        // Déclencher les badges lors de la première connexion (vérification email)
+        if (ctx.path === "/verify-email" && ctx.context.newSession) {
+          const userId = ctx.context.newSession.user.id;
+          console.log(`🎖️ Triggering email verification badges for user: ${userId}`);
+          await triggerProfileUpdateBadges(userId);
+        }
+        
+      } catch (error) {
+        console.error("❌ Error triggering badges in auth hooks:", error);
+        // Ne pas faire échouer l'authentification si les badges échouent
+      }
+    }),
   },
 });
 

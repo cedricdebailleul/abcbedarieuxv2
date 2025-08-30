@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Loader2, Mail, Shield } from "lucide-react";
+import { Check, Mail, Shield, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";

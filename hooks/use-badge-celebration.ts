@@ -1,20 +1,13 @@
 "use client";
 
 import { create } from "zustand";
-
-interface Badge {
-  title: string;
-  description: string;
-  iconUrl?: string | null;
-  color?: string | null;
-  rarity: string;
-}
+import type { BadgeCelebration } from "@/types/membership";
 
 interface BadgeCelebrationState {
   isOpen: boolean;
-  badge: Badge | null;
+  badge: BadgeCelebration | null;
   reason: string;
-  showBadge: (badge: Badge, reason: string) => void;
+  showBadge: (badge: BadgeCelebration, reason: string) => void;
   closeBadge: () => void;
 }
 
@@ -22,7 +15,7 @@ export const useBadgeCelebration = create<BadgeCelebrationState>((set) => ({
   isOpen: false,
   badge: null,
   reason: "",
-  showBadge: (badge: Badge, reason: string) => {
+  showBadge: (badge: BadgeCelebration, reason: string) => {
     set({ isOpen: true, badge, reason });
   },
   closeBadge: () => {

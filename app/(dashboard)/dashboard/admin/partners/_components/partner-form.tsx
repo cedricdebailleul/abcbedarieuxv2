@@ -26,7 +26,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Save, X } from "lucide-react";
+import { Save, X, Loader2 } from "lucide-react";
 import { ImageUpload } from "@/components/media/image-upload";
 import { 
   PartnerCreateSchema,

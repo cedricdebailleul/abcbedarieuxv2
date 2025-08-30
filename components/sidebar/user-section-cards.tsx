@@ -1,12 +1,11 @@
 import {
   IconTrendingUp,
-  IconMapPin,
-  IconFileText,
   IconCalendar,
   IconHeart,
   IconAward,
   IconEye,
-} from "@tabler/icons-react";
+  IconMapPin,
+  IconFileText} from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
 import {

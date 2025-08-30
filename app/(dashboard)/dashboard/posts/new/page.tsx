@@ -6,6 +6,7 @@ import { PostForm } from "@/components/forms/post-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 
 export default async function NewPostPage() {
   // Vérifier l'authentification
@@ -17,7 +18,7 @@ export default async function NewPostPage() {
 
   // Vérifier les permissions
   const canCreatePosts =
-    session.user.role && ["admin", "editor", "user"].includes(session.user.role);
+    safeUserCast(session.user).role && ["admin", "editor", "user"].includes(safeUserCast(session.user).role);
 
   if (!canCreatePosts) {
     redirect("/dashboard");

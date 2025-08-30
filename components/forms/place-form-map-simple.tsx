@@ -18,7 +18,7 @@ export function PlaceFormMapSimple({
   const mapRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
   const mapInstance = useRef<google.maps.Map | null>(null);
-  const markerInstance = useRef<google.maps.Marker | null>(null);
+  const markerInstance = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
   
   const { isLoaded, loadError } = useGoogleMapsLoader();
 
@@ -56,7 +56,7 @@ export function PlaceFormMapSimple({
     
     console.log('PlaceFormMapSimple - Starting initialization...');
 
-    const initMap = () => {
+    const initMap = async () => {
       console.log('PlaceFormMapSimple - initMap start');
       const center = { lat: initialLat, lng: initialLng };
       console.log('PlaceFormMapSimple - center:', center);
@@ -72,25 +72,28 @@ export function PlaceFormMapSimple({
         center: center,
       });
 
-      console.log('PlaceFormMapSimple - Map created, creating marker...');
-      const marker = new window.google.maps.Marker({
+      console.log('PlaceFormMapSimple - Map created, loading marker library...');
+      // Load the marker library
+      const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+
+      console.log('PlaceFormMapSimple - Creating marker...');
+      const marker = new AdvancedMarkerElement({
         position: center,
         map: map,
-        draggable: true,
+        gmpDraggable: true,
       });
 
       console.log('PlaceFormMapSimple - Marker created, adding events...');
       // Events
-      marker.addListener("dragend", () => {
-        const pos = marker.getPosition();
-        if (pos) {
-          onPositionChange(pos.lat(), pos.lng());
+      marker.addListener("dragend", (event: google.maps.MapMouseEvent) => {
+        if (event.latLng) {
+          onPositionChange(event.latLng.lat(), event.latLng.lng());
         }
       });
 
       map.addListener("click", (e: google.maps.MapMouseEvent) => {
         if (e.latLng) {
-          marker.setPosition(e.latLng);
+          marker.position = e.latLng;
           onPositionChange(e.latLng.lat(), e.latLng.lng());
         }
       });
@@ -108,12 +111,10 @@ export function PlaceFormMapSimple({
       
       if (mapRef.current) {
         console.log('PlaceFormMapSimple - mapRef found, initializing...');
-        try {
-          initMap();
-        } catch (error) {
+        initMap().catch(error => {
           console.error("PlaceFormMapSimple - Erreur carte:", error);
           setIsReady(true); // Pour éviter le blocage
-        }
+        });
       } else if (attempt < 20) { // Essayer pendant 2 secondes max
         console.log(`PlaceFormMapSimple - mapRef not ready, retrying in 100ms (attempt ${attempt}/20)`);
         setTimeout(() => checkMapRef(attempt + 1), 100);
@@ -126,13 +127,13 @@ export function PlaceFormMapSimple({
     // Démarrer la vérification après un petit délai
     const timer = setTimeout(() => checkMapRef(), 50);
     return () => clearTimeout(timer);
-  }, [isLoaded, initialLat, initialLng, onPositionChange]); // Dépendances complètes
+  }, [isLoaded, initialLat, initialLng, onPositionChange, isReady]); // Dépendances complètes
 
   // Séparément, mettre à jour la position si elle change
   useEffect(() => {
     if (isReady && initialLat && initialLng && markerInstance.current && mapInstance.current) {
       const newPos = { lat: initialLat, lng: initialLng };
-      markerInstance.current.setPosition(newPos);
+      markerInstance.current.position = newPos;
       mapInstance.current.setCenter(newPos);
     }
   }, [initialLat, initialLng, isReady]);

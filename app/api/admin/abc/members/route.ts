@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { Prisma, AbcMemberType, AbcMemberStatus } from "@/lib/generated/prisma";
 
@@ -29,8 +30,8 @@ export async function GET(request: Request) {
 
     if (
       !session?.user ||
-      !session.user.role ||
-      !["admin", "moderator"].includes(session.user.role)
+      !safeUserCast(session.user).role ||
+      !["admin", "moderator"].includes(safeUserCast(session.user).role)
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
@@ -140,7 +141,7 @@ export async function POST(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || safeUserCast(session.user).role !== "admin") {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }

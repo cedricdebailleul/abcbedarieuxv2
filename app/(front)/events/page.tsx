@@ -139,7 +139,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
 
   const events: PublicEvent[] = eventsResult.success ? eventsResult.data! : [];
 
-  // Adaptation pour l’UI : dates en Date, slug fallback, _count présent
+  // Adaptation pour l'UI : dates en Date, slug fallback, _count présent
   const uiEvents: EventWithCount[] = events.map((e) => {
     const start =
       typeof e.startDate === "string"
@@ -161,20 +161,15 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
       0;
 
     const base = {
-      id: e.id,
-      title: e.title,
-      slug,
+      ...e,
       startDate: start,
       endDate: end,
-      isAllDay: (e as { isAllDay?: boolean }).isAllDay ?? false,
-      isFeatured: (e as { isFeatured?: boolean }).isFeatured ?? false,
-      isFree: (e as { isFree?: boolean }).isFree ?? true,
-      place,
-      occurrenceId: (e as { occurrenceId?: string }).occurrenceId,
+      slug,
       _count: { participants: count },
-    } as Partial<EventWithCount>;
+      place,
+    };
 
-    return base as EventWithCount;
+    return base as unknown as EventWithCount;
   });
 
   // Filtrage texte côté client (MVP)

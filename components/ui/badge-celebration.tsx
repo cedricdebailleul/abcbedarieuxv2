@@ -6,19 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-
-interface BadgeCelebrationProps {
-  isOpen: boolean;
-  onClose: () => void;
-  badge: {
-    title: string;
-    description: string;
-    iconUrl?: string | null;
-    color?: string | null;
-    rarity: string;
-  };
-  reason: string;
-}
+import type { BadgeCelebrationProps } from "@/types/membership";
 
 export function BadgeCelebration({
   isOpen,

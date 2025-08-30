@@ -6,11 +6,10 @@ import {
   Menu,
   User,
   X,
-  MapPin,
   Calendar,
   Star,
   Newspaper,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { NavUser } from "@/components/layout/nav_user";

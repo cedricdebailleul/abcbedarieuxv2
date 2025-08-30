@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut, useSession } from "@/lib/auth-client";
+import { safeUserCast } from "@/lib/auth-helpers-client";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import {
@@ -29,7 +30,7 @@ export function NavUser() {
             <DropdownMenuItem asChild>
               <Link href="/dashboard/profile">Mon profil</Link>
             </DropdownMenuItem>
-            {session.user.role === "ADMIN" && (
+            {safeUserCast(session.user).role === "admin" && (
               <DropdownMenuItem asChild>
                 <Link href="/admin">Administration</Link>
               </DropdownMenuItem>

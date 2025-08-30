@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, MapPin, Star } from "lucide-react";
+import { Heart, Star, MapPin } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { UPLOADS_ROOT } from "@/lib/path";
 
 export async function POST(request: NextRequest) {
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier les permissions
-    const userRole = session.user.role;
+    const userRole = safeUserCast(session.user).role;
     if (!userRole || !["admin", "editor", "user"].includes(userRole)) {
       return NextResponse.json(
         { error: "Permissions insuffisantes" },

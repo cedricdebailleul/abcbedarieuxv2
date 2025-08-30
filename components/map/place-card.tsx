@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
-  MapPin,
   Phone,
   Globe,
   ExternalLink,
@@ -18,7 +17,7 @@ import {
   Instagram,
   Twitter,
   Linkedin,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
@@ -55,7 +56,7 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function PartnerDetailPage({ params }: PageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session?.user || (session.user.role !== "admin" && session.user.role !== "moderator")) {
+  if (!session?.user || (safeUserCast(session.user).role !== "admin" && safeUserCast(session.user).role !== "moderator")) {
     redirect("/dashboard");
   }
 
@@ -92,7 +93,7 @@ export default async function PartnerDetailPage({ params }: PageProps) {
             </p>
           </div>
         </div>
-        {session.user.role === "admin" && (
+        {safeUserCast(session.user).role === "admin" && (
           <Button asChild>
             <Link href={`/dashboard/admin/partners/${partner.id}/edit`}>
               <Edit className="h-4 w-4 mr-2" />

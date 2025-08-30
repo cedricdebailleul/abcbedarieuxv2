@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { PrismaClient, Prisma } from "@/lib/generated/prisma";
 
 // Create a direct Prisma client instance as fallback
@@ -88,7 +89,7 @@ export async function POST(
 
     if (
       place.ownerId !== session.user.id &&
-      !["admin", "moderator"].includes(session.user.role || "")
+      !["admin", "moderator"].includes(safeUserCast(session.user).role || "")
     ) {
       return NextResponse.json(
         { error: "Vous n'êtes pas autorisé à ajouter des services à ce lieu" },

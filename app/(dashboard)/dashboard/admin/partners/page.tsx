@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { PartnersContent } from "./partners-content";
@@ -12,7 +13,7 @@ export const metadata = {
 export default async function AdminPartnersPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session?.user || (session.user.role !== "admin" && session.user.role !== "moderator")) {
+  if (!session?.user || (safeUserCast(session.user).role !== "admin" && safeUserCast(session.user).role !== "moderator")) {
     redirect("/dashboard");
   }
 

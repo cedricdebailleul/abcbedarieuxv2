@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MapPin, Loader2 } from "lucide-react";
+import {} from "lucide-react";
 
 interface PlaceFormMapProps {
   latitude?: number;
@@ -13,7 +13,7 @@ interface PlaceFormMapProps {
 
 export function PlaceFormMap({
   latitude,
-  longitude, 
+  longitude,
   address,
   onCoordinatesChange,
   className = "",
@@ -21,76 +21,88 @@ export function PlaceFormMap({
   const mapRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
   const mapInstance = useRef<google.maps.Map | null>(null);
-  const markerInstance = useRef<google.maps.Marker | null>(null);
-  
+  const markerInstance = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+
   useEffect(() => {
     // Si déjà initialisé, ne rien faire
     if (initialized.current) return;
-    
+
     // Attendre que Google Maps soit disponible
-    const checkGoogle = () => {
-      if (typeof window === 'undefined' || !window.google || !window.google.maps) {
+    const checkGoogle = async () => {
+      if (
+        typeof window === "undefined" ||
+        !window.google ||
+        !window.google.maps
+      ) {
         setTimeout(checkGoogle, 100);
         return;
       }
-      
+
       // Google Maps est disponible, créer la carte
       if (mapRef.current) {
         try {
-          const center = { 
-            lat: latitude || 43.6108, 
-            lng: longitude || 3.1612 
+          const center = {
+            lat: latitude || 43.6108,
+            lng: longitude || 3.1612,
           };
-          
+
           const map = new window.google.maps.Map(mapRef.current, {
             zoom: 15,
             center: center,
           });
-          
-          const marker = new window.google.maps.Marker({
+
+          // Load the marker library
+          const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+
+          const marker = new AdvancedMarkerElement({
             position: center,
             map: map,
-            draggable: true,
+            gmpDraggable: true,
           });
 
           // Sauvegarder les instances pour les mises à jour
           mapInstance.current = map;
           markerInstance.current = marker;
-          
+
           // Events
-          marker.addListener("dragend", () => {
-            const pos = marker.getPosition();
-            if (pos) {
-              onCoordinatesChange(pos.lat(), pos.lng());
+          marker.addListener("dragend", (event: google.maps.MapMouseEvent) => {
+            if (event.latLng) {
+              onCoordinatesChange(event.latLng.lat(), event.latLng.lng());
             }
           });
-          
-          map.addListener("click", (e: any) => {
+
+          map.addListener("click", (e: google.maps.MapMouseEvent) => {
             if (e.latLng) {
-              marker.setPosition(e.latLng);
+              marker.position = e.latLng;
               onCoordinatesChange(e.latLng.lat(), e.latLng.lng());
             }
           });
-          
+
           initialized.current = true;
         } catch (error) {
           console.error("Erreur création carte:", error);
         }
       }
     };
-    
+
     checkGoogle();
-  }, []); // Aucune dépendance !
+  }, [latitude, longitude, onCoordinatesChange]); // Aucune dépendance !
 
   // Synchroniser la position quand latitude/longitude changent depuis l'extérieur
   useEffect(() => {
-    if (initialized.current && mapInstance.current && markerInstance.current && latitude && longitude) {
+    if (
+      initialized.current &&
+      mapInstance.current &&
+      markerInstance.current &&
+      latitude &&
+      longitude
+    ) {
       const newPosition = { lat: latitude, lng: longitude };
-      markerInstance.current.setPosition(newPosition);
+      markerInstance.current.position = newPosition;
       mapInstance.current.setCenter(newPosition);
     }
   }, [latitude, longitude]);
-  
+
   return (
     <div className={`space-y-2 ${className}`}>
       <div ref={mapRef} className="w-full h-64 rounded-lg border bg-gray-100" />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MapPin, Loader2 } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 
 interface PlaceFormMapInteractiveProps {
   initialLat: number;
@@ -17,11 +17,11 @@ export function PlaceFormMapInteractive({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
-  const [markerInstance, setMarkerInstance] = useState<google.maps.Marker | null>(null);
+  const [markerInstance, setMarkerInstance] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
 
   const mapId = `interactive-map-${Date.now()}`;
 
-  const initializeMap = useCallback(() => {
+  const initializeMap = useCallback(async () => {
     try {
       const mapElement = document.getElementById(mapId);
       if (!mapElement) {
@@ -43,27 +43,34 @@ export function PlaceFormMapInteractive({
         fullscreenControl: true,
       });
 
+      // Load the marker library
+      const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+
       // Créer le marqueur draggable
-      const marker = new window.google.maps.Marker({
+      const marker = new AdvancedMarkerElement({
         position: { lat: initialLat, lng: initialLng },
         map: map,
-        draggable: true,
+        gmpDraggable: true,
         title: "Glissez pour repositionner",
       });
 
       // Écouter les changements de position
-      marker.addListener("dragend", (event: any) => {
-        const lat = event.latLng.lat();
-        const lng = event.latLng.lng();
-        onPositionChange(lat, lng);
+      marker.addListener("dragend", (event: google.maps.MapMouseEvent) => {
+        if (event.latLng) {
+          const lat = event.latLng.lat();
+          const lng = event.latLng.lng();
+          onPositionChange(lat, lng);
+        }
       });
 
       // Permettre de cliquer sur la carte pour repositionner
-      map.addListener("click", (event: any) => {
-        const lat = event.latLng.lat();
-        const lng = event.latLng.lng();
-        marker.setPosition({ lat, lng });
-        onPositionChange(lat, lng);
+      map.addListener("click", (event: google.maps.MapMouseEvent) => {
+        if (event.latLng) {
+          const lat = event.latLng.lat();
+          const lng = event.latLng.lng();
+          marker.position = { lat, lng };
+          onPositionChange(lat, lng);
+        }
       });
 
       setMapInstance(map);
@@ -112,7 +119,7 @@ export function PlaceFormMapInteractive({
     setError("Téléchargement de l'API Google Maps...");
     
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&loading=async`;
     script.async = true;
     script.defer = true;
     
@@ -140,7 +147,7 @@ export function PlaceFormMapInteractive({
   useEffect(() => {
     if (mapInstance && markerInstance) {
       const newPosition = { lat: initialLat, lng: initialLng };
-      markerInstance.setPosition(newPosition);
+      markerInstance.position = newPosition;
       mapInstance.setCenter(newPosition);
     }
   }, [initialLat, initialLng, mapInstance, markerInstance]);
@@ -155,7 +162,7 @@ export function PlaceFormMapInteractive({
             <p className="text-xs mt-1">Première utilisation - téléchargement en cours</p>
           )}
           {error && error.includes("Chargement") && (
-            <p className="text-xs mt-1">Initialisation de l'API...</p>
+            <p className="text-xs mt-1">Initialisation de l&apos;API...</p>
           )}
         </div>
       </div>

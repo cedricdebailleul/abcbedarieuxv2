@@ -4,10 +4,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  MapPin,
   Euro,
   Users,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";

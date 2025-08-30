@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { headers } from "next/headers";
@@ -82,7 +83,7 @@ export async function getAllPlacesAction(): Promise<
     }
 
     // Vérifier que l'utilisateur est admin
-    if (session.user.role !== "admin") {
+    if (safeUserCast(session.user).role !== "admin") {
       return {
         success: false,
         error: "Accès non autorisé",

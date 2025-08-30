@@ -4,6 +4,7 @@ import { EventForm } from "@/components/forms/event-form";
 import { prisma } from "@/lib/prisma";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { headers } from "next/headers";
 
 interface EditEventPageProps {
@@ -45,7 +46,7 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
       OR: [
         { organizerId: session.user.id },
         // Les admins peuvent modifier tous les événements
-        ...(["admin", "moderator"].includes(session.user.role!) ? [{}] : []),
+        ...(["admin", "moderator"].includes(safeUserCast(session.user).role!) ? [{}] : []),
       ],
     },
     include: {

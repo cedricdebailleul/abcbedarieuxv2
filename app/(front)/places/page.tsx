@@ -1,4 +1,4 @@
-import { Globe, Mail, MapPin, Phone, Star } from "lucide-react";
+import { Globe, Mail, Phone, Star, MapPin } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {

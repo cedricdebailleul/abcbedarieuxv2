@@ -11,8 +11,7 @@ import {
   ArrowRight,
   Handshake,
   Star,
-  MapPin,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 

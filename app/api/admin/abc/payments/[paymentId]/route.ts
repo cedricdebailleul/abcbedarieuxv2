@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
 const updatePaymentSchema = z.object({
@@ -26,7 +27,7 @@ export async function GET(
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (!session?.user || !safeUserCast(session.user).role || !["admin", "moderator"].includes(safeUserCast(session.user).role)) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -78,7 +79,7 @@ export async function PUT(
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (!session?.user || !safeUserCast(session.user).role || !["admin", "moderator"].includes(safeUserCast(session.user).role)) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -174,7 +175,7 @@ export async function DELETE(
       headers: request.headers,
     });
 
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+    if (!session?.user || !safeUserCast(session.user).role || !["admin", "moderator"].includes(safeUserCast(session.user).role)) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -194,7 +195,7 @@ export async function DELETE(
     }
 
     // Empêcher la suppression des paiements payés (sauf pour les admins)
-    if (payment.status === "PAID" && session.user.role !== "admin") {
+    if (payment.status === "PAID" && safeUserCast(session.user).role !== "admin") {
       return NextResponse.json(
         { error: "Seuls les administrateurs peuvent supprimer un paiement payé" },
         { status: 403 }

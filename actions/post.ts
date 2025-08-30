@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -36,10 +37,10 @@ async function checkPostPermissions(postId?: string, requireAdmin = false) {
     throw new Error("Non authentifié");
   }
 
-  const user = session.user;
+  const user = safeUserCast(session.user);
 
-  // Les admins et éditeurs ont tous les droits
-  if (user.role === "admin" || user.role === "editor") {
+  // Les admins et éditeurs ont tous les droits  
+  if ((user.role as string) === "admin" || (user.role as string) === "editor") {
     return { user, canEdit: true, canDelete: true, canPublish: true };
   }
 
@@ -64,7 +65,7 @@ async function checkPostPermissions(postId?: string, requireAdmin = false) {
       user,
       canEdit: isOwner,
       canDelete: isOwner,
-      canPublish: user.role === "admin" || user.role === "editor",
+      canPublish: (user.role as string) === "admin" || (user.role as string) === "editor",
     };
   }
 
@@ -336,8 +337,8 @@ export async function getPostsAction(
       };
     }
 
-    const user = session.user;
-    const canSeeAll = user.role === "admin" || user.role === "editor";
+    const user = safeUserCast(session.user);
+    const canSeeAll = (user.role as string) === "admin" || (user.role as string) === "editor";
 
     // Nettoyer les filtres avant validation
     const cleanFilters = {
@@ -660,7 +661,7 @@ export async function bulkPublishPostsAction(input: {
     const { user } = await checkPostPermissions();
 
     // Seuls les admins/éditeurs peuvent publier en lot
-    if (user.role !== "admin" && user.role !== "editor") {
+    if ((user.role as string) !== "admin" && (user.role as string) !== "editor") {
       return {
         success: false,
         error: "Permissions insuffisantes",
@@ -755,8 +756,8 @@ export async function getPostsStatsAction(): Promise<
       };
     }
 
-    const user = session.user;
-    const canSeeAll = user.role === "admin" || user.role === "editor";
+    const user = safeUserCast(session.user);
+    const canSeeAll = (user.role as string) === "admin" || (user.role as string) === "editor";
 
     // Construire les conditions de base
     const whereClause: Prisma.PostWhereInput = canSeeAll
@@ -1292,7 +1293,7 @@ export async function createCategoryAction(
       };
     }
 
-    const user = session.user;
+    const user = safeUserCast(session.user);
 
     // Tous les utilisateurs authentifiés peuvent créer des catégories
     // (Pour organiser leurs propres articles)
@@ -1394,7 +1395,7 @@ export async function createTagsAction(input: {
       };
     }
 
-    const user = session.user;
+    const user = safeUserCast(session.user);
 
     // Tous les utilisateurs authentifiés peuvent créer des tags
     // (Pour organiser leurs propres articles)

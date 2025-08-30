@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { IconMail } from "@tabler/icons-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,14 +49,12 @@ import {
 import {
   IconPlus,
   IconSearch,
-  IconMail,
   IconEdit,
   IconTrash,
   IconDotsVertical,
   IconSend,
   IconEye,
-  IconCopy,
-} from "@tabler/icons-react";
+  IconCopy} from "@tabler/icons-react";
 import { CreateBulletinDialog } from "@/components/admin/abc/create-bulletin-dialog";
 import { EditBulletinDialog } from "@/components/admin/abc/edit-bulletin-dialog";
 

@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
-  Euro, 
-  Globe, 
+import {
+  Calendar,
+  Clock,
+  Users,
+  Euro,
+  Globe,
   Image as ImageIcon,
   Repeat,
   Plus,
   X,
+  MapPin,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,12 +24,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ImageUpload } from "@/components/media/image-upload";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
   Form,
@@ -50,11 +50,11 @@ import {
 } from "@/components/ui/collapsible";
 
 import { createEventAction, updateEventAction } from "@/actions/event";
-import { 
-  eventWithRecurrenceSchema, 
+import {
+  eventWithRecurrenceSchema,
   type EventWithRecurrenceData,
   EVENT_CATEGORIES_LABELS,
-  RECURRENCE_FREQUENCY_OPTIONS
+  RECURRENCE_FREQUENCY_OPTIONS,
 } from "@/lib/validations/event";
 import { EventStatus, RecurrenceFrequency } from "@/lib/generated/prisma";
 
@@ -66,14 +66,14 @@ interface EventFormProps {
 const STATUS_OPTIONS = [
   { value: EventStatus.DRAFT, label: "Brouillon" },
   { value: EventStatus.PENDING_REVIEW, label: "En attente de validation" },
-  { value: EventStatus.PUBLISHED, label: "Publié" }
+  { value: EventStatus.PUBLISHED, label: "Publié" },
 ];
 
 const TIMEZONE_OPTIONS = [
   { value: "Europe/Paris", label: "Europe/Paris (France)" },
   { value: "Europe/London", label: "Europe/London (Royaume-Uni)" },
   { value: "America/New_York", label: "America/New_York (EST)" },
-  { value: "America/Los_Angeles", label: "America/Los_Angeles (PST)" }
+  { value: "America/Los_Angeles", label: "America/Los_Angeles (PST)" },
 ];
 
 const WEEKDAYS = [
@@ -83,7 +83,7 @@ const WEEKDAYS = [
   { value: 4, label: "Jeudi" },
   { value: 5, label: "Vendredi" },
   { value: 6, label: "Samedi" },
-  { value: 7, label: "Dimanche" }
+  { value: 7, label: "Dimanche" },
 ];
 
 function formatDateTimeLocal(date: string | Date): string {
@@ -97,7 +97,9 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
   const router = useRouter();
   const isEditing = !!initialData?.id;
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showRecurrence, setShowRecurrence] = useState(initialData?.isRecurring || false);
+  const [showRecurrence, setShowRecurrence] = useState(
+    initialData?.isRecurring || false
+  );
   const [images, setImages] = useState<string[]>(initialData?.images || []);
   const [videos, setVideos] = useState<string[]>(initialData?.videos || []);
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
@@ -116,8 +118,12 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
       phone: initialData?.phone || "",
       website: initialData?.website || "",
       ticketUrl: initialData?.ticketUrl || "",
-      startDate: initialData?.startDate ? formatDateTimeLocal(initialData.startDate) : "",
-      endDate: initialData?.endDate ? formatDateTimeLocal(initialData.endDate) : "",
+      startDate: initialData?.startDate
+        ? formatDateTimeLocal(initialData.startDate)
+        : "",
+      endDate: initialData?.endDate
+        ? formatDateTimeLocal(initialData.endDate)
+        : "",
       isAllDay: initialData?.isAllDay || false,
       timezone: initialData?.timezone || "Europe/Paris",
       locationName: initialData?.locationName || "",
@@ -144,21 +150,21 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
       tags: tags,
       category: initialData?.category || undefined,
       isRecurring: initialData?.isRecurring || false,
-      recurrence: initialData?.recurrence || undefined
+      recurrence: initialData?.recurrence || undefined,
     },
   });
 
   const onSubmit = async (data: EventWithRecurrenceData) => {
     try {
       setIsSubmitting(true);
-      
+
       // Ajouter les médias et tags, traiter les valeurs spéciales
       const formData = {
         ...data,
         images,
         videos,
         tags,
-        placeId: data.placeId === "none" ? undefined : data.placeId
+        placeId: data.placeId === "none" ? undefined : data.placeId,
       };
 
       let result;
@@ -169,7 +175,9 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
       }
 
       if (result.success) {
-        toast.success(`Événement ${isEditing ? 'modifié' : 'créé'} avec succès`);
+        toast.success(
+          `Événement ${isEditing ? "modifié" : "créé"} avec succès`
+        );
         router.push(`/dashboard/events`);
       } else {
         toast.error(result.error || "Une erreur est survenue");
@@ -218,7 +226,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
   };
 
   const removeTag = (tagToRemove: string) => {
-    const newTags = tags.filter(tag => tag !== tagToRemove);
+    const newTags = tags.filter((tag) => tag !== tagToRemove);
     setTags(newTags);
     form.setValue("tags", newTags);
   };
@@ -228,10 +236,12 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">
-            {isEditing ? 'Modifier l\'événement' : 'Créer un événement'}
+            {isEditing ? "Modifier l'événement" : "Créer un événement"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {isEditing ? 'Modifiez les informations de votre événement' : 'Créez un nouvel événement pour votre communauté'}
+            {isEditing
+              ? "Modifiez les informations de votre événement"
+              : "Créez un nouvel événement pour votre communauté"}
           </p>
         </div>
       </div>
@@ -255,7 +265,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                     <FormItem className="md:col-span-2">
                       <FormLabel>Titre de l&apos;événement *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Concert de jazz au parc..." {...field} />
+                        <Input
+                          placeholder="Concert de jazz au parc..."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -268,18 +281,23 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Catégorie</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Choisir une catégorie" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(EVENT_CATEGORIES_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
+                          {Object.entries(EVENT_CATEGORIES_LABELS).map(
+                            ([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            )
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -293,7 +311,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Statut</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -327,7 +348,8 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       />
                     </FormControl>
                     <FormDescription>
-                      Résumé qui apparaîtra dans les partages sur les réseaux sociaux
+                      Résumé qui apparaîtra dans les partages sur les réseaux
+                      sociaux
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -358,7 +380,9 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Événement à la une</FormLabel>
+                      <FormLabel className="text-base">
+                        Événement à la une
+                      </FormLabel>
                       <FormDescription>
                         Mettre en avant cet événement sur la page d&apos;accueil
                       </FormDescription>
@@ -419,7 +443,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Fuseau horaire</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -444,7 +471,9 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Toute la journée</FormLabel>
+                        <FormLabel className="text-base">
+                          Toute la journée
+                        </FormLabel>
                         <FormDescription>
                           Événement sur toute la journée
                         </FormDescription>
@@ -461,9 +490,16 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
               </div>
 
               {/* Récurrence */}
-              <Collapsible open={showRecurrence} onOpenChange={setShowRecurrence}>
+              <Collapsible
+                open={showRecurrence}
+                onOpenChange={setShowRecurrence}
+              >
                 <CollapsibleTrigger asChild>
-                  <Button variant="outline" type="button" className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="flex items-center gap-2"
+                  >
                     <Repeat className="w-4 h-4" />
                     Événement récurrent
                     {showRecurrence ? "↑" : "↓"}
@@ -476,7 +512,9 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Activer la récurrence</FormLabel>
+                          <FormLabel className="text-base">
+                            Activer la récurrence
+                          </FormLabel>
                           <FormDescription>
                             Créer des occurrences répétées de cet événement
                           </FormDescription>
@@ -492,7 +530,7 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                                   frequency: RecurrenceFrequency.WEEKLY,
                                   interval: 1,
                                   count: 5,
-                                  workdaysOnly: false
+                                  workdaysOnly: false,
                                 });
                               }
                             }}
@@ -512,18 +550,26 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Fréquence</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value}
+                                >
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Choisir..." />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    {RECURRENCE_FREQUENCY_OPTIONS.map((option) => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
+                                    {RECURRENCE_FREQUENCY_OPTIONS.map(
+                                      (option) => (
+                                        <SelectItem
+                                          key={option.value}
+                                          value={option.value}
+                                        >
+                                          {option.label}
+                                        </SelectItem>
+                                      )
+                                    )}
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -543,11 +589,17 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                                     min="1"
                                     placeholder="1"
                                     {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                    onChange={(e) =>
+                                      field.onChange(parseInt(e.target.value))
+                                    }
                                   />
                                 </FormControl>
                                 <FormDescription>
-                                  Tous les X {form.watch("recurrence.frequency") === RecurrenceFrequency.WEEKLY ? "semaines" : ""}
+                                  Tous les X{" "}
+                                  {form.watch("recurrence.frequency") ===
+                                  RecurrenceFrequency.WEEKLY
+                                    ? "semaines"
+                                    : ""}
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>
@@ -568,7 +620,13 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                                     min="1"
                                     placeholder="10"
                                     {...field}
-                                    onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        e.target.value
+                                          ? parseInt(e.target.value)
+                                          : undefined
+                                      )
+                                    }
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -591,7 +649,8 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                           />
                         </div>
 
-                        {form.watch("recurrence.frequency") === RecurrenceFrequency.WEEKLY && (
+                        {form.watch("recurrence.frequency") ===
+                          RecurrenceFrequency.WEEKLY && (
                           <FormItem>
                             <FormLabel>Jours de la semaine</FormLabel>
                             <div className="flex flex-wrap gap-2">
@@ -603,11 +662,16 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                                   size="sm"
                                   className="h-8"
                                   onClick={() => {
-                                    const current = form.getValues("recurrence.byWeekDay") || [];
+                                    const current =
+                                      form.getValues("recurrence.byWeekDay") ||
+                                      [];
                                     const newValue = current.includes(day.value)
-                                      ? current.filter(d => d !== day.value)
+                                      ? current.filter((d) => d !== day.value)
                                       : [...current, day.value];
-                                    form.setValue("recurrence.byWeekDay", newValue);
+                                    form.setValue(
+                                      "recurrence.byWeekDay",
+                                      newValue
+                                    );
                                   }}
                                 >
                                   {day.label}
@@ -646,7 +710,9 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">Aucune place sélectionnée</SelectItem>
+                        <SelectItem value="none">
+                          Aucune place sélectionnée
+                        </SelectItem>
                         {places.map((place) => (
                           <SelectItem key={place.id} value={place.id}>
                             {place.name} • {place.city}
@@ -655,7 +721,8 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Sélectionnez une place existante ou renseignez les informations ci-dessous
+                      Sélectionnez une place existante ou renseignez les
+                      informations ci-dessous
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -672,7 +739,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                     <FormItem>
                       <FormLabel>Nom du lieu</FormLabel>
                       <FormControl>
-                        <Input placeholder="Parc municipal, Salle des fêtes..." {...field} />
+                        <Input
+                          placeholder="Parc municipal, Salle des fêtes..."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -700,7 +770,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                     <FormItem className="md:col-span-2">
                       <FormLabel>Adresse complète</FormLabel>
                       <FormControl>
-                        <Input placeholder="123 Avenue de la République..." {...field} />
+                        <Input
+                          placeholder="123 Avenue de la République..."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -719,7 +792,13 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                           step="any"
                           placeholder="43.6532"
                           {...field}
-                          onChange={e => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -739,7 +818,13 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                           step="any"
                           placeholder="3.1645"
                           {...field}
-                          onChange={e => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -771,7 +856,13 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                         min="1"
                         placeholder="100"
                         {...field}
-                        onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormDescription>
@@ -788,7 +879,9 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Événement gratuit</FormLabel>
+                      <FormLabel className="text-base">
+                        Événement gratuit
+                      </FormLabel>
                       <FormDescription>
                         Cochez si l&apos;événement est gratuit
                       </FormDescription>
@@ -820,7 +913,13 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                               placeholder="15.00"
                               className="pr-8"
                               {...field}
-                              onChange={e => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseFloat(e.target.value)
+                                    : undefined
+                                )
+                              }
                             />
                           </FormControl>
                           <Euro className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -837,7 +936,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       <FormItem>
                         <FormLabel>Détails tarifaires</FormLabel>
                         <FormControl>
-                          <Input placeholder="Adulte: 15€, Enfant: 8€" {...field} />
+                          <Input
+                            placeholder="Adulte: 15€, Enfant: 8€"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -865,7 +967,11 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                     <FormItem>
                       <FormLabel>Email de contact</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="contact@example.com" {...field} />
+                        <Input
+                          type="email"
+                          placeholder="contact@example.com"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -907,7 +1013,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                     <FormItem>
                       <FormLabel>Lien billetterie</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://billetterie.example.com" {...field} />
+                        <Input
+                          placeholder="https://billetterie.example.com"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -927,7 +1036,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       <FormItem>
                         <FormLabel>Facebook</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://facebook.com/..." {...field} />
+                          <Input
+                            placeholder="https://facebook.com/..."
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -941,7 +1053,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       <FormItem>
                         <FormLabel>Instagram</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://instagram.com/..." {...field} />
+                          <Input
+                            placeholder="https://instagram.com/..."
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -955,7 +1070,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       <FormItem>
                         <FormLabel>Twitter</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://twitter.com/..." {...field} />
+                          <Input
+                            placeholder="https://twitter.com/..."
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -969,7 +1087,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       <FormItem>
                         <FormLabel>LinkedIn</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://linkedin.com/..." {...field} />
+                          <Input
+                            placeholder="https://linkedin.com/..."
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1001,17 +1122,19 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                         onChange={field.onChange}
                         onRemove={() => field.onChange("")}
                         type="events"
-                        slug={form.getValues("title") ? 
+                        slug={
                           form.getValues("title")
-                            .toLowerCase()
-                            .normalize("NFD")
-                            .replace(/[\u0300-\u036f]/g, "")
-                            .replace(/[^a-z0-9\s-]/g, "")
-                            .replace(/\s+/g, "-")
-                            .replace(/-+/g, "-")
-                            .trim()
-                            .replace(/^-|-$/g, "") || "new-event"
-                          : "new-event"
+                            ? form
+                                .getValues("title")
+                                .toLowerCase()
+                                .normalize("NFD")
+                                .replace(/[\u0300-\u036f]/g, "")
+                                .replace(/[^a-z0-9\s-]/g, "")
+                                .replace(/\s+/g, "-")
+                                .replace(/-+/g, "-")
+                                .trim()
+                                .replace(/^-|-$/g, "") || "new-event"
+                            : "new-event"
                         }
                         imageType="cover"
                         aspectRatios={[
@@ -1024,7 +1147,8 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       />
                     </FormControl>
                     <FormDescription>
-                      Image principale qui apparaîtra en tête de l&apos;événement (recommandé: 1200x675px)
+                      Image principale qui apparaîtra en tête de
+                      l&apos;événement (recommandé: 1200x675px)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -1035,7 +1159,12 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label>Galerie d&apos;images</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addImage}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addImage}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Ajouter une image
                   </Button>
@@ -1054,17 +1183,19 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                           }}
                           onRemove={() => removeImage(index)}
                           type="events"
-                          slug={form.getValues("title") ? 
+                          slug={
                             form.getValues("title")
-                              .toLowerCase()
-                              .normalize("NFD")
-                              .replace(/[\u0300-\u036f]/g, "")
-                              .replace(/[^a-z0-9\s-]/g, "")
-                              .replace(/\s+/g, "-")
-                              .replace(/-+/g, "-")
-                              .trim()
-                              .replace(/^-|-$/g, "") || "new-event"
-                            : "new-event"
+                              ? form
+                                  .getValues("title")
+                                  .toLowerCase()
+                                  .normalize("NFD")
+                                  .replace(/[\u0300-\u036f]/g, "")
+                                  .replace(/[^a-z0-9\s-]/g, "")
+                                  .replace(/\s+/g, "-")
+                                  .replace(/-+/g, "-")
+                                  .trim()
+                                  .replace(/^-|-$/g, "") || "new-event"
+                              : "new-event"
                           }
                           subFolder="gallery"
                           imageType="gallery"
@@ -1082,7 +1213,12 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label>Vidéos</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addVideo}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addVideo}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Ajouter une vidéo
                   </Button>
@@ -1093,7 +1229,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                 {videos.length > 0 && (
                   <div className="space-y-2">
                     {videos.map((video, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 border rounded"
+                      >
                         <Input value={video} readOnly className="flex-1" />
                         <Button
                           type="button"
@@ -1125,7 +1264,9 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                     placeholder="Ajouter un tag..."
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), addTag())
+                    }
                   />
                   <Button type="button" variant="outline" onClick={addTag}>
                     <Plus className="w-4 h-4" />
@@ -1134,10 +1275,14 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
                         #{tag}
-                        <X 
-                          className="w-3 h-3 cursor-pointer" 
+                        <X
+                          className="w-3 h-3 cursor-pointer"
                           onClick={() => removeTag(tag)}
                         />
                       </Badge>
@@ -1159,7 +1304,10 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                       <FormItem>
                         <FormLabel>Titre SEO</FormLabel>
                         <FormControl>
-                          <Input placeholder="Titre pour les moteurs de recherche (max 60 caractères)" {...field} />
+                          <Input
+                            placeholder="Titre pour les moteurs de recherche (max 60 caractères)"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1196,21 +1344,26 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                             onChange={field.onChange}
                             onRemove={() => field.onChange("")}
                             type="events"
-                            slug={form.getValues("title") ? 
+                            slug={
                               form.getValues("title")
-                                .toLowerCase()
-                                .normalize("NFD")
-                                .replace(/[\u0300-\u036f]/g, "")
-                                .replace(/[^a-z0-9\s-]/g, "")
-                                .replace(/\s+/g, "-")
-                                .replace(/-+/g, "-")
-                                .trim()
-                                .replace(/^-|-$/g, "") || "new-event"
-                              : "new-event"
+                                ? form
+                                    .getValues("title")
+                                    .toLowerCase()
+                                    .normalize("NFD")
+                                    .replace(/[\u0300-\u036f]/g, "")
+                                    .replace(/[^a-z0-9\s-]/g, "")
+                                    .replace(/\s+/g, "-")
+                                    .replace(/-+/g, "-")
+                                    .trim()
+                                    .replace(/^-|-$/g, "") || "new-event"
+                                : "new-event"
                             }
                             imageType="social"
                             aspectRatios={[
-                              { label: "1.91:1 (Recommandé Facebook/Twitter)", value: 1.91 },
+                              {
+                                label: "1.91:1 (Recommandé Facebook/Twitter)",
+                                value: 1.91,
+                              },
                               { label: "16:9", value: 16 / 9 },
                               { label: "Libre", value: undefined },
                             ]}
@@ -1219,7 +1372,8 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                           />
                         </FormControl>
                         <FormDescription>
-                          Image utilisée lors du partage sur les réseaux sociaux (recommandé: 1200x630px)
+                          Image utilisée lors du partage sur les réseaux sociaux
+                          (recommandé: 1200x630px)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -1241,7 +1395,11 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
               Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Enregistrement..." : isEditing ? "Modifier" : "Créer l'événement"}
+              {isSubmitting
+                ? "Enregistrement..."
+                : isEditing
+                  ? "Modifier"
+                  : "Créer l'événement"}
             </Button>
           </div>
         </form>

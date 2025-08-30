@@ -127,10 +127,7 @@ function AdminClaimsContent() {
 
   const showProcessDialog = (claim: Claim, action: "approve" | "reject") => {
     const actionText = action === "approve" ? "Approuver" : "Rejeter";
-    const message = prompt(
-      `${actionText} la revendication de "${claim.user.name}" pour "${claim.place.name}"?\n\nMessage optionnel pour l'utilisateur:`
-    );
-
+    const message = prompt(`${actionText} cette revendication. Message optionnel:`, "");
     if (message !== null) {
       // null si annulé, string vide si OK sans message
       const confirmText =

@@ -23,11 +23,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  IconLoader2,
   IconUserPlus,
   IconSearch,
   IconX,
   IconCheck,
+  IconLoader2,
 } from "@tabler/icons-react";
 
 interface User {

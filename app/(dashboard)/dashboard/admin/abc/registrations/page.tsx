@@ -45,11 +45,10 @@ import {
   IconDots,
   IconSearch,
   IconFilter,
-  IconFileText,
-  IconMail,
   IconPlus,
   IconEdit,
-} from "@tabler/icons-react";
+  IconMail,
+  IconFileText} from "@tabler/icons-react";
 import { ManualRegistrationForm } from "@/components/admin/abc/manual-registration-form";
 import { EditRegistrationForm } from "@/components/admin/abc/edit-registration-form";
 

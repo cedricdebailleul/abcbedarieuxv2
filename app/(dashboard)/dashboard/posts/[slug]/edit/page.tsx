@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
 interface EditPostPageProps {
@@ -70,7 +71,7 @@ export default async function EditPostPage({
   // Vérifier les permissions
   const canEdit =
     post.authorId === session.user.id ||
-    (!!session.user.role && ["admin", "editor"].includes(session.user.role));
+    (!!safeUserCast(session.user).role && ["admin", "editor"].includes(safeUserCast(session.user).role));
 
   if (!canEdit) {
     redirect("/dashboard/posts");
@@ -87,15 +88,16 @@ export default async function EditPostPage({
     return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
   };
 
+  // Fonction pour obtenir le texte du statut
   const getStatusText = (status: string, published: boolean) => {
     if (published && status === "PUBLISHED") return "Publié";
-    if (status === "PENDING_REVIEW") return "En attente";
+    if (status === "PENDING_REVIEW") return "En attente de révision";
     if (status === "REJECTED") return "Rejeté";
-    if (status === "ARCHIVED") return "Archivé";
-    return "Brouillon";
+    if (status === "DRAFT") return "Brouillon";
+    return status;
   };
 
-  // Préparer les données initiales en convertissant les valeurs null en undefined
+    // Préparer les données initiales en convertissant les valeurs null en undefined
   const initialDataForForm = {
     id: post.id,
     title: post.title ?? undefined,
@@ -235,8 +237,8 @@ export default async function EditPostPage({
 
       {/* Avertissement si l'utilisateur n'est pas l'auteur */}
       {post.authorId !== session.user.id &&
-        session.user.role &&
-        ["admin", "editor"].includes(session.user.role) && (
+        safeUserCast(session.user).role &&
+        ["admin", "editor"].includes(safeUserCast(session.user).role) && (
           <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-950/50">
             <CardContent className="pt-4">
               <div className="flex items-center space-x-2 text-orange-800 dark:text-orange-200">
@@ -247,7 +249,7 @@ export default async function EditPostPage({
               </div>
               <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
                 En tant qu&apos;
-                {session.user.role === "admin" ? "administrateur" : "éditeur"},
+                {safeUserCast(session.user).role === "admin" ? "administrateur" : "éditeur"},
                 vous pouvez modifier cet article de {post.author.name}.
               </p>
             </CardContent>

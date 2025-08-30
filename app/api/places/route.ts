@@ -1,6 +1,7 @@
 import { PLACES_ROOT } from "@/lib/path";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fsp } from "node:fs";
 import { join, resolve, dirname, sep, parse } from "node:path";
@@ -411,7 +412,7 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
-    const isAdmin = session.user.role === "admin";
+    const isAdmin = safeUserCast(session.user).role === "admin";
 
     const ct = req.headers.get("content-type") || "";
     let body: PlaceIncoming = {};

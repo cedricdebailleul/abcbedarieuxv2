@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { MapPin, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Loader2, MapPin } from "lucide-react";
 import { useGoogleMapsLoader } from "@/hooks/use-google-maps-loader";
 
 interface PlaceFormMapProps {
@@ -21,15 +21,17 @@ export function PlaceFormMap({
 }: PlaceFormMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const { isLoaded, loadError } = useGoogleMapsLoader();
 
   // Position par défaut (Bédarieux)
-  const defaultCenter = { lat: 43.6108, lng: 3.1612 };
-  const center = (latitude && longitude) ? { lat: latitude, lng: longitude } : defaultCenter;
+  const center = useMemo(() => {
+    const defaultCenter = { lat: 43.6108, lng: 3.1612 };
+    return (latitude && longitude) ? { lat: latitude, lng: longitude } : defaultCenter;
+  }, [latitude, longitude]);
 
   // Initialiser la carte une seule fois
   useEffect(() => {
@@ -37,9 +39,10 @@ export function PlaceFormMap({
       return;
     }
 
-    try {
+    const initializeMap = async () => {
+      try {
       // Créer la carte
-      const map = new google.maps.Map(mapRef.current, {
+      const map = new google.maps.Map(mapRef.current!, {
         zoom: (latitude && longitude) ? 16 : 13,
         center: center,
         gestureHandling: "cooperative",
@@ -53,22 +56,24 @@ export function PlaceFormMap({
 
       mapInstanceRef.current = map;
 
+      // Load the marker library
+      const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+
       // Créer le marker
-      const marker = new google.maps.Marker({
+      const marker = new AdvancedMarkerElement({
         position: center,
         map: map,
         title: "Position de l'établissement",
-        draggable: true,
+        gmpDraggable: true,
       });
 
       markerRef.current = marker;
 
       // Écouter le drag du marker
-      marker.addListener("dragend", () => {
-        const position = marker.getPosition();
-        if (position) {
-          const lat = Number(position.lat().toFixed(6));
-          const lng = Number(position.lng().toFixed(6));
+      marker.addListener("dragend", (event: google.maps.MapMouseEvent) => {
+        if (event.latLng) {
+          const lat = Number(event.latLng.lat().toFixed(6));
+          const lng = Number(event.latLng.lng().toFixed(6));
           onCoordinatesChange(lat, lng);
         }
       });
@@ -76,20 +81,23 @@ export function PlaceFormMap({
       // Écouter les clics sur la carte
       map.addListener("click", (event: google.maps.MapMouseEvent) => {
         if (event.latLng) {
-          marker.setPosition(event.latLng);
+          marker.position = event.latLng;
           const lat = Number(event.latLng.lat().toFixed(6));
           const lng = Number(event.latLng.lng().toFixed(6));
           onCoordinatesChange(lat, lng);
         }
       });
 
-      setIsMapReady(true);
+        setIsMapReady(true);
 
-    } catch (err) {
-      console.error("Erreur création carte:", err);
-      setError("Impossible de créer la carte");
-    }
-  }, [isLoaded]); // Seulement isLoaded comme dépendance
+      } catch (err) {
+        console.error("Erreur création carte:", err);
+        setError("Impossible de créer la carte");
+      }
+    };
+
+    initializeMap();
+  }, [isLoaded, center, latitude, longitude, onCoordinatesChange]); // Seulement isLoaded comme dépendance
 
   // Mettre à jour la position du marker quand les coordonnées changent
   useEffect(() => {
@@ -98,7 +106,7 @@ export function PlaceFormMap({
     }
 
     const newPosition = { lat: latitude, lng: longitude };
-    markerRef.current.setPosition(newPosition);
+    markerRef.current.position = newPosition;
     mapInstanceRef.current.setCenter(newPosition);
   }, [latitude, longitude, isMapReady]);
 

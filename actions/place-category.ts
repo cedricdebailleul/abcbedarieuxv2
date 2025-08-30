@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { revalidatePath } from "next/cache";
 import {
   createPlaceCategorySchema,
@@ -31,7 +32,7 @@ async function checkAdminPermissions() {
     throw new Error("Non authentifié");
   }
 
-  const user = session.user;
+  const user = safeUserCast(session.user);
 
   if (user.role !== "admin" && user.role !== "moderator") {
     throw new Error("Permissions administrateur ou modérateur requises");

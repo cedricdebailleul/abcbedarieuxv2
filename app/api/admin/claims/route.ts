@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { ClaimStatus, Prisma } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
       headers: request.headers,
     });
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || safeUserCast(session.user).role !== "admin") {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }

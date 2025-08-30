@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
@@ -17,8 +18,8 @@ export async function GET(
 
     if (
       !session?.user ||
-      !session.user.role ||
-      !["admin", "moderator"].includes(session.user.role)
+      !safeUserCast(session.user).role ||
+      !["admin", "moderator"].includes(safeUserCast(session.user).role)
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
@@ -48,7 +49,7 @@ export async function GET(
     }
 
     // Vérifier les permissions
-    if (!["admin", "moderator"].includes(session.user.role)) {
+    if (!["admin", "moderator"].includes(safeUserCast(session.user).role)) {
       if (document.shares.length === 0) {
         return NextResponse.json(
           { error: "Vous n'avez pas accès à ce document" },

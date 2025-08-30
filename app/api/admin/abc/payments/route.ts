@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import {
   AbcPaymentMode,
@@ -32,8 +33,8 @@ export async function GET(request: Request) {
 
     if (
       !session?.user ||
-      !session.user.role ||
-      !["admin", "moderator"].includes(session.user.role)
+      !safeUserCast(session.user).role ||
+      !["admin", "moderator"].includes(safeUserCast(session.user).role)
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
@@ -154,8 +155,8 @@ export async function POST(request: Request) {
 
     if (
       !session?.user ||
-      !session.user.role ||
-      !["admin", "moderator"].includes(session.user.role)
+      !safeUserCast(session.user).role ||
+      !["admin", "moderator"].includes(safeUserCast(session.user).role)
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },

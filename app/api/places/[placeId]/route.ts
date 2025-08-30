@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { PLACES_ROOT } from "@/lib/path";
 import { rm } from "node:fs/promises";
 import type { DayOfWeek } from "@/lib/generated/prisma";
 import { Prisma, PlaceType, PlaceStatus } from "@/lib/generated/prisma";
+import { DatabaseOpeningHour, GroupedOpeningHours } from "@/lib/schemas/common";
 
 /* --------------------------- helpers Zod --------------------------- */
 const numOpt = z.preprocess(
@@ -91,10 +93,10 @@ type RawHour =
 /* ---------------------- Horaires utilitaires ----------------------- */
 
 // Transformer les horaires DB vers le format avec slots
-function groupOpeningHoursByDay(dbHours: any[]) {
+function groupOpeningHoursByDay(dbHours: DatabaseOpeningHour[]) {
   if (!dbHours?.length) return [];
   
-  const groupedByDay: Record<string, any[]> = {};
+  const groupedByDay: GroupedOpeningHours = {};
   
   // Grouper par jour
   for (const hour of dbHours) {
@@ -280,7 +282,7 @@ export async function PUT(
     }
 
     const canEdit =
-      session.user.role === "admin" ||
+      safeUserCast(session.user).role === "admin" ||
       existingPlace.ownerId === session.user.id;
     if (!canEdit) {
       return NextResponse.json(
@@ -331,14 +333,14 @@ export async function PUT(
 
     let nextStatus: PlaceStatus = existingPlace.status;
     const shouldBePending =
-      session.user.role !== "admin" &&
+      safeUserCast(session.user).role !== "admin" &&
       existingPlace.status === PlaceStatus.ACTIVE;
 
     if (wantsPublished === undefined) {
       if (shouldBePending) nextStatus = PlaceStatus.PENDING;
     } else if (wantsPublished === true) {
       nextStatus =
-        session.user.role === "admin"
+        safeUserCast(session.user).role === "admin"
           ? PlaceStatus.ACTIVE
           : PlaceStatus.PENDING;
     } else {
@@ -458,7 +460,7 @@ export async function DELETE(
     }
 
     const canDelete =
-      session.user.role === "admin" ||
+      safeUserCast(session.user).role === "admin" ||
       existingPlace.ownerId === session.user.id;
     if (!canDelete) {
       return NextResponse.json(

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { ActionStatus, Prisma } from "@/lib/generated/prisma";
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (
       !session?.user ||
-      (session.user.role !== "admin" && session.user.role !== "moderator")
+      (safeUserCast(session.user).role !== "admin" && safeUserCast(session.user).role !== "moderator")
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (
       !session?.user ||
-      (session.user.role !== "admin" && session.user.role !== "moderator")
+      (safeUserCast(session.user).role !== "admin" && safeUserCast(session.user).role !== "moderator")
     ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },

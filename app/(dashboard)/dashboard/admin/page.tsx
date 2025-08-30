@@ -11,11 +11,10 @@ import {
   IconUsers,
   IconAward,
   IconBuilding,
-  IconMail,
   IconFlag,
   IconTrendingUp,
   IconDownload,
-} from "@tabler/icons-react";
+  IconMail} from "@tabler/icons-react";
 import Link from "next/link";
 import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
 

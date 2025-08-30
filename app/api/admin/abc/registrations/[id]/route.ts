@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import nodemailer from "nodemailer";
 import { headers } from "next/headers";
+import { RegistrationUpdateData } from "@/lib/schemas/common";
 
 const statusUpdateSchema = z.object({
   status: z.enum(["PENDING", "APPROVED", "REJECTED", "PROCESSED"]),
@@ -22,7 +24,15 @@ const fullUpdateSchema = z.object({
   profession: z.string().optional(),
   company: z.string().optional(),
   siret: z.string().optional(),
-  membershipType: z.enum(["ACTIF", "ARTISAN", "AUTO_ENTREPRENEUR", "PARTENAIRE", "BIENFAITEUR"]).optional(),
+  membershipType: z
+    .enum([
+      "ACTIF",
+      "ARTISAN",
+      "AUTO_ENTREPRENEUR",
+      "PARTENAIRE",
+      "BIENFAITEUR",
+    ])
+    .optional(),
   motivation: z.string().optional(),
   interests: z.string().optional(),
   adminNotes: z.string().optional(),
@@ -45,10 +55,14 @@ export async function GET(
 ) {
   try {
     const session = await auth.api.getSession({
-      headers: await headers()
+      headers: await headers(),
     });
-    
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+
+    if (
+      !session?.user ||
+      !safeUserCast(session.user).role ||
+      !["admin", "moderator"].includes(safeUserCast(session.user).role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -76,10 +90,7 @@ export async function GET(
     return NextResponse.json(registration);
   } catch (error) {
     console.error("Erreur lors du chargement de l'inscription:", error);
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -89,10 +100,14 @@ export async function PATCH(
 ) {
   try {
     const session = await auth.api.getSession({
-      headers: await headers()
+      headers: await headers(),
     });
-    
-    if (!session?.user || !session.user.role || !["admin", "moderator"].includes(session.user.role)) {
+
+    if (
+      !session?.user ||
+      !safeUserCast(session.user).role ||
+      !["admin", "moderator"].includes(safeUserCast(session.user).role)
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -100,12 +115,12 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    
+
     // Déterminer le type de mise à jour selon les champs présents
     const isStatusUpdate = body.status !== undefined;
-    
-    let updateData: any = {};
-    
+
+    let updateData: RegistrationUpdateData = {};
+
     if (isStatusUpdate) {
       // Mise à jour du statut seulement
       const { status, adminNotes } = statusUpdateSchema.parse(body);
@@ -156,7 +171,7 @@ export async function PATCH(
       try {
         // Vérifier si l'utilisateur existe déjà
         let user = await prisma.user.findUnique({
-          where: { email: existingRegistration.email }
+          where: { email: existingRegistration.email },
         });
 
         // Si l'utilisateur n'existe pas, le créer
@@ -166,32 +181,39 @@ export async function PATCH(
               email: existingRegistration.email,
               name: `${existingRegistration.firstName} ${existingRegistration.lastName}`,
               emailVerified: true, // Considérer comme vérifié puisque approuvé par admin
-            }
+            },
           });
         }
 
         // Vérifier si le membre ABC existe déjà
         const existingMember = await prisma.abcMember.findUnique({
-          where: { userId: user.id }
+          where: { userId: user.id },
         });
 
         if (!existingMember) {
           // Générer un numéro de membre unique
           const memberCount = await prisma.abcMember.count();
-          const memberNumber = `ABC${String(memberCount + 1).padStart(4, '0')}`;
+          const memberNumber = `ABC${String(memberCount + 1).padStart(4, "0")}`;
 
           // Créer le membre ABC
           await prisma.abcMember.create({
             data: {
               userId: user.id,
-              type: existingRegistration.membershipType as "ACTIF" | "ARTISAN" | "AUTO_ENTREPRENEUR" | "PARTENAIRE" | "BIENFAITEUR",
+              type: existingRegistration.membershipType as
+                | "ACTIF"
+                | "ARTISAN"
+                | "AUTO_ENTREPRENEUR"
+                | "PARTENAIRE"
+                | "BIENFAITEUR",
               memberNumber: memberNumber,
               membershipDate: new Date(),
               status: "ACTIVE",
-            }
+            },
           });
 
-          console.log(`Membre ABC créé pour ${user.email} avec le numéro ${memberNumber}`);
+          console.log(
+            `Membre ABC créé pour ${user.email} avec le numéro ${memberNumber}`
+          );
         }
       } catch (memberError) {
         console.error("Erreur lors de la création du membre ABC:", memberError);
@@ -200,22 +222,27 @@ export async function PATCH(
     }
 
     // Envoyer un email de notification selon le statut
-    if (isStatusUpdate && (body.status === "APPROVED" || body.status === "REJECTED")) {
+    if (
+      isStatusUpdate &&
+      (body.status === "APPROVED" || body.status === "REJECTED")
+    ) {
       const isApproved = body.status === "APPROVED";
-      
+
       const mailOptions = {
         from: process.env.SMTP_FROM,
         to: existingRegistration.email,
         subject: `${isApproved ? "Inscription approuvée" : "Réponse à votre inscription"} - Association ABC Bédarieux`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: ${isApproved ? '#16a34a' : '#dc2626'};">
+            <h2 style="color: ${isApproved ? "#16a34a" : "#dc2626"};">
               ${isApproved ? "Félicitations ! Votre inscription a été approuvée" : "Réponse à votre demande d'inscription"}
             </h2>
             
             <p>Bonjour <strong>${existingRegistration.firstName} ${existingRegistration.lastName}</strong>,</p>
             
-            ${isApproved ? `
+            ${
+              isApproved
+                ? `
               <div style="background-color: #dcfce7; padding: 20px; border-radius: 8px; border-left: 4px solid #16a34a; margin: 20px 0;">
                 <p style="margin: 0; color: #15803d;">
                   <strong>Votre demande d'adhésion à l'Association ABC Bédarieux a été approuvée !</strong>
@@ -241,22 +268,28 @@ export async function PATCH(
               </div>
               
               <p>Nous sommes ravis de vous compter parmi nos membres et espérons que vous contribuerez activement à la vie de l'association.</p>
-            ` : `
+            `
+                : `
               <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; border-left: 4px solid #dc2626; margin: 20px 0;">
                 <p style="margin: 0; color: #991b1b;">
                   Nous avons le regret de vous informer que votre demande d'adhésion n'a pas pu être acceptée pour le moment.
                 </p>
               </div>
               
-              ${body.adminNotes ? `
+              ${
+                body.adminNotes
+                  ? `
                 <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
                   <p style="margin: 0;"><strong>Motif :</strong></p>
                   <p style="margin: 5px 0 0 0;">${body.adminNotes}</p>
                 </div>
-              ` : ''}
+              `
+                  : ""
+              }
               
               <p>N'hésitez pas à nous recontacter si vous souhaitez plus d'informations ou si votre situation évolue.</p>
-            `}
+            `
+            }
             
             <p style="margin-top: 30px;">
               Cordialement,<br>
@@ -283,7 +316,7 @@ export async function PATCH(
     return NextResponse.json(updatedRegistration);
   } catch (error) {
     console.error("Erreur lors de la mise à jour de l'inscription:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Données invalides", details: error.issues },
@@ -291,10 +324,7 @@ export async function PATCH(
       );
     }
 
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -304,10 +334,14 @@ export async function DELETE(
 ) {
   try {
     const session = await auth.api.getSession({
-      headers: await headers()
+      headers: await headers(),
     });
-    
-    if (!session?.user || !session.user.role || session.user.role !== "admin") {
+
+    if (
+      !session?.user ||
+      !safeUserCast(session.user).role ||
+      safeUserCast(session.user).role !== "admin"
+    ) {
       return NextResponse.json(
         { error: "Accès non autorisé" },
         { status: 403 }
@@ -321,9 +355,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Erreur lors de la suppression de l'inscription:", error);
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { safeUserCast } from "@/lib/auth-helpers";
 import { newsletterQueue } from "@/lib/newsletter-queue";
 
 export async function GET() {
@@ -16,8 +17,8 @@ export async function GET() {
 
     // Vérifier les permissions admin
     if (
-      !session.user.role ||
-      !["admin", "moderator", "editor"].includes(session.user.role)
+      !safeUserCast(session.user).role ||
+      !["admin", "moderator", "editor"].includes(safeUserCast(session.user).role)
     ) {
       return NextResponse.json(
         { error: "Permissions insuffisantes" },

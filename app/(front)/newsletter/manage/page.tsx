@@ -14,11 +14,10 @@ import {
   AlertCircle,
   Users,
   Calendar,
-  MapPin,
   Settings,
   Trash2,
   Loader2,
-} from "lucide-react";
+  MapPin} from "lucide-react";
 import { toast } from "sonner";
 
 type NewsletterFrequency = "DAILY" | "WEEKLY" | "MONTHLY";

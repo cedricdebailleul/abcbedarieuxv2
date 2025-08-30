@@ -20,11 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  IconLoader2, 
-  IconEdit,
-  IconCheck,
-} from "@tabler/icons-react";
+import { IconEdit, IconCheck, IconLoader2 } from "@tabler/icons-react";
 
 interface AbcRegistration {
   id: string;
@@ -56,11 +52,27 @@ interface EditRegistrationFormProps {
 }
 
 const membershipTypes = [
-  { value: "ACTIF", label: "Membre Actif", description: "Participation active aux activités" },
+  {
+    value: "ACTIF",
+    label: "Membre Actif",
+    description: "Participation active aux activités",
+  },
   { value: "ARTISAN", label: "Artisan", description: "Artisan local" },
-  { value: "AUTO_ENTREPRENEUR", label: "Auto-Entrepreneur", description: "Travailleur indépendant" },
-  { value: "PARTENAIRE", label: "Partenaire", description: "Entreprise partenaire" },
-  { value: "BIENFAITEUR", label: "Bienfaiteur", description: "Soutien financier" },
+  {
+    value: "AUTO_ENTREPRENEUR",
+    label: "Auto-Entrepreneur",
+    description: "Travailleur indépendant",
+  },
+  {
+    value: "PARTENAIRE",
+    label: "Partenaire",
+    description: "Entreprise partenaire",
+  },
+  {
+    value: "BIENFAITEUR",
+    label: "Bienfaiteur",
+    description: "Soutien financier",
+  },
 ];
 
 const interestOptions = [
@@ -74,7 +86,12 @@ const interestOptions = [
   "Solidarité",
 ];
 
-export function EditRegistrationForm({ open, onOpenChange, registration, onSuccess }: EditRegistrationFormProps) {
+export function EditRegistrationForm({
+  open,
+  onOpenChange,
+  registration,
+  onSuccess,
+}: EditRegistrationFormProps) {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -99,14 +116,18 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
   // Charger les données de l'inscription quand elle change
   useEffect(() => {
     if (registration) {
-      const interestsArray = registration.interests ? registration.interests.split(',').map(s => s.trim()) : [];
-      
+      const interestsArray = registration.interests
+        ? registration.interests.split(",").map((s) => s.trim())
+        : [];
+
       setFormData({
         firstName: registration.firstName || "",
         lastName: registration.lastName || "",
         email: registration.email || "",
         phone: registration.phone || "",
-        birthDate: registration.birthDate ? new Date(registration.birthDate).toISOString().split('T')[0] : "",
+        birthDate: registration.birthDate
+          ? new Date(registration.birthDate).toISOString().split("T")[0]
+          : "",
         address: registration.address || "",
         city: registration.city || "",
         postalCode: registration.postalCode || "",
@@ -122,36 +143,39 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
   }, [registration]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleInterestToggle = (interest: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       interests: prev.interests.includes(interest)
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
+        ? prev.interests.filter((i) => i !== interest)
+        : [...prev.interests, interest],
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registration) return;
-    
+
     setLoading(true);
     setError("");
-    
+
     try {
-      const response = await fetch(`/api/admin/abc/registrations/${registration.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          interests: formData.interests.join(", "),
-        }),
-      });
+      const response = await fetch(
+        `/api/admin/abc/registrations/${registration.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            interests: formData.interests.join(", "),
+          }),
+        }
+      );
 
       const result = await response.json();
 
@@ -163,7 +187,9 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
           resetForm();
         }, 2000);
       } else {
-        setError(result.error || "Erreur lors de la modification de l'inscription");
+        setError(
+          result.error || "Erreur lors de la modification de l'inscription"
+        );
       }
     } catch (error) {
       console.error("Erreur modification inscription:", error);
@@ -188,7 +214,8 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
               Inscription modifiée !
             </h3>
             <p className="text-muted-foreground">
-              Les informations de l&apos;inscription ont été mises à jour avec succès.
+              Les informations de l&apos;inscription ont été mises à jour avec
+              succès.
             </p>
           </div>
         </DialogContent>
@@ -204,7 +231,10 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <IconEdit className="h-5 w-5" />
-            <span>Modifier l&apos;inscription de {registration.firstName} {registration.lastName}</span>
+            <span>
+              Modifier l&apos;inscription de {registration.firstName}{" "}
+              {registration.lastName}
+            </span>
           </DialogTitle>
         </DialogHeader>
 
@@ -224,7 +254,9 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
                 <Input
                   id="firstName"
                   value={formData.firstName}
-                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("firstName", e.target.value)
+                  }
                   required
                 />
               </div>
@@ -233,7 +265,9 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
                 <Input
                   id="lastName"
                   value={formData.lastName}
-                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("lastName", e.target.value)
+                  }
                   required
                 />
               </div>
@@ -262,7 +296,9 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
                   id="birthDate"
                   type="date"
                   value={formData.birthDate}
-                  onChange={(e) => handleInputChange("birthDate", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("birthDate", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -285,7 +321,9 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
                 <Input
                   id="postalCode"
                   value={formData.postalCode}
-                  onChange={(e) => handleInputChange("postalCode", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("postalCode", e.target.value)
+                  }
                 />
               </div>
               <div className="md:col-span-2">
@@ -301,14 +339,18 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
 
           {/* Informations professionnelles */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Informations professionnelles</h3>
+            <h3 className="text-lg font-semibold">
+              Informations professionnelles
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="profession">Profession</Label>
                 <Input
                   id="profession"
                   value={formData.profession}
-                  onChange={(e) => handleInputChange("profession", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("profession", e.target.value)
+                  }
                 />
               </div>
               <div>
@@ -335,7 +377,9 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
             <h3 className="text-lg font-semibold">Type d&apos;adhésion</h3>
             <Select
               value={formData.membershipType}
-              onValueChange={(value) => handleInputChange("membershipType", value)}
+              onValueChange={(value) =>
+                handleInputChange("membershipType", value)
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -345,7 +389,9 @@ export function EditRegistrationForm({ open, onOpenChange, registration, onSucce
                   <SelectItem key={type.value} value={type.value}>
                     <div>
                       <div className="font-medium">{type.label}</div>
-                      <div className="text-sm text-muted-foreground">{type.description}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {type.description}
+                      </div>
                     </div>
                   </SelectItem>
                 ))}

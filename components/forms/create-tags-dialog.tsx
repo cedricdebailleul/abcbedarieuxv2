@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Palette, Plus, Tag as TagIcon, X } from "lucide-react";
+import { Palette, Plus, Tag as TagIcon, X, Loader2 } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

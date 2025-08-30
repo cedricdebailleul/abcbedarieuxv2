@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, MapPin, Star } from "lucide-react";
+import { ChevronRight, Star, MapPin } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";

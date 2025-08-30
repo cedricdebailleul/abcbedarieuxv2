@@ -7,12 +7,11 @@ import {
   FileText,
   Globe,
   ImageIcon,
-  Loader2,
-  MapPin,
   RefreshCw,
   Settings,
   Upload,
-} from "lucide-react";
+  MapPin,
+  Loader2} from "lucide-react";
 import React, {
   useCallback,
   useEffect,
@@ -386,7 +385,7 @@ export function PlaceForm({
       
       console.log("PlaceForm - Form values after reset:", form.getValues());
     }
-  }, [initialData, mode, form]);
+  }, [initialData, mode, form, userRole]);
 
   // Forcer le type par défaut si vide
   useEffect(() => {
@@ -656,7 +655,7 @@ export function PlaceForm({
       setShowGoogleSearch(false);
       toast.success("Les informations ont été importées depuis Google");
     },
-    [form, uploadGoogleImage]
+    [form, uploadGoogleImage, images, mode]
   );
 
   const handleFetchOpeningHours = useCallback(async () => {
@@ -1356,7 +1355,7 @@ export function PlaceForm({
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <h5 className="text-sm font-medium text-muted-foreground">
-                          Upload multiple d'images
+                          Upload multiple d&apos;images
                         </h5>
                         <Button
                           type="button"
