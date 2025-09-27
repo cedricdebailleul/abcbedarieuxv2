@@ -260,7 +260,188 @@ export async function POST() {
       }
     });
 
-    console.log("✅ Sauvegarde complète terminée");
+    // 10. Sauvegarder les données ABC (Association)
+    console.log("🏛️ Export des données ABC...");
+    backupData.data.abcMembers = await prisma.abcMember.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    backupData.data.abcRegistrations = await prisma.abcRegistration.findMany({
+      include: {
+        processorUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    backupData.data.abcPayments = await prisma.abcPayment.findMany({
+      include: {
+        member: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    backupData.data.abcMeetings = await prisma.abcMeeting.findMany();
+    backupData.data.abcDocuments = await prisma.abcDocument.findMany();
+    backupData.data.abcBulletins = await prisma.abcBulletin.findMany();
+
+    // 11. Sauvegarder les produits, services et offres
+    console.log("🛍️ Export des produits et services...");
+    backupData.data.products = await prisma.product.findMany({
+      include: {
+        place: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        }
+      }
+    });
+
+    backupData.data.services = await prisma.service.findMany({
+      include: {
+        place: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        }
+      }
+    });
+
+    backupData.data.offers = await prisma.offer.findMany({
+      include: {
+        place: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        }
+      }
+    });
+
+    // 12. Sauvegarder les partenaires
+    console.log("🤝 Export des partenaires...");
+    backupData.data.partners = await prisma.partner.findMany();
+
+    // 13. Sauvegarder les données d'historique du site
+    console.log("📜 Export de l'historique du site...");
+    backupData.data.historyConfigs = await prisma.historyConfig.findMany({
+      include: {
+        milestones: true,
+        timelineEvents: true,
+        updatedByUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    // 14. Sauvegarder les conversations WhatsApp
+    console.log("💬 Export des conversations WhatsApp...");
+    backupData.data.whatsappConversations = await prisma.whatsAppConversation.findMany({
+      include: {
+        messages: true
+      }
+    });
+
+    backupData.data.whatsappBotConfigs = await prisma.whatsAppBotConfig.findMany();
+    backupData.data.whatsappBotStats = await prisma.whatsAppBotStats.findMany();
+
+    // 15. Sauvegarder les actions et campagnes
+    console.log("⚡ Export des actions...");
+    backupData.data.actions = await prisma.action.findMany();
+
+    // 16. Sauvegarder les tags et catégories de contenu
+    console.log("🏷️ Export des tags et catégories...");
+    backupData.data.tags = await prisma.tag.findMany({
+      include: {
+        posts: {
+          include: {
+            post: {
+              select: {
+                id: true,
+                title: true,
+                slug: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    backupData.data.categories = await prisma.category.findMany({
+      include: {
+        posts: {
+          select: {
+            id: true,
+            title: true,
+            slug: true
+          }
+        }
+      }
+    });
+
+    // 17. Sauvegarder les vues et statistiques
+    console.log("📊 Export des statistiques...");
+    backupData.data.postViews = await prisma.postView.findMany();
+
+    // 18. Sauvegarder les rappels d'événements et participants
+    console.log("🔔 Export des rappels et participations...");
+    backupData.data.eventParticipants = await prisma.eventParticipant.findMany({
+      include: {
+        event: {
+          select: {
+            id: true,
+            title: true,
+            slug: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    backupData.data.eventReminders = await prisma.eventReminder.findMany();
+    backupData.data.recurrenceRules = await prisma.recurrenceRule.findMany();
+
+    // 19. Sauvegarder les notifications utilisateur
+    console.log("📧 Export des notifications...");
+    backupData.data.userNotificationStatus = await prisma.userNotificationStatus.findMany();
+
+    console.log("✅ Sauvegarde complète terminée avec TOUTES les tables");
 
     // Retourner le fichier JSON
     return new NextResponse(JSON.stringify(backupData, null, 2), {
