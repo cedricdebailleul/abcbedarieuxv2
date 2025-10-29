@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const oauth = createGoogleDriveOAuth();
 
     // Échanger le code contre les tokens
-    const tokenData = await oauth.exchangeCodeForTokens(code, userId);
+    const tokenData = await oauth.exchangeCodeForTokens(code);
 
     // Sauvegarder les tokens
     await oauth.saveTokens(userId, tokenData);

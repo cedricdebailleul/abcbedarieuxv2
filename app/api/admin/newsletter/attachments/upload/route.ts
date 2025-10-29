@@ -25,9 +25,11 @@ export async function POST(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user)
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-    if (!["admin", "moderator", "editor"].includes(safeUserCast(session.user).role ?? "")) {
+
+    // Restriction: seuls admin et moderator peuvent gérer les newsletters
+    if (!["admin", "moderator"].includes(safeUserCast(session.user).role ?? "")) {
       return NextResponse.json(
-        { error: "Permissions insuffisantes" },
+        { error: "Permissions insuffisantes - admin ou moderator requis" },
         { status: 403 }
       );
     }
@@ -124,9 +126,11 @@ export async function DELETE(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user)
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-    if (!["admin", "moderator", "editor"].includes(safeUserCast(session.user).role ?? "")) {
+
+    // Restriction: seuls admin et moderator peuvent gérer les newsletters
+    if (!["admin", "moderator"].includes(safeUserCast(session.user).role ?? "")) {
       return NextResponse.json(
-        { error: "Permissions insuffisantes" },
+        { error: "Permissions insuffisantes - admin ou moderator requis" },
         { status: 403 }
       );
     }

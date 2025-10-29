@@ -71,18 +71,12 @@ const StatisticsSchema = z.object({
   reconciledRecords: z.number()
 });
 
-const PostgresErrorSchema = z.object({
-  code: z.string(),
-  message: z.string()
-});
-
 // Types dérivés des schémas Zod
 type UserAdmin = z.infer<typeof UserAdminSchema>;
 type SessionData = z.infer<typeof SessionSchema>;
 type AccountData = z.infer<typeof AccountSchema>;
 type GoogleDriveTokenData = z.infer<typeof GoogleDriveTokenSchema>;
 type Statistics = z.infer<typeof StatisticsSchema>;
-type PostgresError = z.infer<typeof PostgresErrorSchema>;
 
 export async function POST(request: NextRequest) {
   try {
@@ -285,12 +279,12 @@ export async function POST(request: NextRequest) {
           // Synchroniser le schéma avant la restauration
           console.log("🔍 Synchronisation du schéma Prisma...");
           try {
-            await execAsync('pnpm db:push --accept-data-loss', { 
-              cwd: process.cwd(), 
-              timeout: 30000 
+            await execAsync('pnpm db:push --accept-data-loss', {
+              cwd: process.cwd(),
+              timeout: 30000
             });
             console.log("✅ Schéma synchronisé");
-          } catch (pushError) {
+          } catch {
             console.warn("⚠️ Synchronisation schéma échouée, continuation...");
           }
 
