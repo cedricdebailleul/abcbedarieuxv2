@@ -4,10 +4,19 @@ import path from "node:path";
 import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
 import { UPLOADS_ROOT } from "@/lib/path";
 import { promises as fs } from "node:fs";
+
+// Schéma de validation stricte pour les uploads
+const uploadSchema = z.object({
+  type: z.enum(['posts', 'places', 'events', 'profiles', 'newsletter']),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-_]+$/i),
+  imageType: z.enum(['logo', 'cover', 'gallery', '']).optional().default(''),
+  subfolder: z.string().max(50).regex(/^[a-z0-9-_]*$/i).optional(),
+});
 
 function isUnderUploads(abs: string) {
   const root = path.resolve(UPLOADS_ROOT);
@@ -35,18 +44,28 @@ export async function POST(request: NextRequest) {
 
     const data = await request.formData();
     const file: File | null = data.get("file") as unknown as File;
-    const sanitize = (s: string) =>
-      s.replace(/[^a-z0-9-_]/gi, "").toLowerCase();
-    const type = sanitize((data.get("type") as string) || "posts");
-    const slug = sanitize(data.get("slug") as string);
+
+    // Validation stricte avec Zod
+    const validationResult = uploadSchema.safeParse({
+      type: data.get("type") as string,
+      slug: data.get("slug") as string,
+      imageType: (data.get("imageType") as string) || "",
+      subfolder: (data.get("subfolder") as string) || (data.get("subFolder") as string) || "",
+    });
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        {
+          error: "Paramètres invalides",
+          details: validationResult.error.issues,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { type, slug, imageType, subfolder } = validationResult.data;
     const cropData = data.get("cropData") as string;
-    const subfolderRaw: string | null =
-      (data.get("subfolder") as string) ||
-      (data.get("subFolder") as string) ||
-      null;
     const oldImagePath: string = data.get("oldImagePath") as string;
-    const imageType: string = (data.get("imageType") as string) || ""; // logo, cover, gallery, etc.
-    const subfolder = subfolderRaw ? sanitize(subfolderRaw) : "";
 
     if (!file) {
       return NextResponse.json(
