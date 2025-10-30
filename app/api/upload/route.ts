@@ -12,7 +12,7 @@ import { promises as fs } from "node:fs";
 
 // Schéma de validation stricte pour les uploads
 const uploadSchema = z.object({
-  type: z.enum(['posts', 'places', 'events', 'profiles', 'newsletter']),
+  type: z.enum(['posts', 'places', 'events', 'profiles', 'newsletter', 'partners']),
   slug: z.string().min(1).max(100).regex(/^[a-z0-9-_]+$/i),
   imageType: z.enum(['logo', 'cover', 'gallery', '']).optional().default(''),
   subfolder: z.string().max(50).regex(/^[a-z0-9-_]*$/i).optional(),

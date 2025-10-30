@@ -34,6 +34,7 @@ async function getMapData() {
   const places = await prisma.place.findMany({
     where: {
       status: { in: [PlaceStatus.ACTIVE, PlaceStatus.PENDING] },
+      isActive: true, // Ajouter le filtre isActive pour ne récupérer que les places actives
     },
     select: {
       id: true,

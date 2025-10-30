@@ -47,7 +47,12 @@ interface ApiResponse {
     totalCount: number;
     limit: number;
   };
-  stats: Record<string, number>;
+  stats: {
+    total: number;
+    active: number;
+    featured: number;
+    byType: Record<string, number>;
+  };
 }
 
 interface FiltersState {
@@ -66,7 +71,17 @@ export function PartnersContent() {
     totalCount: 0,
     limit: 10,
   });
-  const [stats, setStats] = useState<Record<string, number>>({});
+  const [stats, setStats] = useState<{
+    total: number;
+    active: number;
+    featured: number;
+    byType: Record<string, number>;
+  }>({
+    total: 0,
+    active: 0,
+    featured: 0,
+    byType: {},
+  });
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FiltersState>({
     search: "",
@@ -182,9 +197,10 @@ export function PartnersContent() {
   };
 
   // Calculs pour les statistiques
-  const totalPartners = pagination.totalCount;
-  const activePartners = partners.filter((p) => p.isActive).length;
-  const featuredPartners = partners.filter((p) => p.isFeatured).length;
+  // Note: On utilise les stats de l'API qui incluent tous les partenaires, pas juste la page courante
+  const totalPartners = stats.total || pagination.totalCount;
+  const activePartners = stats.active || 0;
+  const featuredPartners = stats.featured || 0;
 
   // Génération des numéros de page pour la pagination
   const generatePageNumbers = () => {
@@ -231,7 +247,7 @@ export function PartnersContent() {
         totalPartners={totalPartners}
         activePartners={activePartners}
         featuredPartners={featuredPartners}
-        partnersByType={stats}
+        partnersByType={stats.byType || {}}
       />
 
       {/* Actions principales */}
