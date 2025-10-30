@@ -37,19 +37,23 @@ export const auth = betterAuth({
     }) => {
       // Vérifier si on doit ignorer l'envoi d'email (pour les invitations)
       if (process.env.SKIP_VERIFICATION_EMAIL === "true") {
-        console.log("🔧 [BETTER AUTH] Envoi d'email ignoré pour invitation:", {
-          email: user.email,
-        });
+        if (process.env.NODE_ENV !== "production") {
+          console.log("🔧 [BETTER AUTH] Envoi d'email ignoré pour invitation:", {
+            email: user.email,
+          });
+        }
         return;
       }
 
-      console.log(
-        "🔧 [BETTER AUTH] Tentative d'envoi d'email de vérification:",
-        {
-          email: user.email,
-          url,
-        }
-      );
+      if (process.env.NODE_ENV !== "production") {
+        console.log(
+          "🔧 [BETTER AUTH] Tentative d'envoi d'email de vérification:",
+          {
+            email: user.email,
+            url: "[URL masquée en production]",
+          }
+        );
+      }
 
       try {
         await sendEmail({
@@ -66,11 +70,16 @@ export const auth = betterAuth({
             <p>Si vous n'avez pas créé de compte sur ABC Bédarieux, ignorez ce message.</p>
           `,
         });
-        console.log(
-          "✅ [BETTER AUTH] Email de vérification envoyé avec succès"
-        );
+        if (process.env.NODE_ENV !== "production") {
+          console.log(
+            "✅ [BETTER AUTH] Email de vérification envoyé avec succès"
+          );
+        }
       } catch (error) {
-        console.error("❌ [BETTER AUTH] Erreur lors de l'envoi:", error);
+        console.error("❌ [BETTER AUTH] Erreur lors de l'envoi de l'email de vérification");
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Détails:", error);
+        }
         throw error;
       }
     },
@@ -124,21 +133,27 @@ export const auth = betterAuth({
         // Déclencher les badges lors de l'inscription
         if (ctx.path === "/sign-up/email" && ctx.context.newSession) {
           const userId = ctx.context.newSession.user.id;
-          console.log(`🎖️ Triggering registration badges for new user: ${userId}`);
+          if (process.env.NODE_ENV !== "production") {
+            console.log(`🎖️ Triggering registration badges for new user: ${userId}`);
+          }
           await triggerUserRegistrationBadges(userId);
         }
-        
+
         // Déclencher les badges lors de la mise à jour du profil
         if (ctx.path === "/update-user" && ctx.context.session) {
           const userId = ctx.context.session.user.id;
-          console.log(`🎖️ Triggering profile update badges for user: ${userId}`);
+          if (process.env.NODE_ENV !== "production") {
+            console.log(`🎖️ Triggering profile update badges for user: ${userId}`);
+          }
           await triggerProfileUpdateBadges(userId);
         }
-        
+
         // Déclencher les badges lors de la première connexion (vérification email)
         if (ctx.path === "/verify-email" && ctx.context.newSession) {
           const userId = ctx.context.newSession.user.id;
-          console.log(`🎖️ Triggering email verification badges for user: ${userId}`);
+          if (process.env.NODE_ENV !== "production") {
+            console.log(`🎖️ Triggering email verification badges for user: ${userId}`);
+          }
           await triggerProfileUpdateBadges(userId);
         }
         

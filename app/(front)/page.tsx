@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getLatestPostsAction } from "@/actions/post";
 import { getUpcomingEventsAction } from "@/actions/event";
 import { getFeaturedPlacesAction } from "@/actions/place";
+import { getFeaturedPartners, getPartnersStats } from "@/lib/actions/partners";
 import Hero from "@/components/front/hero";
 import { PostCard } from "@/components/posts/post-card";
 import { PlacePreviewCard } from "@/components/places/place-preview-card";
@@ -26,6 +27,12 @@ export default async function Home() {
 
   // Récupérer les places en vedette
   const featuredPlacesResult = await getFeaturedPlacesAction(6);
+
+  // Récupérer les partenaires et leurs statistiques
+  const [featuredPartners, partnersStats] = await Promise.all([
+    getFeaturedPartners(),
+    getPartnersStats(),
+  ]);
   const upcomingEvents = upcomingEventsResult.success
     ? upcomingEventsResult.data!.map(
         (event: {
@@ -178,7 +185,7 @@ export default async function Home() {
 
       {/* Section call-to-action */}
       <CTASection />
-      <PartnersSection />
+      <PartnersSection partners={featuredPartners} stats={partnersStats} />
 
       {/* Bouton WhatsApp flottant - Groupe Commerce Local */}
       <WhatsAppButton />

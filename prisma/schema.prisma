@@ -70,6 +70,7 @@ model User {
   abcDocumentsUploaded  AbcDocument[]          @relation("AbcDocumentUploader")
   abcBulletinsCreated   AbcBulletin[]          @relation("AbcBulletinCreator")
   whatsappBotConfigs    WhatsAppBotConfig[]
+  googleDriveToken      GoogleDriveToken?
 
   // Index pour les performances
   @@unique([email])
@@ -2317,4 +2318,40 @@ enum WhatsAppMessageStatus {
   READ
   FAILED
   EXPIRED
+}
+
+// ============================================================
+//                    GOOGLE DRIVE OAUTH
+// ============================================================
+
+model GoogleDriveToken {
+  id String @id @default(cuid())
+  
+  // OAuth tokens
+  accessToken  String
+  refreshToken String?
+  scope        String
+  tokenType    String @default("Bearer")
+  expiresAt    DateTime?
+  
+  // Utilisateur qui a autorisé
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Informations Google
+  googleUserId    String? // Google account ID
+  googleEmail     String? // Google account email
+  googleName      String? // Google account name
+  
+  // Dossier de sauvegarde
+  backupFolderId   String? // ID du dossier de sauvegarde créé
+  backupFolderName String? @default("ABC-Bedarieux-Backups")
+  
+  // Métadonnées
+  isActive      Boolean  @default(true)
+  lastUsedAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("google_drive_tokens")
 }
