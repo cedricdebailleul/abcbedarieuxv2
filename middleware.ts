@@ -31,29 +31,30 @@ export function middleware(request: NextRequest) {
   );
 
   // Content Security Policy (CSP)
-  // Note: Google Maps nécessite 'unsafe-inline' et 'unsafe-eval' pour fonctionner correctement
-  const cspDirectives = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com https://accounts.google.com *.google.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.googleapis.com",
-    "img-src 'self' data: https: blob: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.ggpht.com",
-    "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://maps.googleapis.com https://*.googleapis.com https://accounts.google.com",
-    "frame-src 'self' https://accounts.google.com",
-    "worker-src 'self' blob:",
-    "child-src 'self' blob:",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'"
-  ];
+  // DÉSACTIVÉ TEMPORAIREMENT - Google Maps a besoin de permissions très larges
+  // TODO: Réactiver avec une configuration plus permissive pour Maps
 
-  // Ne pas forcer HTTPS en développement avec upgrade-insecure-requests
-  if (process.env.NODE_ENV === 'production') {
-    cspDirectives.push("upgrade-insecure-requests");
-  }
+  // const cspDirectives = [
+  //   "default-src 'self'",
+  //   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com https://accounts.google.com *.google.com",
+  //   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.googleapis.com",
+  //   "img-src 'self' data: https: blob: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.ggpht.com",
+  //   "font-src 'self' data: https://fonts.gstatic.com",
+  //   "connect-src 'self' https://maps.googleapis.com https://*.googleapis.com https://accounts.google.com",
+  //   "frame-src 'self' https://accounts.google.com",
+  //   "worker-src 'self' blob:",
+  //   "child-src 'self' blob:",
+  //   "object-src 'none'",
+  //   "base-uri 'self'",
+  //   "form-action 'self'",
+  //   "frame-ancestors 'none'"
+  // ];
 
-  response.headers.set('Content-Security-Policy', cspDirectives.join('; '));
+  // if (process.env.NODE_ENV === 'production') {
+  //   cspDirectives.push("upgrade-insecure-requests");
+  // }
+
+  // response.headers.set('Content-Security-Policy', cspDirectives.join('; '));
 
   // HSTS - Force HTTPS (seulement en production)
   if (process.env.NODE_ENV === 'production') {

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import {} from "lucide-react";
+import { env } from "@/lib/env";
 
 interface PlaceFormMapProps {
   latitude?: number;
@@ -46,10 +47,18 @@ export function PlaceFormMap({
             lng: longitude || 3.1612,
           };
 
-          const map = new window.google.maps.Map(mapRef.current, {
+          // Configuration de la carte avec Map ID si disponible
+          const mapConfig: google.maps.MapOptions = {
             zoom: 15,
             center: center,
-          });
+          };
+
+          // Ajouter le Map ID pour les repères avancés
+          if (env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID) {
+            mapConfig.mapId = env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+          }
+
+          const map = new window.google.maps.Map(mapRef.current, mapConfig);
 
           // Load the marker library
           const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
