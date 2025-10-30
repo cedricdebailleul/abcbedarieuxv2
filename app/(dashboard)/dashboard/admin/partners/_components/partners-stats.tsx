@@ -133,9 +133,9 @@ export function PartnersStats({
           <CardContent>
             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
               {Object.entries(partnersByType).map(([type, count]) => {
-                const Icon = partnerTypeIcons[type as keyof typeof partnerTypeIcons];
-                const label = partnerTypeLabels[type as keyof typeof partnerTypeLabels];
-                
+                const Icon = partnerTypeIcons[type as keyof typeof partnerTypeIcons] || Users;
+                const label = partnerTypeLabels[type as keyof typeof partnerTypeLabels] || type;
+
                 return (
                   <div
                     key={type}

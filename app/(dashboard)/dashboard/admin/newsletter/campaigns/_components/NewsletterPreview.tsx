@@ -38,18 +38,25 @@ export function NewsletterPreview({
   type PreviewMode = 'visual' | 'html';
   const [previewMode, setPreviewMode] = useState<PreviewMode>('visual');
 
+  // Fonction de sécurité pour échapper le HTML et prévenir les injections XSS
+  const escapeHtml = (text: string): string => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
   const formatDate = (dateString: string, isAllDay?: boolean) => {
     const date = new Date(dateString);
     if (isAllDay) {
-      return date.toLocaleDateString('fr-FR', { 
-        weekday: 'long', 
-        day: 'numeric', 
-        month: 'long' 
+      return date.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
       });
     }
-    return date.toLocaleDateString('fr-FR', { 
-      weekday: 'short', 
-      day: 'numeric', 
+    return date.toLocaleDateString('fr-FR', {
+      weekday: 'short',
+      day: 'numeric',
       month: 'short',
       hour: '2-digit',
       minute: '2-digit'
@@ -219,11 +226,11 @@ export function NewsletterPreview({
         <div class="content">
             <div class="greeting">Bonjour,</div>
             
-            <h2 style="color: #1f2937; margin-bottom: 15px;">${campaignTitle}</h2>
-            
+            <h2 style="color: #1f2937; margin-bottom: 15px;">${escapeHtml(campaignTitle)}</h2>
+
             ${content ? `
             <div class="main-content">
-                ${content.replace(/\n/g, '<br>')}
+                ${escapeHtml(content).replace(/\n/g, '<br>')}
             </div>
             ` : ''}
             
@@ -232,17 +239,17 @@ export function NewsletterPreview({
                 <h3>📅 Événements à venir</h3>
                 ${selectedEvents.map(event => `
                 <div class="content-item event">
-                    ${event.coverImage ? 
-                        `<img src="${event.coverImage}" alt="${event.title}" class="content-image">` :
+                    ${event.coverImage ?
+                        `<img src="${escapeHtml(event.coverImage)}" alt="${escapeHtml(event.title)}" class="content-image">` :
                         `<div class="content-image-placeholder">📅</div>`
                     }
                     <div class="content-details">
-                        <h4><a href="/events/${event.slug}">${event.title}</a></h4>
-                        ${event.description ? `<p style="margin: 8px 0; color: #4b5563; font-size: 14px;">${event.description}</p>` : ''}
+                        <h4><a href="/events/${escapeHtml(event.slug)}">${escapeHtml(event.title)}</a></h4>
+                        ${event.description ? `<p style="margin: 8px 0; color: #4b5563; font-size: 14px;">${escapeHtml(event.description)}</p>` : ''}
                         <div class="content-meta">
-                            ${event.startDate ? `<span>📅 ${formatDate(event.startDate, event.isAllDay)}</span>` : ''}
-                            ${event.location ? `<span>📍 ${event.location}</span>` : ''}
-                            <br><a href="/events/${event.slug}" class="view-link">➡️ Voir les détails</a>
+                            ${event.startDate ? `<span>📅 ${escapeHtml(formatDate(event.startDate, event.isAllDay))}</span>` : ''}
+                            ${event.location ? `<span>📍 ${escapeHtml(event.location)}</span>` : ''}
+                            <br><a href="/events/${escapeHtml(event.slug)}" class="view-link">➡️ Voir les détails</a>
                         </div>
                     </div>
                 </div>
@@ -255,18 +262,18 @@ export function NewsletterPreview({
                 <h3>🏪 Commerces à découvrir</h3>
                 ${selectedPlaces.map(place => `
                 <div class="content-item place">
-                    ${place.coverImage || place.logo ? 
-                        `<img src="${place.coverImage || place.logo}" alt="${place.title}" class="content-image">` :
+                    ${place.coverImage || place.logo ?
+                        `<img src="${escapeHtml(place.coverImage || place.logo)}" alt="${escapeHtml(place.title)}" class="content-image">` :
                         `<div class="content-image-placeholder">🏪</div>`
                     }
                     <div class="content-details">
-                        <h4><a href="/places/${place.slug}">${place.title}</a></h4>
-                        ${place.description ? `<p style="margin: 8px 0; color: #4b5563; font-size: 14px;">${place.description}</p>` : ''}
+                        <h4><a href="/places/${escapeHtml(place.slug)}">${escapeHtml(place.title)}</a></h4>
+                        ${place.description ? `<p style="margin: 8px 0; color: #4b5563; font-size: 14px;">${escapeHtml(place.description)}</p>` : ''}
                         <div class="content-meta">
-                            ${place.location ? `<span>📍 ${place.location}</span>` : ''}
-                            ${place.phone ? `<span>📞 ${place.phone}</span>` : ''}
+                            ${place.location ? `<span>📍 ${escapeHtml(place.location)}</span>` : ''}
+                            ${place.phone ? `<span>📞 ${escapeHtml(place.phone)}</span>` : ''}
                             ${place.website ? `<span>🌐 Site web</span>` : ''}
-                            <br><a href="/places/${place.slug}" class="view-link">➡️ Voir la fiche</a>
+                            <br><a href="/places/${escapeHtml(place.slug)}" class="view-link">➡️ Voir la fiche</a>
                         </div>
                     </div>
                 </div>
@@ -279,17 +286,17 @@ export function NewsletterPreview({
                 <h3>📄 Actualités</h3>
                 ${selectedPosts.map(post => `
                 <div class="content-item post">
-                    ${post.coverImage ? 
-                        `<img src="${post.coverImage}" alt="${post.title}" class="content-image">` :
+                    ${post.coverImage ?
+                        `<img src="${escapeHtml(post.coverImage)}" alt="${escapeHtml(post.title)}" class="content-image">` :
                         `<div class="content-image-placeholder">📄</div>`
                     }
                     <div class="content-details">
-                        <h4><a href="/posts/${post.slug}">${post.title}</a></h4>
-                        ${post.description ? `<p style="margin: 8px 0; color: #4b5563; font-size: 14px;">${post.description}</p>` : ''}
+                        <h4><a href="/posts/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a></h4>
+                        ${post.description ? `<p style="margin: 8px 0; color: #4b5563; font-size: 14px;">${escapeHtml(post.description)}</p>` : ''}
                         <div class="content-meta">
-                            ${post.publishedAt ? `<span>📅 ${new Date(post.publishedAt).toLocaleDateString('fr-FR')}</span>` : ''}
-                            ${post.author ? `<span>👤 ${post.author}</span>` : ''}
-                            <br><a href="/posts/${post.slug}" class="view-link">➡️ Lire l'article</a>
+                            ${post.publishedAt ? `<span>📅 ${escapeHtml(new Date(post.publishedAt).toLocaleDateString('fr-FR'))}</span>` : ''}
+                            ${post.author ? `<span>👤 ${escapeHtml(post.author)}</span>` : ''}
+                            <br><a href="/posts/${escapeHtml(post.slug)}" class="view-link">➡️ Lire l'article</a>
                         </div>
                     </div>
                 </div>
@@ -303,7 +310,7 @@ export function NewsletterPreview({
                 ${attachments.map(attachment => `
                 <div class="attachment-item">
                     <span>${attachment.type.includes('pdf') ? '📄' : '🖼️'}</span>
-                    <span>${attachment.name}</span>
+                    <span>${escapeHtml(attachment.name)}</span>
                     <span style="color: #6b7280; font-size: 12px;">(${(attachment.size / 1024 / 1024).toFixed(1)} MB)</span>
                 </div>
                 `).join('')}

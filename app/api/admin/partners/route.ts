@@ -78,12 +78,16 @@ export async function GET(
       prisma.partner.count({ where: where as Prisma.PartnerWhereInput }),
     ]);
 
-    // Statistiques pour le dashboard
-    const stats = await prisma.partner.groupBy({
-      by: ["partnerType"],
-      _count: { id: true },
-      where: { isActive: true },
-    });
+    // Statistiques globales pour le dashboard (tous les partenaires, pas juste la page courante)
+    const [statsByType, activeCount, featuredCount] = await Promise.all([
+      prisma.partner.groupBy({
+        by: ["partnerType"],
+        _count: { id: true },
+        where: { isActive: true },
+      }),
+      prisma.partner.count({ where: { isActive: true } }),
+      prisma.partner.count({ where: { isFeatured: true } }),
+    ]);
 
     const totalPages = Math.ceil(totalCount / (filters.limit || 10));
 
@@ -97,8 +101,9 @@ export async function GET(
       },
       stats: {
         total: totalCount,
-        featured: partners.filter((p) => p.isFeatured).length,
-        byType: stats.reduce(
+        active: activeCount,
+        featured: featuredCount,
+        byType: statsByType.reduce(
           (acc, stat) => {
             acc[stat.partnerType] = stat._count.id;
             return acc;

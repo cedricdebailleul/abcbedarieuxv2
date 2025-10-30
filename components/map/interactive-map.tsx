@@ -304,6 +304,10 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
     filters.showAssociations
   );
 
+  // Compter les places sans coordonnées
+  const placesWithoutCoords = filteredPlaces.filter(p => !p.latitude || !p.longitude);
+  const hasPlacesWithoutCoords = placesWithoutCoords.length > 0;
+
   return (
     <div className="h-full flex relative">
       {/* Sidebar Filters - Desktop */}
@@ -320,6 +324,25 @@ export function InteractiveMap({ places, categories }: InteractiveMapProps) {
 
       {/* Map Container */}
       <div className="flex-1 relative">
+        {/* Alerte pour les places sans coordonnées */}
+        {hasPlacesWithoutCoords && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 max-w-md">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 shadow-lg">
+              <div className="flex items-start gap-3">
+                <span className="text-orange-500 text-xl">⚠️</span>
+                <div className="flex-1 text-sm">
+                  <p className="font-medium text-orange-900">
+                    {placesWithoutCoords.length} établissement{placesWithoutCoords.length > 1 ? 's' : ''} sans position GPS
+                  </p>
+                  <p className="text-orange-700 mt-1">
+                    {placesWithoutCoords.map(p => p.name).join(', ')} {placesWithoutCoords.length === 1 ? 'n\'apparaît' : 'n\'apparaissent'} pas sur la carte car {placesWithoutCoords.length === 1 ? 'son adresse n\'a' : 'leurs adresses n\'ont'} pas été géolocalisée{placesWithoutCoords.length > 1 ? 's' : ''}.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <MapView
           key={`map-${mapKey}`}
           places={clusteredItems}

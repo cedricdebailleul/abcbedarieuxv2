@@ -285,9 +285,9 @@ export async function POST(request: NextRequest) {
           // Synchroniser le schéma avant la restauration
           console.log("🔍 Synchronisation du schéma Prisma...");
           try {
-            await execAsync('pnpm db:push --accept-data-loss', { 
-              cwd: process.cwd(), 
-              timeout: 30000 
+            await execAsync('pnpm db:push --accept-data-loss', {
+              cwd: process.cwd(),
+              timeout: 30000
             });
             console.log("✅ Schéma synchronisé");
           } catch (pushError) {

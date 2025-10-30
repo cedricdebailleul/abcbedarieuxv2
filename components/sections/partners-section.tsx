@@ -11,61 +11,24 @@ import {
   ArrowRight,
   Handshake,
   Star,
-  MapPin} from "lucide-react";
+  MapPin,
+  ExternalLink,
+} from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import type { Partner } from "@/lib/generated/prisma";
+import Image from "next/image";
 
-const partnerStats = [
-  {
-    icon: Building2,
-    label: "Partenaires institutionnels",
-    value: "8+",
-    color: "text-blue-600 bg-blue-100",
-  },
-  {
-    icon: Users,
-    label: "Partenaires économiques",
-    value: "12+",
-    color: "text-green-600 bg-green-100",
-  },
-  {
-    icon: Heart,
-    label: "Partenaires associatifs",
-    value: "15+",
-    color: "text-red-600 bg-red-100",
-  },
-  {
-    icon: Award,
-    label: "Partenaires premium",
-    value: "25+",
-    color: "text-purple-600 bg-purple-100",
-  },
-];
-
-const featuredPartners = [
-  {
-    name: "Mairie de Bédarieux",
-    category: "Institutionnel",
-    description: "Partenaire principal pour le développement économique local",
-    type: "Collectivité locale",
-    collaboration: "Promotion du territoire",
-  },
-  {
-    name: "CCI Hérault",
-    category: "Économique",
-    description:
-      "Accompagnement des entreprises et formation des entrepreneurs",
-    type: "Chambre consulaire",
-    collaboration: "Formation et conseil",
-  },
-  {
-    name: "Association des Commerçants",
-    category: "Associatif",
-    description: "Fédération des commerçants pour l'animation du centre-ville",
-    type: "Association professionnelle",
-    collaboration: "Animation commerciale",
-  },
-];
+interface PartnersSectionProps {
+  partners: Partner[];
+  stats: {
+    total: number;
+    active: number;
+    featured: number;
+    institutional: number;
+    commercial: number;
+  };
+}
 
 const testimonial = {
   content:
@@ -76,7 +39,34 @@ const testimonial = {
   rating: 5,
 };
 
-export function PartnersSection() {
+export function PartnersSection({ partners, stats }: PartnersSectionProps) {
+  const partnerStats = [
+    {
+      icon: Building2,
+      label: "Partenaires institutionnels",
+      value: `${stats.institutional}`,
+      color: "text-blue-600 bg-blue-100",
+    },
+    {
+      icon: Users,
+      label: "Partenaires commerciaux",
+      value: `${stats.commercial}`,
+      color: "text-green-600 bg-green-100",
+    },
+    {
+      icon: Heart,
+      label: "Partenaires actifs",
+      value: `${stats.active}`,
+      color: "text-red-600 bg-red-100",
+    },
+    {
+      icon: Award,
+      label: "Partenaires mis en avant",
+      value: `${stats.featured}`,
+      color: "text-purple-600 bg-purple-100",
+    },
+  ];
+
   return (
     <section className="py-16 px-8 ">
       <div className="container mx-auto">
@@ -126,78 +116,103 @@ export function PartnersSection() {
         </div>
 
         {/* Featured Partners */}
-        <div className="mb-16">
-          <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-            Nos partenaires clés
-          </h3>
+        {partners.length > 0 && (
+          <div className="mb-16">
+            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">
+              Nos partenaires clés
+            </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {featuredPartners.map((partner, index) => (
-              <motion.div
-                key={partner.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.15, duration: 0.5 }}
-              >
-                <Card className="h-full hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                        {partner.category === "Institutionnel" && (
-                          <Building2 className="w-6 h-6 text-primary" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {partners.map((partner, index) => (
+                <motion.div
+                  key={partner.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.15, duration: 0.5 }}
+                >
+                  <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+                    <CardHeader>
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                          {partner.partnerType === "INSTITUTIONAL" && (
+                            <Building2 className="w-6 h-6 text-primary" />
+                          )}
+                          {partner.partnerType === "COMMERCIAL" && (
+                            <Users className="w-6 h-6 text-green-600" />
+                          )}
+                          {partner.partnerType === "ASSOCIATIVE" && (
+                            <Heart className="w-6 h-6 text-red-600" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <Badge
+                            variant="outline"
+                            className={`mb-2 ${
+                              partner.partnerType === "INSTITUTIONAL"
+                                ? "text-primary border-primary/20"
+                                : partner.partnerType === "COMMERCIAL"
+                                  ? "text-green-600 border-green-200"
+                                  : "text-red-600 border-red-200"
+                            }`}
+                          >
+                            {partner.partnerType === "INSTITUTIONAL"
+                              ? "Institutionnel"
+                              : partner.partnerType === "COMMERCIAL"
+                                ? "Commercial"
+                                : "Associatif"}
+                          </Badge>
+                          <CardTitle className="text-lg text-gray-900 mb-2">
+                            {partner.name}
+                          </CardTitle>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      {partner.description && (
+                        <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                          {partner.description}
+                        </p>
+                      )}
+                      <div className="space-y-2 text-xs text-gray-500">
+                        {partner.category && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                            <span>
+                              <strong>Type:</strong> {partner.category}
+                            </span>
+                          </div>
                         )}
-                        {partner.category === "Économique" && (
-                          <Users className="w-6 h-6 text-green-600" />
+                        {partner.phone && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                            <span>
+                              <strong>Tél:</strong> {partner.phone}
+                            </span>
+                          </div>
                         )}
-                        {partner.category === "Associatif" && (
-                          <Heart className="w-6 h-6 text-red-600" />
+                        {partner.website && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                            <a
+                              href={partner.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline flex items-center gap-1"
+                            >
+                              <strong>Site web</strong>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <Badge
-                          variant="outline"
-                          className={`mb-2 ${
-                            partner.category === "Institutionnel"
-                              ? "text-primary border-primary/20"
-                              : partner.category === "Économique"
-                                ? "text-green-600 border-green-200"
-                                : "text-red-600 border-red-200"
-                          }`}
-                        >
-                          {partner.category}
-                        </Badge>
-                        <CardTitle className="text-lg text-gray-900 mb-2">
-                          {partner.name}
-                        </CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                      {partner.description}
-                    </p>
-                    <div className="space-y-2 text-xs text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                        <span>
-                          <strong>Type:</strong> {partner.type}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                        <span>
-                          <strong>Collaboration:</strong>{" "}
-                          {partner.collaboration}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Testimonial */}
         <motion.div
