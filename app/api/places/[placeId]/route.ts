@@ -469,13 +469,31 @@ export async function DELETE(
       );
     }
 
-    // Supprimer le dossier uploads (volume)
+    // Supprimer tous les fichiers (local + R2)
     try {
+      const allFiles = [
+        existingPlace.logo,
+        existingPlace.coverImage,
+        ...(Array.isArray(existingPlace.images) ? existingPlace.images as string[] : [])
+      ].filter(Boolean) as string[];
+
+      // Supprimer chaque fichier via le module storage (gère local + R2)
+      const { deleteFile } = await import("@/lib/storage");
+      for (const fileUrl of allFiles) {
+        if (fileUrl.startsWith("/uploads/")) {
+          const relativePath = fileUrl.replace(/^\/uploads\//, "").replace(/\\/g, "/");
+          await deleteFile(relativePath).catch((err) => {
+            console.error(`Erreur suppression fichier ${relativePath}:`, err);
+          });
+        }
+      }
+
+      // Supprimer le dossier uploads local
       const uploadDir = PLACES_ROOT(existingPlace.slug || existingPlace.id);
       await rm(uploadDir, { recursive: true, force: true }).catch(() => {});
-      console.log(`Dossier supprimé: ${uploadDir}`);
+      console.log(`✅ Fichiers et dossier supprimés: ${uploadDir}`);
     } catch (err) {
-      console.error("Erreur suppression dossier uploads:", err);
+      console.error("❌ Erreur suppression fichiers:", err);
     }
 
     await prisma.place.delete({ where: { id: placeId } });
