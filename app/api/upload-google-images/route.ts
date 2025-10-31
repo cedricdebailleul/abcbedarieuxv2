@@ -1,12 +1,9 @@
-import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
-import { UPLOADS_ROOT } from "@/lib/path";
+import { saveFile } from "@/lib/storage";
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,18 +38,8 @@ export async function POST(request: NextRequest) {
     const cleanSlug = sanitize(slug);
     const cleanType = sanitize(type);
 
-    // Créer le dossier de destination selon le type
+    // Déterminer si c'est une image de galerie
     const isGalleryImage = !imageType || imageType === "gallery";
-    const uploadDir = path.join(
-      UPLOADS_ROOT,
-      cleanType,
-      cleanSlug,
-      isGalleryImage ? "gallery" : ""
-    );
-
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
 
     const uploadedImages: string[] = [];
     const errors: string[] = [];
@@ -89,8 +76,6 @@ export async function POST(request: NextRequest) {
           fileName = `google_${timestamp}_${i}.jpg`;
         }
 
-        const filePath = path.join(uploadDir, fileName);
-
         // Traitement de l'image avec Sharp
         const optimizedBuffer = await sharp(buffer)
           .resize(2000, 2000, {
@@ -103,13 +88,19 @@ export async function POST(request: NextRequest) {
           })
           .toBuffer();
 
-        // Sauvegarder seulement le fichier principal - pas de versions multiples
-        await writeFile(filePath, optimizedBuffer);
+        // Construire le chemin relatif pour saveFile
+        const subfolder = isGalleryImage ? "gallery" : "";
+        const relativePath = [cleanType, cleanSlug, subfolder, fileName]
+          .filter(Boolean)
+          .join("/");
 
-        // URL relative pour la base de données
-        const galleryPath = isGalleryImage ? "/gallery" : "";
-        const relativeUrl = `/uploads/${cleanType}/${cleanSlug}${galleryPath}/${fileName}`;
-        uploadedImages.push(relativeUrl);
+        // Utiliser saveFile pour envoyer sur local + R2
+        const result = await saveFile(optimizedBuffer, relativePath, "image/jpeg");
+
+        console.log(`✅ Image Google uploadée: ${result.url}${result.cloudUrl ? ` (+ R2: ${result.cloudUrl})` : ""}`);
+
+        // Retourner l'URL locale pour la base de données
+        uploadedImages.push(result.url);
       } catch (error) {
         console.error(`Erreur traitement image ${imageUrl}:`, error);
         errors.push(
