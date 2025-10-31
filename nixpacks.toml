@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_20", "pnpm-9_x", "openssl"]
+
+[phases.install]
+cmds = ["pnpm i --frozen-lockfile"]
+
+[phases.build]
+cmds = ["SKIP_BUILD_STATIC_GENERATION=true pnpm run build"]
+
+[start]
+cmd = "pnpm run start"
