@@ -8,6 +8,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
 import { UPLOADS_ROOT } from "@/lib/path";
+import { saveFile, deleteFile, getFileUrl } from "@/lib/storage";
 import { promises as fs } from "node:fs";
 
 // Schéma de validation stricte pour les uploads
@@ -205,14 +206,8 @@ export async function POST(request: NextRequest) {
     // Supprimer l'ancienne image si fournie
     if (oldImagePath?.startsWith("/uploads/")) {
       try {
-        const { unlink } = await import("node:fs/promises");
-        const oldFullPath = path.join(
-          UPLOADS_ROOT,
-          oldImagePath.replace(/^\/uploads\//, "")
-        );
-        if (existsSync(oldFullPath)) {
-          await unlink(oldFullPath);
-        }
+        const relativePath = oldImagePath.replace(/^\/uploads\//, "");
+        await deleteFile(relativePath);
       } catch (error) {
         console.error(
           "Erreur lors de la suppression de l'ancienne image:",
@@ -222,32 +217,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Sauvegarder le fichier
-    await writeFile(filePath, optimizedBuffer);
+    // Construire le chemin relatif pour le stockage
+    const relativePath = path.join(
+      type,
+      slug || "general",
+      subfolder || "",
+      fileName
+    );
 
-    // Ne créer qu'une seule image - pas de versions multiples
-    const thumbnailUrl = null;
-    const socialUrl = null;
+    // Sauvegarder le fichier via le module storage
+    const uploadResult = await saveFile(
+      optimizedBuffer,
+      relativePath,
+      "image/jpeg"
+    );
 
-    // Retourner les URLs
-    const baseUrl = `/uploads/${type}/${slug || "general"}${
-      subfolder ? `/${subfolder}` : ""
-    }`;
-    const fileUrl = `${baseUrl}/${fileName}`;
+    console.log(`✅ Fichier uploadé: ${uploadResult.url}${uploadResult.cloudUrl ? ` (+ R2: ${uploadResult.cloudUrl})` : ""}`);
+
+    // Obtenir les métadonnées de l'image
+    const metadata = await sharp(optimizedBuffer).metadata();
 
     return NextResponse.json({
       success: true,
-      url: fileUrl,
-      thumbnail: thumbnailUrl,
-      social: socialUrl,
-      filename: fileName,
-      size: optimizedBuffer.length,
-      dimensions: await sharp(optimizedBuffer)
-        .metadata()
-        .then((meta) => ({
-          width: meta.width,
-          height: meta.height,
-        })),
+      url: uploadResult.url,
+      cloudUrl: uploadResult.cloudUrl,
+      thumbnail: null,
+      social: null,
+      filename: uploadResult.filename,
+      size: uploadResult.size,
+      dimensions: {
+        width: metadata.width,
+        height: metadata.height,
+      },
     });
   } catch (error) {
     console.error("Erreur lors de l'upload:", error);

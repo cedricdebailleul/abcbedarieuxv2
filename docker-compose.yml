@@ -1,6 +1,33 @@
 version: "3.8"
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abcv2_app
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads_data:/app/uploads  # Volume persistant pour les images
+    environment:
+      - NODE_ENV=production
+      - UPLOADS_DIR=/app/uploads
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/abcv2
+      # Variables pour Cloudflare R2 (à remplir plus tard)
+      - STORAGE_PROVIDER=local  # local | r2 | hybrid
+      # - R2_ACCOUNT_ID=
+      # - R2_ACCESS_KEY_ID=
+      # - R2_SECRET_ACCESS_KEY=
+      # - R2_BUCKET_NAME=
+      # - R2_PUBLIC_URL=
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - app-network
+    restart: unless-stopped
+
   postgres:
     image: postgres:16-alpine
     container_name: abcv2_postgres
@@ -15,6 +42,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -25,10 +53,20 @@ services:
       - redis_data:/data
     networks:
       - app-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
+  uploads_data:
+    driver: local
+    # Pour backup externe, vous pouvez configurer:
+    # driver_opts:
+    #   type: none
+    #   o: bind
+    #   device: /mnt/backup/uploads
 
 networks:
   app-network:
