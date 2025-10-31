@@ -85,6 +85,7 @@ export async function cleanupUnusedImages(
 
     // Supprimer chaque fichier obsolète (local + R2)
     let deletedCount = 0;
+    let failedCount = 0;
     for (const fileUrl of imagesToDelete) {
       if (fileUrl.startsWith("/uploads/")) {
         const relativePath = fileUrl.replace(/^\/uploads\//, "").replace(/\\/g, "/");
@@ -93,12 +94,17 @@ export async function cleanupUnusedImages(
           console.log(`  ✅ ${relativePath}`);
           deletedCount++;
         } catch (err) {
-          console.error(`  ⚠️  ${relativePath}:`, (err as Error).message);
+          console.error(`  ⚠️  Échec suppression ${relativePath}:`, (err as Error).message);
+          failedCount++;
         }
       }
     }
 
-    console.log(`🗑️  ${deletedCount}/${imagesToDelete.length} image(s) supprimée(s)`);
+    if (failedCount > 0) {
+      console.log(`🗑️  ${deletedCount}/${imagesToDelete.length} image(s) supprimée(s) (${failedCount} échec(s))`);
+    } else {
+      console.log(`🗑️  ${deletedCount}/${imagesToDelete.length} image(s) supprimée(s)`);
+    }
     return deletedCount;
 
   } catch (err) {

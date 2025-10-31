@@ -147,9 +147,10 @@ async function saveToR2(
   }
 }
 
-async function deleteFromR2(key: string): Promise<void> {
+async function deleteFromR2(key: string): Promise<boolean> {
   if (!storageConfig.r2) {
-    throw new Error("R2 configuration not available");
+    console.error("❌ R2 configuration not available");
+    return false;
   }
 
   try {
@@ -157,6 +158,9 @@ async function deleteFromR2(key: string): Promise<void> {
 
     const { accountId, accessKeyId, secretAccessKey, bucketName } =
       storageConfig.r2;
+
+    // Normaliser le chemin pour R2
+    const normalizedKey = key.replace(/\\/g, '/');
 
     const s3Client = new S3Client({
       region: "auto",
@@ -170,12 +174,21 @@ async function deleteFromR2(key: string): Promise<void> {
     await s3Client.send(
       new DeleteObjectCommand({
         Bucket: bucketName,
-        Key: key,
+        Key: normalizedKey,
       })
     );
-  } catch (error) {
-    console.error("❌ Erreur suppression R2:", error);
-    // Ne pas throw pour éviter de bloquer si R2 est down
+
+    console.log(`  🌐 R2: ${normalizedKey}`);
+    return true;
+  } catch (error: any) {
+    // Si l'erreur est "NoSuchKey", le fichier n'existe pas (peut-être uploadé avant R2)
+    if (error.name === "NoSuchKey" || error.Code === "NoSuchKey") {
+      console.log(`  ℹ️  R2: ${key} (n'existe pas - probablement uploadé avant R2)`);
+      return true; // Considérer comme succès car le but est de ne pas avoir le fichier
+    }
+
+    console.error(`  ❌ R2 suppression échouée (${key}):`, error.message || error);
+    return false;
   }
 }
 
@@ -263,10 +276,31 @@ export async function deleteFile(relativePath: string): Promise<void> {
 
     case "hybrid":
       // Supprimer des deux sources
-      await Promise.allSettled([
+      const results = await Promise.allSettled([
         deleteFromLocal(relativePath),
         deleteFromR2(relativePath),
       ]);
+
+      // Vérifier les résultats
+      const [localResult, r2Result] = results;
+      let hasError = false;
+
+      if (localResult.status === "rejected") {
+        console.error(`  ❌ Local suppression échouée:`, localResult.reason);
+        hasError = true;
+      }
+
+      if (r2Result.status === "fulfilled" && r2Result.value === false) {
+        console.error(`  ❌ R2 suppression échouée (voir logs ci-dessus)`);
+        hasError = true;
+      } else if (r2Result.status === "rejected") {
+        console.error(`  ❌ R2 suppression error:`, r2Result.reason);
+        hasError = true;
+      }
+
+      if (hasError) {
+        throw new Error(`Échec de suppression pour: ${relativePath}`);
+      }
       break;
   }
 }
