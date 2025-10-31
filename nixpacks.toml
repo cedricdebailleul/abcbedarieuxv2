@@ -5,7 +5,9 @@ nixPkgs = ["nodejs_20", "pnpm-9_x", "openssl"]
 cmds = ["pnpm i --frozen-lockfile"]
 
 [phases.build]
-cmds = ["SKIP_BUILD_STATIC_GENERATION=true pnpm run build"]
+cmds = [
+  "NODE_OPTIONS='--max-old-space-size=2048' SKIP_BUILD_STATIC_GENERATION=true NEXT_TELEMETRY_DISABLED=1 pnpm run build"
+]
 
 [start]
 cmd = "pnpm run start"

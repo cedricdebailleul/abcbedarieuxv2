@@ -10,6 +10,17 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   output: 'standalone',
+  // Optimisations pour réduire la mémoire pendant le build
+  experimental: {
+    // Désactiver le cache mémoire de Webpack si nécessaire
+    isrMemoryCacheSize: 0, // Désactive le cache ISR en mémoire
+  },
+  // Limiter le nombre de workers webpack pour économiser la mémoire
+  webpack: (config, { isServer }) => {
+    // Limiter le parallélisme pour réduire l'utilisation mémoire
+    config.parallelism = 1;
+    return config;
+  },
   // Redirection pour bloquer les URLs Google Photos problématiques
   async redirects() {
     return [
