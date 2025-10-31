@@ -370,6 +370,14 @@ export async function PUT(
         ? placeData.coverImage
         : (normalizedPhotos[0] ?? existingPlace.coverImage ?? undefined);
 
+    // Détecter et supprimer les anciennes images (local + R2)
+    const { cleanupUnusedImages } = await import("@/lib/cleanup-images");
+    await cleanupUnusedImages(existingPlace, {
+      logo: finalLogo ?? null,
+      coverImage: finalCover ?? null,
+      images: normalizedPhotos,
+    });
+
     // Construire update
     const updateData: Prisma.PlaceUpdateInput = {
       ...placeData,
@@ -470,30 +478,16 @@ export async function DELETE(
     }
 
     // Supprimer tous les fichiers (local + R2)
+    const { deleteAllImages } = await import("@/lib/cleanup-images");
+    await deleteAllImages(existingPlace);
+
+    // Supprimer le dossier uploads local
     try {
-      const allFiles = [
-        existingPlace.logo,
-        existingPlace.coverImage,
-        ...(Array.isArray(existingPlace.images) ? existingPlace.images as string[] : [])
-      ].filter(Boolean) as string[];
-
-      // Supprimer chaque fichier via le module storage (gère local + R2)
-      const { deleteFile } = await import("@/lib/storage");
-      for (const fileUrl of allFiles) {
-        if (fileUrl.startsWith("/uploads/")) {
-          const relativePath = fileUrl.replace(/^\/uploads\//, "").replace(/\\/g, "/");
-          await deleteFile(relativePath).catch((err) => {
-            console.error(`Erreur suppression fichier ${relativePath}:`, err);
-          });
-        }
-      }
-
-      // Supprimer le dossier uploads local
       const uploadDir = PLACES_ROOT(existingPlace.slug || existingPlace.id);
       await rm(uploadDir, { recursive: true, force: true }).catch(() => {});
-      console.log(`✅ Fichiers et dossier supprimés: ${uploadDir}`);
+      console.log(`✅ Dossier supprimé: ${uploadDir}`);
     } catch (err) {
-      console.error("❌ Erreur suppression fichiers:", err);
+      console.error("❌ Erreur suppression dossier:", err);
     }
 
     await prisma.place.delete({ where: { id: placeId } });
