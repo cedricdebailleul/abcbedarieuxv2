@@ -86,7 +86,9 @@ async function saveToLocal(
   // Écrire le fichier
   await writeFile(fullPath, buffer);
 
-  return `/uploads/${relativePath}`;
+  // Normaliser le chemin pour les URLs (toujours des forward slashes)
+  const normalizedPath = relativePath.replace(/\\/g, '/');
+  return `/uploads/${normalizedPath}`;
 }
 
 async function deleteFromLocal(relativePath: string): Promise<void> {
@@ -109,6 +111,9 @@ async function saveToR2(
     throw new Error("R2 configuration not available");
   }
 
+  // Normaliser la clé pour R2 (toujours des forward slashes)
+  const normalizedKey = key.replace(/\\/g, '/');
+
   // Import dynamique pour éviter l'erreur si le package n'est pas installé
   try {
     const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
@@ -128,14 +133,14 @@ async function saveToR2(
     await s3Client.send(
       new PutObjectCommand({
         Bucket: bucketName,
-        Key: key,
+        Key: normalizedKey,
         Body: buffer,
         ContentType: contentType,
         CacheControl: "public, max-age=31536000, immutable",
       })
     );
 
-    return `${publicUrl}/${key}`;
+    return `${publicUrl}/${normalizedKey}`;
   } catch (error) {
     console.error("❌ Erreur upload R2:", error);
     throw new Error("Failed to upload to R2");
@@ -216,6 +221,7 @@ export async function saveFile(
       const hybridLocalUrl = await saveToLocal(buffer, relativePath);
 
       // Upload vers R2 en arrière-plan (async, ne pas bloquer)
+      const normalizedRelativePath = relativePath.replace(/\\/g, '/');
       saveToR2(buffer, relativePath, contentType)
         .then((r2Url) => {
           console.log(`✅ Fichier uploadé vers R2: ${r2Url}`);
@@ -229,7 +235,7 @@ export async function saveFile(
       return {
         url: hybridLocalUrl,
         cloudUrl: storageConfig.r2
-          ? `${storageConfig.r2.publicUrl}/${relativePath}`
+          ? `${storageConfig.r2.publicUrl}/${normalizedRelativePath}`
           : undefined,
         filename,
         size: buffer.length,
@@ -272,16 +278,19 @@ export async function deleteFile(relativePath: string): Promise<void> {
  * @returns URL publique du fichier
  */
 export function getFileUrl(relativePath: string): string {
+  // Normaliser le chemin (toujours des forward slashes)
+  const normalizedPath = relativePath.replace(/\\/g, '/');
+
   // Si R2 est configuré et que le provider est r2 ou hybrid
   if (
     storageConfig.r2 &&
     (storageConfig.provider === "r2" || storageConfig.provider === "hybrid")
   ) {
-    return `${storageConfig.r2.publicUrl}/${relativePath}`;
+    return `${storageConfig.r2.publicUrl}/${normalizedPath}`;
   }
 
   // Sinon, URL locale
-  return `/uploads/${relativePath}`;
+  return `/uploads/${normalizedPath}`;
 }
 
 /**
