@@ -283,8 +283,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Chemin invalide" }, { status: 400 });
     }
 
-    // On transforme l’URL publique -> chemin réel sous UPLOADS_ROOT
-    const rel = clientPath.replace(/^\/uploads\//, ""); // places/…
+    // On transforme l'URL publique -> chemin réel sous UPLOADS_ROOT
+    // Normaliser les backslashes en forward slashes (Windows compatibility)
+    const rel = clientPath.replace(/^\/uploads\//, "").replace(/\\/g, "/"); // places/…
     const abs = path.resolve(UPLOADS_ROOT, rel); // /app/uploads/places/…
     if (!isUnderUploads(abs)) {
       return NextResponse.json({ error: "Chemin interdit" }, { status: 403 });
