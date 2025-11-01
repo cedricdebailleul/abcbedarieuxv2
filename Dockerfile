@@ -26,14 +26,22 @@ COPY . .
 # Nettoyer les fichiers Prisma générés localement
 RUN rm -rf lib/generated/prisma
 
-# Générer Prisma client et builder
-RUN pnpm prisma generate && pnpm run build
+# OPTIMISATIONS MÉMOIRE AJOUTÉES
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Générer Prisma client et builder avec gestion mémoire
+RUN pnpm prisma generate && \
+    NODE_OPTIONS="--max-old-space-size=4096" \
+    NEXT_TELEMETRY_DISABLED=1 \
+    pnpm run build
 
 # Image de production
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
