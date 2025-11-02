@@ -29,6 +29,7 @@ type PlaceIncoming = Partial<{
   placeType: PlaceType | string;
 
   street: string;
+  streetNumber?: string;
   address: string;
   addressLine1: string;
   postalCode: string;
@@ -37,6 +38,8 @@ type PlaceIncoming = Partial<{
   city: string;
   town: string;
   locality: string;
+  latitude?: number | string;
+  longitude?: number | string;
 
   images: string[] | string;
   logo: string;
@@ -53,6 +56,15 @@ type PlaceIncoming = Partial<{
   phone?: string;
   website?: string;
   googlePlaceId?: string;
+  googleMapsUrl?: string;
+
+  // Réseaux sociaux
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  linkedin?: string;
+  tiktok?: string;
+
   categories?: string[];
   openingHours?: Array<{
     dayOfWeek: string;
@@ -453,6 +465,14 @@ export async function POST(req: NextRequest) {
     const postalCode = asString(body.postalCode ?? body.zip ?? body.zipCode);
     const city = asString(body.city ?? body.town ?? body.locality);
 
+    // Géolocalisation
+    const latitude = typeof body.latitude === 'number' ? body.latitude :
+                     typeof body.latitude === 'string' ? parseFloat(body.latitude) :
+                     null;
+    const longitude = typeof body.longitude === 'number' ? body.longitude :
+                      typeof body.longitude === 'string' ? parseFloat(body.longitude) :
+                      null;
+
     // images (string | array -> array)
     let images: string[] | undefined;
     if (Array.isArray(body.images)) {
@@ -547,8 +567,11 @@ export async function POST(req: NextRequest) {
           slug,
           type,
           street,
+          streetNumber: asString(body.streetNumber ?? undefined) || null,
           postalCode,
           city,
+          latitude,
+          longitude,
 
           description: asString(body.description ?? undefined) || null,
           summary: asString(body.summary ?? undefined) || null,
@@ -565,6 +588,14 @@ export async function POST(req: NextRequest) {
           status,
           ownerId,
           googlePlaceId: asString(body.googlePlaceId ?? undefined) || null,
+          googleMapsUrl: asString(body.googleMapsUrl ?? undefined) || null,
+
+          // Réseaux sociaux
+          facebook: asString(body.facebook ?? undefined) || null,
+          instagram: asString(body.instagram ?? undefined) || null,
+          twitter: asString(body.twitter ?? undefined) || null,
+          linkedin: asString(body.linkedin ?? undefined) || null,
+          tiktok: asString(body.tiktok ?? undefined) || null,
         },
       });
 
