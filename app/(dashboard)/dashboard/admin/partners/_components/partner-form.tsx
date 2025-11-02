@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,9 +26,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Save, X, Loader2 } from "lucide-react";
+import { Save, X, Loader2, MapPin, Search } from "lucide-react";
 import { ImageUpload } from "@/components/media/image-upload";
-import { 
+import {
   PartnerCreateSchema,
   PartnerFormData,
   PARTNER_TYPES,
@@ -36,6 +36,7 @@ import {
   Partner,
   sanitizePartnerData
 } from "@/lib/types/partners";
+import { useGooglePlaces, type FormattedPlaceData } from "@/hooks/use-google-places";
 
 interface PartnerFormProps {
   partner?: Partner;
@@ -45,6 +46,7 @@ interface PartnerFormProps {
 export function PartnerForm({ partner, onSuccess }: PartnerFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [showGoogleSearch, setShowGoogleSearch] = useState(false);
 
   const form = useForm<PartnerFormData>({
     resolver: zodResolver(PartnerCreateSchema) as unknown as Resolver<PartnerFormData>,
@@ -63,8 +65,66 @@ export function PartnerForm({ partner, onSuccess }: PartnerFormProps) {
       isFeatured: false,
       startDate: "",
       endDate: "",
+      // Geolocation fields
+      street: "",
+      streetNumber: "",
+      postalCode: "",
+      city: "",
+      latitude: undefined,
+      longitude: undefined,
+      googlePlaceId: "",
+      googleMapsUrl: "",
     },
   });
+
+  // Hook Google Places
+  const {
+    isLoaded,
+    predictions,
+    inputValue,
+    setInputValue,
+    searchPlaces,
+    getPlaceDetails,
+    clearPredictions,
+  } = useGooglePlaces({
+    types: ["establishment"],
+    onPlaceSelected: (place: FormattedPlaceData) => {
+      // Remplir le formulaire avec les données Google
+      form.setValue("street", place.street || "");
+      form.setValue("streetNumber", place.streetNumber || "");
+      form.setValue("postalCode", place.postalCode || "");
+      form.setValue("city", place.city || "");
+      form.setValue("latitude", place.latitude);
+      form.setValue("longitude", place.longitude);
+      form.setValue("googlePlaceId", place.googlePlaceId || "");
+      form.setValue("googleMapsUrl", place.googleMapsUrl || "");
+
+      // Remplir aussi les infos de contact si disponibles
+      if (place.phone && !form.getValues("phone")) {
+        form.setValue("phone", place.phone);
+      }
+      if (place.website && !form.getValues("website")) {
+        form.setValue("website", place.website);
+      }
+
+      setShowGoogleSearch(false);
+      clearPredictions();
+      toast.success("Localisation importée depuis Google Business");
+    },
+  });
+
+  // Debounce pour la recherche Google Places
+  useEffect(() => {
+    if (!showGoogleSearch || !inputValue || inputValue.length < 3) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      searchPlaces(inputValue);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [showGoogleSearch, inputValue, searchPlaces]);
 
   // Auto-génération du slug basé sur le nom
   const handleNameChange = (name: string) => {
@@ -327,6 +387,147 @@ export function PartnerForm({ partner, onSuccess }: PartnerFormProps) {
                     )}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Localisation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Google Places Search */}
+                {!showGoogleSearch ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowGoogleSearch(true)}
+                    className="w-full"
+                    disabled={!isLoaded}
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    Rechercher sur Google Business
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Rechercher un lieu..."
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowGoogleSearch(false);
+                          setInputValue("");
+                          clearPredictions();
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {predictions.length > 0 && (
+                      <div className="border rounded-md max-h-60 overflow-y-auto">
+                        {predictions.map((prediction) => (
+                          <button
+                            key={prediction.place_id}
+                            type="button"
+                            onClick={() => {
+                              getPlaceDetails(prediction.place_id);
+                              setInputValue("");
+                            }}
+                            className="w-full text-left px-4 py-2 hover:bg-accent transition-colors border-b last:border-b-0"
+                          >
+                            <div className="font-medium text-sm">
+                              {prediction.structured_formatting.main_text}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {prediction.structured_formatting.secondary_text}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Manual Address Fields */}
+                <div className="grid grid-cols-4 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="streetNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>N°</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="12" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="street"
+                    render={({ field }) => (
+                      <FormItem className="col-span-3">
+                        <FormLabel>Rue</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Rue de la Paix" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="postalCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Code postal</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="34600" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ville</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Bédarieux" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Coordinates Display (read-only) */}
+                {(form.watch("latitude") || form.watch("longitude")) && (
+                  <div className="p-3 bg-muted rounded-md text-sm">
+                    <div className="font-medium mb-1">Coordonnées GPS</div>
+                    <div className="text-muted-foreground">
+                      Lat: {form.watch("latitude")?.toFixed(6)}, Long:{" "}
+                      {form.watch("longitude")?.toFixed(6)}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

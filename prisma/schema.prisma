@@ -1182,11 +1182,18 @@ model Event {
   instances        Event[]         @relation("EventRecurrence")
 
   // Localisation (si différent de la place)
-  locationName      String?
-  locationAddress   String?
-  locationCity      String?
-  locationLatitude  Float?
-  locationLongitude Float?
+  locationName         String?
+  locationAddress      String?
+  locationStreet       String?
+  locationStreetNumber String?
+  locationPostalCode   String?
+  locationCity         String?
+  locationLatitude     Float?
+  locationLongitude    Float?
+
+  // Google Business Integration
+  googlePlaceId String?
+  googleMapsUrl String?
 
   // Capacité et participants
   maxParticipants     Int?
@@ -1242,6 +1249,7 @@ model Event {
   @@index([placeId])
   @@index([category])
   @@index([locationCity])
+  @@index([locationLatitude, locationLongitude])
   @@map("events")
 }
 
@@ -2036,32 +2044,45 @@ model Partner {
   website     String?
   email       String?
   phone       String?
-  
+
+  // Adresse et géolocalisation
+  street       String?
+  streetNumber String?
+  postalCode   String?
+  city         String?
+  latitude     Float?
+  longitude    Float?
+
+  // Google Business Integration
+  googlePlaceId String?
+  googleMapsUrl String?
+
   // Informations de partenariat
   partnerType PartnerType @default(COMMERCIAL)
   category    String?
   priority    Int         @default(0) // Pour l'ordre d'affichage
-  
+
   // Statut
   isActive    Boolean @default(true)
   isFeatured  Boolean @default(false)
-  
+
   // Dates importantes
   startDate   DateTime?
   endDate     DateTime?
-  
+
   // Métadonnées
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdBy   String?
   updatedBy   String?
-  
+
   // Index pour les performances
   @@index([slug])
   @@index([partnerType])
   @@index([isActive])
   @@index([priority])
   @@index([createdAt])
+  @@index([latitude, longitude])
   @@map("partner")
 }
 

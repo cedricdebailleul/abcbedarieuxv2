@@ -51,6 +51,15 @@ export const PartnerCreateSchema = z.object({
   isFeatured: z.boolean().default(false),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  // Geolocation fields
+  street: z.string().optional(),
+  streetNumber: z.string().optional(),
+  postalCode: z.string().optional(),
+  city: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  googlePlaceId: z.string().optional(),
+  googleMapsUrl: z.string().optional(),
 });
 
 export const PartnerUpdateSchema = z.object({
@@ -75,6 +84,15 @@ export const PartnerUpdateSchema = z.object({
   isFeatured: z.boolean().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  // Geolocation fields
+  street: z.string().optional(),
+  streetNumber: z.string().optional(),
+  postalCode: z.string().optional(),
+  city: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  googlePlaceId: z.string().optional(),
+  googleMapsUrl: z.string().optional(),
 });
 
 // ============================================================
@@ -146,6 +164,15 @@ export interface Partner {
   updatedAt?: Date;
   createdBy?: string | null;
   updatedBy?: string | null;
+  // Geolocation fields
+  street?: string | null;
+  streetNumber?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  googlePlaceId?: string | null;
+  googleMapsUrl?: string | null;
 }
 
 // Type strict pour les partenaires complets (base de données)
@@ -169,6 +196,15 @@ export interface PartnerComplete {
   updatedAt: Date;
   createdBy: string | null;
   updatedBy: string | null;
+  // Geolocation fields
+  street: string | null;
+  streetNumber: string | null;
+  postalCode: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  googlePlaceId: string | null;
+  googleMapsUrl: string | null;
 }
 
 // Alias pour la compatibilité ascendante
@@ -210,6 +246,15 @@ export interface PartnerFormData {
   isFeatured: boolean;
   startDate?: string;
   endDate?: string;
+  // Geolocation fields
+  street?: string;
+  streetNumber?: string;
+  postalCode?: string;
+  city?: string;
+  latitude?: number;
+  longitude?: number;
+  googlePlaceId?: string;
+  googleMapsUrl?: string;
 }
 
 // ============================================================
@@ -256,6 +301,11 @@ export function sanitizePartnerData(
       ? (obj["partnerType"] as PartnerType)
       : "OTHER";
 
+  const getNumberOpt = (k: string): number | undefined => {
+    const v = obj[k];
+    return typeof v === "number" ? v : undefined;
+  };
+
   return {
     name: getString("name"),
     slug: getString("slug"),
@@ -271,6 +321,15 @@ export function sanitizePartnerData(
     isFeatured: getBoolean("isFeatured", false),
     startDate: parseDateToIsoDay(obj["startDate"]),
     endDate: parseDateToIsoDay(obj["endDate"]),
+    // Geolocation fields
+    street: getString("street"),
+    streetNumber: getString("streetNumber"),
+    postalCode: getString("postalCode"),
+    city: getString("city"),
+    latitude: getNumberOpt("latitude"),
+    longitude: getNumberOpt("longitude"),
+    googlePlaceId: getString("googlePlaceId"),
+    googleMapsUrl: getString("googleMapsUrl"),
   };
 }
 
@@ -286,5 +345,12 @@ export function preparePartnerForDatabase(
     description: data.description === "" ? null : data.description,
     startDate: data.startDate ? new Date(data.startDate) : null,
     endDate: data.endDate ? new Date(data.endDate) : null,
+    // Geolocation fields
+    street: data.street === "" ? null : data.street,
+    streetNumber: data.streetNumber === "" ? null : data.streetNumber,
+    postalCode: data.postalCode === "" ? null : data.postalCode,
+    city: data.city === "" ? null : data.city,
+    googlePlaceId: data.googlePlaceId === "" ? null : data.googlePlaceId,
+    googleMapsUrl: data.googleMapsUrl === "" ? null : data.googleMapsUrl,
   };
 }
