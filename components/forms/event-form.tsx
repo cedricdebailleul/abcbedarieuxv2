@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +16,9 @@ import {
   Plus,
   X,
   MapPin,
+  Search,
 } from "lucide-react";
+import { useGooglePlaces, type FormattedPlaceData } from "@/hooks/use-google-places";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,6 +105,50 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
   const [images, setImages] = useState<string[]>(initialData?.images || []);
   const [videos, setVideos] = useState<string[]>(initialData?.videos || []);
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
+  const [showGoogleSearch, setShowGoogleSearch] = useState(false);
+
+  // Hook Google Places pour la géolocalisation
+  const {
+    isLoaded,
+    predictions,
+    inputValue,
+    setInputValue,
+    searchPlaces,
+    getPlaceDetails,
+    clearPredictions,
+  } = useGooglePlaces({
+    types: ["establishment", "point_of_interest"],
+    onPlaceSelected: (place: FormattedPlaceData) => {
+      // Remplir le formulaire avec les données Google
+      form.setValue("locationName", place.name || "");
+      form.setValue("locationStreet", place.street || "");
+      form.setValue("locationStreetNumber", place.streetNumber || "");
+      form.setValue("locationPostalCode", place.postalCode || "");
+      form.setValue("locationCity", place.city || "");
+      form.setValue("locationAddress", place.formatted_address || "");
+      form.setValue("locationLatitude", place.latitude);
+      form.setValue("locationLongitude", place.longitude);
+      form.setValue("googlePlaceId", place.googlePlaceId || "");
+      form.setValue("googleMapsUrl", place.googleMapsUrl || "");
+
+      setShowGoogleSearch(false);
+      clearPredictions();
+      toast.success("Localisation importée depuis Google Business");
+    },
+  });
+
+  // Debounce pour la recherche Google Places
+  useEffect(() => {
+    if (!showGoogleSearch || !inputValue || inputValue.length < 3) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      searchPlaces(inputValue);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [showGoogleSearch, inputValue, searchPlaces]);
   const [newTag, setNewTag] = useState("");
 
   const form = useForm<EventWithRecurrenceData>({
@@ -128,9 +174,14 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
       timezone: initialData?.timezone || "Europe/Paris",
       locationName: initialData?.locationName || "",
       locationAddress: initialData?.locationAddress || "",
+      locationStreet: initialData?.locationStreet || "",
+      locationStreetNumber: initialData?.locationStreetNumber || "",
+      locationPostalCode: initialData?.locationPostalCode || "",
       locationCity: initialData?.locationCity || "",
       locationLatitude: initialData?.locationLatitude || undefined,
       locationLongitude: initialData?.locationLongitude || undefined,
+      googlePlaceId: initialData?.googlePlaceId || "",
+      googleMapsUrl: initialData?.googleMapsUrl || "",
       maxParticipants: initialData?.maxParticipants || undefined,
       isFree: initialData?.isFree ?? true,
       price: initialData?.price || undefined,
@@ -731,6 +782,67 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
 
               <Separator />
 
+              {/* Google Places Search */}
+              <div className="space-y-4">
+                {!showGoogleSearch ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowGoogleSearch(true)}
+                    className="w-full"
+                    disabled={!isLoaded}
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    Rechercher sur Google Business
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Rechercher un lieu..."
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowGoogleSearch(false);
+                          setInputValue("");
+                          clearPredictions();
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {predictions.length > 0 && (
+                      <div className="border rounded-md max-h-60 overflow-y-auto">
+                        {predictions.map((prediction) => (
+                          <button
+                            key={prediction.place_id}
+                            type="button"
+                            onClick={() => {
+                              getPlaceDetails(prediction.place_id);
+                              setInputValue("");
+                            }}
+                            className="w-full text-left px-4 py-2 hover:bg-accent transition-colors border-b last:border-b-0"
+                          >
+                            <div className="font-medium text-sm">
+                              {prediction.structured_formatting.main_text}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {prediction.structured_formatting.secondary_text}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -743,6 +855,48 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                           placeholder="Parc municipal, Salle des fêtes..."
                           {...field}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="locationStreetNumber"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>N°</FormLabel>
+                      <FormControl>
+                        <Input placeholder="12" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="locationStreet"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rue</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Rue de la Paix" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="locationPostalCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Code postal</FormLabel>
+                      <FormControl>
+                        <Input placeholder="34600" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -768,13 +922,16 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
                   name="locationAddress"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Adresse complète</FormLabel>
+                      <FormLabel>Adresse complète (optionnel)</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="123 Avenue de la République..."
+                          placeholder="123 Avenue de la République, 34600 Bédarieux"
                           {...field}
                         />
                       </FormControl>
+                      <FormDescription>
+                        Rempli automatiquement depuis Google ou peut être modifié manuellement
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
