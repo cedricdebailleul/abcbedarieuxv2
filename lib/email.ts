@@ -200,10 +200,13 @@ export function createNewsletterEmailTemplate({
   subscriberId?: string;
 }) {
   
-  // En développement, utiliser localhost, en production abc-bedarieux.fr
-  const baseUrl = process.env.NODE_ENV === 'production' 
-    ? (process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr')
-    : 'http://localhost:3001';
+  // Utiliser la variable d'environnement, avec fallback intelligent
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    process.env.NEXTAUTH_URL ||
+    (process.env.NODE_ENV === 'production'
+      ? 'https://abc-bedarieux.fr'
+      : 'http://localhost:3000');
   
   // Fonction helper pour créer des liens trackés
   const createTrackedLink = (destinationUrl: string) => {
