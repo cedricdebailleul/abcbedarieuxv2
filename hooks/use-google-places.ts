@@ -294,13 +294,14 @@ export const useGooglePlaces = ({
         locationBias = new google.maps.LatLng(43.6158, 3.1303);
       }
 
-      const request = {
+      const request: google.maps.places.AutocompletionRequest = {
         input,
         componentRestrictions: { country: defaultCountry },
-        types,
         language,
         // Bias vers Bédarieux si google chargé
         ...(locationBias ? { location: locationBias, radius: 50000 } : {}),
+        // Google Places Autocomplete n'accepte qu'un seul type, pas un tableau
+        ...(types && types.length > 0 ? { types: [types[0]] } : {}),
       };
 
       autocompleteService.current.getPlacePredictions(
