@@ -20,6 +20,7 @@ import {
   type CategoryInput,
 } from "@/lib/validations/post";
 import { Prisma, PostStatus } from "@/lib/generated/prisma";
+import { notifyAdminsNewPost } from "@/lib/content-notifications";
 
 // Types pour les réponses
 type ActionResult<T = unknown> = {
@@ -167,7 +168,7 @@ export async function createPostAction(input: CreatePostInput): Promise<
 
     // Attribution automatique des badges pour les articles
     await triggerPostCreationBadges(user.id, post.id);
-    
+
     // Pour des raisons de compatibilité, on retourne un tableau vide pour newBadges
     const newBadges: Array<{
       badge: {
@@ -182,6 +183,16 @@ export async function createPostAction(input: CreatePostInput): Promise<
 
     revalidatePath("/dashboard/posts");
     revalidatePath("/posts");
+
+    // Notification admin pour nouvel article en attente de validation
+    if (validatedData.status === PostStatus.PENDING_REVIEW && user.role !== "admin" && user.role !== "editor") {
+      const userName = user.name || user.email || "Utilisateur inconnu";
+      const userEmail = user.email || "";
+      await notifyAdminsNewPost(validatedData.title, userName, userEmail).catch((error) => {
+        console.error('Error sending admin notification:', error);
+        // Ne pas faire échouer la création si la notification échoue
+      });
+    }
 
     return {
       success: true,

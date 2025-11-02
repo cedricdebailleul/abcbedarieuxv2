@@ -8,6 +8,7 @@ import { join, resolve, dirname, sep, parse } from "node:path";
 import { PlaceType } from "@/lib/generated/prisma";
 import type { PlaceStatus, Prisma, DayOfWeek } from "@/lib/generated/prisma";
 import { triggerPlaceCreationBadges } from "@/lib/services/badge-trigger-service";
+import { notifyAdminsNewPlace } from "@/lib/place-notifications";
 
 /* ====================== Utils types ====================== */
 type Primitive = string | number | boolean | undefined;
@@ -627,6 +628,16 @@ export async function POST(req: NextRequest) {
         await triggerPlaceCreationBadges(ownerId, created.id).catch((error) => {
           console.error('Error triggering place creation badges:', error);
           // Ne pas faire échouer la création de place si les badges échouent
+        });
+      }
+
+      // Notification admin pour nouvelle place en attente de validation
+      if (status === "PENDING" && !isAdmin) {
+        const userName = session.user.name || session.user.email || "Utilisateur inconnu";
+        const userEmail = session.user.email || "";
+        await notifyAdminsNewPlace(name, userName, userEmail).catch((error) => {
+          console.error('Error sending admin notification:', error);
+          // Ne pas faire échouer la création si la notification échoue
         });
       }
 

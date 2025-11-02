@@ -17,6 +17,7 @@ import {
   ParticipationStatus,
 } from "@/lib/generated/prisma";
 import { expandRecurrentEvents } from "@/lib/recurrence";
+import { notifyAdminsNewEvent } from "@/lib/content-notifications";
 
 /* =========================================
  *               Types communs
@@ -364,6 +365,16 @@ export async function createEventAction(
 
     revalidatePath("/dashboard/events");
     revalidatePath("/events");
+
+    // Notification admin pour nouvel événement en attente de validation
+    if ((data.status ?? EventStatus.DRAFT) === EventStatus.DRAFT && !isAdminRole(user.role)) {
+      const userName = user.name || user.email || "Utilisateur inconnu";
+      const userEmail = user.email || "";
+      await notifyAdminsNewEvent(data.title, userName, userEmail).catch((error) => {
+        console.error('Error sending admin notification:', error);
+        // Ne pas faire échouer la création si la notification échoue
+      });
+    }
 
     return { success: true, data: { id: event.id, slug: event.slug } };
   } catch (e) {
