@@ -73,8 +73,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto py-12 px-4">
-      <h1 className="text-2xl font-bold mb-6">Créer un compte</h1>
+    <div className="container flex min-h-screen w-screen flex-col items-center justify-center">
+      <div className="max-w-md w-full px-4 space-y-6">
+        <h1 className="text-2xl font-bold text-center">Créer un compte</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {/* Prénom */}
@@ -169,12 +170,13 @@ export default function RegisterPage() {
           </Button>
         </form>
       </Form>
-      <p className="mt-6 text-sm text-center">
-        Déjà inscrit ?{" "}
-        <Link href="/login" className="underline">
-          Se connecter
-        </Link>
-      </p>
+        <p className="text-sm text-center text-muted-foreground">
+          Déjà inscrit ?{" "}
+          <Link href="/login" className="underline underline-offset-4 hover:text-primary">
+            Se connecter
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

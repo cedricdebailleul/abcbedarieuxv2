@@ -61,14 +61,7 @@ export default async function LoginPage({
 
             <TabLoginForm />
 
-            <div className="text-center space-y-2">
-              <Link
-                href="/forgot-password"
-                className="text-sm text-muted-foreground hover:text-primary underline underline-offset-4"
-              >
-                Mot de passe oublié ?
-              </Link>
-
+            <div className="text-center">
               <p className="text-sm text-muted-foreground">
                 Pas encore de compte ?{" "}
                 <Link
