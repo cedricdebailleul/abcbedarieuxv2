@@ -1923,47 +1923,52 @@ export function PlaceForm({
                     </>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <FormLabel htmlFor="published">Publié</FormLabel>
-                    <FormField
-                      control={form.control}
-                      name="published"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Switch
-                              id="published"
-                              checked={!!field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* Publication controls - Admin only */}
+                  {userRole === "admin" && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <FormLabel htmlFor="published">Publié</FormLabel>
+                        <FormField
+                          control={form.control}
+                          name="published"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Switch
+                                  id="published"
+                                  checked={!!field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-                  <div className="flex items-center justify-between">
-                    <FormLabel htmlFor="isFeatured">En vedette</FormLabel>
-                    <FormField
-                      control={form.control}
-                      name="isFeatured"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Switch
-                              id="isFeatured"
-                              checked={!!field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Afficher cet établissement en vedette sur la page
-                    d&apos;accueil
-                  </p>
+                      <div className="flex items-center justify-between">
+                        <FormLabel htmlFor="isFeatured">En vedette</FormLabel>
+                        <FormField
+                          control={form.control}
+                          name="isFeatured"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Switch
+                                  id="isFeatured"
+                                  checked={!!field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Afficher cet établissement en vedette sur la page
+                        d&apos;accueil
+                      </p>
+                    </>
+                  )}
 
                   <div className="pt-2">
                     <Button
