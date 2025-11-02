@@ -2,13 +2,44 @@
 
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import Logo from "@/components/logo";
 import FooterNewsletter from "./footer-newsletter";
+import { Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
+import { FaTiktok } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
+
+interface SiteSettings {
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  twitterUrl?: string | null;
+  linkedinUrl?: string | null;
+  youtubeUrl?: string | null;
+  tiktokUrl?: string | null;
+  siteName?: string | null;
+}
 
 export default function FooterSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>({});
+
+  // Récupérer les paramètres du site
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch("/api/site-settings");
+        const result = await response.json();
+        if (result.success && result.data) {
+          setSiteSettings(result.data);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des paramètres:", error);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   // Animation variants
   const containerVariants = {
@@ -76,12 +107,39 @@ export default function FooterSection() {
     }),
   };
 
+  // Construire dynamiquement la liste des réseaux sociaux disponibles
   const socialButtons = [
-    { icon: "f", label: "Facebook" },
-    { icon: "ig", label: "Instagram" },
-    { icon: "in", label: "LinkedIn" },
-    { icon: "yt", label: "YouTube" },
-  ];
+    {
+      icon: <Facebook className="h-5 w-5" />,
+      label: "Facebook",
+      url: siteSettings.facebookUrl,
+    },
+    {
+      icon: <Instagram className="h-5 w-5" />,
+      label: "Instagram",
+      url: siteSettings.instagramUrl,
+    },
+    {
+      icon: <FaXTwitter className="h-5 w-5" />,
+      label: "Twitter/X",
+      url: siteSettings.twitterUrl,
+    },
+    {
+      icon: <Linkedin className="h-5 w-5" />,
+      label: "LinkedIn",
+      url: siteSettings.linkedinUrl,
+    },
+    {
+      icon: <Youtube className="h-5 w-5" />,
+      label: "YouTube",
+      url: siteSettings.youtubeUrl,
+    },
+    {
+      icon: <FaTiktok className="h-5 w-5" />,
+      label: "TikTok",
+      url: siteSettings.tiktokUrl,
+    },
+  ].filter((social) => social.url); // Filtrer uniquement les réseaux configurés
 
   const bottomNavItems = [
     { icon: "📞", label: "Nous Appeler", href: "/contact" },
@@ -114,32 +172,37 @@ export default function FooterSection() {
             </motion.div>
 
             {/* Social Media */}
-            <motion.div variants={itemVariants}>
-              <h3 className="text-sm font-semibold mb-4 tracking-wide">
-                SUIVEZ-NOUS
-              </h3>
-              <div className="flex gap-3">
-                {socialButtons.map((social, index) => (
-                  <motion.div
-                    key={social.label}
-                    variants={socialButtonVariants}
-                    custom={index}
-                    whileHover={{
-                      scale: 1.1,
-                      transition: { type: "spring" as const, stiffness: 300 },
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Link
-                      href="#"
-                      className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
+            {socialButtons.length > 0 && (
+              <motion.div variants={itemVariants}>
+                <h3 className="text-sm font-semibold mb-4 tracking-wide">
+                  SUIVEZ-NOUS
+                </h3>
+                <div className="flex gap-3 flex-wrap">
+                  {socialButtons.map((social, index) => (
+                    <motion.div
+                      key={social.label}
+                      variants={socialButtonVariants}
+                      custom={index}
+                      whileHover={{
+                        scale: 1.1,
+                        transition: { type: "spring" as const, stiffness: 300 },
+                      }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <span className="text-sm font-bold">{social.icon}</span>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+                      <Link
+                        href={social.url || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
+                        aria-label={social.label}
+                      >
+                        {social.icon}
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Quick Links */}
             <motion.div className="flex gap-8" variants={itemVariants}>
@@ -178,12 +241,14 @@ export default function FooterSection() {
             <p className="text-sm text-gray-400">
               © {new Date().getFullYear()}{" "}
               <span className="text-primary">
-                ABC - Association Bédaricienne des Commerçants
+                {siteSettings.siteName || "ABC - Association Bédaricienne des Commerçants"}
               </span>
               , propulsé par{" "}
               <Link
                 className="text-primary hover:text-white transition-colors"
                 href="https://blackbearstudio.fr"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 Black Bear Studio
               </Link>

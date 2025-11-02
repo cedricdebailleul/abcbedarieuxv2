@@ -2373,6 +2373,43 @@ model GoogleDriveToken {
   lastUsedAt    DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  
+
   @@map("google_drive_tokens")
+}
+
+// ============================================================
+//                    PARAMÈTRES DU SITE
+// ============================================================
+
+model SiteSettings {
+  id String @id @default(cuid())
+
+  // Informations générales
+  siteName        String  @default("ABC Bédarieux")
+  siteDescription String?
+  siteUrl         String?
+  contactEmail    String?
+  contactPhone    String?
+
+  // Réseaux sociaux
+  facebookUrl  String?
+  instagramUrl String?
+  twitterUrl   String?
+  linkedinUrl  String?
+  youtubeUrl   String?
+  tiktokUrl    String?
+
+  // Adresse physique
+  addressStreet String?
+  addressCity   String?
+  addressZip    String?
+
+  // Horaires d'ouverture (JSON)
+  openingHours Json?
+
+  // Métadonnées
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
 }
