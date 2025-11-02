@@ -82,9 +82,19 @@ export const eventSchema = z.object({
   // Localisation
   locationName: z.string().optional(),
   locationAddress: z.string().optional(),
+  locationStreet: z.string().optional(),
+  locationStreetNumber: z.string().optional(),
+  locationPostalCode: z.string().optional(),
   locationCity: z.string().optional(),
   locationLatitude: z.number().min(-90).max(90).optional(),
   locationLongitude: z.number().min(-180).max(180).optional(),
+  googlePlaceId: z.string().optional(),
+  googleMapsUrl: z
+    .string()
+    .optional()
+    .refine((url) => !url || url === "" || z.string().url().safeParse(url).success, {
+      message: "Format d'URL Google Maps invalide"
+    }),
   
   // Participants
   maxParticipants: z

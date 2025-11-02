@@ -58,9 +58,14 @@ interface EventFormData {
   timezone?: string;
   locationName?: string;
   locationAddress?: string;
+  locationStreet?: string;
+  locationStreetNumber?: string;
+  locationPostalCode?: string;
   locationCity?: string;
   locationLatitude?: number;
   locationLongitude?: number;
+  googlePlaceId?: string;
+  googleMapsUrl?: string;
   maxParticipants?: number;
   isFree?: boolean;
   price?: number;
@@ -301,9 +306,14 @@ export async function createEventAction(
         timezone: data.timezone || "Europe/Paris",
         locationName: data.locationName,
         locationAddress: data.locationAddress,
+        locationStreet: data.locationStreet,
+        locationStreetNumber: data.locationStreetNumber,
+        locationPostalCode: data.locationPostalCode,
         locationCity: data.locationCity,
         locationLatitude: data.locationLatitude,
         locationLongitude: data.locationLongitude,
+        googlePlaceId: data.googlePlaceId,
+        googleMapsUrl: data.googleMapsUrl,
         maxParticipants: data.maxParticipants,
         isFree: data.isFree ?? true,
         price: data.price,
@@ -440,6 +450,15 @@ export async function updateEventAction(
         ...(data.locationAddress !== undefined && {
           locationAddress: data.locationAddress,
         }),
+        ...(data.locationStreet !== undefined && {
+          locationStreet: data.locationStreet,
+        }),
+        ...(data.locationStreetNumber !== undefined && {
+          locationStreetNumber: data.locationStreetNumber,
+        }),
+        ...(data.locationPostalCode !== undefined && {
+          locationPostalCode: data.locationPostalCode,
+        }),
         ...(data.locationCity !== undefined && {
           locationCity: data.locationCity,
         }),
@@ -448,6 +467,12 @@ export async function updateEventAction(
         }),
         ...(data.locationLongitude !== undefined && {
           locationLongitude: data.locationLongitude,
+        }),
+        ...(data.googlePlaceId !== undefined && {
+          googlePlaceId: data.googlePlaceId,
+        }),
+        ...(data.googleMapsUrl !== undefined && {
+          googleMapsUrl: data.googleMapsUrl,
         }),
         ...(data.maxParticipants !== undefined && {
           maxParticipants: data.maxParticipants,
@@ -989,9 +1014,14 @@ export async function getEventBySlugAction(slug: string): Promise<
     videos?: string[] | null;
     locationName?: string | null;
     locationAddress?: string | null;
+    locationStreet?: string | null;
+    locationStreetNumber?: string | null;
+    locationPostalCode?: string | null;
     locationCity?: string | null;
     locationLatitude?: number | null;
     locationLongitude?: number | null;
+    googlePlaceId?: string | null;
+    googleMapsUrl?: string | null;
     email?: string | null;
     phone?: string | null;
     website?: string | null;
