@@ -15,7 +15,7 @@ export async function GET() {
         data: {
           siteName: "ABC Bédarieux",
           siteDescription: "Annuaire des commerces et artisans de Bédarieux",
-          siteUrl: process.env.NEXT_PUBLIC_URL || "https://abc-bedarieux.fr",
+          siteUrl: process.env.NEXT_PUBLIC_URL || "https://abcbedarieux.com",
         },
       });
     }

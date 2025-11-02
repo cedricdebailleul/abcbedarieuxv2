@@ -13,7 +13,9 @@
       "Bash(pnpm prisma migrate:*)",
       "Bash(pnpm type-check:*)",
       "Bash(git restore:*)",
-      "Bash(pnpm prisma db push:*)"
+      "Bash(pnpm prisma db push:*)",
+      "Bash(xargs sed:*)",
+      "Bash(powershell -Command:*)"
     ],
     "deny": [],
     "ask": []

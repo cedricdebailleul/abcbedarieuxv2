@@ -195,7 +195,7 @@ export default function SiteSettingsPage() {
                   <FormItem>
                     <FormLabel>URL du site</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="https://abc-bedarieux.fr" type="url" />
+                      <Input {...field} placeholder="https://abcbedarieux.com" type="url" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

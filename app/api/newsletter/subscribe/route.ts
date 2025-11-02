@@ -5,6 +5,7 @@ import { sendEmail, createVerificationEmailTemplate } from "@/lib/email";
 import { checkRateLimit, createRateLimitResponse, getClientIP, newsletterSubscribeLimit } from "@/lib/rate-limit";
 import { validateAndSanitize, subscribeSchema } from "@/lib/validation";
 import { NewsletterFrequency } from "@/lib/generated/prisma";
+import { getBaseUrlFromRequest } from "@/lib/url-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Envoyer un email de vérification
-      const baseUrl = process.env.NEXTAUTH_URL || `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+      const baseUrl = getBaseUrlFromRequest(request);
       const verificationUrl = `${baseUrl}/api/newsletter/verify?token=${verificationToken}`;
       
       const emailHtml = createVerificationEmailTemplate({

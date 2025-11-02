@@ -123,7 +123,7 @@ function createContactEmailTemplate({
 }) {
   const baseUrl =
     process.env.NODE_ENV === "production"
-      ? process.env.NEXTAUTH_URL || "https://abc-bedarieux.fr"
+      ? process.env.NEXTAUTH_URL || "https://abcbedarieux.com"
       : "http://localhost:3001";
 
   return `

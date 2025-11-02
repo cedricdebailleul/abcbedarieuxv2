@@ -37,7 +37,7 @@ async function main() {
             bio: "Administrateur de la plateforme ABC Bédarieux",
             address: "Bédarieux, France",
             socials: JSON.stringify({
-              website: "https://abc-bedarieux.fr",
+              website: "https://abcbedarieux.com",
             }),
           },
         },

@@ -105,7 +105,7 @@ export async function GET(
         : []
     ]);
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://abc-bedarieux.fr';
+    const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.NEXTAUTH_URL || 'https://abcbedarieux.com';
     const unsubscribeUrl = `${baseUrl}/newsletter/unsubscribe?token=${subscriber.unsubscribeToken}`;
     const trackingPixelUrl = `${baseUrl}/api/newsletter/track/open?c=${campaignId}&s=${subscriberId}`;
 

@@ -436,7 +436,7 @@ class NewsletterQueue {
           : [],
       ]);
 
-      const baseUrl = process.env.NEXTAUTH_URL || "https://abc-bedarieux.fr";
+      const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.NEXTAUTH_URL || "https://abcbedarieux.com";
 
       return {
         subscriber: {

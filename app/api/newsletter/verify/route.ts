@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
 
     // Renvoyer l'email de vérification
     const baseUrl =
+      process.env.NEXT_PUBLIC_URL ||
       process.env.NEXTAUTH_URL ||
       `${request.nextUrl.protocol}//${request.nextUrl.host}`;
     const verificationUrl = `${baseUrl}/api/newsletter/verify?token=${subscriber.verificationToken}`;

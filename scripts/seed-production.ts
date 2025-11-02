@@ -182,7 +182,7 @@ async function main() {
           create: {
             bio: "Administrateur de la plateforme ABC Bédarieux",
             // location: "Bédarieux, France", // Removed as it is not part of the Profile model
-            // website: "https://abc-bedarieux.fr", // Removed as it is not part of the Profile model
+            // website: "https://abcbedarieux.com", // Removed as it is not part of the Profile model
           },
         },
       },

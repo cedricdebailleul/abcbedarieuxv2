@@ -392,7 +392,7 @@ Ou tapez le nom d'un établissement directement.`;
     return `🗺️ **Carte interactive d'ABC Bédarieux**
 
 Découvrez tous nos partenaires sur la carte :
-${process.env.NEXT_PUBLIC_URL || 'https://abc-bedarieux.fr'}/carte
+${process.env.NEXT_PUBLIC_URL || 'https://abcbedarieux.com'}/carte
 
 Vous pouvez aussi partager votre localisation pour voir les établissements près de vous !`;
   }

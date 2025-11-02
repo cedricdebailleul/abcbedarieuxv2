@@ -99,7 +99,7 @@ export function CustomShareExample() {
   const customShareData: ShareData = {
     title: "Découvrez Bédarieux",
     description: "Une ville pleine de charme au cœur de l'Hérault",
-    url: "https://abc-bedarieux.fr/decouvrir",
+    url: "https://abcbedarieux.com/decouvrir",
     image: "/images/bedarieux-panorama.jpg",
     type: "post",
     hashtags: ["Bédarieux", "Hérault", "Découverte", "Tourisme"],
