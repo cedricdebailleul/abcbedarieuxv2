@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  eslint: {
-    // Temporairement désactiver pour économiser la mémoire pendant le build
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // Temporairement désactiver pour économiser la mémoire pendant le build
     ignoreBuildErrors: true,
@@ -13,8 +9,6 @@ const nextConfig: NextConfig = {
   
   // Optimisations pour réduire la mémoire pendant le build
   experimental: {
-    // Retirer isrMemoryCacheSize qui n'existe pas dans Next.js 15
-    // Ajouter ces options à la place :
     workerThreads: false,
     cpus: 1,
   },
@@ -48,9 +42,9 @@ const nextConfig: NextConfig = {
     
     return config;
   },
-  
-  // Utiliser SWC pour la minification (plus rapide et moins gourmand)
-  swcMinify: true,
+
+  // Turbopack configuration (empty to silence error when using webpack config)
+  turbopack: {},
   
   // Redirection pour bloquer les URLs Google Photos problématiques
   async redirects() {
