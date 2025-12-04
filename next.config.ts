@@ -101,6 +101,25 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      // Cloudflare R2 domains
+      {
+        protocol: 'https',
+        hostname: '*.r2.dev',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.r2.cloudflarestorage.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pub-*.r2.dev',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

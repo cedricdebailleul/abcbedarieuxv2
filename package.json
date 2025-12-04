@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "NODE_OPTIONS='--max-old-space-size=4096' prisma generate && NODE_OPTIONS='--max-old-space-size=4096' next build",
+    "build": "cross-env NODE_OPTIONS='--max-old-space-size=4096' prisma generate && cross-env NODE_OPTIONS='--max-old-space-size=4096' next build",
     "build:coolify": "prisma generate && SKIP_BUILD_STATIC_GENERATION=true next build",
     "start": "prisma db push && next start",
     "lint": "next lint",

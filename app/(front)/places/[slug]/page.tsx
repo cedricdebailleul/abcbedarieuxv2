@@ -31,6 +31,7 @@ import { PlaceAboutTab } from "@/components/places/place-about-tab";
 import { ContactForm } from "@/components/places/contact-form";
 import { PlaceReviewsTab } from "@/components/places/place-reviews-tab";
 import { ContactButtons } from "@/components/places/contact-buttons";
+import { StickyMobileActions } from "@/components/places/sticky-mobile-actions";
 import { PlaceStatus } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
@@ -361,7 +362,7 @@ export default async function PlacePage({ params }: PageProps) {
   };
 
   return (
-    <div className="relative">
+    <div className="relative pb-20 md:pb-0">
       {/* Données structurées pour SEO et réseaux sociaux */}
       <PlaceSchema place={place} />
 
@@ -463,8 +464,8 @@ export default async function PlacePage({ params }: PageProps) {
                   )}
                 </div>
 
-                {/* Boutons de contact */}
-                <div className="flex flex-wrap items-center gap-2 mt-3 sm:mt-4">
+                {/* Boutons de contact - Masqués sur mobile car dans la sticky bar */}
+                <div className="hidden md:flex flex-wrap items-center gap-2 mt-3 sm:mt-4">
                   {place.phone && (
                     <Button asChild size="sm" variant="outline">
                       <a href={`tel:${place.phone}`}>
@@ -520,7 +521,7 @@ export default async function PlacePage({ params }: PageProps) {
                   data={generatePlaceShareData(place)}
                   variant="outline"
                   size="sm"
-                  className="flex-1 md:flex-initial"
+                  className="hidden md:flex flex-1 md:flex-initial"
                 />
                 <FavoriteButton
                   placeId={place.id}
@@ -1037,6 +1038,17 @@ export default async function PlacePage({ params }: PageProps) {
           </div>
         </div>
       </div>
+      <StickyMobileActions
+        phone={place.phone}
+        website={place.website}
+        directionsUrl={directionsHref}
+        placeName={place.name}
+        shareData={{
+          title: place.name,
+          text: place.summary || `Découvrez ${place.name} à ${place.city}`,
+          url: `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/places/${place.slug}`,
+        }}
+      />
     </div>
   );
 }

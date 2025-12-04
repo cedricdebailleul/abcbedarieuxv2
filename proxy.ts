@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const url = request.url;
 
   // Bloquer UNIQUEMENT les requêtes Google Photos problématiques, pas toute l'API Maps
