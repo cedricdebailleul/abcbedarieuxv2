@@ -49,7 +49,7 @@ export function SafeImage({
       width={width}
       height={height}
       className={className}
-      unoptimized={unoptimized ?? (isExternal(src) || isDataUrl(src))}
+      unoptimized={unoptimized ?? (isExternal(src) || isDataUrl(src) || src.startsWith("/uploads/"))}
       sizes={sizes}
       onError={() => {
         setHasError(true);
