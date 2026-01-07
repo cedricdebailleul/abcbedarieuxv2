@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { deleteAllImages } from "@/lib/cleanup-images";
 import { PLACES_ROOT } from "@/lib/path";
 import { rm } from "node:fs/promises";
-import { Prisma } from "@/lib/generated/prisma";
 import { headers } from "next/headers";
 
 export async function POST(request: Request) {
