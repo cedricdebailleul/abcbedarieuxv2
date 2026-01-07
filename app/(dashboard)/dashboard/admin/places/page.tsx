@@ -19,13 +19,15 @@ import {
   Star,
   Heart,
   Flag,
-  MapPin
+  MapPin,
+  Trash2
 } from "lucide-react";
 import { AdminGuard } from "@/components/auth/admin-guard";
 import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -161,6 +163,11 @@ export default function AdminPlacesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [pendingCount, setPendingCount] = useState(0);
   
+  // États pour la suppression multiple
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Gestion des propriétaires
   const [showOwnerDialog, setShowOwnerDialog] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
@@ -216,6 +223,9 @@ export default function AdminPlacesPage() {
       setPlaces(data.places);
       setTotalPages(data.pagination.pages);
       setPendingCount(data.stats.pendingCount);
+      
+      // Réinitialiser la sélection lors du changement de page/filtre
+      setSelectedIds([]);
     } catch (error: unknown) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       console.error("Erreur:", error);
@@ -275,7 +285,54 @@ export default function AdminPlacesPage() {
     };
   }, [searchUsers, showOwnerDialog, searchUsersAPI]);
 
+  // Selection Logic
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(places.map(p => p.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (checked: boolean, id: string) => {
+    if (checked) {
+      setSelectedIds(prev => [...prev, id]);
+    } else {
+      setSelectedIds(prev => prev.filter(item => item !== id));
+    }
+  };
+
+  const selectedCount = selectedIds.length;
+  const isAllSelected = places.length > 0 && selectedIds.length === places.length;
+
   // Actions
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/places/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      if (!res.ok) throw new Error("Erreur lors de la suppression");
+
+      const result = await res.json();
+      toast.success(result.message || "Suppression effectuée avec succès");
+      
+      setShowDeleteDialog(false);
+      setSelectedIds([]);
+      fetchPlaces();
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Erreur lors de la suppression multiple");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleValidation = async (
     placeId: string,
     action: "approve" | "reject",
@@ -380,13 +437,25 @@ export default function AdminPlacesPage() {
             )}
           </div>
 
-          <Link
-            href="/dashboard/admin/places/new"
-            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            <Building2 className="w-4 h-4 mr-2" />
-            Créer une place
-          </Link>
+          <div className="flex gap-2">
+            {selectedCount > 0 && (
+              <Button 
+                variant="destructive" 
+                onClick={() => setShowDeleteDialog(true)}
+                className="animate-in fade-in"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Supprimer ({selectedCount})
+              </Button>
+            )}
+            <Link
+              href="/dashboard/admin/places/new"
+              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <Building2 className="w-4 h-4 mr-2" />
+              Créer une place
+            </Link>
+          </div>
         </div>
 
         {/* Filtres & recherche */}
@@ -437,6 +506,12 @@ export default function AdminPlacesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox 
+                      checked={isAllSelected}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Place</TableHead>
                   <TableHead>Propriétaire</TableHead>
                   <TableHead>Statut</TableHead>
@@ -448,6 +523,12 @@ export default function AdminPlacesPage() {
               <TableBody>
                 {places.map((place) => (
                   <TableRow key={place.id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedIds.includes(place.id)}
+                        onCheckedChange={(checked) => handleSelectOne(checked as boolean, place.id)}
+                      />
+                    </TableCell>
                     {/* Place info */}
                     <TableCell>
                       <div className="space-y-1">
@@ -632,6 +713,52 @@ export default function AdminPlacesPage() {
           </div>
         )}
       </div>
+
+      {/* Dialog de suppression multiple */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Supprimer {selectedCount} place(s) ?
+            </DialogTitle>
+            <DialogDescription className="pt-2space-y-2">
+              <p>
+                Cette action est <strong>irréversible</strong>.
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-red-600/80 text-sm">
+                <li>Les places sélectionnées seront définitivement supprimées.</li>
+                <li>Tous les événements liés seront supprimés.</li>
+                <li>Tous les articles (posts) liés seront supprimés.</li>
+                <li>Toutes les images associées (local + Cloud) seront détruites.</li>
+              </ul>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                  Suppression...
+                </>
+              ) : (
+                "Confirmer la suppression"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de gestion des propriétaires */}
       <Dialog open={showOwnerDialog} onOpenChange={setShowOwnerDialog}>

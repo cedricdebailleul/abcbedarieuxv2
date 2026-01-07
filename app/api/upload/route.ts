@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       UPLOADS_ROOT,
       type,
       slug || "general",
-      subfolder
+      subfolder || ""
     );
 
     // Créer les dossiers s'ils n'existent pas
