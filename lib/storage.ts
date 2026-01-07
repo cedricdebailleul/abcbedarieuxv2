@@ -52,6 +52,13 @@ function getStorageConfig(): StorageConfig {
       );
       config.provider = "local";
     } else {
+      if (!r2PublicUrl) {
+        console.warn(
+          "⚠️ R2_PUBLIC_URL not set. Using fallback URL which might not be public: " +
+            `https://${r2Bucket}.${r2AccountId}.r2.dev`
+        );
+      }
+
       config.r2 = {
         accountId: r2AccountId,
         accessKeyId: r2AccessKey,
