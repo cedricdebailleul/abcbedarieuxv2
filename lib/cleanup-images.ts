@@ -3,7 +3,7 @@
  * Supprime automatiquement les fichiers locaux ET sur Cloudflare R2
  */
 
-import { deleteFile } from "./storage";
+import { deleteFile, getStorageInfo } from "./storage";
 
 export interface ImageFields {
   logo?: string | null;
@@ -86,9 +86,24 @@ export async function cleanupUnusedImages(
     // Supprimer chaque fichier obsolète (local + R2)
     let deletedCount = 0;
     let failedCount = 0;
+    // Récupérer la config actuelle pour parser les URLs R2
+    const { r2PublicUrl } = getStorageInfo();
+
     for (const fileUrl of imagesToDelete) {
+      let relativePath: string | null = null;
+
+      // Cas 1: Chemin local
       if (fileUrl.startsWith("/uploads/")) {
-        const relativePath = fileUrl.replace(/^\/uploads\//, "").replace(/\\/g, "/");
+        relativePath = fileUrl.replace(/^\/uploads\//, "").replace(/\\/g, "/");
+      }
+      // Cas 2: URL R2 (si configurée)
+      else if (r2PublicUrl && fileUrl.startsWith(r2PublicUrl)) {
+        // Enlève l'URL publique + le slash éventuel
+        relativePath = fileUrl.slice(r2PublicUrl.length);
+        if (relativePath.startsWith("/")) relativePath = relativePath.slice(1);
+      }
+      
+      if (relativePath) {
         try {
           await deleteFile(relativePath);
           console.log(`  ✅ ${relativePath}`);
