@@ -41,6 +41,15 @@ export async function GET(
       },
     });
   } catch {
+    // Si le fichier n'existe pas localement, on tente une redirection vers R2
+    // C'est utile si le volume Docker a été perdu mais que les fichiers sont sur R2
+    const r2Url = process.env.R2_PUBLIC_URL;
+    if (r2Url) {
+      // Normaliser le chemin pour l'URL (forward slashes)
+      const urlPath = path.join(...(await ctx.params).path).replace(/\\/g, "/");
+      return NextResponse.redirect(`${r2Url}/${urlPath}`);
+    }
+
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 }
