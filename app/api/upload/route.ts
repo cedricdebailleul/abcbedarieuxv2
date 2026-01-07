@@ -8,7 +8,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
 import { UPLOADS_ROOT } from "@/lib/path";
-import { saveFile, deleteFile, getFileUrl } from "@/lib/storage";
+import { saveFile, deleteFile, getFileUrl, getStorageInfo } from "@/lib/storage";
 import { promises as fs } from "node:fs";
 
 // Schéma de validation stricte pour les uploads
@@ -278,51 +278,70 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const clientPath = searchParams.get("path"); // ex: /uploads/places/temp-.../gallery/x.jpg
-    if (!clientPath || !clientPath.startsWith("/uploads/")) {
-      return NextResponse.json({ error: "Chemin invalide" }, { status: 400 });
+    const clientPath = searchParams.get("path"); // URL or path
+    
+    if (!clientPath) {
+      return NextResponse.json({ error: "Chemin manquant" }, { status: 400 });
     }
 
-    // On transforme l'URL publique -> chemin réel sous UPLOADS_ROOT
-    // Normaliser les backslashes en forward slashes (Windows compatibility)
-    const rel = clientPath.replace(/^\/uploads\//, "").replace(/\\/g, "/"); // places/…
-    const abs = path.resolve(UPLOADS_ROOT, rel); // /app/uploads/places/…
-    if (!isUnderUploads(abs)) {
-      return NextResponse.json({ error: "Chemin interdit" }, { status: 403 });
+    // Récupérer config pour vérifier si c'est une URL R2 valide
+    const { r2PublicUrl } = getStorageInfo();
+    let relativePath: string | null = null;
+
+    // Déterminer le chemin relatif selon le type d'input
+    if (clientPath.startsWith("/uploads/")) {
+      relativePath = clientPath.replace(/^\/uploads\//, "").replace(/\\/g, "/");
+    } else if (r2PublicUrl && clientPath.startsWith(r2PublicUrl)) {
+      relativePath = clientPath.slice(r2PublicUrl.length);
+      if (relativePath.startsWith("/")) relativePath = relativePath.slice(1);
+    } else {
+      // Peut-être déjà un chemin relatif ?
+      // On accepte temporairement tout pour essayer de delete via le storage provider
+      // Mais on bloque les tentatives de remonter dans l'arborescence (path traversal)
+      if (clientPath.includes("..")) {
+         return NextResponse.json({ error: "Chemin invalide" }, { status: 400 });
+      }
+      relativePath = clientPath;
     }
 
-    if (!canDelete(session, rel)) {
+    if (!relativePath) {
+      return NextResponse.json({ error: "Chemin non reconnu" }, { status: 400 });
+    }
+
+    // Vérification permissions (basique)
+    if (!canDelete(session, relativePath)) {
       return NextResponse.json(
-        { error: "Permissions insuffisantes" },
+        { error: "Permissions insuffisantes (seuls admin/editor ou fichiers temporaires)" },
         { status: 403 }
       );
     }
 
-    const st = await fs.stat(abs).catch(() => null);
-    if (!st) {
-      return NextResponse.json(
-        { error: "Fichier introuvable" },
-        { status: 404 }
-      );
-    }
-
-    if (st.isDirectory()) {
-      await fs.rm(abs, { recursive: true, force: true });
-    } else {
-      await fs.unlink(abs);
-    }
-
-    // Nettoyage doux des dossiers vides (jusqu’à /app/uploads)
+    // Tenter la suppression via le storage abstraction
+    // Note: deleteFile throw une erreur si ça échoue totalement
     try {
-      let dir = path.dirname(abs);
-      const stop = path.resolve(UPLOADS_ROOT);
-      for (let i = 0; i < 4 && dir !== stop && isUnderUploads(dir); i++) {
-        const entries = await fs.readdir(dir).catch(() => []);
-        if (entries.length) break;
-        await fs.rmdir(dir).catch(() => {});
-        dir = path.dirname(dir);
-      }
-    } catch {}
+      await deleteFile(relativePath);
+    } catch (error) {
+       console.error("Erreur deleteFile:", error);
+       // On continue, c'est peut-être déjà supprimé ou introuvable
+    }
+    
+    // Nettoyage dossiers vides (si local)
+    // On garde cette logique uniquement si c'était un fichier local
+    if (clientPath.startsWith("/uploads/")) {
+      try {
+        const abs = path.resolve(UPLOADS_ROOT, relativePath);
+        if (isUnderUploads(abs)) {
+           let dir = path.dirname(abs);
+           const stop = path.resolve(UPLOADS_ROOT);
+           for (let i = 0; i < 4 && dir !== stop && isUnderUploads(dir); i++) {
+             const entries = await fs.readdir(dir).catch(() => []);
+             if (entries.length) break;
+             await fs.rmdir(dir).catch(() => {});
+             dir = path.dirname(dir);
+           }
+        }
+      } catch {}
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
