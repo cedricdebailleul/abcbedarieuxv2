@@ -538,9 +538,25 @@ export async function getPlaceCategoriesHierarchyAction(): Promise<
       description: string | null;
       icon: string | null;
       color: string | null;
+      bgColor: string | null;
+      textColor: string | null;
+      borderColor: string | null;
       sortOrder: number;
       isActive: boolean;
-      children: { id: string; name: string; slug: string; description: string | null; icon: string | null; color: string | null; sortOrder: number; isActive: boolean }[];
+      children: { 
+        id: string; 
+        name: string; 
+        slug: string; 
+        description: string | null; 
+        icon: string | null; 
+        color: string | null; 
+        bgColor: string | null;
+        textColor: string | null;
+        borderColor: string | null;
+        sortOrder: number; 
+        isActive: boolean;
+        children?: any[]; // Allow further nesting for export recursively
+      }[];
     }[]
   >
 > {

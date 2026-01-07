@@ -2,79 +2,73 @@
 
 import { useEffect, useState } from "react";
 import {
-  Edit,
-  Eye,
   Plus,
-  ChevronRight,
-  ChevronDown,
-  GripVertical,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import * as LucideIcons from "lucide-react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
-import { getPlaceCategoriesHierarchyAction } from "@/actions/place-category";
-import { cn } from "@/lib/utils";
+import { getPlaceCategoriesHierarchyAction, reorderPlaceCategoriesAction } from "@/actions/place-category";
+import { SortableCategoryList } from "./sortable-category-list";
+import { SortableCategoryItem, Category } from "./sortable-category-item";
 
 export function PlaceCategoryHierarchy() {
-  interface Category {
-    id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    isActive: boolean;
-    sortOrder: number;
-    color: string | null;
-    icon: string | null;
-    children?: Category[];
-  }
-
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   useEffect(() => {
     const loadHierarchy = async () => {
       try {
         const result = await getPlaceCategoriesHierarchyAction();
         if (result.success) {
-          setCategories(
-            result.data!.map((cat: Category) => ({
-              id: cat.id,
-              name: cat.name,
-              slug: cat.slug,
-              description: cat.description,
-              isActive: cat.isActive,
-              sortOrder: cat.sortOrder,
-              color: cat.color,
-              icon: cat.icon,
-              children:
-                cat.children?.map((child: Category) => ({
-                  ...child,
-                  children:
-                    child.children?.map((grandChild: Category) => ({
-                      ...grandChild,
-                      children: grandChild.children || [],
-                    })) || [],
-                })) || [],
-            }))
-          );
+            // Function to recursively map data to match Category interface if needed
+            // Assuming the action returns structure compatible with our interface
+            // But we need to ensure recursive children mapping is correct
+             const mapCategories = (cats: any[]): Category[] => {
+                return cats.map(cat => ({
+                    ...cat,
+                    children: cat.children ? mapCategories(cat.children) : []
+                }));
+             };
+
+          const mappedCategories = mapCategories(result.data!);
+          setCategories(mappedCategories);
+          
           // Ouvrir automatiquement les catégories qui ont des enfants
-          const itemsWithChildren = result
-            .data!.filter(
-              (cat: Category) =>
-                Array.isArray(cat.children) && cat.children.length > 0
-            )
-            .map((cat: Category) => cat.id);
+          const itemsWithChildren: string[] = [];
+          const findItemsWithChildren = (cats: Category[]) => {
+            for (const cat of cats) {
+                if (cat.children && cat.children.length > 0) {
+                    itemsWithChildren.push(cat.id);
+                    findItemsWithChildren(cat.children);
+                }
+            }
+          };
+          findItemsWithChildren(mappedCategories);
           setOpenItems(new Set(itemsWithChildren));
         } else {
           toast.error(result.error || "Erreur lors du chargement");
@@ -98,146 +92,100 @@ export function PlaceCategoryHierarchy() {
     }
     setOpenItems(newOpenItems);
   };
+  
+  // Helper to find a category by ID (recursive)
+    const findCategory = (id: string, cats: Category[]): Category | undefined => {
+        for (const cat of cats) {
+            if (cat.id === id) return cat;
+            if (cat.children) {
+                const found = findCategory(id, cat.children);
+                if (found) return found;
+            }
+        }
+        return undefined;
+    };
 
-  // Rendu de l'icône de catégorie
-  const renderCategoryIcon = (icon: string | null, color: string | null) => {
-    if (!icon) return null;
+    // Helper to find the LIST containing a specific item ID
+    const findContainerList = (id: string, cats: Category[]): Category[] | undefined => {
+        // Build a flat map of parent -> children relationship?
+        // Or just search recursively
+        
+        // Check top level
+        if (cats.some(c => c.id === id)) return cats;
 
-    // Vérifier si c'est un emoji
-    if (
-      icon.length <= 4 &&
-      /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(
-        icon
-      )
-    ) {
-      return <span className="text-lg">{icon}</span>;
-    }
+        for (const cat of cats) {
+            if (cat.children) {
+                const found = findContainerList(id, cat.children);
+                if (found) return found;
+            }
+        }
+        return undefined;
+    };
 
-    // Vérifier si c'est une icône Lucide
-    const IconComponent = (
-      LucideIcons as unknown as Record<string, React.FC<{ className?: string }>>
-    )[icon];
-    if (IconComponent) {
-      return (
-        <span style={{ color: color || undefined }}>
-          <IconComponent className="w-5 h-5" />
-        </span>
-      );
-    }
 
-    return null;
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
   };
 
-  // Rendu d'une catégorie avec ses enfants
-  const renderCategory = (category: Category, level: number = 0) => {
-    const hasChildren = category.children && category.children.length > 0;
-    const isOpen = openItems.has(category.id);
-    const indentClass = level > 0 ? `ml-${level * 6}` : "";
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
 
-    return (
-      <div key={category.id} className="space-y-1">
-        {/* Catégorie principale */}
-        <Collapsible
-          open={isOpen}
-          onOpenChange={() => hasChildren && toggleItem(category.id)}
-        >
-          <div
-            className={cn(
-              "flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors",
-              indentClass
-            )}
-          >
-            {/* Handle de drag (pour futur drag & drop) */}
-            <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
+    if (!over) return;
+    if (active.id === over.id) return;
 
-            {/* Icône expand/collapse */}
-            {hasChildren ? (
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  {isOpen ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-            ) : (
-              <div className="w-6" />
-            )}
+    // Find which list the active item belongs to
+    const activeList = findContainerList(String(active.id), categories);
+    // Find which list the over item belongs to
+    const overList = findContainerList(String(over.id), categories);
 
-            {/* Icône de la catégorie */}
-            <div className="flex-shrink-0">
-              {renderCategoryIcon(category.icon, category.color)}
-            </div>
+    // We only support sorting within the same list (siblings)
+    if (!activeList || !overList || activeList !== overList) {
+        // If they are different lists, we don't support moving between parents yet as per plan
+        return;
+    }
 
-            {/* Informations de la catégorie */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-medium truncate">{category.name}</h3>
-                {!category.isActive && (
-                  <Badge variant="secondary">Inactive</Badge>
-                )}
-              </div>
-              {category.description && (
-                <p className="text-sm text-muted-foreground truncate">
-                  {category.description}
-                </p>
-              )}
-              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                <span>Ordre: {category.sortOrder}</span>
-                {hasChildren && (
-                  <span>{category.children?.length || 0} sous-catégorie(s)</span>
-                )}
-              </div>
-            </div>
+    // Indices
+    const oldIndex = activeList.findIndex((c) => c.id === active.id);
+    const newIndex = activeList.findIndex((c) => c.id === over.id);
 
-            {/* Badge de couleur */}
-            <div
-              className="w-4 h-4 rounded border-2"
-              style={{
-                backgroundColor: category.color || "#6B7280",
-                borderColor: category.color || "#6B7280",
-              }}
-            />
+    if (oldIndex !== -1 && newIndex !== -1) {
+       // Optimistic update
+       const newOrder = arrayMove(activeList, oldIndex, newIndex);
+        
+       // We need to update the state deeply
+       // Recursive function to update the specific list in the state tree
+       const updateStateRecursively = (cats: Category[]): Category[] => {
+            // If this is the list we modified
+            if (cats === activeList) {
+                return newOrder;
+            }
+            // Otherwise check children of each
+            return cats.map(cat => ({
+                ...cat,
+                children: cat.children ? updateStateRecursively(cat.children) : []
+            }));
+       };
 
-            {/* Actions */}
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href={`/dashboard/admin/place-categories/${category.id}`}>
-                  <Eye className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link
-                  href={`/dashboard/admin/place-categories/${category.id}/edit`}
-                >
-                  <Edit className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link
-                  href={`/dashboard/admin/place-categories/new?parentId=${category.id}`}
-                >
-                  <Plus className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
+       const newState = updateStateRecursively(categories);
+       setCategories(newState);
 
-          {/* Sous-catégories */}
-          {hasChildren && (
-            <CollapsibleContent className="space-y-1">
-              <div className="ml-6 border-l-2 border-muted pl-4 space-y-1">
-                {category.children?.map((child: Category) =>
-                  renderCategory(child, level + 1)
-                )}
-              </div>
-            </CollapsibleContent>
-          )}
-        </Collapsible>
-      </div>
-    );
+       // Call Server Action
+       // Get the IDs in the new order
+       const orderedIds = newOrder.map(c => c.id);
+       try {
+           const result = await reorderPlaceCategoriesAction(orderedIds);
+           if (!result.success) {
+             toast.error("Erreur lors de la sauvegarde de l'ordre");
+             // Revert state if needed? (Not implementing complex revert logic for now)
+           }
+       } catch (err) {
+           toast.error("Erreur de connexion");
+       }
+    }
   };
+  
+  const activeCategory = activeId ? findCategory(activeId, categories) : null;
 
   if (loading) {
     return (
@@ -264,36 +212,72 @@ export function PlaceCategoryHierarchy() {
   }
 
   return (
-    <div className="space-y-2">
-      {/* En-tête avec actions globales */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-sm text-muted-foreground">
-          {categories.length} catégorie(s) principale(s)
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setOpenItems(new Set(categories.map((cat) => cat.id)))
-            }
-          >
-            Tout développer
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setOpenItems(new Set())}
-          >
-            Tout réduire
-          </Button>
-        </div>
-      </div>
-
-      {/* Liste hiérarchique */}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <div className="space-y-2">
-        {categories.map((category) => renderCategory(category))}
+        {/* En-tête avec actions globales */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-sm text-muted-foreground">
+            {categories.length} catégorie(s) principale(s)
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                  const allIds: string[] = [];
+                  const collectIds = (cats: Category[]) => {
+                      cats.forEach(c => {
+                          allIds.push(c.id);
+                          if(c.children) collectIds(c.children);
+                      });
+                  };
+                  collectIds(categories);
+                  setOpenItems(new Set(allIds));
+              }}
+            >
+              Tout développer
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setOpenItems(new Set())}
+            >
+              Tout réduire
+            </Button>
+          </div>
+        </div>
+
+        {/* Liste hiérarchique */}
+        <div className="space-y-2">
+           <SortableCategoryList 
+                categories={categories} 
+                level={0} 
+                openItems={openItems} 
+                onToggle={toggleItem} 
+           />
+        </div>
       </div>
-    </div>
+      
+       {/* Overlay pour le drag */}
+      {createPortal(
+        <DragOverlay>
+            {activeCategory ? (
+                 <SortableCategoryItem 
+                    category={activeCategory} 
+                    level={0} // Indent doesn't matter much in overlay
+                    isOpen={false} // Collapsed while dragging is usually cleaner
+                    onToggle={() => {}} 
+                 />
+            ) : null}
+        </DragOverlay>,
+        document.body
+      )}
+    </DndContext>
   );
 }
+

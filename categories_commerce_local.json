@@ -1,0 +1,440 @@
+[
+  {
+    "name": "Alimentation",
+    "slug": "alimentation",
+    "description": "Boulangeries, boucheries, primeurs, épiceries fines et supermarchés.",
+    "icon": "shopping-basket",
+    "color": "#10B981",
+    "bgColor": "bg-emerald-100",
+    "textColor": "text-emerald-800",
+    "children": [
+      {
+        "name": "Boulangerie & Pâtisserie",
+        "slug": "boulangerie-patisserie",
+        "icon": "croissant",
+        "color": "#10B981",
+        "bgColor": "bg-emerald-100",
+        "textColor": "text-emerald-800"
+      },
+      {
+        "name": "Boucherie & Charcuterie",
+        "slug": "boucherie-charcuterie",
+        "icon": "beef",
+        "color": "#10B981",
+        "bgColor": "bg-emerald-100",
+        "textColor": "text-emerald-800"
+      },
+      {
+        "name": "Fruits & Légumes",
+        "slug": "fruits-et-legumes",
+        "icon": "carrot",
+        "color": "#10B981",
+        "bgColor": "bg-emerald-100",
+        "textColor": "text-emerald-800"
+      },
+      {
+        "name": "Épicerie & Supermarché",
+        "slug": "epicerie-supermarche",
+        "icon": "shopping-cart",
+        "color": "#10B981",
+        "bgColor": "bg-emerald-100",
+        "textColor": "text-emerald-800"
+      },
+      {
+        "name": "Vins & Spiritueux",
+        "slug": "vins-et-spiritueux",
+        "icon": "wine",
+        "color": "#10B981",
+        "bgColor": "bg-emerald-100",
+        "textColor": "text-emerald-800"
+      }
+    ]
+  },
+  {
+    "name": "Restauration",
+    "slug": "restauration",
+    "description": "Restaurants, cafés, brasseries, fast-food et traiteurs.",
+    "icon": "utensils",
+    "color": "#F59E0B",
+    "bgColor": "bg-amber-100",
+    "textColor": "text-amber-800",
+    "children": [
+      {
+        "name": "Restaurant Traditionnel",
+        "slug": "restaurant-traditionnel",
+        "icon": "chef-hat",
+        "color": "#F59E0B",
+        "bgColor": "bg-amber-100",
+        "textColor": "text-amber-800"
+      },
+      {
+        "name": "Pizzeria & Italien",
+        "slug": "pizzeria-italien",
+        "icon": "pizza",
+        "color": "#F59E0B",
+        "bgColor": "bg-amber-100",
+        "textColor": "text-amber-800"
+      },
+      {
+        "name": "Restauration Rapide",
+        "slug": "restauration-rapide",
+        "icon": "sandwich",
+        "color": "#F59E0B",
+        "bgColor": "bg-amber-100",
+        "textColor": "text-amber-800"
+      },
+      {
+        "name": "Café & Bar",
+        "slug": "cafe-et-bar",
+        "icon": "coffee",
+        "color": "#F59E0B",
+        "bgColor": "bg-amber-100",
+        "textColor": "text-amber-800"
+      },
+      {
+        "name": "Traiteur",
+        "slug": "traiteur",
+        "icon": "soup",
+        "color": "#F59E0B",
+        "bgColor": "bg-amber-100",
+        "textColor": "text-amber-800"
+      }
+    ]
+  },
+  {
+    "name": "Mode & Accessoires",
+    "slug": "mode-et-accessoires",
+    "description": "Vêtements, chaussures, maroquinerie, bijoux et accessoires.",
+    "icon": "shirt",
+    "color": "#EC4899",
+    "bgColor": "bg-pink-100",
+    "textColor": "text-pink-800",
+    "children": [
+      {
+        "name": "Vêtements Femme",
+        "slug": "vetements-femme",
+        "icon": "shirt",
+        "color": "#EC4899",
+        "bgColor": "bg-pink-100",
+        "textColor": "text-pink-800"
+      },
+      {
+        "name": "Vêtements Homme",
+        "slug": "vetements-homme",
+        "icon": "shirt",
+        "color": "#EC4899",
+        "bgColor": "bg-pink-100",
+        "textColor": "text-pink-800"
+      },
+      {
+        "name": "Vêtements Enfant",
+        "slug": "vetements-enfant",
+        "icon": "baby",
+        "color": "#EC4899",
+        "bgColor": "bg-pink-100",
+        "textColor": "text-pink-800"
+      },
+      {
+        "name": "Chaussures",
+        "slug": "chaussures",
+        "icon": "footprints",
+        "color": "#EC4899",
+        "bgColor": "bg-pink-100",
+        "textColor": "text-pink-800"
+      },
+      {
+        "name": "Bijouterie & Joaillerie",
+        "slug": "bijouterie-joaillerie",
+        "icon": "gem",
+        "color": "#EC4899",
+        "bgColor": "bg-pink-100",
+        "textColor": "text-pink-800"
+      }
+    ]
+  },
+  {
+    "name": "Beauté & Bien-être",
+    "slug": "beaute-et-bien-etre",
+    "description": "Coiffeurs, instituts de beauté, spas, parfumeries et soins.",
+    "icon": "scissors",
+    "color": "#8B5CF6",
+    "bgColor": "bg-violet-100",
+    "textColor": "text-violet-800",
+    "children": [
+      {
+        "name": "Coiffure",
+        "slug": "coiffure",
+        "icon": "scissors",
+        "color": "#8B5CF6",
+        "bgColor": "bg-violet-100",
+        "textColor": "text-violet-800"
+      },
+      {
+        "name": "Institut de Beauté",
+        "slug": "institut-de-beaute",
+        "icon": "sparkles",
+        "color": "#8B5CF6",
+        "bgColor": "bg-violet-100",
+        "textColor": "text-violet-800"
+      },
+      {
+        "name": "Parfumerie",
+        "slug": "parfumerie",
+        "icon": "spray-can",
+        "color": "#8B5CF6",
+        "bgColor": "bg-violet-100",
+        "textColor": "text-violet-800"
+      },
+      {
+        "name": "Spa & Massage",
+        "slug": "spa-et-massage",
+        "icon": "flower",
+        "color": "#8B5CF6",
+        "bgColor": "bg-violet-100",
+        "textColor": "text-violet-800"
+      }
+    ]
+  },
+  {
+    "name": "Maison & Déco",
+    "slug": "maison-et-deco",
+    "description": "Ameublement, décoration, bricolage, jardinage et électroménager.",
+    "icon": "armchair",
+    "color": "#6366F1",
+    "bgColor": "bg-indigo-100",
+    "textColor": "text-indigo-800",
+    "children": [
+      {
+        "name": "Ameublement",
+        "slug": "ameublement",
+        "icon": "sofa",
+        "color": "#6366F1",
+        "bgColor": "bg-indigo-100",
+        "textColor": "text-indigo-800"
+      },
+      {
+        "name": "Décoration",
+        "slug": "decoration",
+        "icon": "lamp",
+        "color": "#6366F1",
+        "bgColor": "bg-indigo-100",
+        "textColor": "text-indigo-800"
+      },
+      {
+        "name": "Bricolage & Quincaillerie",
+        "slug": "bricolage-quincaillerie",
+        "icon": "hammer",
+        "color": "#6366F1",
+        "bgColor": "bg-indigo-100",
+        "textColor": "text-indigo-800"
+      },
+      {
+        "name": "Jardin & Fleurs",
+        "slug": "jardin-fleurs",
+        "icon": "flower-2",
+        "color": "#6366F1",
+        "bgColor": "bg-indigo-100",
+        "textColor": "text-indigo-800"
+      },
+      {
+        "name": "Électroménager & Hifi",
+        "slug": "electromenager-hifi",
+        "icon": "tv",
+        "color": "#6366F1",
+        "bgColor": "bg-indigo-100",
+        "textColor": "text-indigo-800"
+      }
+    ]
+  },
+  {
+    "name": "Santé",
+    "slug": "sante",
+    "description": "Pharmacies, opticiens, audioprothésistes et matériel médical.",
+    "icon": "heart-pulse",
+    "color": "#EF4444",
+    "bgColor": "bg-red-100",
+    "textColor": "text-red-800",
+    "children": [
+      {
+        "name": "Pharmacie",
+        "slug": "pharmacie",
+        "icon": "pill",
+        "color": "#EF4444",
+        "bgColor": "bg-red-100",
+        "textColor": "text-red-800"
+      },
+      {
+        "name": "Opticien",
+        "slug": "opticien",
+        "icon": "glasses",
+        "color": "#EF4444",
+        "bgColor": "bg-red-100",
+        "textColor": "text-red-800"
+      },
+      {
+        "name": "Audioprothésiste",
+        "slug": "audioprothesiste",
+        "icon": "ear",
+        "color": "#EF4444",
+        "bgColor": "bg-red-100",
+        "textColor": "text-red-800"
+      },
+      {
+        "name": "Matériel Médical",
+        "slug": "materiel-medical",
+        "icon": "stethoscope",
+        "color": "#EF4444",
+        "bgColor": "bg-red-100",
+        "textColor": "text-red-800"
+      }
+    ]
+  },
+  {
+    "name": "Services",
+    "slug": "services",
+    "description": "Banques, assurances, immobilier, pressing, cordonnerie et agences.",
+    "icon": "briefcase",
+    "color": "#3B82F6",
+    "bgColor": "bg-blue-100",
+    "textColor": "text-blue-800",
+    "children": [
+      {
+        "name": "Banque & Assurance",
+        "slug": "banque-assurance",
+        "icon": "landmark",
+        "color": "#3B82F6",
+        "bgColor": "bg-blue-100",
+        "textColor": "text-blue-800"
+      },
+      {
+        "name": "Immobilier",
+        "slug": "immobilier",
+        "icon": "home",
+        "color": "#3B82F6",
+        "bgColor": "bg-blue-100",
+        "textColor": "text-blue-800"
+      },
+      {
+        "name": "Pressing & Blanchisserie",
+        "slug": "pressing-blanchisserie",
+        "icon": "shirt",
+        "color": "#3B82F6",
+        "bgColor": "bg-blue-100",
+        "textColor": "text-blue-800"
+      },
+      {
+        "name": "Cordonnerie & Clés",
+        "slug": "cordonnerie-cles",
+        "icon": "key",
+        "color": "#3B82F6",
+        "bgColor": "bg-blue-100",
+        "textColor": "text-blue-800"
+      }
+    ]
+  },
+  {
+    "name": "Loisirs & Culture",
+    "slug": "loisirs-et-culture",
+    "description": "Librairies, magasins de sport, jouets, musique et multimédia.",
+    "icon": "gamepad-2",
+    "color": "#F97316",
+    "bgColor": "bg-orange-100",
+    "textColor": "text-orange-800",
+    "children": [
+      {
+        "name": "Librairie & Presse",
+        "slug": "librairie-presse",
+        "icon": "book-open",
+        "color": "#F97316",
+        "bgColor": "bg-orange-100",
+        "textColor": "text-orange-800"
+      },
+      {
+        "name": "Sport",
+        "slug": "sport",
+        "icon": "trophy",
+        "color": "#F97316",
+        "bgColor": "bg-orange-100",
+        "textColor": "text-orange-800"
+      },
+      {
+        "name": "Jouets & Jeux",
+        "slug": "jouets-jeux",
+        "icon": "puzzle",
+        "color": "#F97316",
+        "bgColor": "bg-orange-100",
+        "textColor": "text-orange-800"
+      },
+      {
+        "name": "Informatique & Téléphonie",
+        "slug": "informatique-telephonie",
+        "icon": "smartphone",
+        "color": "#F97316",
+        "bgColor": "bg-orange-100",
+        "textColor": "text-orange-800"
+      }
+    ]
+  },
+  {
+    "name": "Automobile & Moto",
+    "slug": "automobile-et-moto",
+    "description": "Garages, concessions, stations-lavage et accessoires auto-moto.",
+    "icon": "car",
+    "color": "#64748B",
+    "bgColor": "bg-slate-100",
+    "textColor": "text-slate-800",
+    "children": [
+      {
+        "name": "Garage & Entretien",
+        "slug": "garage-entretien",
+        "icon": "wrench",
+        "color": "#64748B",
+        "bgColor": "bg-slate-100",
+        "textColor": "text-slate-800"
+      },
+      {
+        "name": "Station Service & Lavage",
+        "slug": "station-service-lavage",
+        "icon": "fuel",
+        "color": "#64748B",
+        "bgColor": "bg-slate-100",
+        "textColor": "text-slate-800"
+      }
+    ]
+  },
+  {
+    "name": "Artisans",
+    "slug": "artisans",
+    "description": "Plombiers, électriciens, menuisiers et artisans d'art.",
+    "icon": "hammer",
+    "color": "#A16207",
+    "bgColor": "bg-yellow-100",
+    "textColor": "text-yellow-800",
+    "children": [
+      {
+        "name": "Plomberie & Chauffage",
+        "slug": "plomberie-chauffage",
+        "icon": "droplet",
+        "color": "#A16207",
+        "bgColor": "bg-yellow-100",
+        "textColor": "text-yellow-800"
+      },
+      {
+        "name": "Électricité",
+        "slug": "electricite",
+        "icon": "zap",
+        "color": "#A16207",
+        "bgColor": "bg-yellow-100",
+        "textColor": "text-yellow-800"
+      },
+      {
+        "name": "Menuiserie",
+        "slug": "menuiserie",
+        "icon": "ruler",
+        "color": "#A16207",
+        "bgColor": "bg-yellow-100",
+        "textColor": "text-yellow-800"
+      }
+    ]
+  }
+]

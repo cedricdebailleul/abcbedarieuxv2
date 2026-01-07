@@ -21,14 +21,13 @@ export const metadata: Metadata = {
 };
 
 interface PlaceCategoryDetailsPageProps {
-  params: {
+  params: Promise<{
     categoryId: string;
-  };
+  }>;
 }
 
-export default async function PlaceCategoryDetailsPage({
-  params,
-}: PlaceCategoryDetailsPageProps) {
+export default async function PlaceCategoryDetailsPage(props: PlaceCategoryDetailsPageProps) {
+  const params = await props.params;
   // Charger la catégorie
   const result = await getPlaceCategoryAction(params.categoryId);
 

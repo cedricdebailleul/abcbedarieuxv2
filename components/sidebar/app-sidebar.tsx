@@ -31,12 +31,14 @@ import { authClient } from "@/lib/auth-client";
 import Logo from "../logo";
 
 const data = {
-  navMain: [
+  general: [
     {
       title: "Dashboard",
       url: "/dashboard",
       icon: IconDashboard,
     },
+  ],
+  content: [
     {
       title: "Places",
       url: "/dashboard/places",
@@ -67,6 +69,8 @@ const data = {
         },
       ],
     },
+  ],
+  user: [
     {
       title: "Favoris",
       url: "/dashboard/favorites",
@@ -82,95 +86,79 @@ const data = {
       url: "/dashboard/association",
       icon: IconBuilding,
     },
+  ],
+  adminAll: [
     {
-      title: "Administration",
-      url: "#",
-      icon: IconSettings,
-      items: [
-        {
-          title: "Vue d'ensemble",
-          url: "/dashboard/admin",
-        },
-        {
-          title: "Utilisateurs",
-          url: "/dashboard/admin/users",
-        },
-        {
-          title: "Badges",
-          url: "/dashboard/admin/badges",
-        },
-        {
-          title: "Places",
-          url: "/dashboard/admin/places",
-        },
-        {
-          title: "Catégories",
-          url: "/dashboard/admin/place-categories",
-        },
-        {
-          title: "Réclamations",
-          url: "/dashboard/admin/claims",
-        },
-        {
-          title: "Newsletter",
-          url: "/dashboard/admin/newsletter",
-        },
-        {
-          title: "Actions",
-          url: "/dashboard/admin/actions",
-        },
-        {
-          title: "Partenaires",
-          url: "/dashboard/admin/partners",
-        },
-        {
-          title: "Notre Histoire",
-          url: "/dashboard/admin/history",
-        },
-        {
-          title: "Sauvegarde",
-          url: "/dashboard/admin/export",
-        },
-        {
-          title: "Chatbot WhatsApp",
-          url: "/dashboard/admin/whatsapp",
-        },
-      ],
+      title: "Vue d'ensemble",
+      url: "/dashboard/admin",
     },
     {
-      title: "ABC",
-      url: "#",
-      icon: IconBuilding,
-      items: [
-        {
-          title: "Vue d'ensemble",
-          url: "/dashboard/admin/abc",
-        },
-        {
-          title: "Membres",
-          url: "/dashboard/admin/abc/members",
-        },
-        {
-          title: "Paiements",
-          url: "/dashboard/admin/abc/payments",
-        },
-        {
-          title: "Réunions",
-          url: "/dashboard/admin/abc/meetings",
-        },
-        {
-          title: "Documents",
-          url: "/dashboard/admin/abc/documents",
-        },
-        {
-          title: "Bulletins",
-          url: "/dashboard/admin/abc/bulletins",
-        },
-        {
-          title: "Inscriptions",
-          url: "/dashboard/admin/abc/registrations",
-        },
-      ],
+      title: "Utilisateurs",
+      url: "/dashboard/admin/users",
+    },
+    {
+      title: "Places (Global)",
+      url: "/dashboard/admin/places",
+    },
+    {
+      title: "Catégories",
+      url: "/dashboard/admin/place-categories",
+    },
+    {
+      title: "Réclamations",
+      url: "/dashboard/admin/claims",
+    },
+    {
+      title: "Newsletter",
+      url: "/dashboard/admin/newsletter",
+    },
+    {
+      title: "Actions",
+      url: "/dashboard/admin/actions",
+    },
+    {
+      title: "Partenaires",
+      url: "/dashboard/admin/partners",
+    },
+    {
+      title: "Notre Histoire",
+      url: "/dashboard/admin/history",
+    },
+    {
+      title: "Chatbot WhatsApp",
+      url: "/dashboard/admin/whatsapp",
+    },
+    {
+      title: "Sauvegarde",
+      url: "/dashboard/admin/export",
+    },
+    {
+      title: "Association Vue d'ensemble",
+      url: "/dashboard/admin/abc",
+    },
+    {
+      title: "Assoc. Membres",
+      url: "/dashboard/admin/abc/members",
+    },
+    {
+      title: "Assoc. Paiements",
+      url: "/dashboard/admin/abc/payments",
+    },
+    {
+      title: "Assoc. Réunions",
+      url: "/dashboard/admin/abc/meetings",
+    },
+    {
+      title: "Assoc. Documents",
+      url: "/dashboard/admin/abc/documents",
+    },
+    {
+      title: "Assoc. Bulletins",
+      url: "/dashboard/admin/abc/bulletins",
+    },
+    {
+      title: "Assoc. Inscriptions",
+      url: "/dashboard/admin/abc/registrations",
     },
   ],
   navSecondary: [
@@ -197,56 +185,48 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = authClient.useSession();
 
-  // Filtrer les items de navigation selon le rôle utilisateur
-  const filteredNavMain = data.navMain
-    .filter((item) => {
-      // Si c'est le menu Administration ou ABC, ne l'afficher que pour les admins et modérateurs
-      if (item.title === "Administration" || item.title === "ABC") {
-        return (
-          session?.user?.role &&
-          ["admin", "moderator"].includes(safeUserCast(session.user).role)
-        );
-      }
-      return true;
-    })
-    .map((item) => {
-      // Filtrer les sous-items d'administration selon les permissions
-      if (item.title === "Administration" && item.items) {
-        const filteredItems = item.items.filter((subItem) => {
-          // Vue d'ensemble : admin et modérateur
-          if (subItem.title === "Vue d'ensemble") {
-            return (
-              session?.user?.role &&
-              ["admin", "moderator"].includes(safeUserCast(session.user).role)
-            );
-          }
-          // Newsletter, Badges, Partenaires et Sauvegarde : admin seulement
-          if (
-            ["Newsletter", "Badges", "Partenaires", "Sauvegarde"].includes(
-              subItem.title
-            )
-          ) {
-            return session?.user?.role === "admin";
-          }
-          // Utilisateurs, Réclamations et Places : admin et modérateur
-          if (
-            ["Utilisateurs", "Réclamations", "Places"].includes(subItem.title)
-          ) {
-            return (
-              session?.user?.role &&
-              ["admin", "moderator"].includes(safeUserCast(session.user).role)
-            );
-          }
-          // Catégories : tous les rôles admin/moderator
-          return (
-            session?.user?.role &&
-            ["admin", "moderator"].includes(safeUserCast(session.user).role)
-          );
-        });
-        return { ...item, items: filteredItems };
-      }
-      return item;
+  const user = session?.user ? safeUserCast(session.user) : null;
+  const isAdminOrMod = user && ["admin", "moderator"].includes(user.role);
+  const isAdmin = user?.role === "admin";
+
+  // Construction des groupes de navigation
+  const groups: {
+    title: string;
+    items: {
+      title: string;
+      url: string;
+      icon?: any;
+      items?: { title: string; url: string }[];
+    }[];
+  }[] = [
+    {
+      title: "Général",
+      items: data.general,
+    },
+    {
+      title: "Contenu",
+      items: data.content,
+    },
+    {
+      title: "Mon Espace",
+      items: data.user,
+    },
+  ];
+
+  // Groupes Admin
+  if (isAdminOrMod) {
+    groups.push({
+      title: "Système",
+      items: [
+        {
+          title: "Administration",
+          url: "#",
+          icon: IconSettings,
+          items: data.adminAll, // Utilise la liste consolidée
+        }
+      ],
     });
+  }
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -266,7 +246,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={filteredNavMain} />
+        <NavMain groups={groups} />
         <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

@@ -30,6 +30,7 @@ export function PlaceFormMap({
 
     // Attendre que Google Maps soit disponible
     const checkGoogle = async () => {
+      // Attendre que l'objet global google.maps soit défini (le script doit être chargé)
       if (
         typeof window === "undefined" ||
         !window.google ||
@@ -39,9 +40,16 @@ export function PlaceFormMap({
         return;
       }
 
-      // Google Maps est disponible, créer la carte
+      // Google Maps est disponible, charger les bibliothèques nécessaires
       if (mapRef.current) {
         try {
+          const { Map } = (await window.google.maps.importLibrary(
+            "maps"
+          )) as google.maps.MapsLibrary;
+          const { AdvancedMarkerElement } = (await window.google.maps.importLibrary(
+            "marker"
+          )) as google.maps.MarkerLibrary;
+
           const center = {
             lat: latitude || 43.6108,
             lng: longitude || 3.1612,
@@ -58,10 +66,7 @@ export function PlaceFormMap({
             mapConfig.mapId = env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
           }
 
-          const map = new window.google.maps.Map(mapRef.current, mapConfig);
-
-          // Load the marker library
-          const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+          const map = new Map(mapRef.current, mapConfig);
 
           const marker = new AdvancedMarkerElement({
             position: center,

@@ -11,6 +11,8 @@ import { PlaceCategoriesTable } from "./_components/place-categories-table";
 import { PlaceCategoryStatsCards } from "./_components/place-category-stats-cards";
 import { PlaceCategoryFilters } from "./_components/place-category-filters";
 import { PlaceCategoryHierarchy } from "./_components/place-category-hierarchy";
+import { PlaceCategoryImportDialog } from "./_components/place-category-import-dialog";
+import { PlaceCategoryExportButton } from "./_components/place-category-export-button";
 
 export const metadata: Metadata = {
   title: "Catégories de places | Administration",
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 interface PlaceCategoriesPageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string;
     limit?: string;
     search?: string;
@@ -27,12 +29,12 @@ interface PlaceCategoriesPageProps {
     sortBy?: string;
     sortOrder?: string;
     view?: "list" | "hierarchy";
-  };
+  }>;
 }
 
-export default function PlaceCategoriesPage({
-  searchParams,
-}: PlaceCategoriesPageProps) {
+export default async function PlaceCategoriesPage(props: PlaceCategoriesPageProps) {
+  const searchParams = await props.searchParams;
+
   // Construire les filtres depuis les paramètres de recherche
   const filters = {
     page: Number.parseInt(searchParams.page || "1"),
@@ -70,6 +72,8 @@ export default function PlaceCategoriesPage({
           </div>
         </div>
         <div className="flex gap-2">
+          <PlaceCategoryExportButton />
+          <PlaceCategoryImportDialog />
           <Button asChild variant="outline">
             <Link href="/dashboard/admin/place-categories/stats">
               <BarChart3 className="mr-2 h-4 w-4" />
