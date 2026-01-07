@@ -74,6 +74,14 @@ function getStorageConfig(): StorageConfig {
 
 const storageConfig = getStorageConfig();
 
+console.log("🚀 [Storage] Config Loaded:", {
+  provider: storageConfig.provider,
+  env_provider: process.env.STORAGE_PROVIDER,
+  has_r2_config: !!storageConfig.r2,
+  r2_public_url: storageConfig.r2?.publicUrl,
+  r2_bucket: storageConfig.r2?.bucketName,
+});
+
 // ============================================================================
 // LOCAL STORAGE
 // ============================================================================
