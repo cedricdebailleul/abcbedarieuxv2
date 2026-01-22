@@ -15,7 +15,9 @@
       "Bash(git restore:*)",
       "Bash(pnpm prisma db push:*)",
       "Bash(xargs sed:*)",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs"
     ],
     "deny": [],
     "ask": []

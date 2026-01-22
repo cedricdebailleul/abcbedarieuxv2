@@ -295,3 +295,35 @@ Gmail's privacy features can affect tracking accuracy:
 - Newsletter tracking uses multiple methods due to Gmail privacy features
 - Force deletion feature requires admin role and should be used with caution
 - Environment-based URL detection handles localhost vs production tracking URLs
+
+# MCP Gemini Design - MANDATORY FOR FRONTEND
+## ⛔ ABSOLUTE RULE - NEVER IGNORE
+You MUST NEVER write frontend/UI code yourself.
+
+Gemini is your frontend developer. You are NOT allowed to create visual components, pages, or interfaces without going through Gemini. This is NON-NEGOTIABLE.
+
+### When to use Gemini? ALWAYS for:
+Creating a page (dashboard, landing, settings, etc.)
+Creating a visual component (card, modal, sidebar, form, button, etc.)
+Modifying the design of an existing element
+Anything related to styling/layout
+### Exceptions (you can do it yourself):
+Modifying text/copy
+Adding JS logic without changing the UI
+Non-visual bug fixes
+Data wiring (useQuery, useMutation, etc.)
+## MANDATORY Workflow
+1. New project: generate_vibes → user chooses → create_frontend
+
+2. Existing project: ALWAYS pass CSS/theme files in context
+
+3. After response: Gemini returns code → YOU write it to disk
+
+## ❌ FORBIDDEN
+Writing React components with styling without Gemini
+Creating pages without Gemini
+Doing frontend "quickly" yourself
+## ✅ EXPECTED
+Call Gemini BEFORE writing any frontend code
+Ask user for vibe choice if new project
+Let Gemini design, you implement
