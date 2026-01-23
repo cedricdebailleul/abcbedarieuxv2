@@ -2,9 +2,14 @@
  * Module de stockage abstrait supportant local et Cloudflare R2
  *
  * Providers supportés:
- * - local: Système de fichiers local (volume Docker)
- * - r2: Cloudflare R2 Object Storage
+ * - local: Système de fichiers local (volume Docker) - AUTOMATIQUE EN DEV
+ * - r2: Cloudflare R2 Object Storage - AUTOMATIQUE EN PROD
  * - hybrid: Local en cache + R2 en backup asynchrone
+ *
+ * Comportement automatique:
+ * - En développement (NODE_ENV !== 'production'): utilise LOCAL
+ * - En production (NODE_ENV === 'production'): utilise R2
+ * - Override possible via STORAGE_PROVIDER
  */
 
 import { writeFile, mkdir, unlink } from "node:fs/promises";
@@ -33,11 +38,37 @@ export interface StorageConfig {
   };
 }
 
+// Détecter si on est en développement
+const isDevelopment = process.env.NODE_ENV !== "production";
+
 // Configuration du storage depuis les variables d'environnement
 function getStorageConfig(): StorageConfig {
-  const provider = (process.env.STORAGE_PROVIDER || "local") as StorageProvider;
+  // Déterminer le provider automatiquement basé sur l'environnement
+  // - Dev: local par défaut
+  // - Prod: r2 par défaut
+  // - Override possible via STORAGE_PROVIDER
+  const explicitProvider = process.env.STORAGE_PROVIDER as StorageProvider | undefined;
+
+  let provider: StorageProvider;
+
+  if (explicitProvider) {
+    // Si explicitement configuré, utiliser cette valeur
+    provider = explicitProvider;
+  } else {
+    // Sinon, auto-détection basée sur l'environnement
+    provider = isDevelopment ? "local" : "r2";
+  }
 
   const config: StorageConfig = { provider };
+
+  // Log le mode utilisé
+  if (isDevelopment && provider === "local") {
+    console.log("📁 Storage: mode LOCAL (développement)");
+  } else if (!isDevelopment && (provider === "r2" || provider === "hybrid")) {
+    console.log("☁️ Storage: mode R2 (production - Cloudflare)");
+  } else if (provider === "local") {
+    console.log("📁 Storage: mode LOCAL (configuré explicitement)");
+  }
 
   if (provider === "r2" || provider === "hybrid") {
     const r2AccountId = process.env.R2_ACCOUNT_ID;
