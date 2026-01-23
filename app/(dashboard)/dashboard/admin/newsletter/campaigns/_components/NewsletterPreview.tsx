@@ -263,7 +263,7 @@ export function NewsletterPreview({
                 ${selectedPlaces.map(place => `
                 <div class="content-item place">
                     ${place.coverImage || place.logo ?
-                        `<img src="${escapeHtml(place.coverImage || place.logo)}" alt="${escapeHtml(place.title)}" class="content-image">` :
+                        `<img src="${escapeHtml(place.coverImage || place.logo || '')}" alt="${escapeHtml(place.title || '')}" class="content-image">` :
                         `<div class="content-image-placeholder">🏪</div>`
                     }
                     <div class="content-details">

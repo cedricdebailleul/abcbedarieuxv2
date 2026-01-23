@@ -1,6 +1,7 @@
 import FooterSection from "@/components/front/footer";
 import EnhancedHeader from "@/components/front/header/enhanced-header";
 import { SimpleCookieBanner } from "@/components/rgpd/cookie-banner";
+import { Suspense } from "react";
 
 export default function FrontLayout({
   children,
@@ -9,7 +10,10 @@ export default function FrontLayout({
 }) {
   return (
     <>
+    <Suspense fallback={<div className="h-16" />}>
+
       <EnhancedHeader />
+      </Suspense>
       <main id="main-content" className="pt-20 mx-auto bg-background">
         {children}
       </main>

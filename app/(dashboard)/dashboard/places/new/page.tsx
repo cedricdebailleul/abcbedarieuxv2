@@ -118,7 +118,15 @@ export default function NewPlacePage() {
       });
       const out = await res.json();
 
-      if (!res.ok) throw new Error(out?.error || "Erreur lors de la création");
+          if (!res.ok) {
+      // ✅ Meilleur message d'erreur
+      if (out?.error?.includes("slug")) {
+        toast.error("Ce slug existe déjà. Veuillez en choisir un autre.");
+      } else {
+        toast.error(out?.error || "Erreur lors de la création");
+      }
+      return; // ← Ajouter return pour ne pas continuer
+    }
 
       toast.success("Place créée avec succès !");
       router.push("/dashboard/places");

@@ -17,7 +17,8 @@ import {
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { Partner } from "@/lib/generated/prisma";
-import Image from "next/image";
+import type { PartnerType } from "@/lib/types/partners";
+
 
 interface PartnersSectionProps {
   partners: Partner[];
@@ -141,7 +142,7 @@ export function PartnersSection({ partners, stats }: PartnersSectionProps) {
                           {partner.partnerType === "COMMERCIAL" && (
                             <Users className="w-6 h-6 text-green-600" />
                           )}
-                          {partner.partnerType === "ASSOCIATIVE" && (
+                          {partner.partnerType as PartnerType === "ASSOCIATIVE" && (
                             <Heart className="w-6 h-6 text-red-600" />
                           )}
                         </div>

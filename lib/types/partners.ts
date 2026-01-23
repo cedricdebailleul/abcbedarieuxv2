@@ -12,6 +12,7 @@ export const PARTNER_TYPES = [
   "SPONSOR",
   "SUPPLIER",
   "OTHER",
+  "ASSOCIATIVE"
 ] as const;
 
 export type PartnerType = (typeof PARTNER_TYPES)[number];
@@ -24,6 +25,7 @@ export const PARTNER_TYPE_LABELS: Record<PartnerType, string> = {
   SPONSOR: "Sponsor",
   SUPPLIER: "Fournisseur",
   OTHER: "Autre",
+  ASSOCIATIVE: "Associatif"
 };
 
 // ============================================================
@@ -214,6 +216,7 @@ export interface PartnerStats {
   total: number;
   featured: number;
   byType: Record<string, number>;
+  active: number;
 }
 
 export interface PartnerListResponse {

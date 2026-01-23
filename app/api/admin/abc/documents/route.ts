@@ -32,6 +32,72 @@ const VALID_DOC_TYPES = new Set<AbcDocumentType>([
   "OTHER",
 ]);
 
+export async function GET(request: Request) {
+  try {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (
+      !session?.user ||
+      !["admin", "moderator"].includes(safeUserCast(session.user).role ?? "")
+    ) {
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const search = searchParams.get("search") || "";
+    const type = searchParams.get("type") || "";
+
+    const skip = (page - 1) * limit;
+
+    const where: {
+      title?: { contains: string; mode: "insensitive" };
+      type?: AbcDocumentType;
+    } = {};
+
+    if (search) {
+      where.title = { contains: search, mode: "insensitive" };
+    }
+
+    if (type && VALID_DOC_TYPES.has(type as AbcDocumentType)) {
+      where.type = type as AbcDocumentType;
+    }
+
+    const [documents, total] = await Promise.all([
+      prisma.abcDocument.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          uploadedBy: { select: { id: true, name: true, email: true } },
+          meeting: { select: { id: true, title: true, scheduledAt: true } },
+        },
+      }),
+      prisma.abcDocument.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      documents,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des documents:", error);
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });

@@ -274,7 +274,7 @@ export function PartnersContent() {
           <PartnersFilters
             filters={filters}
             onFiltersChange={handleFiltersChange}
-            stats={stats}
+            stats={stats.byType || {}}
           />
         </CardContent>
       </Card>

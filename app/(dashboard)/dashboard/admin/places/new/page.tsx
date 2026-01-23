@@ -41,12 +41,19 @@ export default function AdminNewPlacePage() {
 
   const handleSubmit = async (data: PlaceData) => {
     try {
+      // Convertir published en status pour l'API
+      const payload = {
+        ...data,
+        status: data.published ? "ACTIVE" : "PENDING",
+        ownerId: data.createForClaim ? null : undefined, // null = pas de propriétaire (pour revendication)
+      };
+
       const response = await fetch("/api/places", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

@@ -12,9 +12,8 @@ async function testR2Deletion() {
   const info = getStorageInfo();
   console.log("📋 Configuration storage:", {
     provider: info.provider,
-    hasR2: !!info.r2Config,
-    r2Bucket: info.r2Config?.bucketName,
-    r2PublicUrl: info.r2Config?.publicUrl,
+    hasR2: info.hasR2,
+    r2PublicUrl: info.r2PublicUrl,
   });
   console.log();
 

@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       await mkdir(uploadDir, { recursive: true });
     }
 
-    const filePath = path.join(uploadDir, fileName);
+    
 
     // Traitement de l'image avec Sharp
     let imageBuffer: Buffer = bufferSafe;
