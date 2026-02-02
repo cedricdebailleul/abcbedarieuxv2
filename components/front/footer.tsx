@@ -259,7 +259,7 @@ export default function FooterSection() {
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
                 <Link
-                  href="/privacy"
+                  href="/privacy2"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Politique d&apos;utilisation
@@ -270,7 +270,7 @@ export default function FooterSection() {
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
                 <Link
-                  href="/privacy"
+                  href="/privacy2"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Politique de confidentialité

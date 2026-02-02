@@ -1,27 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { authClient } from "@/lib/auth-client";
+import { AuthLayout } from "../_components/AuthLayout";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +20,6 @@ export default function ForgotPasswordPage() {
     setMessage(null);
 
     try {
-      // Utiliser l'API Better Auth pour envoyer le lien de réinitialisation
       const response = await fetch("/api/auth/forget-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,7 +41,6 @@ export default function ForgotPasswordPage() {
         });
       }
     } catch (error) {
-      console.error("Erreur lors de la demande de réinitialisation:", error);
       setMessage({
         type: "error",
         text: "Impossible de traiter votre demande. Veuillez réessayer plus tard.",
@@ -62,24 +51,28 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Mot de passe oublié ?</CardTitle>
-          <CardDescription>
-            Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
-          </CardDescription>
+    <AuthLayout
+      title="Mot de passe oublié ?"
+      description="Pas de panique ! Entrez votre email et nous vous enverrons un lien de réinitialisation."
+      image="https://images.unsplash.com/photo-1633265486064-086b219458ec?q=80&w=1920&auto=format&fit=crop"
+    >
+      <Card className="border-0 shadow-none sm:border sm:shadow-lg">
+        <CardHeader className="space-y-1 px-0 pb-4 sm:px-6">
+          <CardTitle className="text-xl sm:text-2xl text-center">Réinitialiser le mot de passe</CardTitle>
+          <p className="text-xs sm:text-sm text-muted-foreground text-center">
+            Entrez votre email pour recevoir un lien
+          </p>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+        <CardContent className="px-0 sm:px-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {message && (
-              <Alert variant={message.type === "error" ? "destructive" : "default"}>
-                <AlertDescription>{message.text}</AlertDescription>
+              <Alert variant={message.type === "error" ? "destructive" : "default"} className={message.type === "success" ? "border-green-200 bg-green-50 text-green-700" : ""}>
+                <AlertDescription className="text-sm">{message.text}</AlertDescription>
               </Alert>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-xs sm:text-sm">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -88,24 +81,25 @@ export default function ForgotPasswordPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                className="text-sm"
               />
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
+
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Envoi en cours..." : "Envoyer le lien de réinitialisation"}
+              {isLoading ? "Envoi en cours..." : "Envoyer le lien"}
             </Button>
-            <div className="text-center text-sm">
-              <Link
-                href="/login"
-                className="text-muted-foreground hover:text-primary underline underline-offset-4"
-              >
-                Retour à la connexion
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
+          </form>
+
+          <div className="text-center pt-4">
+            <Link
+              href="/login"
+              className="text-xs sm:text-sm text-muted-foreground hover:text-primary underline underline-offset-4"
+            >
+              Retour à la connexion
+            </Link>
+          </div>
+        </CardContent>
       </Card>
-    </div>
+    </AuthLayout>
   );
 }

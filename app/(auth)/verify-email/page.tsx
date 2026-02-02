@@ -1,6 +1,5 @@
 "use client";
 
-// Force dynamic rendering
 export const dynamic = "force-dynamic";
 
 import { Loader2, Send } from "lucide-react";
@@ -8,19 +7,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, Suspense } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { authClient } from "@/lib/auth-client";
+import { AuthLayout } from "../_components/AuthLayout";
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -37,30 +31,27 @@ function VerifyEmailContent() {
         otp: otp as string,
         fetchOptions: {
           onSuccess: () => {
-            // Redirect to the home page or dashboard after successful verification
-            toast.success(
-              "Email verified successfully! Redirecting to your dashboard."
-            );
+            toast.success("Email vérifié avec succès ! Redirection...");
             router.push("/dashboard");
           },
           onError: () => {
-            toast.error("Failed to verify OTP. Please try again.");
+            toast.error("Code invalide. Veuillez réessayer.");
           },
         },
       });
     });
   }
+
   return (
-    <Card className="w-full mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl">Please check your email</CardTitle>
-        <CardDescription className="">
-          A verification code has been sent to your email. Please enter the code
-          below to verify your email address.
-        </CardDescription>
+    <Card className="border-0 shadow-none sm:border sm:shadow-lg">
+      <CardHeader className="text-center px-0 pb-4 sm:px-6">
+        <CardTitle className="text-xl sm:text-2xl">Vérifiez votre email</CardTitle>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Un code de vérification a été envoyé à votre adresse email.
+        </p>
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-6">
-        <div className="flex flex-col items-center space-y-2">
+      <CardContent className="flex flex-col items-center justify-center space-y-6 px-0 sm:px-6">
+        <div className="flex flex-col items-center space-y-3">
           <InputOTP
             className="gap-2"
             maxLength={6}
@@ -78,8 +69,8 @@ function VerifyEmailContent() {
               <InputOTPSlot index={5} />
             </InputOTPGroup>
           </InputOTP>
-          <p className="text-sm text-muted-foreground">
-            Enter the 6-digit code sent to your email.
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Entrez le code à 6 chiffres
           </p>
         </div>
         <Button
@@ -90,12 +81,12 @@ function VerifyEmailContent() {
           {otpPending ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              <span className="ml-2">Verifying...</span>
+              <span className="ml-2">Vérification...</span>
             </>
           ) : (
             <>
               <Send className="size-4" />
-              <span>Verify Account</span>
+              <span className="ml-2">Vérifier mon compte</span>
             </>
           )}
         </Button>
@@ -104,10 +95,27 @@ function VerifyEmailContent() {
   );
 }
 
+function LoadingCard() {
+  return (
+    <Card className="border-0 shadow-none sm:border sm:shadow-lg">
+      <CardHeader className="text-center px-0 pb-4 sm:px-6">
+        <CardTitle className="text-xl sm:text-2xl">Vérifiez votre email</CardTitle>
+        <p className="text-xs sm:text-sm text-muted-foreground">Chargement...</p>
+      </CardHeader>
+    </Card>
+  );
+}
+
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <VerifyEmailContent />
-    </Suspense>
+    <AuthLayout
+      title="Vérification de votre email"
+      description="Entrez le code reçu par email pour activer votre compte."
+      image="https://images.unsplash.com/photo-1596526131083-e8c633c948d2?q=80&w=1920&auto=format&fit=crop"
+    >
+      <Suspense fallback={<LoadingCard />}>
+        <VerifyEmailContent />
+      </Suspense>
+    </AuthLayout>
   );
 }
