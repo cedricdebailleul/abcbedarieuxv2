@@ -785,11 +785,20 @@ export async function getPublicEventsAction(options?: {
     {
       id: string;
       title: string;
+      slug: string;
+      summary?: string | null;
+      coverImage?: string | null;
       startDate: Date;
       endDate: Date;
       isAllDay: boolean;
       isFeatured: boolean;
       isFree: boolean;
+      price?: number | null;
+      currency?: string | null;
+      locationName?: string | null;
+      locationCity?: string | null;
+      maxParticipants?: number | null;
+      ticketUrl?: string | null;
       place?: { id: string; name: string; slug: string; city: string };
       organizer?: { id: string; name: string; slug: string };
       recurrenceRule?: {
@@ -951,6 +960,8 @@ export async function getPublicEventsAction(options?: {
         id: occ.id,
         title: original.title,
         slug: original.slug,
+        summary: original.summary,
+        coverImage: original.coverImage,
         startDate:
           typeof occ.startDate === "string"
             ? new Date(occ.startDate)
@@ -962,6 +973,12 @@ export async function getPublicEventsAction(options?: {
         isAllDay: original.isAllDay ?? false,
         isFeatured: original.isFeatured ?? false,
         isFree: original.isFree ?? true,
+        price: original.price,
+        currency: original.currency,
+        locationName: original.locationName,
+        locationCity: original.locationCity,
+        maxParticipants: original.maxParticipants,
+        ticketUrl: original.ticketUrl,
         place: original.place ?? undefined,
         organizer: original.organizer?.slug
           ? {
