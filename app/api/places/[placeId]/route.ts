@@ -72,6 +72,9 @@ const placeSchema = z.object({
   // 👇 pilotage publication venant du form
   published: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
+
+  // Admin: rendre la place revendiquable (ownerId = null)
+  createForClaim: z.boolean().optional(),
 });
 
 type RawHour =
@@ -314,6 +317,7 @@ export async function PUT(
       published: _published,
       categories: newCategories,
       isFeatured,
+      createForClaim,
       ...placeData
     } = validatedData;
 
@@ -378,6 +382,11 @@ export async function PUT(
       images: normalizedPhotos,
     });
 
+    // Gérer la revendication (admin seulement)
+    const shouldRemoveOwner =
+      safeUserCast(session.user).role === "admin" &&
+      createForClaim === true;
+
     // Construire update
     const updateData: Prisma.PlaceUpdateInput = {
       ...placeData,
@@ -391,6 +400,12 @@ export async function PUT(
         typeof body.googlePlaceId === "string" && body.googlePlaceId.trim()
           ? body.googlePlaceId
           : existingPlace.googlePlaceId,
+      // Si admin coche "peut être revendiquée", retirer le propriétaire
+      ...(shouldRemoveOwner && {
+        ownerId: null,
+        claimedAt: null,
+        isVerified: false,
+      }),
     };
 
     const place = await prisma.place.update({

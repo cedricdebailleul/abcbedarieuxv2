@@ -50,6 +50,7 @@ interface Place {
     images?: string[];
   };
   status: string;
+  ownerId?: string | null;
   owner?: {
     id: string;
     name: string;
@@ -274,6 +275,7 @@ export default function EditPlacePage() {
   // Préparer les données initiales pour le formulaire
   const initialData = {
     id: place.id, // Ajout de l'ID pour l'import des avis
+    ownerId: place.ownerId ?? place.owner?.id ?? null, // Pour le switch "peut être revendiquée"
     name: place.name,
     type: place.type || "COMMERCE", // Défaut COMMERCE si vide
     category: place.category || "",
