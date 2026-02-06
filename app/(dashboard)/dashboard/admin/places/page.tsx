@@ -168,6 +168,11 @@ export default function AdminPlacesPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // États pour la mise en vedette
+  const [showFeatureDialog, setShowFeatureDialog] = useState(false);
+  const [featureAction, setFeatureAction] = useState<"feature" | "unfeature">("feature");
+  const [isFeaturing, setIsFeaturing] = useState(false);
+
   // Gestion des propriétaires
   const [showOwnerDialog, setShowOwnerDialog] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
@@ -321,7 +326,7 @@ export default function AdminPlacesPage() {
 
       const result = await res.json();
       toast.success(result.message || "Suppression effectuée avec succès");
-      
+
       setShowDeleteDialog(false);
       setSelectedIds([]);
       fetchPlaces();
@@ -330,6 +335,36 @@ export default function AdminPlacesPage() {
       toast.error("Erreur lors de la suppression multiple");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleBulkFeature = async () => {
+    if (selectedIds.length === 0) return;
+
+    setIsFeaturing(true);
+    try {
+      const res = await fetch("/api/admin/places/bulk-feature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: selectedIds,
+          isFeatured: featureAction === "feature"
+        }),
+      });
+
+      if (!res.ok) throw new Error("Erreur lors de la mise à jour");
+
+      const result = await res.json();
+      toast.success(result.message || "Mise à jour effectuée avec succès");
+
+      setShowFeatureDialog(false);
+      setSelectedIds([]);
+      fetchPlaces();
+    } catch (error) {
+      console.error("Feature error:", error);
+      toast.error("Erreur lors de la mise en vedette");
+    } finally {
+      setIsFeaturing(false);
     }
   };
 
@@ -439,14 +474,38 @@ export default function AdminPlacesPage() {
 
           <div className="flex gap-2">
             {selectedCount > 0 && (
-              <Button 
-                variant="destructive" 
-                onClick={() => setShowDeleteDialog(true)}
-                className="animate-in fade-in"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Supprimer ({selectedCount})
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFeatureAction("feature");
+                    setShowFeatureDialog(true);
+                  }}
+                  className="animate-in fade-in border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                >
+                  <Star className="w-4 h-4 mr-2" />
+                  Mettre en vedette ({selectedCount})
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFeatureAction("unfeature");
+                    setShowFeatureDialog(true);
+                  }}
+                  className="animate-in fade-in"
+                >
+                  <Star className="w-4 h-4 mr-2" />
+                  Retirer vedette ({selectedCount})
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="animate-in fade-in"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Supprimer ({selectedCount})
+                </Button>
+              </>
             )}
             <Link
               href="/dashboard/admin/places/new"
@@ -515,6 +574,7 @@ export default function AdminPlacesPage() {
                   <TableHead>Place</TableHead>
                   <TableHead>Propriétaire</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead>Vedette</TableHead>
                   <TableHead>Statistiques</TableHead>
                   <TableHead>Créée</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -570,6 +630,20 @@ export default function AdminPlacesPage() {
                     {/* Status */}
                     <TableCell>
                       {getStatusBadge(place.status, place.isVerified)}
+                    </TableCell>
+
+                    {/* Featured */}
+                    <TableCell>
+                      {place.isFeatured ? (
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                          <Star className="w-3 h-3 mr-1" />
+                          Oui
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-gray-500">
+                          Non
+                        </Badge>
+                      )}
                     </TableCell>
 
                     {/* Stats */}
@@ -646,6 +720,57 @@ export default function AdminPlacesPage() {
                                 Modifier
                               </Link>
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {place.isFeatured ? (
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch("/api/admin/places/bulk-feature", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({
+                                        ids: [place.id],
+                                        isFeatured: false
+                                      }),
+                                    });
+                                    if (!res.ok) throw new Error("Erreur");
+                                    const result = await res.json();
+                                    toast.success(result.message);
+                                    fetchPlaces();
+                                  } catch (error) {
+                                    toast.error("Erreur lors de la mise à jour");
+                                  }
+                                }}
+                              >
+                                <Star className="w-4 h-4 mr-2" />
+                                Retirer de la vedette
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch("/api/admin/places/bulk-feature", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({
+                                        ids: [place.id],
+                                        isFeatured: true
+                                      }),
+                                    });
+                                    if (!res.ok) throw new Error("Erreur");
+                                    const result = await res.json();
+                                    toast.success(result.message);
+                                    fetchPlaces();
+                                  } catch (error) {
+                                    toast.error("Erreur lors de la mise à jour");
+                                  }
+                                }}
+                                className="text-yellow-600"
+                              >
+                                <Star className="w-4 h-4 mr-2" />
+                                Mettre en vedette
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
                             {place.owner ? (
                               <DropdownMenuItem
@@ -754,6 +879,55 @@ export default function AdminPlacesPage() {
                 </>
               ) : (
                 "Confirmer la suppression"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de mise en vedette */}
+      <Dialog open={showFeatureDialog} onOpenChange={setShowFeatureDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-600" />
+              {featureAction === "feature"
+                ? `Mettre ${selectedCount} place(s) en vedette ?`
+                : `Retirer ${selectedCount} place(s) de la vedette ?`
+              }
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              {featureAction === "feature" ? (
+                <p>
+                  Les places sélectionnées seront mises en avant et affichées en priorité sur le site.
+                </p>
+              ) : (
+                <p>
+                  Les places sélectionnées ne seront plus mises en avant.
+                </p>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowFeatureDialog(false)}
+              disabled={isFeaturing}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleBulkFeature}
+              disabled={isFeaturing}
+              className={featureAction === "feature" ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+            >
+              {isFeaturing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                  Mise à jour...
+                </>
+              ) : (
+                featureAction === "feature" ? "Mettre en vedette" : "Retirer de la vedette"
               )}
             </Button>
           </DialogFooter>
