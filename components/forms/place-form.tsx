@@ -497,7 +497,9 @@ export function PlaceForm({
     }
   }, [mode, streetW, cityW, postalCodeW, form, handleGeocodeAddress]);
 
-  // Debounce recherche Google (toutes deps incluses)
+  // Debounce recherche Google
+  // Note: searchPlaces et clearPredictions sont exclus des dépendances car ce sont
+  // des fonctions stables (useCallback) et les inclure causerait une boucle infinie
   useEffect(() => {
     if (!showGoogleSearch) return;
     if (isSelectingPrediction.current) {
@@ -512,7 +514,8 @@ export function PlaceForm({
       }
     }, 300);
     return () => clearTimeout(t);
-  }, [showGoogleSearch, inputValue, searchPlaces, clearPredictions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showGoogleSearch, inputValue]);
 
   // Import Google → upload sélectif du logo
   const uploadGoogleImage = useCallback(
