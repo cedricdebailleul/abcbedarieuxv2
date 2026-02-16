@@ -399,23 +399,24 @@ export function PlaceForm({
     }
   }, [form, initialData]);
 
-  // Préremplir images & horaires en EDIT
+  // Préremplir images & horaires en EDIT (une seule fois au montage)
   useEffect(() => {
-    if (mode === "edit") {
-      if (Array.isArray(initialData?.images)) {
-        // Dédupliquer les images avant de les définir dans le state
+    if (mode === "edit" && images.length === 0) {
+      // Charger uniquement si le state est vide (évite de réinitialiser après suppression)
+      if (Array.isArray(initialData?.images) && initialData.images.length > 0) {
         const uniqueImages = Array.from(new Set(initialData.images));
-        console.log("PlaceForm EDIT - Original images count:", initialData.images.length);
-        console.log("PlaceForm EDIT - Unique images count:", uniqueImages.length);
-        console.log("PlaceForm EDIT - Setting images:", uniqueImages);
+        console.log("PlaceForm EDIT - Initial load of images:", uniqueImages.length);
         setImages(uniqueImages);
       }
+    }
+
+    if (mode === "edit" && openingHours.length === 0) {
       if (initialData?.openingHours) {
         setOpeningHours(toDaySchedule(initialData.openingHours as RawHour[]));
       }
     }
-     
-  }, [mode, initialData?.images, initialData?.openingHours]);
+
+  }, [mode]); // Retirer initialData des dépendances pour éviter la réinitialisation
 
   // Charger catégories
   useEffect(() => {

@@ -111,18 +111,15 @@ export default function EditPlacePage() {
 
     // Normalize incoming form data to match the Place type expected by the API.
     // Handle both old format (openTime/closeTime) and new format (slots)
-    
-    // Filtrer les images pour ne garder que celles déjà uploadées (qui commencent par /uploads/)
-    // Les URLs Google sont laissées dans le state du formulaire mais pas envoyées à l'API
-    const filteredImages = Array.isArray(data.images) 
-      ? data.images.filter(img => 
-          typeof img === 'string' && 
-          (img.startsWith('/uploads/') || img.startsWith('data:') || !img.includes('googleusercontent.com'))
-        )
+
+    // Envoyer exactement les images du formulaire (supprimées ou non)
+    // Si l'utilisateur a tout supprimé, envoyer un tableau vide
+    const filteredImages = Array.isArray(data.images)
+      ? data.images.filter(img => typeof img === 'string' && img.trim() !== '')
       : [];
 
-    console.log("Original images:", data.images);
-    console.log("Filtered images:", filteredImages);
+    console.log("Original images from form:", data.images);
+    console.log("Images to send to API:", filteredImages);
     console.log("EditPage - data.type before normalization:", data.type);
     
     const normalized = {
