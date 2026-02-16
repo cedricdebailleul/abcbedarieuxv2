@@ -309,19 +309,24 @@ export const useGooglePlaces = ({
         (predictions, status) => {
           setIsSearching(false);
 
-          const g = google;
+          // Utiliser window.google directement pour accéder aux constantes de status
+          const g = typeof window !== "undefined" ? window.google : null;
+
           if (
             g &&
             status === g.maps.places.PlacesServiceStatus.OK &&
             predictions
           ) {
+            console.log("✅ Prédictions reçues:", predictions.length);
             setPredictions(predictions);
           } else {
             setPredictions([]);
             if (
               !(g && status === g.maps.places.PlacesServiceStatus.ZERO_RESULTS)
             ) {
-              console.error("Erreur recherche Google Places:", status);
+              console.error("❌ Erreur recherche Google Places:", status);
+            } else {
+              console.log("ℹ️ Aucun résultat pour cette recherche");
             }
           }
         }
@@ -369,7 +374,8 @@ export const useGooglePlaces = ({
       placesService.current.getDetails(request, (place, status) => {
         setIsSearching(false);
 
-        const g = google;
+        // Utiliser window.google directement pour accéder aux constantes de status
+        const g = typeof window !== "undefined" ? window.google : null;
         if (g && status === g.maps.places.PlacesServiceStatus.OK && place) {
           const addressComponents = extractAddressComponents(
             place.address_components || []
@@ -511,7 +517,7 @@ export const useGooglePlaces = ({
         };
 
         placesService.current.getDetails(request, (place, status) => {
-          const g = google;
+          const g = typeof window !== "undefined" ? window.google : null;
           if (g && status === g.maps.places.PlacesServiceStatus.OK && place) {
             const hours = formatOpeningHours(place.opening_hours?.periods);
             resolve(hours);
