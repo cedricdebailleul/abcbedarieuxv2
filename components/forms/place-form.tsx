@@ -190,7 +190,7 @@ type PlaceFormData = z.infer<typeof placeSchema> & {
 };
 
 type PlaceFormProps = {
-  initialData?: Partial<PlaceFormData & { id?: string; images?: string[] }>;
+  initialData?: Partial<PlaceFormData & { id?: string; images?: string[]; ownerId?: string | null }>;
   onSubmit: (
     data: PlaceFormData & {
       openingHours?: RawHour[];
@@ -239,8 +239,11 @@ export function PlaceForm({
   // Google search box
   const [showGoogleSearch, setShowGoogleSearch] = useState(mode === "create");
   const isSelectingPrediction = useRef(false);
-  // Admin: créer fiche non attribuée (revendication)
-  const [createForClaim, setCreateForClaim] = useState(false);
+  // Admin: fiche non attribuée (peut être revendiquée)
+  // En mode édition, initialiser à true si pas de propriétaire
+  const [createForClaim, setCreateForClaim] = useState(
+    mode === "edit" ? !initialData?.ownerId : false
+  );
 
   const [placeCategories, setPlaceCategories] = useState<
     { value: string; label: string; level: number }[]
@@ -876,29 +879,40 @@ export function PlaceForm({
                     <FormField
                       control={form.control}
                       name="type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type *</FormLabel>
-                          <FormControl>
-                            <Select
-                              value={field.value || "COMMERCE"}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner un type…" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {PLACE_TYPES.map((t) => (
-                                  <SelectItem key={t.value} value={t.value}>
-                                    {t.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        // S'assurer que la valeur est toujours définie
+                        const currentValue = field.value || "COMMERCE";
+
+                        // Si field.value est vide mais qu'on a une valeur par défaut, la définir
+                        if (!field.value && currentValue) {
+                          field.onChange(currentValue);
+                        }
+
+                        return (
+                          <FormItem>
+                            <FormLabel>Type *</FormLabel>
+                            <FormControl>
+                              <Select
+                                value={currentValue}
+                                onValueChange={field.onChange}
+                                defaultValue={currentValue}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sélectionner un type…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {PLACE_TYPES.map((t) => (
+                                    <SelectItem key={t.value} value={t.value}>
+                                      {t.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
 
                     <FormField
@@ -1902,12 +1916,12 @@ export function PlaceForm({
 
                   <Separator />
 
-                  {/* Option admin : créer pour revendication */}
-                  {userRole === "admin" && mode === "create" && (
+                  {/* Option admin : peut être revendiquée */}
+                  {userRole === "admin" && (
                     <>
                       <div className="flex items-center justify-between">
                         <FormLabel htmlFor="createForClaim">
-                          Créer pour revendication
+                          {mode === "create" ? "Créer pour revendication" : "Peut être revendiquée"}
                         </FormLabel>
                         <Switch
                           id="createForClaim"
@@ -1916,8 +1930,10 @@ export function PlaceForm({
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        La fiche ne vous sera pas attribuée et pourra être
-                        revendiquée par un utilisateur
+                        {mode === "create"
+                          ? "La fiche ne vous sera pas attribuée et pourra être revendiquée par un utilisateur"
+                          : "Cocher pour retirer le propriétaire et permettre la revendication"
+                        }
                       </p>
                       <Separator />
                     </>

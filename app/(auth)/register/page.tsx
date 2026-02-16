@@ -1,4 +1,5 @@
 "use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -7,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { AuthLayout } from "../_components/AuthLayout";
 
 const formSchema = z.object({
   name: z.string().min(2, "Prénom requis"),
@@ -48,8 +50,6 @@ export default function RegisterPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      console.log("🔧 [REGISTER] Tentative d'inscription:", { email: data.email, name: data.name });
-
       const result = await authClient.signUp.email({
         email: data.email,
         password: data.password,
@@ -57,13 +57,9 @@ export default function RegisterPage() {
         callbackURL: "/dashboard",
       });
 
-      console.log("🔧 [REGISTER] Résultat de signUp.email:", result);
-
-      console.log("✅ [REGISTER] Inscription réussie");
-      toast.success("Compte créé. Vérifiez votre email et vous serez redirigé également.");
+      toast.success("Compte créé. Vérifiez votre email et vous serez redirigé.");
       router.push("/dashboard");
     } catch (error) {
-      console.error("❌ [REGISTER] Erreur lors de l'inscription:", error);
       toast.error(
         `Erreur lors de l'inscription: ${error instanceof Error ? error.message : "Erreur inconnue"}`
       );
@@ -73,110 +69,128 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container flex min-h-screen w-screen flex-col items-center justify-center">
-      <div className="max-w-md w-full px-4 space-y-6">
-        <h1 className="text-2xl font-bold text-center">Créer un compte</h1>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Prénom */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Prénom</FormLabel>
-                <FormControl>
-                  <Input placeholder="Jean" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Nom */}
-          <FormField
-            control={form.control}
-            name="surname"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nom</FormLabel>
-                <FormControl>
-                  <Input placeholder="Dupont" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Email */}
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="ex: jean@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Mot de passe */}
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mot de passe</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* RGPD */}
-          <FormField
-            control={form.control}
-            name="rgpd"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-start space-x-2">
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      className="mt-1"
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      checked={field.value}
-                    />
-                  </FormControl>
-                  <FormLabel className="font-normal">
-                    J’accepte la{" "}
-                    <Link href="/politique-confidentialite" className="underline">
-                      politique de confidentialité
-                    </Link>{" "}
-                    et les{" "}
-                    <Link href="/cgu" className="underline">
-                      CGU
-                    </Link>
-                    .
-                  </FormLabel>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "En cours..." : "Créer mon compte"}
-          </Button>
-        </form>
-      </Form>
-        <p className="text-sm text-center text-muted-foreground">
-          Déjà inscrit ?{" "}
-          <Link href="/login" className="underline underline-offset-4 hover:text-primary">
-            Se connecter
-          </Link>
-        </p>
-      </div>
-    </div>
+    <AuthLayout
+      title="Rejoignez notre communauté"
+      description="Créez votre compte pour accéder à tous les services de l'annuaire local."
+      image="https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=1920&auto=format&fit=crop"
+    >
+      <Card className="border-0 shadow-none sm:border sm:shadow-lg">
+        <CardHeader className="space-y-1 px-0 pb-4 sm:px-6">
+          <CardTitle className="text-xl sm:text-2xl text-center">Créer un compte</CardTitle>
+          <p className="text-xs sm:text-sm text-muted-foreground text-center">
+            Remplissez le formulaire ci-dessous
+          </p>
+        </CardHeader>
+        <CardContent className="px-0 sm:px-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs sm:text-sm">Prénom</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Jean" className="text-sm" {...field} />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="surname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs sm:text-sm">Nom</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Dupont" className="text-sm" {...field} />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs sm:text-sm">Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="jean@example.com" className="text-sm" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs sm:text-sm">Mot de passe</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" className="text-sm" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="rgpd"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-start space-x-2">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          className="mt-1"
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          checked={field.value}
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal text-xs sm:text-sm leading-relaxed">
+                        J&apos;accepte la{" "}
+                        <Link href="/privacy2" className="underline text-primary">
+                          politique de confidentialité
+                        </Link>{" "}
+                        et les{" "}
+                        <Link href="/privacy2" className="underline text-primary">
+                          conditions d&apos;utilisation
+                        </Link>
+                        .
+                      </FormLabel>
+                    </div>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? "Création en cours..." : "Créer mon compte"}
+              </Button>
+            </form>
+          </Form>
+
+          <div className="text-center pt-4">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Déjà inscrit ?{" "}
+              <Link
+                href="/login"
+                className="font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+              >
+                Se connecter
+              </Link>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </AuthLayout>
   );
 }

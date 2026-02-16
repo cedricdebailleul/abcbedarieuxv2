@@ -6,15 +6,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthLayout } from "../_components/AuthLayout";
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState("");
@@ -38,26 +32,17 @@ function ResetPasswordForm() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      setMessage({
-        type: "error",
-        text: "Les mots de passe ne correspondent pas.",
-      });
+      setMessage({ type: "error", text: "Les mots de passe ne correspondent pas." });
       return;
     }
 
     if (password.length < 8) {
-      setMessage({
-        type: "error",
-        text: "Le mot de passe doit contenir au moins 8 caractères.",
-      });
+      setMessage({ type: "error", text: "Le mot de passe doit contenir au moins 8 caractères." });
       return;
     }
 
     if (!token) {
-      setMessage({
-        type: "error",
-        text: "Token manquant.",
-      });
+      setMessage({ type: "error", text: "Token manquant." });
       return;
     }
 
@@ -78,108 +63,103 @@ function ResetPasswordForm() {
           type: "success",
           text: "Votre mot de passe a été réinitialisé avec succès. Redirection...",
         });
-        setTimeout(() => {
-          router.push("/login");
-        }, 2000);
+        setTimeout(() => router.push("/login"), 2000);
       } else {
         setMessage({
           type: "error",
-          text: data.error || "Impossible de réinitialiser le mot de passe. Le lien est peut-être expiré.",
+          text: data.error || "Impossible de réinitialiser le mot de passe.",
         });
       }
     } catch (error) {
-      console.error("Erreur lors de la réinitialisation:", error);
-      setMessage({
-        type: "error",
-        text: "Une erreur est survenue. Veuillez réessayer.",
-      });
+      setMessage({ type: "error", text: "Une erreur est survenue. Veuillez réessayer." });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Réinitialiser le mot de passe</CardTitle>
-          <CardDescription>
-            Entrez votre nouveau mot de passe.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {message && (
-              <Alert variant={message.type === "error" ? "destructive" : "default"}>
-                <AlertDescription>{message.text}</AlertDescription>
-              </Alert>
-            )}
+    <Card className="border-0 shadow-none sm:border sm:shadow-lg">
+      <CardHeader className="space-y-1 px-0 pb-4 sm:px-6">
+        <CardTitle className="text-xl sm:text-2xl text-center">Nouveau mot de passe</CardTitle>
+        <p className="text-xs sm:text-sm text-muted-foreground text-center">
+          Choisissez un mot de passe sécurisé
+        </p>
+      </CardHeader>
+      <CardContent className="px-0 sm:px-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {message && (
+            <Alert variant={message.type === "error" ? "destructive" : "default"} className={message.type === "success" ? "border-green-200 bg-green-50 text-green-700" : ""}>
+              <AlertDescription className="text-sm">{message.text}</AlertDescription>
+            </Alert>
+          )}
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Nouveau mot de passe</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading || !token}
-                minLength={8}
-              />
-              <p className="text-xs text-muted-foreground">
-                Minimum 8 caractères
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-xs sm:text-sm">Nouveau mot de passe</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading || !token}
+              minLength={8}
+              className="text-sm"
+            />
+            <p className="text-xs text-muted-foreground">Minimum 8 caractères</p>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                disabled={isLoading || !token}
-                minLength={8}
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading || !token}>
-              {isLoading ? "Réinitialisation..." : "Réinitialiser le mot de passe"}
-            </Button>
-            <div className="text-center text-sm">
-              <Link
-                href="/login"
-                className="text-muted-foreground hover:text-primary underline underline-offset-4"
-              >
-                Retour à la connexion
-              </Link>
-            </div>
-          </CardFooter>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className="text-xs sm:text-sm">Confirmer</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              disabled={isLoading || !token}
+              minLength={8}
+              className="text-sm"
+            />
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isLoading || !token}>
+            {isLoading ? "Réinitialisation..." : "Réinitialiser"}
+          </Button>
         </form>
-      </Card>
-    </div>
+
+        <div className="text-center pt-4">
+          <Link href="/login" className="text-xs sm:text-sm text-muted-foreground hover:text-primary underline underline-offset-4">
+            Retour à la connexion
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LoadingCard() {
+  return (
+    <Card className="border-0 shadow-none sm:border sm:shadow-lg">
+      <CardHeader className="space-y-1 px-0 pb-4 sm:px-6">
+        <CardTitle className="text-xl sm:text-2xl text-center">Nouveau mot de passe</CardTitle>
+        <p className="text-xs sm:text-sm text-muted-foreground text-center">Chargement...</p>
+      </CardHeader>
+    </Card>
   );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="container flex items-center justify-center min-h-screen py-8">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Réinitialiser le mot de passe</CardTitle>
-            <CardDescription>
-              Chargement...
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    }>
-      <ResetPasswordForm />
-    </Suspense>
+    <AuthLayout
+      title="Créez un nouveau mot de passe"
+      description="Choisissez un mot de passe sécurisé pour protéger votre compte."
+      image="https://images.unsplash.com/photo-1633265486064-086b219458ec?q=80&w=1920&auto=format&fit=crop"
+    >
+      <Suspense fallback={<LoadingCard />}>
+        <ResetPasswordForm />
+      </Suspense>
+    </AuthLayout>
   );
 }

@@ -6,7 +6,6 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -69,13 +68,8 @@ export function TabLoginForm() {
   }
 
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Connexion par email</CardTitle>
-        <CardDescription>Choisissez votre méthode de connexion préférée</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="otp" className="w-full">
+    <div className="space-y-4">
+      <Tabs defaultValue="otp" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="otp" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
@@ -193,7 +187,6 @@ export function TabLoginForm() {
             )}
           </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
