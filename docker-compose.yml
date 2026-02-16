@@ -9,10 +9,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - uploads_data:/app/uploads  # Volume persistant pour les images
+      - uploads_data:/app/public/uploads  # Volume persistant pour les images
     environment:
       - NODE_ENV=production
-      - UPLOADS_DIR=/app/uploads
+      - UPLOADS_DIR=/app/public/uploads
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/abcv2
       # Variables pour Cloudflare R2 (à remplir plus tard)
       - STORAGE_PROVIDER=local  # local | r2 | hybrid

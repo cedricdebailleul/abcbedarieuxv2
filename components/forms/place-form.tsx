@@ -879,29 +879,40 @@ export function PlaceForm({
                     <FormField
                       control={form.control}
                       name="type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type *</FormLabel>
-                          <FormControl>
-                            <Select
-                              value={field.value || "COMMERCE"}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner un type…" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {PLACE_TYPES.map((t) => (
-                                  <SelectItem key={t.value} value={t.value}>
-                                    {t.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        // S'assurer que la valeur est toujours définie
+                        const currentValue = field.value || "COMMERCE";
+
+                        // Si field.value est vide mais qu'on a une valeur par défaut, la définir
+                        if (!field.value && currentValue) {
+                          field.onChange(currentValue);
+                        }
+
+                        return (
+                          <FormItem>
+                            <FormLabel>Type *</FormLabel>
+                            <FormControl>
+                              <Select
+                                value={currentValue}
+                                onValueChange={field.onChange}
+                                defaultValue={currentValue}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sélectionner un type…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {PLACE_TYPES.map((t) => (
+                                    <SelectItem key={t.value} value={t.value}>
+                                      {t.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
 
                     <FormField
