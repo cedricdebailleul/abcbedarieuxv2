@@ -306,23 +306,15 @@ export default function EditPlacePage() {
     // Images sauvegardées en base de données (filtrées et dédupliquées)
     images: (() => {
       const placeImages = parseImages(place.images);
-      const googleBusinessImages = place.googleBusinessData?.images || [];
-      
+
       console.log("EditPage - Raw place.images:", place.images);
       console.log("EditPage - Parsed place images:", placeImages);
-      console.log("EditPage - Google business images:", googleBusinessImages);
-      
-      // Combiner les images et supprimer les doublons
-      const allImages = [...placeImages, ...googleBusinessImages];
-      const uniqueImages = Array.from(new Set(allImages)); // Supprime les doublons
-      
-      console.log("EditPage - All images before dedup:", allImages);
-      console.log("EditPage - Unique images after dedup:", uniqueImages);
-      
-      // Filtrer les URLs Google problématiques
-      const filteredImages = filterGooglePhotosUrls(uniqueImages);
+
+      // En mode édition, on affiche UNIQUEMENT les images sauvegardées en base
+      // (les images Google ne sont plus réinjectées automatiquement)
+      const filteredImages = filterGooglePhotosUrls(placeImages);
       console.log("EditPage - Final filtered images:", filteredImages);
-      
+
       return filteredImages;
     })(),
     // Données Google Business ou horaires existantes
