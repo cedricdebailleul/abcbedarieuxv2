@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useLoadScript } from "@react-google-maps/api";
 import { env } from "@/lib/env";
 
@@ -22,10 +23,17 @@ export const useGoogleMapsLoader = (): UseGoogleMapsLoaderReturn => {
     preventGoogleFontsLoading: true,
   });
 
+  // Mémoriser l'objet google pour éviter les boucles de re-render
+  const googleInstance = useMemo(() => {
+    if (typeof window !== "undefined" && isLoaded) {
+      return window.google || null;
+    }
+    return null;
+  }, [isLoaded]);
+
   return {
     isLoaded,
     loadError,
-    // Exposer google pour les composants qui en ont besoin
-    google: typeof window !== "undefined" && isLoaded ? window.google || null : null,
+    google: googleInstance,
   };
 };
