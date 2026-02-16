@@ -352,15 +352,11 @@ export async function PUT(
     }
 
     // googleBusinessData JSON
-    const googleBusinessDataValue =
-      (Array.isArray(newOpeningHours) && newOpeningHours.length > 0) ||
-      normalizedPhotos.length > 0
-        ? ({
-            openingHours: newOpeningHours || [],
-            images: normalizedPhotos,
-          } as Prisma.InputJsonValue)
-        : ((existingPlace.googleBusinessData as Prisma.InputJsonValue | null) ??
-          undefined);
+    // Toujours mettre à jour googleBusinessData pour éviter que les anciennes images reviennent
+    const googleBusinessDataValue = {
+      openingHours: newOpeningHours || [],
+      images: normalizedPhotos, // Utiliser les images du formulaire (peut être vide)
+    } as Prisma.InputJsonValue;
 
     // Préserver logo/cover si vides, sinon fallback 1ère photo
     const finalLogo =
