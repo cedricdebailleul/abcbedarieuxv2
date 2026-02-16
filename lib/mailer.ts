@@ -1,17 +1,38 @@
 import nodemailer from "nodemailer";
 import { env } from "./env";
 
-export const transporter = nodemailer.createTransport({
-  host: env.MAIL_HOST,
-  port: env.MAIL_PORT as unknown as number,
-  secure: true,
-  auth: {
-    user: env.MAIL_USER,
-    pass: env.MAIL_PASS,
-  },
-});
+// Vérifier si les variables MAIL sont configurées
+const isMailConfigured = Boolean(
+  env.MAIL_HOST &&
+  env.MAIL_PORT &&
+  env.MAIL_USER &&
+  env.MAIL_PASS
+);
+
+export const transporter = isMailConfigured
+  ? nodemailer.createTransport({
+      host: env.MAIL_HOST!,
+      port: env.MAIL_PORT as unknown as number,
+      secure: true,
+      auth: {
+        user: env.MAIL_USER!,
+        pass: env.MAIL_PASS!,
+      },
+    })
+  : null;
 
 export async function sendEmailOTP(email: string, otp: string) {
+  if (!transporter) {
+    console.error("❌ [MAILER] Configuration email manquante pour OTP");
+    console.log("📧 [MAILER] OTP non envoyé :", { email, otp });
+
+    if (process.env.NODE_ENV !== "production") {
+      return { messageId: "dev-mock-otp-id" };
+    }
+
+    throw new Error("Configuration email manquante");
+  }
+
   const mailOptions = {
     from: `ABC Bédarieux <${env.MAIL_USER}>`,
     to: email,
@@ -34,6 +55,24 @@ export async function sendEmail({
   subject: string;
   html: string;
 }) {
+  if (!transporter) {
+    console.error("❌ [MAILER] Configuration email manquante (MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS)");
+    console.log("📧 [MAILER] Email non envoyé (mode développement) :", {
+      to,
+      subject,
+      htmlPreview: html.substring(0, 100) + "...",
+    });
+
+    // En développement, ne pas bloquer, juste logger
+    if (process.env.NODE_ENV !== "production") {
+      return { messageId: "dev-mock-message-id" };
+    }
+
+    throw new Error(
+      "Configuration email manquante. Veuillez configurer les variables MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS."
+    );
+  }
+
   console.log("🔧 [MAILER] Tentative d'envoi d'email:", {
     to,
     subject,
