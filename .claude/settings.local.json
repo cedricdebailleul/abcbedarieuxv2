@@ -22,7 +22,8 @@
       "Bash(npx tsx:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

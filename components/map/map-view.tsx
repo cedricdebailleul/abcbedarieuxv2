@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Navigation, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { MarkerClusterer, SuperClusterAlgorithm } from "@googlemaps/markerclusterer";
 import type { MapPlace, MapCategory } from "./interactive-map";
 import type { PlaceCluster } from "@/lib/map-utils";
 import {
@@ -40,6 +41,7 @@ export function MapView({
   const markersRef = useRef<
     Map<string, google.maps.marker.AdvancedMarkerElement>
   >(new Map());
+  const clustererRef = useRef<MarkerClusterer | null>(null);
   const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
     null
   );
@@ -206,7 +208,7 @@ export function MapView({
   }, [places, userLocation, google, hasActiveFilters]);
 
   // Créer un marker personnalisé
-  const createCustomMarker = (place: MapPlace): HTMLElement => {
+  const createCustomMarker = useCallback((place: MapPlace): HTMLElement => {
     const markerDiv = document.createElement("div");
     markerDiv.className = "custom-marker";
 
@@ -318,28 +320,29 @@ export function MapView({
     `;
 
     return markerDiv;
-  };
+  }, []);
 
-  // Créer un marker de cluster
-  const createClusterMarker = (cluster: PlaceCluster): HTMLElement => {
-    const markerDiv = document.createElement("div");
-    markerDiv.className = "cluster-marker";
+  // Rendu personnalisé pour les clusters
+  const clusterRenderer = useMemo(() => ({
+    render: ({ count, position }: { count: number; position: google.maps.LatLng }) => {
+      const clusterDiv = document.createElement("div");
+      clusterDiv.className = "cluster-marker";
 
-    const placeCount = cluster.places.length;
-    const color = "#10b981"; // Vert pour les clusters
+      // Taille du cluster basée sur le nombre
+      const size = count < 10 ? 40 : count < 50 ? 48 : 56;
+      const fontSize = count < 10 ? 14 : count < 50 ? 16 : 18;
+      const color = count < 10 ? "#10b981" : count < 50 ? "#3b82f6" : "#8b5cf6";
 
-    // Créer un style adapté aux clusters
-    markerDiv.style.cssText = `
-      position: absolute;
-      transform: translate(-50%, -100%);
-      z-index: 800;
-    `;
+      clusterDiv.style.cssText = `
+        position: absolute;
+        transform: translate(-50%, -50%);
+        z-index: 800;
+      `;
 
-    markerDiv.innerHTML = `
-      <div style="position: relative;">
+      clusterDiv.innerHTML = `
         <div style="
-          width: 44px;
-          height: 44px;
+          width: ${size}px;
+          height: ${size}px;
           border-radius: 50%;
           background-color: ${color};
           display: flex;
@@ -348,27 +351,21 @@ export function MapView({
           border: 3px solid white;
           box-shadow: 0 3px 12px rgba(0,0,0,0.4);
           cursor: pointer;
+          transition: transform 0.2s;
         ">
-          <span style="color: white; font-size: 14px; font-weight: bold; line-height: 1;">${placeCount}</span>
+          <span style="color: white; font-size: ${fontSize}px; font-weight: bold; line-height: 1;">${count}</span>
         </div>
-        <div style="
-          position: absolute;
-          top: 100%;
-          left: 50%;
-          margin-left: -6px;
-          width: 0;
-          height: 0;
-          border-left: 6px solid transparent;
-          border-right: 6px solid transparent;
-          border-top: 8px solid ${color};
-        "></div>
-      </div>
-    `;
+      `;
 
-    return markerDiv;
-  };
+      return new window.google.maps.marker.AdvancedMarkerElement({
+        position,
+        content: clusterDiv,
+        zIndex: 800,
+      });
+    },
+  }), []);
 
-  // Mettre à jour les markers des places
+  // Mettre à jour les markers des places avec clustering dynamique
   useEffect(() => {
     if (!mapInstanceRef.current || !window.google || !categoriesReady) {
       return;
@@ -380,90 +377,79 @@ export function MapView({
       return;
     }
 
-    // Attendre un petit délai pour s'assurer que la carte est complètement initialisée
     const timer = setTimeout(() => {
+      // Supprimer l'ancien clusterer et ses markers
+      if (clustererRef.current) {
+        clustererRef.current.clearMarkers();
+        clustererRef.current.setMap(null);
+        clustererRef.current = null;
+      }
+
       // Supprimer les anciens markers
       markersRef.current.forEach((marker) => (marker.map = null));
       markersRef.current.clear();
 
-      // Créer les nouveaux markers (places individuelles et clusters)
-      places.forEach((item) => {
-        if (!item.latitude || !item.longitude) return;
+      // Filtrer les places individuelles (pas les clusters pré-calculés)
+      const individualPlaces = places.filter(
+        (item) => !('isCluster' in item && item.isCluster) && item.latitude && item.longitude
+      ) as MapPlace[];
 
-        // Vérifier si c'est un cluster ou une place individuelle
-        const isCluster = 'isCluster' in item && item.isCluster;
+      // Créer les markers individuels
+      const markersForClusterer: google.maps.marker.AdvancedMarkerElement[] = [];
 
-        if (isCluster) {
-          // Créer un marker de cluster
-          const cluster = item as PlaceCluster;
-          const markerContent = createClusterMarker(cluster);
+      individualPlaces.forEach((place) => {
+        const markerContent = createCustomMarker(place);
 
-          try {
-            const marker = new window.google.maps.marker.AdvancedMarkerElement({
-              map: mapInstanceRef.current,
-              position: { lat: cluster.latitude ?? 0, lng: cluster.longitude ?? 0 },
-              content: markerContent,
-              title: `${cluster.places.length} établissements à ${cluster.address}`,
-              zIndex: 800,
+        try {
+          const marker = new window.google.maps.marker.AdvancedMarkerElement({
+            position: { lat: place.latitude ?? 0, lng: place.longitude ?? 0 },
+            content: markerContent,
+            title: place.name,
+            zIndex: place.isFeatured ? 1000 : 500,
+          });
+
+          marker.addListener("click", () => {
+            onPlaceSelect(place);
+            mapInstanceRef.current?.panTo({
+              lat: place.latitude ?? 0,
+              lng: place.longitude ?? 0,
             });
+          });
 
-            // Gérer le clic sur le cluster (afficher la liste des établissements)
-            marker.addListener("click", () => {
-              if (onClusterSelect) {
-                onClusterSelect(cluster);
-              } else {
-                // Fallback: sélectionner le premier établissement
-                const firstPlace = cluster.places[0];
-                if (firstPlace) {
-                  onPlaceSelect(firstPlace);
-                }
-              }
-
-              // Animer vers le cluster
-              mapInstanceRef.current?.panTo({
-                lat: cluster.latitude ?? 0,
-                lng: cluster.longitude ?? 0,
-              });
-            });
-
-            markersRef.current.set(cluster.id, marker);
-          } catch (error) {
-            console.error("Error creating cluster marker:", error);
-          }
-        } else {
-          // Créer un marker de place individuelle
-          const place = item as MapPlace;
-          const markerContent = createCustomMarker(place);
-
-          try {
-            const marker = new window.google.maps.marker.AdvancedMarkerElement({
-              map: mapInstanceRef.current,
-              position: { lat: place.latitude ?? 0, lng: place.longitude ?? 0 },
-              content: markerContent,
-              title: place.name,
-              zIndex: place.isFeatured ? 1000 : 500,
-            });
-
-            marker.addListener("click", () => {
-              onPlaceSelect(place);
-
-              // Animer vers le marker sélectionné
-              mapInstanceRef.current?.panTo({
-                lat: place.latitude ?? 0,
-                lng: place.longitude ?? 0,
-              });
-            });
-
-            markersRef.current.set(place.id, marker);
-          } catch (error) {
-            console.error("Error creating marker:", error);
-          }
+          markersRef.current.set(place.id, marker);
+          markersForClusterer.push(marker);
+        } catch (error) {
+          console.error("Error creating marker:", error);
         }
       });
+
+      // Créer le clusterer avec algorithme SuperCluster
+      if (mapInstanceRef.current && markersForClusterer.length > 0) {
+        clustererRef.current = new MarkerClusterer({
+          map: mapInstanceRef.current,
+          markers: markersForClusterer,
+          algorithm: new SuperClusterAlgorithm({
+            maxZoom: 17,  // Au-delà de zoom 17, plus de clustering
+            radius: 80,   // Rayon en pixels pour grouper les markers
+          }),
+          renderer: clusterRenderer,
+          onClusterClick: (event, cluster, map) => {
+            // Zoomer sur le cluster quand on clique dessus
+            if (cluster.bounds) {
+              map.fitBounds(cluster.bounds, {
+                top: 50,
+                right: 50,
+                bottom: 50,
+                left: 50,
+              });
+            }
+          },
+        });
+      }
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [places, onPlaceSelect, onClusterSelect, categoriesReady, forceRender]);
+  }, [places, onPlaceSelect, onClusterSelect, categoriesReady, forceRender, createCustomMarker, clusterRenderer]);
 
   // Mettre à jour le marker de l'utilisateur
   useEffect(() => {
@@ -602,6 +588,9 @@ export function MapView({
         }
         .custom-marker:hover .relative > div {
           transform: scale(1.1);
+        }
+        .cluster-marker:hover > div {
+          transform: scale(1.15);
         }
       `}</style>
     </div>
