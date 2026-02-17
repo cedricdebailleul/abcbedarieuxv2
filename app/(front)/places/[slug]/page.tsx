@@ -25,6 +25,7 @@ import { PlaceCategoriesBadges } from "@/components/places/place-categories-badg
 import { FavoriteButton } from "@/components/places/favorite-button";
 import { SocialShare } from "@/components/shared/social-share";
 import { PlaceSchema } from "@/components/structured-data/place-schema";
+import { PlaceDetailMap } from "@/components/places/place-detail-map";
 import { PrintHeader } from "@/components/print/print-header";
 import { PlaceTabs } from "@/components/places/place-tabs";
 import { PlaceAboutTab } from "@/components/places/place-about-tab";
@@ -334,13 +335,6 @@ export default async function PlacePage({ params }: PageProps) {
   const fullAddress = `${place.street} ${place.streetNumber || ""}, ${
     place.postalCode
   } ${place.city}`.trim();
-  const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-  const mapSrc =
-    place.latitude && place.longitude
-      ? `https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=${place.latitude},${place.longitude}&zoom=16`
-      : `https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=${encodeURIComponent(
-          fullAddress
-        )}&zoom=16`;
   const directionsHref =
     place.latitude && place.longitude
       ? `https://www.google.com/maps?daddr=${place.latitude},${place.longitude}`
@@ -786,15 +780,20 @@ export default async function PlacePage({ params }: PageProps) {
                   <MapPin className="w-4 h-4 mr-2 mt-0.5" />
                   <span>{fullAddress}</span>
                 </div>
-                <div className="overflow-hidden rounded-xl border relative z-0">
-                  <iframe
-                    title={`Carte — ${place.name}`}
-                    src={mapSrc}
-                    className="w-full h-56"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
+                {place.latitude && place.longitude ? (
+                  <PlaceDetailMap
+                    latitude={place.latitude}
+                    longitude={place.longitude}
+                    name={place.name}
+                    address={fullAddress}
                   />
-                </div>
+                ) : (
+                  <div className="w-full h-56 bg-muted rounded-xl flex items-center justify-center">
+                    <span className="text-sm text-muted-foreground">
+                      Position GPS non disponible
+                    </span>
+                  </div>
+                )}
                 <Button asChild className="w-full">
                   <a
                     href={directionsHref}
