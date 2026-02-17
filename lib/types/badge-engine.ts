@@ -1,4 +1,4 @@
-import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
+import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/browser";
 
 // ============================================================
 //                    TYPES BADGE ENGINE

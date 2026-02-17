@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EventStatus, EventCategory, RecurrenceFrequency } from "@/lib/generated/prisma/client";
+import { EventStatus, EventCategory, RecurrenceFrequency } from "@/lib/generated/prisma/browser";
 
 // Schema de base pour un événement
 export const eventSchema = z.object({

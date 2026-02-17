@@ -58,7 +58,7 @@ import {
   EVENT_CATEGORIES_LABELS,
   RECURRENCE_FREQUENCY_OPTIONS,
 } from "@/lib/validations/event";
-import { EventStatus, RecurrenceFrequency } from "@/lib/generated/prisma/client";
+import { EventStatus, RecurrenceFrequency } from "@/lib/generated/prisma/browser";
 
 interface EventFormProps {
   initialData?: Partial<EventWithRecurrenceData & { id: string }>;

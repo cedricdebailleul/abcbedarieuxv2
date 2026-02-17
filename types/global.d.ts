@@ -1,5 +1,5 @@
 // Types globaux pour résoudre les problèmes temporaires de Better Auth
-import type { Role } from "@/lib/generated/prisma/client";
+import type { Role } from "@/lib/generated/prisma/browser";
 
 declare global {
   namespace BetterAuth {

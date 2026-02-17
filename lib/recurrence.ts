@@ -1,4 +1,4 @@
-import { RecurrenceFrequency } from "@/lib/generated/prisma/client";
+import { RecurrenceFrequency } from "@/lib/generated/prisma/browser";
 
 export interface RecurrenceRule {
   frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";

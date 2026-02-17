@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Role } from "@/lib/generated/prisma/client";
+import { Role } from "@/lib/generated/prisma/browser";
 
 /**
  * Schémas Zod communs pour remplacer les types 'any'

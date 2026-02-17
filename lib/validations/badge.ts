@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
+import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/browser";
 
 // Export des enums pour les composants
-export { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
+export { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/browser";
 
 // Schéma pour créer un badge
 export const createBadgeSchema = z.object({

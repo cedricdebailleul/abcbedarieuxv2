@@ -31,7 +31,7 @@ import {
   createCategorySchema,
   generateSlug,
 } from "@/lib/validations/post";
-import { Category } from "@/lib/generated/prisma/client";
+import { Category } from "@/lib/generated/prisma/browser";
 
 interface CreateCategoryDialogProps {
   onCategoryCreated?: (category: Category) => void;

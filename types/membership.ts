@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BadgeRarity } from "@/lib/generated/prisma/client";
+import { BadgeRarity } from "@/lib/generated/prisma/browser";
 
 // Schéma pour les données de célébration d'adhésion
 export const MembershipCelebrationDataSchema = z.object({

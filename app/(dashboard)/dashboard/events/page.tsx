@@ -32,7 +32,7 @@ import {
 import { SafeImage } from "@/components/safe-image";
 
 import { getUserEventsAction, deleteEventAction } from "@/actions/event";
-import { EventStatus, EventCategory } from "@/lib/generated/prisma/client";
+import { EventStatus, EventCategory } from "@/lib/generated/prisma/browser";
 import { EVENT_CATEGORIES_LABELS } from "@/lib/validations/event";
 
 interface Event {

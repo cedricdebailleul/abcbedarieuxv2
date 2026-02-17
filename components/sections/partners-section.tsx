@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { Partner } from "@/lib/generated/prisma/client";
+import type { Partner } from "@/lib/generated/prisma/browser";
 import type { PartnerType } from "@/lib/types/partners";
 
 

@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PostStatus } from "@/lib/generated/prisma/client";
+import { PostStatus } from "@/lib/generated/prisma/browser";
 
 interface PostsFiltersProps {
   searchParams: {
