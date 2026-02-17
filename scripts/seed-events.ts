@@ -1,14 +1,12 @@
-import { PrismaClient } from "../lib/generated/prisma";
-import { 
-  EventStatus, 
+import { prisma } from "./prisma-client";
+import {
+  EventStatus,
   EventCategory,
   PlaceStatus,
   ParticipationStatus,
   RecurrenceFrequency,
-  UserStatus 
+  UserStatus
 } from "../lib/generated/prisma";
-
-const prisma = new PrismaClient();
 
 async function seedEvents() {
   try {

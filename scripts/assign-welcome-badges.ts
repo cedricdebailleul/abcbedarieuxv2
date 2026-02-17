@@ -1,6 +1,4 @@
-import { PrismaClient } from "@/lib/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
 
 async function assignWelcomeBadges() {
   console.log("🎉 Attribution des badges de bienvenue...");

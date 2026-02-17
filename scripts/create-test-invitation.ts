@@ -1,7 +1,5 @@
 import crypto from "node:crypto";
-import { PrismaClient } from "@/lib/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
 
 async function createTestInvitation() {
   console.log("🎫 Création d'une invitation de test...");

@@ -23,7 +23,13 @@
       "Bash(git pull:*)",
       "Bash(git stash:*)",
       "Bash(git merge:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:www.prisma.io)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm list:*)"
     ],
     "deny": [],
     "ask": []

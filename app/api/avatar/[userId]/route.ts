@@ -2,17 +2,9 @@
 import { NextResponse, NextRequest } from "next/server";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { PrismaClient } from "@/lib/generated/prisma";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
-
-declare global {
-  // store PrismaClient in a global to prevent multiple instances during hot-reload in dev
-  var __prisma: PrismaClient | undefined;
-}
-
-const prisma = globalThis.__prisma ?? new PrismaClient();
-if (process.env.NODE_ENV !== "production") globalThis.__prisma = prisma;
 
 function contentTypeFromExt(ext: string) {
   switch (ext.toLowerCase()) {

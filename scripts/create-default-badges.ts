@@ -1,6 +1,5 @@
-import { type BadgeCategory, type BadgeRarity, PrismaClient } from "@/lib/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
+import { type BadgeCategory, type BadgeRarity } from "@/lib/generated/prisma";
 
 const DEFAULT_BADGES = [
   // Badges d'accueil

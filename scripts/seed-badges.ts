@@ -1,6 +1,5 @@
-import { BadgeCategory, BadgeRarity, PrismaClient } from "@/lib/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
+import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
 
 const badges = [
   {

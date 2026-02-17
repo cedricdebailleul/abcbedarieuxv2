@@ -1,6 +1,4 @@
-import { PrismaClient } from "../lib/generated/prisma/index.js";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
 
 /**
  * Script pour ajouter les coordonnées GPS à Black Bear Studio

@@ -1,19 +1,14 @@
 import { PrismaClient } from "@/lib/generated/prisma";
+import { prisma as sharedPrisma } from "@/lib/prisma";
 import { writeFile } from "node:fs/promises";
 
 // Version optimisée pour l'API backup/database
 export async function generateAPICompleteSQLDump(outputPath: string, prismaClient?: PrismaClient) {
   console.log("🔄 Génération SQL API avec tables principales...");
   console.log(`🎯 Fichier cible: ${outputPath}`);
-  
-  // Utiliser l'instance Prisma fournie ou créer une nouvelle
-  const prisma = prismaClient || new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-  });
+
+  // Utiliser l'instance Prisma fournie ou l'instance partagée
+  const prisma = prismaClient || sharedPrisma;
 
   const timestamp = new Date().toISOString();
   

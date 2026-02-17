@@ -1,6 +1,4 @@
-import { PrismaClient } from "@/lib/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
 
 async function updateBadgeIcons() {
   console.log("🏆 Mise à jour des icônes de badges...\n");

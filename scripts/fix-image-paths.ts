@@ -1,6 +1,4 @@
-import { PrismaClient } from "../lib/generated/prisma/index.js";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
 
 async function fixImagePaths() {
   console.log("🔧 Correction des chemins d'images avec backslashes...\n");

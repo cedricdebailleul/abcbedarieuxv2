@@ -1,6 +1,4 @@
-import { PrismaClient } from "@/lib/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
 
 async function checkInvitation(token: string, email: string) {
   console.log("🔍 Vérification de l'invitation...");

@@ -1,6 +1,5 @@
-import { PrismaClient, PartnerType } from "../lib/generated/prisma/index.js";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
+import { PartnerType } from "../lib/generated/prisma/index.js";
 
 /**
  * Script pour créer des partenaires institutionnels et économiques

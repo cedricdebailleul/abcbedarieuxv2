@@ -1,6 +1,4 @@
-import { PrismaClient } from "@/lib/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma-client";
 
 function generateSlug(name: string, id: string): string {
   // Nettoyer le nom pour créer un slug SEO-friendly

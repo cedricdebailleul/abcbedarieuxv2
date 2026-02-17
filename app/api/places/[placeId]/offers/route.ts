@@ -3,10 +3,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
-import { PrismaClient } from "@/lib/generated/prisma";
-
-// Create a direct Prisma client instance as fallback
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 const offerSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),

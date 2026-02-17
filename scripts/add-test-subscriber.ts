@@ -1,7 +1,5 @@
-import { PrismaClient } from '@/lib/generated/prisma';
+import { prisma } from "./prisma-client";
 import crypto from 'crypto';
-
-const prisma = new PrismaClient();
 
 async function addTestSubscriber() {
   try {
