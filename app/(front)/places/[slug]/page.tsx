@@ -334,12 +334,13 @@ export default async function PlacePage({ params }: PageProps) {
   const fullAddress = `${place.street} ${place.streetNumber || ""}, ${
     place.postalCode
   } ${place.city}`.trim();
+  const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
   const mapSrc =
     place.latitude && place.longitude
-      ? `https://www.google.com/maps?q=${place.latitude},${place.longitude}&z=16&output=embed`
-      : `https://www.google.com/maps?q=${encodeURIComponent(
+      ? `https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=${place.latitude},${place.longitude}&zoom=16`
+      : `https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=${encodeURIComponent(
           fullAddress
-        )}&z=16&output=embed`;
+        )}&zoom=16`;
   const directionsHref =
     place.latitude && place.longitude
       ? `https://www.google.com/maps?daddr=${place.latitude},${place.longitude}`
