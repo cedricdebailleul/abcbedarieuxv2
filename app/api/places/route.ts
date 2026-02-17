@@ -542,8 +542,9 @@ export async function POST(req: NextRequest) {
       : "PENDING";
 
     // Proprio: admin peut définir ownerId, sinon owner = user courant
+    // Si body.ownerId est explicitement null (place à revendiquer), on garde null
     const ownerId = isAdmin
-      ? asString(body.ownerId ?? session.user.id ?? "") || null
+      ? (body.ownerId === null ? null : asString(body.ownerId ?? session.user.id ?? "") || null)
       : (session.user.id ?? null);
 
     // Déplacer fichiers temp -> slug final
