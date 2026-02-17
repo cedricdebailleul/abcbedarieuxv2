@@ -266,52 +266,67 @@ export function generateAddressKey(
 }
 
 /**
- * Groupe les places par adresse identique
+ * Seuil de distance en mètres pour considérer deux places comme au même endroit
+ */
+const CLUSTER_DISTANCE_THRESHOLD_M = 10;
+
+/**
+ * Groupe les places par proximité GPS (< 10m = même endroit)
+ * Utilise les coordonnées réelles au lieu de l'adresse textuelle
+ * pour éviter de grouper des places dans une zone artisanale sans numéro
  * @param places Liste des places à grouper
  * @returns Liste des places et clusters
  */
 export function clusterPlacesByAddress(places: MapPlace[]): (MapPlace | PlaceCluster)[] {
-  const addressMap = new Map<string, MapPlace[]>();
+  const placesWithCoords = places.filter(
+    (p) => p.latitude && p.longitude
+  );
 
-  // Grouper les places par adresse
-  places.forEach((place) => {
-    // Ne traiter que les places avec coordonnées
-    if (!place.latitude || !place.longitude) {
-      return;
+  // Grouper par proximité GPS
+  const clusters: MapPlace[][] = [];
+  const assigned = new Set<string>();
+
+  for (const place of placesWithCoords) {
+    if (assigned.has(place.id)) continue;
+
+    const group: MapPlace[] = [place];
+    assigned.add(place.id);
+
+    for (const other of placesWithCoords) {
+      if (assigned.has(other.id)) continue;
+
+      const distanceM =
+        calculateDistance(
+          place.latitude!,
+          place.longitude!,
+          other.latitude!,
+          other.longitude!
+        ) * 1000; // km → m
+
+      if (distanceM <= CLUSTER_DISTANCE_THRESHOLD_M) {
+        group.push(other);
+        assigned.add(other.id);
+      }
     }
 
-    const addressKey = generateAddressKey(
-      place.street,
-      place.streetNumber,
-      place.city,
-      place.postalCode
-    );
-
-    if (!addressMap.has(addressKey)) {
-      addressMap.set(addressKey, []);
-    }
-    addressMap.get(addressKey)!.push(place);
-  });
+    clusters.push(group);
+  }
 
   const result: (MapPlace | PlaceCluster)[] = [];
 
-  // Traiter chaque groupe d'adresses
-  addressMap.forEach((placesAtAddress, addressKey) => {
-    if (placesAtAddress.length === 1) {
-      // Une seule place à cette adresse, l'ajouter directement
-      result.push(placesAtAddress[0]);
+  for (const group of clusters) {
+    if (group.length === 1) {
+      result.push(group[0]);
     } else {
-      // Plusieurs places à la même adresse, créer un cluster
-      // Utiliser la place avec la date de mise à jour la plus récente pour l'adresse du cluster
-      const mostRecentPlace = placesAtAddress.reduce((latest, current) => {
+      const mostRecentPlace = group.reduce((latest, current) => {
         const latestDate = latest.updatedAt ? new Date(latest.updatedAt) : new Date(0);
         const currentDate = current.updatedAt ? new Date(current.updatedAt) : new Date(0);
         return currentDate > latestDate ? current : latest;
       });
-      
+
       const cluster: PlaceCluster = {
-        id: `cluster-${addressKey}`,
-        places: placesAtAddress,
+        id: `cluster-${group.map((p) => p.id).join("-")}`,
+        places: group,
         address: `${mostRecentPlace.streetNumber ? mostRecentPlace.streetNumber + " " : ""}${mostRecentPlace.street}, ${mostRecentPlace.city}`,
         latitude: mostRecentPlace.latitude,
         longitude: mostRecentPlace.longitude,
@@ -319,7 +334,7 @@ export function clusterPlacesByAddress(places: MapPlace[]): (MapPlace | PlaceClu
       };
       result.push(cluster);
     }
-  });
+  }
 
   // Ajouter les places sans coordonnées directement (elles ne seront pas affichées sur la carte)
   places.forEach((place) => {
