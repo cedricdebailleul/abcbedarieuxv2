@@ -4,7 +4,7 @@ import { safeUserCast } from "@/lib/auth-helpers";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import type { Partner, Prisma } from "@/lib/generated/prisma";
+import type { Partner, Prisma } from "@/lib/generated/prisma/client";
 import {
   PartnerUpdateSchema,
   preparePartnerForDatabase,

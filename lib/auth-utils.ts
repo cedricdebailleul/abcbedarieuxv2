@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import type { UserWithRole, ExtendedUser } from "@/types/auth";
-import type { Role } from "@/lib/generated/prisma";
+import type { Role } from "@/lib/generated/prisma/client";
 
 /**
  * Récupère l'utilisateur actuel avec son rôle depuis la base de données

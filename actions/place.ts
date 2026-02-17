@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 
 export async function getFeaturedPlacesAction(limit: number = 6) {
   try {

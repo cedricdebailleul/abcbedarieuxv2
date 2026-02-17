@@ -14,7 +14,7 @@ import {
   type UpdatePlaceCategoryInput,
   type PlaceCategoryFilters,
 } from "@/lib/validations/place-category";
-import { Prisma } from "@/lib/generated/prisma";
+import { Prisma } from "@/lib/generated/prisma/client";
 
 // Types pour les réponses
 type ActionResult<T = unknown> = {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { Prisma, AbcMemberType, AbcMemberStatus } from "@/lib/generated/prisma";
+import { Prisma, AbcMemberType, AbcMemberStatus } from "@/lib/generated/prisma/client";
 
 const createMemberSchema = z.object({
   userId: z.string().min(1),

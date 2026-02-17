@@ -5,8 +5,8 @@ import { safeUserCast } from "@/lib/auth-helpers";
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fsp } from "node:fs";
 import { join, resolve, dirname, sep, parse } from "node:path";
-import { PlaceType } from "@/lib/generated/prisma";
-import type { PlaceStatus, Prisma, DayOfWeek } from "@/lib/generated/prisma";
+import { PlaceType } from "@/lib/generated/prisma/client";
+import type { PlaceStatus, Prisma, DayOfWeek } from "@/lib/generated/prisma/client";
 import { triggerPlaceCreationBadges } from "@/lib/services/badge-trigger-service";
 import { notifyAdminsNewPlace } from "@/lib/place-notifications";
 

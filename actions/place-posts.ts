@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { PostStatus } from "@/lib/generated/prisma";
+import { PostStatus } from "@/lib/generated/prisma/client";
 import { ActionResult } from "@/lib/types";
 
 export async function getPlacePostsAction(

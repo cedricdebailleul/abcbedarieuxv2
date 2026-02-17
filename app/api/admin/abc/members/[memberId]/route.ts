@@ -3,7 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { AbcMemberType, AbcMemberRole, AbcMemberStatus } from "@/lib/generated/prisma";
+import { AbcMemberType, AbcMemberRole, AbcMemberStatus } from "@/lib/generated/prisma/client";
 
 const updateMemberSchema = z.object({
   type: z

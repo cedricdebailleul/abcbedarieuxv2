@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { UserStatus } from "@/lib/generated/prisma";
+import { UserStatus } from "@/lib/generated/prisma/client";
 
 const banUserSchema = z.object({
   banned: z.boolean(),

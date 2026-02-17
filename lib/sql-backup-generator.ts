@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/lib/generated/prisma";
+import { PrismaClient } from "@/lib/generated/prisma/client";
 import { prisma as sharedPrisma } from "@/lib/prisma";
 import { writeFile } from "node:fs/promises";
 

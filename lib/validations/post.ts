@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PostStatus } from "@/lib/generated/prisma";
+import { PostStatus } from "@/lib/generated/prisma/client";
 
 // Fonction utilitaire pour générer un slug
 export function generateSlug(title: string): string {

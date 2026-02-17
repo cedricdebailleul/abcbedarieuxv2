@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
-import { ClaimStatus, Prisma } from "@/lib/generated/prisma";
+import { ClaimStatus, Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/admin/claims - Liste des revendications

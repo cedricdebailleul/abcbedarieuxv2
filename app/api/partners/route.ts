@@ -5,7 +5,7 @@ import {
   PartnerListResponse,
   isValidPartnerType,
 } from "@/lib/types/partners";
-import { Prisma } from "@/lib/generated/prisma";
+import { Prisma } from "@/lib/generated/prisma/client";
 
 export async function GET(
   request: NextRequest

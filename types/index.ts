@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Session } from "@/lib/generated/prisma";
+import type { Session } from "@/lib/generated/prisma/client";
 
 // User schemas
 export const UserSchema = z.object({

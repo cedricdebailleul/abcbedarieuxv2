@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
-import type { Role } from "@/lib/generated/prisma";
+import type { Role } from "@/lib/generated/prisma/client";
 
 /**
  * Récupère la session actuelle avec le rôle utilisateur depuis la base de données

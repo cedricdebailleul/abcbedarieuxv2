@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
+import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
 import {
   BadgeConfiguration,
   BadgeContext,

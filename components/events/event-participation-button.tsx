@@ -27,7 +27,7 @@ import {
 
 import { useSession } from "@/hooks/use-session";
 import { participateInEventAction } from "@/actions/event";
-import { ParticipationStatus } from "@/lib/generated/prisma";
+import { ParticipationStatus } from "@/lib/generated/prisma/client";
 
 interface EventParticipationButtonProps {
   eventId: string;

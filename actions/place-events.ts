@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { EventStatus } from "@/lib/generated/prisma";
+import { EventStatus } from "@/lib/generated/prisma/client";
 
 type ActionResult<T = unknown> = {
   success: boolean;

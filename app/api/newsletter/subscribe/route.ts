@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { sendEmail, createVerificationEmailTemplate } from "@/lib/email";
 import { checkRateLimit, createRateLimitResponse, getClientIP, newsletterSubscribeLimit } from "@/lib/rate-limit";
 import { validateAndSanitize, subscribeSchema } from "@/lib/validation";
-import { NewsletterFrequency } from "@/lib/generated/prisma";
+import { NewsletterFrequency } from "@/lib/generated/prisma/client";
 import { getBaseUrlFromRequest } from "@/lib/url-utils";
 
 export async function POST(request: NextRequest) {

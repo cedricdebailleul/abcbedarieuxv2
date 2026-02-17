@@ -9,13 +9,13 @@ import { prisma } from "@/lib/prisma";
 // ⚠️ Adapte si tes enums Prisma sont ailleurs :
 import type {
   Prisma,
-} from "@/lib/generated/prisma";
+} from "@/lib/generated/prisma/client";
 
 import {
   EventStatus,
   RecurrenceFrequency,
   ParticipationStatus,
-} from "@/lib/generated/prisma";
+} from "@/lib/generated/prisma/client";
 import { expandRecurrentEvents } from "@/lib/recurrence";
 import { notifyAdminsNewEvent } from "@/lib/content-notifications";
 

@@ -1,5 +1,5 @@
 import { prisma } from "./prisma-client";
-import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
+import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
 
 const badges = [
   {

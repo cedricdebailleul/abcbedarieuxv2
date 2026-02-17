@@ -7,7 +7,7 @@ import {
   AbcPaymentMode,
   AbcPaymentStatus,
   Prisma,
-} from "@/lib/generated/prisma";
+} from "@/lib/generated/prisma/client";
 
 const createPaymentSchema = z.object({
   memberId: z.string().min(1, "Le membre est obligatoire"),

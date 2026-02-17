@@ -12,7 +12,7 @@ import {
   isValidPartnerType,
   preparePartnerForDatabase,
 } from "@/lib/types/partners";
-import { Prisma } from "@/lib/generated/prisma";
+import { Prisma } from "@/lib/generated/prisma/client";
 
 // GET - Récupérer tous les partenaires avec filtres et pagination
 export async function GET(

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(

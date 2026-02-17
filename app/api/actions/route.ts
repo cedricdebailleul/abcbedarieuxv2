@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ActionStatus } from "@/lib/generated/prisma";
+import { ActionStatus } from "@/lib/generated/prisma/client";
 
 // GET - Lister les actions publiques
 export async function GET(request: NextRequest) {

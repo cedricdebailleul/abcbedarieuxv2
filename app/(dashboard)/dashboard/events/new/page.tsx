@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { EventForm } from "@/components/forms/event-form";
 import { prisma } from "@/lib/prisma";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 
 export const metadata: Metadata = {
   title: "Créer un événement - Dashboard",

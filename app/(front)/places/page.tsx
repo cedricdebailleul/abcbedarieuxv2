@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // Force dynamic rendering

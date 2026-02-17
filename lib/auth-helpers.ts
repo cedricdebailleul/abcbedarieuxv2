@@ -6,7 +6,7 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { Role } from "@/lib/generated/prisma";
+import type { Role } from "@/lib/generated/prisma/client";
 
 // Réexporter les types et utilitaires client pour compatibilité
 export type { BetterAuthUser } from "@/lib/auth-helpers-client";

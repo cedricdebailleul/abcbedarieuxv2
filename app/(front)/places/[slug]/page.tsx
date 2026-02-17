@@ -33,7 +33,7 @@ import { ContactForm } from "@/components/places/contact-form";
 import { PlaceReviewsTab } from "@/components/places/place-reviews-tab";
 import { ContactButtons } from "@/components/places/contact-buttons";
 import { StickyMobileActions } from "@/components/places/sticky-mobile-actions";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // Force dynamic rendering

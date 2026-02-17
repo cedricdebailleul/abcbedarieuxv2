@@ -2,7 +2,7 @@
  * Utilitaires d'authentification pour les composants client
  */
 
-import type { Role } from "@/lib/generated/prisma";
+import type { Role } from "@/lib/generated/prisma/client";
 
 /**
  * Type pour session Better Auth étendue avec rôle

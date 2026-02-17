@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { NewsletterFrequency } from "@/lib/generated/prisma";
+import { NewsletterFrequency } from "@/lib/generated/prisma/client";
 
 const preferencesSchema = z.object({
   email: z.string().email("Email invalide"),

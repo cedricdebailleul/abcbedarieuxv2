@@ -5,8 +5,8 @@ import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { PLACES_ROOT } from "@/lib/path";
 import { rm } from "node:fs/promises";
-import type { DayOfWeek } from "@/lib/generated/prisma";
-import { Prisma, PlaceType, PlaceStatus } from "@/lib/generated/prisma";
+import type { DayOfWeek } from "@/lib/generated/prisma/client";
+import { Prisma, PlaceType, PlaceStatus } from "@/lib/generated/prisma/client";
 import { DatabaseOpeningHour, GroupedOpeningHours } from "@/lib/schemas/common";
 
 /* --------------------------- helpers Zod --------------------------- */

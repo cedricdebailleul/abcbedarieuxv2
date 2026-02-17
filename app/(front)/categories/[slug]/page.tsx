@@ -12,7 +12,7 @@ import { FavoriteButton } from "@/components/places/favorite-button";
 import { SafeImage } from "@/components/safe-image";
 
 import { prisma } from "@/lib/prisma";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";

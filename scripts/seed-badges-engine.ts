@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 import { prisma } from "./prisma-client";
-import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
+import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
 
 // Badges basés sur les configurations de l'engine
 const badges = [

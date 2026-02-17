@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 
 async function testPlaceCategoriesQuery() {
   console.log("🔍 Test de la requête place avec catégories...");

@@ -19,7 +19,7 @@ import {
   type PostFilters,
   type CategoryInput,
 } from "@/lib/validations/post";
-import { Prisma, PostStatus } from "@/lib/generated/prisma";
+import { Prisma, PostStatus } from "@/lib/generated/prisma/client";
 import { notifyAdminsNewPost } from "@/lib/content-notifications";
 
 // Types pour les réponses

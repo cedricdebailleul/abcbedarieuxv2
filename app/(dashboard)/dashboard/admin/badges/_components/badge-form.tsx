@@ -50,7 +50,7 @@ import {
   type UpdateBadgeInput,
 } from "@/lib/validations/badge";
 import { BadgeFormData } from "@/lib/types/badge";
-import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
+import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
 import Image from "next/image";
 
 interface BadgeFormProps {

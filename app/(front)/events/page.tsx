@@ -17,9 +17,9 @@ import { EventCalendar } from "@/components/events/event-calendar";
 import { EventCard } from "@/components/events/event-card";
 
 import { getPublicEventsAction } from "@/actions/event";
-import type { Event } from "@/lib/generated/prisma";
+import type { Event } from "@/lib/generated/prisma/client";
 import { EVENT_CATEGORIES_LABELS } from "@/lib/validations/event";
-import { EventCategory } from "@/lib/generated/prisma";
+import { EventCategory } from "@/lib/generated/prisma/client";
 
 /** =========================
  * Types locaux utiles

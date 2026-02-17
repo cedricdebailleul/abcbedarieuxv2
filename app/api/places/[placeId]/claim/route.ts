@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // POST /api/places/[placeId]/claim - Revendiquer directement une place

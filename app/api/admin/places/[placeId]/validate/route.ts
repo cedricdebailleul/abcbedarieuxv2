@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 import {
   notifyUserPlaceApproved,
   notifyUserPlaceRejected,

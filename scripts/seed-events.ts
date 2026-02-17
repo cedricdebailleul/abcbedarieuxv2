@@ -6,7 +6,7 @@ import {
   ParticipationStatus,
   RecurrenceFrequency,
   UserStatus
-} from "../lib/generated/prisma";
+} from "../lib/generated/prisma/client";
 
 async function seedEvents() {
   try {

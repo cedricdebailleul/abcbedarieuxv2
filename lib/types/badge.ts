@@ -1,4 +1,4 @@
-import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
+import { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
 
 // Types de base pour les badges
 export interface Badge {
@@ -95,7 +95,7 @@ export interface BadgeAwardResult {
 }
 
 // Exports des enums pour faciliter l'utilisation
-export { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
+export { BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
 
 // Types pour les filtres
 export interface BadgeFilters {

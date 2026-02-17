@@ -57,7 +57,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { PostStatus } from "@/lib/generated/prisma";
+import { PostStatus } from "@/lib/generated/prisma/client";
 import {
   type CreatePostInput,
   createPostSchema,

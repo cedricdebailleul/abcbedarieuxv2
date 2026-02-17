@@ -4,7 +4,7 @@
  * en attendant une solution plus permanente
  */
 
-import type { Role } from "@/lib/generated/prisma";
+import type { Role } from "@/lib/generated/prisma/client";
 
 // Type assertion pour Better Auth User avec role
 export function assertUserWithRole(user: unknown): asserts user is { role: Role } {

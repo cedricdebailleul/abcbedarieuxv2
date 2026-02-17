@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
 import { headers } from "next/headers";
 import crypto from "crypto";
-import type { Prisma } from "@/lib/generated/prisma";
+import type { Prisma } from "@/lib/generated/prisma/client";
 
 // Configuration WhatsApp Business API
 const VERIFY_TOKEN = env.WHATSAPP_VERIFY_TOKEN;

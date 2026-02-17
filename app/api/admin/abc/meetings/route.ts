@@ -3,7 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { AbcMeetingStatus, Prisma } from "@/lib/generated/prisma";
+import { AbcMeetingStatus, Prisma } from "@/lib/generated/prisma/client";
 
 const createMeetingSchema = z.object({
   title: z.string().min(1, "Le titre est obligatoire"),

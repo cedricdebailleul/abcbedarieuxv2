@@ -1,4 +1,4 @@
-import type { Role } from "@/lib/generated/prisma";
+import type { Role } from "@/lib/generated/prisma/client";
 
 declare module "better-auth/types" {
   interface User {

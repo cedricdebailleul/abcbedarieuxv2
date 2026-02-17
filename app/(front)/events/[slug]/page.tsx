@@ -28,7 +28,7 @@ import { SocialShare } from "@/components/shared/social-share";
 import { EventSchema } from "@/components/structured-data/event-schema";
 import { PrintHeader } from "@/components/print/print-header";
 
-import { EventCategory, EventStatus } from "@/lib/generated/prisma";
+import { EventCategory, EventStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // Force dynamic rendering

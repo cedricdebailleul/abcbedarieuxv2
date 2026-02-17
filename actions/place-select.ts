@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 import { headers } from "next/headers";
 import { ActionResult } from "@/lib/types";
 

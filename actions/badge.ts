@@ -23,7 +23,7 @@ import {
   BadgeListItem,
   BadgeStats,
 } from "@/lib/types/badge";
-import { Prisma, BadgeCategory, BadgeRarity } from "@/lib/generated/prisma";
+import { Prisma, BadgeCategory, BadgeRarity } from "@/lib/generated/prisma/client";
 
 // Types pour les réponses
 type ActionResult<T = unknown> = {

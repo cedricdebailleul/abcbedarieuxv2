@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
-import { PlaceStatus, Prisma } from "@/lib/generated/prisma";
+import { PlaceStatus, Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/admin/places - Liste des places pour admin

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { InteractiveMap } from "@/components/map/interactive-map";
 import { MapSkeleton } from "@/components/map/map-skeleton";
 import { prisma } from "@/lib/prisma";
-import { PlaceStatus } from "@/lib/generated/prisma";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';

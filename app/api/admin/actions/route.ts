@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { ActionStatus, Prisma } from "@/lib/generated/prisma";
+import { ActionStatus, Prisma } from "@/lib/generated/prisma/client";
 
 const createActionSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),

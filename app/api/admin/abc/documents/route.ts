@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { safeUserCast } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { AbcDocumentType } from "@/lib/generated/prisma";
+import { AbcDocumentType } from "@/lib/generated/prisma/client";
 import path from "node:path";
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";

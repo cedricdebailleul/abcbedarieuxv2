@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Role } from "@/lib/generated/prisma";
+import { Role } from "@/lib/generated/prisma/client";
 
 // Schéma Zod pour l'utilisateur avec rôle
 export const UserWithRoleSchema = z.object({
