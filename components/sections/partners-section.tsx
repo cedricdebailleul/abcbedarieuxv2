@@ -10,7 +10,6 @@ import {
   Award,
   ArrowRight,
   Handshake,
-  Star,
   MapPin,
   ExternalLink,
 } from "lucide-react";
@@ -31,14 +30,6 @@ interface PartnersSectionProps {
   };
 }
 
-const testimonial = {
-  content:
-    "ABC Bédarieux est devenu un acteur incontournable du développement économique local. Notre collaboration porte ses fruits !",
-  author: "Marie Dubois",
-  role: "Présidente Association des Commerçants",
-  company: "Bédarieux Centre-Ville",
-  rating: 5,
-};
 
 export function PartnersSection({ partners, stats }: PartnersSectionProps) {
   const partnerStats = [
@@ -216,42 +207,6 @@ export function PartnersSection({ partners, stats }: PartnersSectionProps) {
         )}
 
         {/* Testimonial */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-12"
-        >
-          <Card className="max-w-4xl mx-auto bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
-            <CardContent className="p-8">
-              <div className="flex items-center gap-1 mb-4 justify-center">
-                {Array.from({ length: testimonial.rating }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 text-yellow-500 fill-current"
-                  />
-                ))}
-              </div>
-              <blockquote className="text-lg text-gray-700 italic text-center mb-6 leading-relaxed">
-                &quot;{testimonial.content}&quot;
-              </blockquote>
-              <div className="flex items-center justify-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Users className="w-6 h-6 text-primary" />
-                </div>
-                <div className="text-center">
-                  <h4 className="font-semibold text-gray-900">
-                    {testimonial.author}
-                  </h4>
-                  <p className="text-sm text-gray-600">{testimonial.role}</p>
-                  <p className="text-xs text-gray-500">{testimonial.company}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
         {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
