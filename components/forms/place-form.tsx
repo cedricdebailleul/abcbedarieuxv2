@@ -1887,10 +1887,14 @@ export function PlaceForm({
                                   { method: "POST" }
                                 );
                                 if (!response.ok) {
-                                  const err = await response.json();
-                                  throw new Error(
-                                    err.error || "Erreur lors de l'import"
-                                  );
+                                  let errorMessage = "Erreur lors de l'import";
+                                  try {
+                                    const err = await response.json();
+                                    errorMessage = err.error || errorMessage;
+                                  } catch {
+                                    // réponse non-JSON (page d'erreur proxy)
+                                  }
+                                  throw new Error(errorMessage);
                                 }
                                 const result = await response.json();
                                 toast.success(result.message);

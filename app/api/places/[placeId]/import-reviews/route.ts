@@ -108,9 +108,18 @@ export async function POST(
     if (!res.ok) {
       const txt = await res.text();
       console.error("Google Places v1 error:", res.status, txt);
+
+      let googleMessage = "Erreur inconnue de l'API Google";
+      try {
+        const googleErr = JSON.parse(txt);
+        googleMessage = googleErr?.error?.message ?? googleMessage;
+      } catch {
+        // réponse non-JSON
+      }
+
       return NextResponse.json(
-        { error: "Échec récupération avis Google", details: txt },
-        { status: 502 }
+        { error: `Échec récupération avis Google : ${googleMessage}` },
+        { status: 400 }
       );
     }
 
