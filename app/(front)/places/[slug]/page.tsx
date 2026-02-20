@@ -30,6 +30,7 @@ import { PrintHeader } from "@/components/print/print-header";
 import { PlaceTabs } from "@/components/places/place-tabs";
 import { PlaceAboutTab } from "@/components/places/place-about-tab";
 import { ContactForm } from "@/components/places/contact-form";
+import { PlaceReviewsTab } from "@/components/places/place-reviews-tab";
 import { ContactButtons } from "@/components/places/contact-buttons";
 import { StickyMobileActions } from "@/components/places/sticky-mobile-actions";
 import { PlaceStatus } from "@/lib/generated/prisma/client";
@@ -295,6 +296,14 @@ export default async function PlacePage({ params }: PageProps) {
           },
         },
       },
+      reviews: {
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      googleReviews: {
+        where: { status: "APPROVED" },
+        orderBy: { createdAt: "desc" },
+      },
       openingHours: { orderBy: { dayOfWeek: "asc" } },
       categories: {
         include: {
@@ -310,7 +319,7 @@ export default async function PlacePage({ params }: PageProps) {
         },
       },
       _count: {
-        select: { favorites: true },
+        select: { reviews: true, favorites: true, googleReviews: true },
       },
     },
   });
@@ -330,6 +339,13 @@ export default async function PlacePage({ params }: PageProps) {
     place.latitude && place.longitude
       ? `https://www.google.com/maps?daddr=${place.latitude},${place.longitude}`
       : `https://www.google.com/maps?daddr=${encodeURIComponent(fullAddress)}`;
+
+  // Calcul de la note moyenne
+  const averageRating =
+    place.reviews && place.reviews.length > 0
+      ? place.reviews.reduce((acc, review) => acc + (review.rating || 0), 0) /
+        place.reviews.length
+      : 0;
 
   const normalizedPlace = {
     ...place,
@@ -429,6 +445,18 @@ export default async function PlacePage({ params }: PageProps) {
                     </span>
                   </span>
 
+                  {/* Note moyenne */}
+                  {averageRating > 0 && (
+                    <span className="inline-flex items-center text-sm">
+                      <Star className="w-4 h-4 mr-1 fill-yellow-400 text-yellow-400" />
+                      <span className="leading-none font-medium">
+                        {averageRating.toFixed(1)}
+                      </span>
+                      <span className="leading-none text-muted-foreground ml-1">
+                        ({place.reviews?.length || 0})
+                      </span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Boutons de contact - Masqués sur mobile car dans la sticky bar */}
@@ -566,6 +594,40 @@ export default async function PlacePage({ params }: PageProps) {
                     categories: (place.categories || []).map((c) => c.category),
                   }}
                   gallery={gallery}
+                />
+              }
+              reviewsContent={
+                <PlaceReviewsTab
+                  placeId={place.id}
+                  placeName={place.name}
+                  reviews={place.reviews}
+                  googleReviews={place.googleReviews.map((review) => {
+                    // narrow the shape safely without using `any`
+                    const rev = review as unknown as Record<string, unknown>;
+                    const authorField = rev["author"];
+                    const fallbackName =
+                      (rev["authorName"] as string | undefined) ??
+                      (rev["author_name"] as string | undefined) ??
+                      null;
+
+                    // Ensure we provide a string name for `author` to match GoogleReview type
+                    const authorName =
+                      typeof authorField === "string"
+                        ? authorField
+                        : typeof authorField === "object" &&
+                            authorField !== null &&
+                            "name" in (authorField as object)
+                          ? ((authorField as { name?: string | null }).name ??
+                            fallbackName ??
+                            "")
+                          : (fallbackName ?? "");
+
+                    return {
+                      ...review,
+                      createdAt: review.createdAt.toISOString(),
+                      author: authorName,
+                    };
+                  })}
                 />
               }
             />
