@@ -13,6 +13,8 @@ import { ActionsSection } from "@/components/actions/actions-section";
 import { CTASection } from "@/components/sections/cta-section";
 import { PartnersSection } from "@/components/sections/partners-section";
 import { WhatsAppButton } from "@/components/whatsapp/whatsapp-button";
+import { prisma } from "@/lib/prisma";
+import { AbcMemberStatus, PlaceStatus } from "@/lib/generated/prisma/client";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -28,11 +30,18 @@ export default async function Home() {
   // Récupérer les places en vedette
   const featuredPlacesResult = await getFeaturedPlacesAction(6);
 
-  // Récupérer les partenaires et leurs statistiques
-  const [featuredPartners, partnersStats] = await Promise.all([
-    getFeaturedPartners(),
-    getPartnersStats(),
-  ]);
+  // Récupérer les partenaires, leurs statistiques et les compteurs CTA
+  const currentYear = new Date().getFullYear();
+  const startOfYear = new Date(currentYear, 0, 1);
+
+  const [featuredPartners, partnersStats, memberCount, placesCount, eventsCount] =
+    await Promise.all([
+      getFeaturedPartners(),
+      getPartnersStats(),
+      prisma.abcMember.count({ where: { status: AbcMemberStatus.ACTIVE } }),
+      prisma.place.count({ where: { status: PlaceStatus.ACTIVE, isActive: true } }),
+      prisma.event.count({ where: { startDate: { gte: startOfYear } } }),
+    ]);
   const upcomingEvents = upcomingEventsResult.success
     ? upcomingEventsResult.data!.map(
         (event: {
@@ -184,7 +193,11 @@ export default async function Home() {
       )}
 
       {/* Section call-to-action */}
-      <CTASection />
+      <CTASection
+        memberCount={memberCount}
+        placesCount={placesCount}
+        eventsCount={eventsCount}
+      />
       <PartnersSection partners={featuredPartners} stats={partnersStats} />
 
       {/* Bouton WhatsApp flottant - Groupe Commerce Local */}
