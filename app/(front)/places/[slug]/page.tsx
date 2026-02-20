@@ -133,11 +133,29 @@ function groupOpeningHours(
   }
   return byDay;
 }
-function computeOpenState(
-  grouped: Record<string, Slot[]>,
-  nowDate = new Date()
-) {
-  const dow = nowDate.getDay(); // 0=Dim..6=Sam
+function getNowInParis(): { dow: number; nowMin: number } {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Paris",
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+
+  const weekdayMap: Record<string, number> = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  };
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "Mon";
+  let hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+  const minute = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
+  if (hour === 24) hour = 0; // minuit
+
+  return { dow: weekdayMap[weekday] ?? 1, nowMin: hour * 60 + minute };
+}
+
+function computeOpenState(grouped: Record<string, Slot[]>) {
+  const { dow, nowMin } = getNowInParis();
   const mapIdx: Record<number, (typeof DAY_ORDER)[number]> = {
     0: "SUNDAY",
     1: "MONDAY",
@@ -148,7 +166,6 @@ function computeOpenState(
     6: "SATURDAY",
   };
   const todayKey = mapIdx[dow];
-  const nowMin = nowDate.getHours() * 60 + nowDate.getMinutes();
   const todaySlots = grouped[todayKey] || [];
 
   let open = false;
