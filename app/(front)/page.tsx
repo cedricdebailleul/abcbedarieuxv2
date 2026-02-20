@@ -14,7 +14,7 @@ import { CTASection } from "@/components/sections/cta-section";
 import { PartnersSection } from "@/components/sections/partners-section";
 import { WhatsAppButton } from "@/components/whatsapp/whatsapp-button";
 import { prisma } from "@/lib/prisma";
-import { AbcMemberStatus, PlaceStatus } from "@/lib/generated/prisma/client";
+import { PlaceStatus } from "@/lib/generated/prisma/client";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -34,14 +34,22 @@ export default async function Home() {
   const currentYear = new Date().getFullYear();
   const startOfYear = new Date(currentYear, 0, 1);
 
-  const [featuredPartners, partnersStats, memberCount, placesCount, eventsCount] =
-    await Promise.all([
-      getFeaturedPartners(),
-      getPartnersStats(),
-      prisma.abcMember.count({ where: { status: AbcMemberStatus.ACTIVE } }),
-      prisma.place.count({ where: { status: PlaceStatus.ACTIVE, isActive: true } }),
-      prisma.event.count({ where: { startDate: { gte: startOfYear } } }),
-    ]);
+  const [
+    featuredPartners,
+    partnersStats,
+    placesCount,
+    activePartnersCount,
+    eventsCount,
+  ] = await Promise.all([
+    getFeaturedPartners(),
+    getPartnersStats(),
+    prisma.place.count({ where: { status: PlaceStatus.ACTIVE, isActive: true } }),
+    prisma.partner.count({ where: { isActive: true } }),
+    prisma.event.count({ where: { startDate: { gte: startOfYear } } }),
+  ]);
+
+  // Membres actifs = établissements référencés + partenaires
+  const memberCount = placesCount + activePartnersCount;
   const upcomingEvents = upcomingEventsResult.success
     ? upcomingEventsResult.data!.map(
         (event: {
