@@ -5,7 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RegistrationDialog } from "@/components/abc/registration-dialog";
 import { ArrowRight, Users, Heart, Star } from "lucide-react";
 
-export function CTASection() {
+interface CTASectionProps {
+  memberCount: number;
+  placesCount: number;
+  eventsCount: number;
+}
+
+export function CTASection({ memberCount, placesCount, eventsCount }: CTASectionProps) {
   return (
     <section className="py-16 bg-gradient-to-br from-primary/5 via-background to-primary/10">
       <div className="container mx-auto px-8">
@@ -22,7 +28,7 @@ export function CTASection() {
                       <Star className="h-5 w-5 text-yellow-500 fill-current" />
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      Rejoignez plus de 200 membres
+                      Rejoignez plus de {memberCount} membres
                     </span>
                   </div>
 
@@ -93,7 +99,7 @@ export function CTASection() {
                   <div className="space-y-6">
                     <div className="text-center">
                       <div className="text-3xl font-bold text-primary">
-                        200+
+                        {memberCount}+
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Membres actifs
@@ -102,13 +108,13 @@ export function CTASection() {
 
                     <div className="grid grid-cols-2 gap-6">
                       <div className="text-center">
-                        <div className="text-2xl font-bold">50+</div>
+                        <div className="text-2xl font-bold">{placesCount}+</div>
                         <div className="text-xs text-muted-foreground">
                           Commerçants
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold">25+</div>
+                        <div className="text-2xl font-bold">{eventsCount}+</div>
                         <div className="text-xs text-muted-foreground">
                           Événements/an
                         </div>
