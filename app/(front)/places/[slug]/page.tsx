@@ -7,13 +7,18 @@ import {
   Instagram,
   Linkedin,
   Mail,
+  Pencil,
   Phone,
   Star,
   Twitter,
   User,
-  MapPin} from "lucide-react";
+  MapPin,
+} from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { ClaimPlaceButton } from "@/components/claim-place-button";
 import { GalleryLightbox } from "@/components/gallery-lightbox";
 import { SafeImage } from "@/components/safe-image";
@@ -291,6 +296,11 @@ export async function generateMetadata({
 // ---------- Page ----------
 export default async function PlacePage({ params }: PageProps) {
   const { slug } = await params;
+
+  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUserId = session?.user?.id ?? null;
+  const currentUserRole = (session?.user as { role?: string } | undefined)?.role ?? null;
+
   const place = await prisma.place.findFirst({
     where: { slug, status: PlaceStatus.ACTIVE },
     include: {
@@ -341,6 +351,11 @@ export default async function PlacePage({ params }: PageProps) {
     },
   });
   if (!place) notFound();
+
+  const isOwnerOrAdmin =
+    (currentUserId !== null && place.ownerId !== null && currentUserId === place.ownerId) ||
+    currentUserRole === "admin" ||
+    currentUserRole === "moderator";
 
   const gallery = toArray(place.images);
   const cover = normalizeImagePath(place.coverImage || gallery[0]);
@@ -542,6 +557,14 @@ export default async function PlacePage({ params }: PageProps) {
                   size="sm"
                   className="flex-1 md:flex-initial"
                 />
+                {isOwnerOrAdmin && (
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/dashboard/places/${place.id}/edit`}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Modifier
+                    </Link>
+                  </Button>
+                )}
               </div>
 
               {/* Statut d'ouverture amélioré */}
