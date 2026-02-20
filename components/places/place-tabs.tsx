@@ -4,7 +4,6 @@ import {
   Calendar,
   FileText,
   Info,
-  MessageSquare,
   ShoppingBag,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
@@ -17,8 +16,6 @@ interface PlaceTabsProps {
   placeId: string;
   placeName?: string;
   aboutContent?: React.ReactNode;
-  reviewsContent?: React.ReactNode;
-  ratingsContent?: React.ReactNode;
   isOwner?: boolean;
   placeType?: string;
 }
@@ -27,14 +24,12 @@ type TabType =
   | "about"
   | "articles"
   | "events"
-  | "products-services"
-  | "reviews";
+  | "products-services";
 
 export function PlaceTabs({
   placeId,
   placeName = "",
   aboutContent,
-  reviewsContent,
   isOwner = false,
   placeType,
 }: PlaceTabsProps) {
@@ -63,14 +58,9 @@ export function PlaceTabs({
         label: "Produits & Services",
         icon: ShoppingBag,
       },
-      {
-        id: "reviews" as TabType,
-        label: "Avis",
-        icon: MessageSquare,
-      },
     ];
     
-    return allTabs.filter(tab => {
+    return allTabs.filter((tab) => {
       // Masquer l'onglet "Produits & Services" pour les associations
       if (tab.id === "products-services" && placeType === "ASSOCIATION") {
         return false;
@@ -174,16 +164,6 @@ export function PlaceTabs({
               isOwner={isOwner}
             />
           )}
-        </div>
-        <div
-          className={cn(
-            "transition-opacity duration-200",
-            activeTab === "reviews"
-              ? "opacity-100"
-              : "opacity-0 absolute pointer-events-none"
-          )}
-        >
-          {activeTab === "reviews" && reviewsContent}
         </div>
       </div>
     </div>
