@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=4096' prisma generate && cross-env NODE_OPTIONS='--max-old-space-size=4096' next build",
     "build:coolify": "prisma generate && SKIP_BUILD_STATIC_GENERATION=true next build",
-    "start": "prisma migrate deploy && next start",
+    "start": "prisma db push && next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "biome:check": "biome check .",
