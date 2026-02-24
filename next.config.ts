@@ -45,22 +45,7 @@ const nextConfig: NextConfig = {
   // Turbopack configuration (empty to silence error when using webpack config)
   turbopack: {},
   
-  // Security headers
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'X-DNS-Prefetch-Control', value: 'on' },
-          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
-        ],
-      },
-    ];
-  },
+  // Security headers are handled in proxy.ts (includes CSP, HSTS, X-Frame-Options, etc.)
 
   // Redirection pour bloquer les URLs Google Photos problématiques
   async redirects() {

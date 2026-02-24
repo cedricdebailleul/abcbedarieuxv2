@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-// Mock middleware logic (extracted for testability)
+// Mock proxy.ts route matching logic (extracted for testability)
 const protectedPrefixes = ["/dashboard", "/api/admin"];
 const publicPrefixes = [
   "/",
@@ -23,7 +23,7 @@ function isProtectedRoute(path: string): boolean {
   return protectedPrefixes.some((prefix) => path.startsWith(prefix));
 }
 
-describe("Middleware route matching", () => {
+describe("Proxy route matching", () => {
   it("should identify public routes correctly", () => {
     expect(isPublicRoute("/")).toBe(true);
     expect(isPublicRoute("/login")).toBe(true);

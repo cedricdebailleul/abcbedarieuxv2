@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const protectedPrefixes = ["/dashboard", "/api/admin"];
+
 export function proxy(request: NextRequest) {
   const url = request.url;
+  const path = request.nextUrl.pathname;
 
   // Bloquer UNIQUEMENT les requêtes Google Photos problématiques, pas toute l'API Maps
   if (url.includes('maps.googleapis.com/maps/api/place/js/PhotoService') ||
@@ -13,6 +16,21 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(
       new URL('https://via.placeholder.com/400x300/e5e7eb/6b7280?text=Image+bloquee', request.url)
     );
+  }
+
+  // Protection des routes authentifiées
+  const isProtected = protectedPrefixes.some((prefix) => path.startsWith(prefix));
+  if (isProtected) {
+    const sessionCookie =
+      request.cookies.get("better-auth.session_token") ||
+      request.cookies.get("__Secure-better-auth.session_token");
+
+    if (!sessionCookie) {
+      if (path.startsWith("/api/")) {
+        return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL("/login", request.nextUrl));
+    }
   }
 
   // Créer la réponse avec headers de sécurité renforcés
