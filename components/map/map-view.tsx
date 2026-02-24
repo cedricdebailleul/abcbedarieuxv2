@@ -129,14 +129,20 @@ export function MapView({
           zoomControlOptions: {
             position: google.maps.ControlPosition.RIGHT_CENTER,
           },
-          // Masquer les POI Google pour ne laisser apparaître que les établissements
-          // Note: styles s'appliquent uniquement sans mapId (avec mapId, configurer via Cloud Console)
-          styles: [
+        };
+
+        // mapId requis pour AdvancedMarkerElement
+        // Quand mapId est défini, les styles programmatiques sont ignorés → configurer dans Google Cloud Console
+        // Quand mapId absent (dev sans env), on applique les styles localement
+        if (env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID) {
+          mapConfig.mapId = env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+        } else {
+          mapConfig.styles = [
             { featureType: "poi", stylers: [{ visibility: "off" }] },
             { featureType: "poi.park", elementType: "geometry", stylers: [{ visibility: "on" }] },
             { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-          ],
-        };
+          ];
+        }
 
         const map = new google.maps.Map(mapRef.current!, mapConfig);
 
