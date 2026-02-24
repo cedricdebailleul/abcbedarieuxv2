@@ -408,7 +408,7 @@ export function MapView({
             zIndex: place.isFeatured ? 1000 : 500,
           });
 
-          marker.addListener("click", () => {
+          marker.addEventListener("gmp-click", () => {
             onPlaceSelect(place);
             mapInstanceRef.current?.panTo({
               lat: place.latitude ?? 0,
