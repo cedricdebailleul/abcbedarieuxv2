@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -420,7 +421,7 @@ export function NewsletterPreview({
               <ScrollArea className="h-[calc(90vh-200px)]">
                 <div 
                   className="bg-gray-50 p-4 rounded-lg"
-                  dangerouslySetInnerHTML={{ __html: generateEmailHTML() }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(generateEmailHTML()) }}
                 />
               </ScrollArea>
             </div>

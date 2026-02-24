@@ -18,6 +18,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
+import DOMPurify from "isomorphic-dompurify";
 import { GalleryLightbox } from "@/components/gallery-lightbox";
 import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
@@ -414,7 +415,7 @@ export default async function EventPage({ params }: PageProps) {
                   <div
                     className="prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{
-                      __html: event.description.replace(/\n/g, "<br>"),
+                      __html: DOMPurify.sanitize(event.description.replace(/\n/g, "<br>")),
                     }}
                   />
                 </CardContent>

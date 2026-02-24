@@ -2,8 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typescript: {
-    // Temporairement désactiver pour économiser la mémoire pendant le build
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   output: 'standalone',
   
@@ -22,7 +21,7 @@ const nextConfig: NextConfig = {
     if (!isServer) {
       config.optimization = {
         ...config.optimization,
-        minimize: false,
+        minimize: process.env.NODE_ENV === "production",
         splitChunks: {
           chunks: 'all',
           cacheGroups: {
@@ -46,6 +45,23 @@ const nextConfig: NextConfig = {
   // Turbopack configuration (empty to silence error when using webpack config)
   turbopack: {},
   
+  // Security headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
+        ],
+      },
+    ];
+  },
+
   // Redirection pour bloquer les URLs Google Photos problématiques
   async redirects() {
     return [
@@ -114,12 +130,7 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'pub-*.r2.dev',
-        port: '',
-        pathname: '/**',
-      },
+      // pub-*.r2.dev already covered by *.r2.dev above
       {
         protocol: 'https',
         hostname: 'images.abcbedarieux.com',

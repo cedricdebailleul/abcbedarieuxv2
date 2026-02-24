@@ -1,36 +1,139 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ABC Bedarieux v2
 
-## Getting Started
+Annuaire local des commerces, associations et services de Bedarieux et ses environs.
 
-First, run the development server:
+## Stack technique
+
+- **Framework** : Next.js 16 (App Router)
+- **Base de donnees** : PostgreSQL + Prisma ORM
+- **Authentification** : Better Auth (email/password, OAuth GitHub/Google)
+- **UI** : shadcn/ui + Radix UI + Tailwind CSS
+- **Animation** : Framer Motion, GSAP
+- **Email** : Nodemailer + systeme de newsletter complet
+- **Validation** : Zod + React Hook Form
+- **Deploiement** : Coolify (Docker standalone)
+
+## Demarrage rapide
+
+### Prerequis
+
+- Node.js >= 20.19
+- pnpm
+- PostgreSQL
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env  # Configurer les variables d'environnement
+pnpm db:generate
+pnpm db:push
+pnpm db:seed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Developpement
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm dev          # Serveur de dev avec Turbopack
+pnpm lint         # ESLint
+pnpm type-check   # Verification TypeScript
+pnpm test         # Tests unitaires
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Production
 
-## Learn More
+```bash
+pnpm build
+pnpm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Structure du projet
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/
+  (auth)/           # Pages d'authentification (login, register, verify)
+  (dashboard)/      # Zone protegee avec sidebar
+    admin/          # Interface d'administration
+  (front)/          # Pages publiques
+  api/              # Routes API
+    admin/          # APIs admin protegees
+    newsletter/     # APIs newsletter publiques
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+components/
+  ui/               # Composants shadcn/ui
+  forms/            # Formulaires
+  layout/           # Layout (header, sidebar)
+  admin/newsletter/ # Composants admin newsletter
 
-## Deploy on Vercel
+lib/
+  auth.ts           # Configuration Better Auth
+  prisma.ts         # Client Prisma
+  env.ts            # Variables d'environnement typees (T3 Env)
+  email.ts          # Systeme de templates email
+  generated/prisma/ # Client Prisma genere
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Variables d'environnement
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Description | Requis |
+|----------|-------------|--------|
+| `DATABASE_URL` | URL PostgreSQL | Oui |
+| `BETTER_AUTH_SECRET` | Secret auth (min 32 chars) | Oui |
+| `NEXT_PUBLIC_URL` | URL publique du site | Oui |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Cle API Google Maps (client) | Oui |
+| `GOOGLE_MAPS_API_KEY` | Cle API Google Places (serveur) | Non |
+| `GITHUB_CLIENT_ID/SECRET` | OAuth GitHub | Non |
+| `GOOGLE_CLIENT_ID/SECRET` | OAuth Google | Non |
+| `SMTP_*` | Configuration email | Non |
+
+## Commandes disponibles
+
+### Base de donnees
+
+```bash
+pnpm db:push       # Appliquer le schema Prisma
+pnpm db:migrate     # Executer les migrations
+pnpm db:generate    # Generer le client Prisma
+pnpm db:studio      # Lancer Prisma Studio
+pnpm db:seed        # Seed initial (badges)
+pnpm db:reset       # Reset complet
+```
+
+### Tests
+
+```bash
+pnpm test           # Executer les tests Jest
+pnpm test:watch     # Mode watch
+pnpm test:coverage  # Rapport de couverture
+```
+
+### Sauvegardes
+
+```bash
+pnpm backup:full    # Sauvegarde complete
+pnpm backup:db      # Sauvegarde base de donnees
+pnpm backup:files   # Sauvegarde fichiers
+```
+
+## Fonctionnalites principales
+
+- **Annuaire de places** : fiches detaillees avec horaires, avis Google, categories
+- **Evenements** : calendrier et gestion des evenements locaux
+- **Blog/Articles** : systeme de publication avec editeur riche
+- **Newsletter** : campagnes email avec tracking, templates, pieces jointes
+- **Systeme de badges** : gamification pour les utilisateurs
+- **RGPD** : consentement cookies, demandes de donnees, nettoyage automatique
+- **Roles** : admin, moderateur, editeur, utilisateur
+
+## Securite
+
+- Middleware de protection des routes protegees
+- Security headers (HSTS, X-Frame-Options, CSP)
+- Sanitisation XSS via DOMPurify
+- Validation des entrees avec Zod
+- Rate limiting disponible (Arcjet/Upstash)
+- Protection CSRF via Better Auth trustedOrigins
+
+## Licence
+
+Projet prive - ABC Bedarieux

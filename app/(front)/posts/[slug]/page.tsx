@@ -11,6 +11,7 @@ import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import DOMPurify from "isomorphic-dompurify";
 import { SocialShare } from "@/components/shared/social-share";
 import { PostSchema } from "@/components/structured-data/post-schema";
 import { PrintHeader } from "@/components/print/print-header";
@@ -275,7 +276,7 @@ export default async function PostPage({
               <div className="prose prose-lg dark:prose-invert max-w-none">
                 {post.content ? (
                   <div
-                    dangerouslySetInnerHTML={{ __html: post.content }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
                     className="leading-relaxed"
                   />
                 ) : (

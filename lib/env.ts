@@ -4,7 +4,7 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     DATABASE_URL: z.string().min(1),
-    BETTER_AUTH_SECRET: z.string().min(1),
+    BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
 
     GITHUB_CLIENT_ID: z.string().optional(),
     GITHUB_CLIENT_SECRET: z.string().optional(),
@@ -102,5 +102,5 @@ export const env = createEnv({
     
   },
 
-  skipValidation: process.env.SKIP_ENV_VALIDATION === "true",
+  skipValidation: process.env.SKIP_ENV_VALIDATION === "true" && process.env.NODE_ENV !== "production",
 });

@@ -9,6 +9,10 @@ import { prisma } from "./prisma";
 import { triggerUserRegistrationBadges, triggerProfileUpdateBadges } from "./services/badge-trigger-service";
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_URL,
+  trustedOrigins: [
+    process.env.NEXT_PUBLIC_URL || "https://abcbedarieux.com",
+  ].filter(Boolean) as string[],
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -17,7 +21,7 @@ export const auth = betterAuth({
       role: {
         type: "string",
         defaultValue: "user",
-        input: true,
+        input: false,
       },
     },
   },

@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { generateAPICompleteSQLDump } from "@/lib/sql-backup-generator";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 // API pour créer un dump PostgreSQL de la base de données
 export async function POST() {
@@ -63,21 +63,20 @@ export async function POST() {
     const dumpFileName = `abc-bedarieux-db-dump-${dateStr}-${timeStr}.sql`;
     const dumpPath = join(backupDir, dumpFileName);
 
-    // Commande pg_dump
-    const pgDumpCmd = [
-      "pg_dump",
+    // Arguments pg_dump (utiliser execFile pour éviter l'injection shell)
+    const pgDumpArgs = [
       `--host=${dbConfig.host}`,
       `--port=${dbConfig.port}`,
       `--username=${dbConfig.username}`,
       `--dbname=${dbConfig.database}`,
-      "--no-password", // Utiliser PGPASSWORD
+      "--no-password",
       "--verbose",
-      "--clean", // Inclure les commandes DROP
-      "--if-exists", // Éviter les erreurs si les objets n'existent pas
-      "--create", // Inclure la création de la base
+      "--clean",
+      "--if-exists",
+      "--create",
       `--file=${dumpPath}`,
       "--encoding=UTF8"
-    ].join(" ");
+    ];
 
     console.log("🔄 Tentative pg_dump...");
 
@@ -91,9 +90,9 @@ export async function POST() {
         PGPASSWORD: dbConfig.password
       };
 
-      const { stderr } = await execAsync(pgDumpCmd, { 
+      const { stderr } = await execFileAsync("pg_dump", pgDumpArgs, {
         env,
-        timeout: 300000 // 5 minutes de timeout
+        timeout: 300000
       });
 
       console.log("✅ pg_dump terminé avec succès");
@@ -178,10 +177,8 @@ SELECT 'Utiliser la sauvegarde JSON comme alternative' as recommendation;`;
         email: session.user.email
       },
       database: {
-        host: dbConfig.host,
-        port: dbConfig.port,
         database: dbConfig.database,
-        username: dbConfig.username
+        method: usedPgDump ? "pg_dump" : "prisma_sql_generator",
       },
       files: {
         sqlDump: dumpFileName,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { IconMail } from "@tabler/icons-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -605,10 +606,10 @@ export default function AbcBulletinsPage() {
                     <div
                       className="prose max-w-none"
                       dangerouslySetInnerHTML={{
-                        __html: previewingBulletin.content.replace(
+                        __html: DOMPurify.sanitize(previewingBulletin.content.replace(
                           /\n/g,
                           "<br>"
-                        ),
+                        )),
                       }}
                     />
                   </div>

@@ -5,16 +5,26 @@ import { prisma } from "@/lib/prisma";
 const ALLOWED_DOMAINS = [
   "abc-bedarieux.fr",
   "www.abc-bedarieux.fr",
+  "abcbedarieux.com",
+  "www.abcbedarieux.com",
   "localhost:3000",
   "localhost:3001",
   "127.0.0.1:3000",
   "127.0.0.1:3001",
 ];
 
+// Newsletter links can point to external sites - allow all https URLs
+const ALLOW_EXTERNAL_NEWSLETTER_LINKS = true;
+
 // Fonction pour valider l'URL de redirection
 function validateRedirectUrl(url: string, requestUrl: string): URL {
   try {
     const targetUrl = new URL(decodeURIComponent(url));
+
+    // Allow external https links for newsletter campaigns
+    if (ALLOW_EXTERNAL_NEWSLETTER_LINKS && targetUrl.protocol === "https:") {
+      return targetUrl;
+    }
 
     // Vérifier si le domaine est autorisé
     if (

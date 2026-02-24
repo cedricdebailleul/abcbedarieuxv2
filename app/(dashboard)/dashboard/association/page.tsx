@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -554,8 +555,8 @@ export default function AssociationPage() {
                 </div>
               )}
               <div className="prose max-w-none">
-                <div dangerouslySetInnerHTML={{ 
-                  __html: selectedBulletin.content.replace(/\n/g, '<br>')
+                <div dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(selectedBulletin.content.replace(/\n/g, '<br>'))
                 }} />
               </div>
             </div>
