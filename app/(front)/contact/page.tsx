@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, Clock, Users, Briefcase, MapPin } from "lucide-react";
 import { ContactForm } from "@/components/forms/contact-form";
+import { PlaceDetailMap } from "@/components/places/place-detail-map";
 
 export const metadata: Metadata = {
   title: "Contact - ABC Bédarieux",
@@ -48,9 +49,7 @@ export default function ContactPage() {
                 <div>
                   <p className="font-medium">Adresse</p>
                   <p className="text-sm text-muted-foreground">
-                    Mairie de Bédarieux
-                    <br />
-                    1 Avenue Abbé Tarroux
+                    1 Rue de la République
                     <br />
                     34600 Bédarieux
                   </p>
@@ -137,7 +136,7 @@ export default function ContactPage() {
                 className="w-full justify-start"
               >
                 <a
-                  href="https://www.google.com/maps/place/Mairie+de+B%C3%A9darieux,+1+Av.+Abb%C3%A9+Tarroux,+34600+B%C3%A9darieux"
+                  href="https://www.google.com/maps/search/1+Rue+de+la+R%C3%A9publique,+34600+B%C3%A9darieux"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -182,21 +181,15 @@ export default function ContactPage() {
             <CardTitle>Comment nous trouver</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2897.123456789!2d3.1615!3d43.6147!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12b1234567890!2sMairie%20de%20B%C3%A9darieux!5e0!3m2!1sfr!2sfr!4v1234567890"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Localisation ABC Bédarieux"
-              ></iframe>
-            </div>
+            <PlaceDetailMap
+              latitude={43.6136}
+              longitude={3.1598}
+              name="ABC Bédarieux"
+              address="1 Rue de la République, 34600 Bédarieux"
+            />
             <p className="text-sm text-muted-foreground mt-4">
-              Nous sommes situés au cœur de Bédarieux, dans les locaux de la
-              mairie. Un parking public est disponible à proximité.
+              Nous sommes situés au cœur de Bédarieux, 1 Rue de la République.
+              Un parking public est disponible à proximité.
             </p>
           </CardContent>
         </Card>
