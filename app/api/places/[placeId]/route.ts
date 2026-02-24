@@ -8,6 +8,7 @@ import { rm } from "node:fs/promises";
 import type { DayOfWeek } from "@/lib/generated/prisma/client";
 import { Prisma, PlaceType, PlaceStatus } from "@/lib/generated/prisma/client";
 import { DatabaseOpeningHour, GroupedOpeningHours } from "@/lib/schemas/common";
+import { isGooglePhotosUrl } from "@/lib/image-utils";
 
 /* --------------------------- helpers Zod --------------------------- */
 const numOpt = z.preprocess(
@@ -358,17 +359,30 @@ export async function PUT(
       images: normalizedPhotos, // Utiliser les images du formulaire (peut être vide)
     } as Prisma.InputJsonValue;
 
-    // Préserver logo/cover si vides, sinon fallback 1ère photo
+    // Préserver logo/cover si vides, sinon fallback 1ère photo (hors URLs Google Photos temporaires)
+    const safePhotos = normalizedPhotos.filter((url) => !isGooglePhotosUrl(url));
+    const safeExistingLogo =
+      existingPlace.logo && !isGooglePhotosUrl(existingPlace.logo)
+        ? existingPlace.logo
+        : undefined;
+    const safeExistingCover =
+      existingPlace.coverImage && !isGooglePhotosUrl(existingPlace.coverImage)
+        ? existingPlace.coverImage
+        : undefined;
+
     const finalLogo =
-      typeof placeData.logo === "string" && placeData.logo.trim() !== ""
+      typeof placeData.logo === "string" &&
+      placeData.logo.trim() !== "" &&
+      !isGooglePhotosUrl(placeData.logo)
         ? placeData.logo
-        : (normalizedPhotos[0] ?? existingPlace.logo ?? undefined);
+        : (safePhotos[0] ?? safeExistingLogo ?? undefined);
 
     const finalCover =
       typeof placeData.coverImage === "string" &&
-      placeData.coverImage.trim() !== ""
+      placeData.coverImage.trim() !== "" &&
+      !isGooglePhotosUrl(placeData.coverImage)
         ? placeData.coverImage
-        : (normalizedPhotos[0] ?? existingPlace.coverImage ?? undefined);
+        : (safePhotos[0] ?? safeExistingCover ?? undefined);
 
     // Détecter et supprimer les anciennes images (local + R2)
     const { cleanupUnusedImages } = await import("@/lib/cleanup-images");

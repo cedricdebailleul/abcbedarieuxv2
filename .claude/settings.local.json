@@ -30,7 +30,11 @@
       "Bash(npx prisma generate:*)",
       "Bash(pnpm build:*)",
       "Bash(pnpm list:*)",
-      "Bash(pnpm run build:*)"
+      "Bash(pnpm run build:*)",
+      "Bash(for f in types/membership.ts types/index.ts types/global.d.ts types/auth.ts types/better-auth.d.ts lib/validations/post.ts lib/validations/event.ts lib/validations/badge.ts lib/types/badge.ts lib/types/badge-engine.ts lib/schemas/common.ts lib/auth-helpers-client.ts lib/auth-types-fix.ts lib/recurrence.ts)",
+      "Bash(do sed -i 's|from \"\"@/lib/generated/prisma/client\"\"|from \"\"@/lib/generated/prisma/browser\"\"|g' \"$f\")",
+      "Bash(done)",
+      "Bash(git revert:*)"
     ],
     "deny": [],
     "ask": []
