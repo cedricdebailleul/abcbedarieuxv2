@@ -1168,7 +1168,7 @@ model Event {
 
   // Dates et récurrence
   startDate DateTime
-  endDate   DateTime
+  endDate   DateTime?
   isAllDay  Boolean  @default(false)
   timezone  String   @default("Europe/Paris")
 

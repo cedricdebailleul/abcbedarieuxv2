@@ -14,7 +14,7 @@ interface Event {
   slug: string;
   summary?: string | null;
   startDate: string | Date;
-  endDate: string | Date;
+  endDate: string | Date | null;
   isAllDay: boolean;
   category?: string | null | undefined | { id: string; name: string; slug: string; color?: string | null };
   isFeatured: boolean;
@@ -65,15 +65,15 @@ function normalizeImagePath(path?: string | null): string | undefined {
 // Formatage dates (inchangé)
 function formatEventDate(
   startDate: string | Date,
-  endDate: string | Date,
+  endDate: string | Date | null,
   isAllDay: boolean
 ) {
   const start = startDate instanceof Date ? startDate : new Date(startDate);
-  const end = endDate instanceof Date ? endDate : new Date(endDate);
-  const isMultiDay = start.toDateString() !== end.toDateString();
+  const end = endDate ? (endDate instanceof Date ? endDate : new Date(endDate)) : null;
+  const isMultiDay = end ? start.toDateString() !== end.toDateString() : false;
 
   if (isAllDay) {
-    if (isMultiDay) {
+    if (isMultiDay && end) {
       return {
         primary: `${start.toLocaleDateString("fr-FR", {
           weekday: "short",
@@ -97,7 +97,7 @@ function formatEventDate(
     };
   }
 
-  if (isMultiDay) {
+  if (isMultiDay && end) {
     return {
       primary: `${start.toLocaleDateString("fr-FR", {
         weekday: "short",
@@ -124,13 +124,15 @@ function formatEventDate(
       day: "numeric",
       month: "long",
     }),
-    secondary: `${start.toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} - ${end.toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`,
+    secondary: end
+      ? `${start.toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })} - ${end.toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`
+      : start.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
   };
 }
 
@@ -144,11 +146,11 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
   // Évite les new Date() multiples (lisible + léger + moins d'erreurs)
   const now = new Date();
   const start = event.startDate instanceof Date ? event.startDate : new Date(event.startDate);
-  const end = event.endDate instanceof Date ? event.endDate : new Date(event.endDate);
+  const end = event.endDate ? (event.endDate instanceof Date ? event.endDate : new Date(event.endDate)) : null;
 
   const isUpcoming = start > now;
-  const isPast = end < now;
-  const isOngoing = now >= start && now <= end;
+  const isPast = end ? end < now : false;
+  const isOngoing = end ? now >= start && now <= end : now >= start;
 
   // Laisse passer 0 si jamais (rare, mais sûr)
   const max = event.maxParticipants;

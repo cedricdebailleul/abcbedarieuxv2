@@ -87,7 +87,7 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
     website: event.website || "",
     ticketUrl: event.ticketUrl || "",
     startDate: event.startDate.toISOString(),
-    endDate: event.endDate.toISOString(),
+    endDate: event.endDate ? event.endDate.toISOString() : undefined,
     isAllDay: event.isAllDay,
     timezone: event.timezone,
     locationName: event.locationName ?? undefined,

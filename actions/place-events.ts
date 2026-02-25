@@ -16,7 +16,7 @@ interface EventData {
   summary?: string | null;
   description?: string | null;
   startDate: Date;
-  endDate: Date;
+  endDate: Date | null;
   isAllDay: boolean;
   isFree: boolean;
   price?: number | null;

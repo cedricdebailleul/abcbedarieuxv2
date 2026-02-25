@@ -25,7 +25,7 @@ interface Event {
   title: string;
   slug: string;
   startDate: string | Date;
-  endDate: string | Date;
+  endDate: string | Date | null;
   isAllDay: boolean;
   category?: string | null | { id: string; name: string; slug: string; color?: string | null };
   isFeatured: boolean;
@@ -123,7 +123,7 @@ function EventThumbnail({
   isCompact?: boolean;
 }) {
   const startDate = new Date(event.startDate);
-  const endDate = new Date(event.endDate);
+  const endDate = event.endDate ? new Date(event.endDate) : new Date(event.startDate);
   const isMultiDay = startDate.toDateString() !== endDate.toDateString();
 
   return (
@@ -271,10 +271,10 @@ export function EventCalendar({ events }: EventCalendarProps) {
   // Grouper les événements par date
   const eventsByDate = events.reduce((acc, event) => {
     // Skip events that don't have the required date fields
-    if (!event.startDate || !event.endDate) return acc;
+    if (!event.startDate) return acc;
 
     const startDate = new Date(event.startDate);
-    const endDate = new Date(event.endDate);
+    const endDate = event.endDate ? new Date(event.endDate) : new Date(event.startDate);
 
     // Pour les événements multi-jours, les ajouter à chaque jour
     const current = new Date(startDate);

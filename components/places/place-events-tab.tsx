@@ -20,7 +20,7 @@ interface EventData {
   summary?: string | null;
   description?: string | null;
   startDate: Date;
-  endDate: Date;
+  endDate: Date | null;
   isAllDay: boolean;
   isFree: boolean;
   price?: number | null;
@@ -60,23 +60,16 @@ const getGradientForId = (id: string): string => {
 
 function formatEventDate(
   startDate: Date,
-  endDate: Date,
+  endDate: Date | null,
   isAllDay: boolean
 ): string {
   const start = new Date(startDate);
-  const end = new Date(endDate);
+  const end = endDate ? new Date(endDate) : null;
 
-  const sameDay = start.toDateString() === end.toDateString();
+  const sameDay = end ? start.toDateString() === end.toDateString() : true;
 
   if (isAllDay) {
-    if (sameDay) {
-      return start.toLocaleDateString("fr-FR", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } else {
+    if (!sameDay && end) {
       return `${start.toLocaleDateString("fr-FR", {
         weekday: "short",
         day: "numeric",
@@ -87,6 +80,12 @@ function formatEventDate(
         month: "short",
       })}`;
     }
+    return start.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   }
 
   if (sameDay) {
@@ -98,10 +97,7 @@ function formatEventDate(
     })} • ${start.toLocaleTimeString("fr-FR", {
       hour: "2-digit",
       minute: "2-digit",
-    })} - ${end.toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
+    })}${end ? ` - ${end.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : ""}`;
   }
 
   return `${start.toLocaleDateString("fr-FR", {
@@ -110,13 +106,13 @@ function formatEventDate(
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-  })} - ${end.toLocaleDateString("fr-FR", {
+  })}${end ? ` - ${end.toLocaleDateString("fr-FR", {
     weekday: "short",
     day: "numeric",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-  })}`;
+  })}` : ""}`;
 }
 
 export function PlaceEventsTab({ placeId }: PlaceEventsTabProps) {

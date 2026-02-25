@@ -39,7 +39,7 @@ interface EmailData {
       summary: string;
       description: string;
       startDate: Date;
-      endDate: Date;
+      endDate: Date | null;
       isAllDay: boolean;
       locationName: string;
       locationAddress: string;

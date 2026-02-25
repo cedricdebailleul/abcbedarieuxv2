@@ -209,9 +209,12 @@ export function EventForm({ initialData, places = [] }: EventFormProps) {
     try {
       setIsSubmitting(true);
 
-      // Ajouter les médias et tags, traiter les valeurs spéciales
+      // Convertir les datetime-local en UTC ISO pour éviter le décalage timezone
+      // (le navigateur interprète datetime-local comme heure locale → toISOString() donne UTC)
       const formData = {
         ...data,
+        startDate: data.startDate ? new Date(data.startDate).toISOString() : data.startDate,
+        endDate: data.endDate && data.endDate !== "" ? new Date(data.endDate).toISOString() : undefined,
         images,
         videos,
         tags,

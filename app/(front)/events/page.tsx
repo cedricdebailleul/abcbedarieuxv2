@@ -145,8 +145,9 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
       typeof e.startDate === "string"
         ? new Date(e.startDate)
         : new Date(e.startDate);
-    const end =
-      typeof e.endDate === "string" ? new Date(e.endDate) : new Date(e.endDate);
+    const end = e.endDate
+      ? (typeof e.endDate === "string" ? new Date(e.endDate) : new Date(e.endDate))
+      : null;
 
     const place = (
       e as {

@@ -141,7 +141,9 @@ export default function MyEventsPage() {
                 ? event.createdAt
                 : new Date().toISOString(),
             startDate: new Date(event.startDate).toISOString(),
-            endDate: new Date(event.endDate).toISOString(),
+            endDate: event.endDate
+              ? new Date(event.endDate).toISOString()
+              : new Date(event.startDate).toISOString(),
             _count:
               "_count" in event
                 ? (event._count as { participants: number })

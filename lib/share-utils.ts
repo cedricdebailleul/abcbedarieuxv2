@@ -22,7 +22,7 @@ export function generateEventShareData(event: {
   summary?: string | null;
   description?: string | null;
   startDate: Date;
-  endDate: Date;
+  endDate: Date | null;
   isAllDay: boolean;
   locationName?: string | null;
   locationCity?: string | null;
@@ -41,13 +41,11 @@ export function generateEventShareData(event: {
   const formatEventDate = () => {
     const start = event.startDate;
     const end = event.endDate;
-    const isMultiDay = start.toDateString() !== end.toDateString();
+    const isMultiDay = end ? start.toDateString() !== end.toDateString() : false;
 
     if (event.isAllDay) {
-      if (isMultiDay) {
-        return `Du ${start.toLocaleDateString(
-          "fr-FR"
-        )} au ${end.toLocaleDateString("fr-FR")}`;
+      if (isMultiDay && end) {
+        return `Du ${start.toLocaleDateString("fr-FR")} au ${end.toLocaleDateString("fr-FR")}`;
       } else {
         return start.toLocaleDateString("fr-FR", {
           weekday: "long",
@@ -57,7 +55,7 @@ export function generateEventShareData(event: {
         });
       }
     } else {
-      if (isMultiDay) {
+      if (isMultiDay && end) {
         return `${start.toLocaleDateString("fr-FR")} ${start.toLocaleTimeString(
           "fr-FR",
           { hour: "2-digit", minute: "2-digit" }
@@ -70,13 +68,10 @@ export function generateEventShareData(event: {
           weekday: "long",
           day: "numeric",
           month: "long",
-        })} de ${start.toLocaleTimeString("fr-FR", {
+        })} à ${start.toLocaleTimeString("fr-FR", {
           hour: "2-digit",
           minute: "2-digit",
-        })} à ${end.toLocaleTimeString("fr-FR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`;
+        })}${end ? ` - ${end.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : ""}`;
       }
     }
   };
@@ -116,7 +111,7 @@ export function generateEventShareData(event: {
     // Données structurées pour Facebook Events
     structuredData: {
       startDate: event.startDate.toISOString(),
-      endDate: event.endDate.toISOString(),
+      ...(event.endDate && { endDate: event.endDate.toISOString() }),
       isAllDay: event.isAllDay,
       timezone: "Europe/Paris",
     },

@@ -54,7 +54,7 @@ interface EventFormData {
   website?: string;
   ticketUrl?: string;
   startDate: string; // ISO
-  endDate: string; // ISO
+  endDate?: string; // ISO — optionnel
   isAllDay?: boolean;
   timezone?: string;
   locationName?: string;
@@ -272,8 +272,8 @@ export async function createEventAction(
 
     const slug = await generateUniqueSlug(data.title);
     const startDate = new Date(data.startDate);
-    const endDate = new Date(data.endDate);
-    if (endDate < startDate) {
+    const endDate = data.endDate && data.endDate !== "" ? new Date(data.endDate) : null;
+    if (endDate && endDate < startDate) {
       return {
         success: false,
         error: "La date de fin doit être après la date de début",
@@ -302,7 +302,7 @@ export async function createEventAction(
         website: data.website,
         ticketUrl: data.ticketUrl,
         startDate,
-        endDate,
+        ...(endDate !== null ? { endDate } : {}),
         isAllDay: data.isAllDay ?? false,
         timezone: data.timezone || "Europe/Paris",
         locationName: data.locationName,
@@ -418,10 +418,10 @@ export async function updateEventAction(
     }
 
     let startDate = existingEvent.startDate;
-    let endDate = existingEvent.endDate;
+    let endDate: Date | null = existingEvent.endDate ?? null;
     if (data.startDate !== undefined) startDate = new Date(data.startDate);
-    if (data.endDate !== undefined) endDate = new Date(data.endDate);
-    if (endDate < startDate) {
+    if (data.endDate !== undefined) endDate = data.endDate && data.endDate !== "" ? new Date(data.endDate) : null;
+    if (endDate && endDate < startDate) {
       return {
         success: false,
         error: "La date de fin doit être après la date de début",
@@ -452,7 +452,7 @@ export async function updateEventAction(
         ...(data.website !== undefined && { website: data.website }),
         ...(data.ticketUrl !== undefined && { ticketUrl: data.ticketUrl }),
         ...(data.startDate !== undefined && { startDate }),
-        ...(data.endDate !== undefined && { endDate }),
+        ...(data.endDate !== undefined && { endDate: endDate }),
         ...(data.isAllDay !== undefined && { isAllDay: data.isAllDay }),
         ...(data.timezone !== undefined && { timezone: data.timezone }),
         ...(data.locationName !== undefined && {
@@ -638,7 +638,7 @@ export async function getUserEventsAction(options?: {
       title: string;
       slug: string;
       startDate: Date;
-      endDate: Date;
+      endDate: Date | null;
       place?: { id: string; name: string; slug: string; city: string };
       participantCount: number;
     }[];
@@ -707,7 +707,7 @@ export async function getUpcomingEventsAction(limit: number = 5): Promise<
       id: string;
       title: string;
       startDate: Date;
-      endDate: Date;
+      endDate: Date | null;
       place?: {
         name: string;
         street: string;
@@ -891,7 +891,7 @@ export async function getPublicEventsAction(options?: {
     const eventsForExpansion: ExpandableEvent[] = events.map((e) => ({
       id: e.id,
       startDate: e.startDate.toISOString(),
-      endDate: e.endDate.toISOString(),
+      endDate: e.endDate ? e.endDate.toISOString() : new Date(e.startDate.getTime() + 3600000).toISOString(),
       isRecurring: e.isRecurring,
       recurrenceRule: e.recurrenceRule
         ? {
@@ -1027,7 +1027,7 @@ export async function getEventBySlugAction(slug: string): Promise<
     content?: string | null;
     summary?: string | null;
     startDate: Date;
-    endDate: Date;
+    endDate: Date | null;
     isAllDay: boolean;
     timezone: string;
     maxParticipants?: number | null;
@@ -1169,7 +1169,7 @@ export async function getEventBySlugAction(slug: string): Promise<
           {
             id: event.id,
             startDate: event.startDate.toISOString(),
-            endDate: event.endDate.toISOString(),
+            endDate: event.endDate ? event.endDate.toISOString() : new Date(event.startDate.getTime() + 3600000).toISOString(),
             isRecurring: event.isRecurring,
             recurrenceRule: {
               frequency: event.recurrenceRule

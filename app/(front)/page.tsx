@@ -56,7 +56,7 @@ export default async function Home() {
           id: string;
           title: string;
           startDate: Date;
-          endDate: Date;
+          endDate: Date | null;
           place?: { name: string; street: string; city: string };
           slug?: string;
           category?: string;

@@ -72,9 +72,11 @@ export const eventSchema = z.object({
   
   endDate: z
     .string()
-    .refine((date) => !isNaN(Date.parse(date)), {
+    .refine((date) => !date || !isNaN(Date.parse(date)), {
       message: "Date de fin invalide"
-    }),
+    })
+    .optional()
+    .or(z.literal("")),
   
   isAllDay: z.boolean().optional(),
   timezone: z.string().optional(),
@@ -205,8 +207,8 @@ export const eventSchema = z.object({
   isRecurring: z.boolean().optional(),
 })
 .refine((data) => {
-  // Validation croisée des dates
-  if (data.startDate && data.endDate) {
+  // Validation croisée des dates (seulement si endDate renseignée)
+  if (data.startDate && data.endDate && data.endDate !== "") {
     return new Date(data.endDate) >= new Date(data.startDate);
   }
   return true;

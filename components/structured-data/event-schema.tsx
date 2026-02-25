@@ -4,7 +4,7 @@ interface EventSchemaProps {
     description?: string | null;
     summary?: string | null;
     startDate: Date;
-    endDate: Date;
+    endDate: Date | null;
     isAllDay: boolean;
     timezone: string;
     locationName?: string | null;
@@ -112,7 +112,7 @@ export function EventSchema({ event }: EventSchemaProps) {
     name: event.title,
     description: event.description || event.summary || `Événement : ${event.title}`,
     startDate: event.startDate.toISOString(),
-    endDate: event.endDate.toISOString(),
+    ...(event.endDate && { endDate: event.endDate.toISOString() }),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
     location,

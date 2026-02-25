@@ -38,7 +38,7 @@ export interface ShareData {
   // Données structurées pour Facebook Events
   structuredData?: {
     startDate: string;
-    endDate: string;
+    endDate?: string;
     isAllDay: boolean;
     timezone: string;
   };

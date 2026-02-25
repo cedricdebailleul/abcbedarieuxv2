@@ -232,18 +232,22 @@ export default async function EventPage({ params }: PageProps) {
   const tags = toArray(event.tags);
   const cover = normalizeImagePath(event.coverImage || gallery[0]);
 
+  const endDateOrStart = event.endDate
+    ? new Date(event.endDate)
+    : new Date(event.startDate);
+
   const dateInfo = formatEventDateTime(
     new Date(event.startDate),
-    new Date(event.endDate),
+    endDateOrStart,
     event.isAllDay || false,
     event.timezone || "Europe/Paris"
   );
 
   const isUpcoming = new Date(event.startDate) > new Date();
-  const isPast = new Date(event.endDate) < new Date();
+  const isPast = endDateOrStart < new Date();
   const isOngoing =
     new Date() >= new Date(event.startDate) &&
-    new Date() <= new Date(event.endDate);
+    new Date() <= endDateOrStart;
   const isFull =
     event.maxParticipants && event._count.participants >= event.maxParticipants;
 
@@ -352,7 +356,7 @@ export default async function EventPage({ params }: PageProps) {
                 return generateEventShareData({
                   ...event,
                   startDate: new Date(event.startDate),
-                  endDate: new Date(event.endDate),
+                  endDate: event.endDate ? new Date(event.endDate) : null,
                   tags,
                 });
               })()}
