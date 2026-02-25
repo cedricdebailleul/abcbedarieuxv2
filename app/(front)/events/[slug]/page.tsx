@@ -253,34 +253,36 @@ export default async function EventPage({ params }: PageProps) {
 
   // Construire l'adresse complète
   const fullAddress = event.locationAddress
-    ? `${event.locationAddress}, ${event.locationCity}`
+    ? `${event.locationAddress}${event.locationCity ? `, ${event.locationCity}` : ""}`
+    : event.locationStreet
+    ? [
+        event.locationStreetNumber,
+        event.locationStreet,
+        event.locationPostalCode,
+        event.locationCity,
+      ]
+        .filter(Boolean)
+        .join(" ")
     : event.place
     ? `${event.place.street}, ${event.place.postalCode} ${event.place.city}`
-    : event.locationCity;
+    : event.locationCity ?? null;
+
+  const lat = event.locationLatitude || event.place?.latitude;
+  const lng = event.locationLongitude || event.place?.longitude;
 
   // URLs de carte et itinéraire
   const mapSrc =
-    (event.locationLatitude && event.locationLongitude) ||
-    (event.place?.latitude && event.place?.longitude)
-      ? `https://www.google.com/maps?q=${
-          event.locationLatitude || event.place?.latitude
-        },${
-          event.locationLongitude || event.place?.longitude
-        }&z=16&output=embed`
+    lat && lng
+      ? `https://maps.google.com/maps?q=${lat},${lng}&z=16&hl=fr&output=embed`
       : fullAddress
-      ? `https://www.google.com/maps?q=${encodeURIComponent(
-          fullAddress
-        )}&z=16&output=embed`
+      ? `https://maps.google.com/maps?q=${encodeURIComponent(fullAddress)}&z=16&hl=fr&output=embed`
       : null;
 
   const directionsHref =
-    (event.locationLatitude && event.locationLongitude) ||
-    (event.place?.latitude && event.place?.longitude)
-      ? `https://www.google.com/maps?daddr=${
-          event.locationLatitude || event.place?.latitude
-        },${event.locationLongitude || event.place?.longitude}`
+    lat && lng
+      ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
       : fullAddress
-      ? `https://www.google.com/maps?daddr=${encodeURIComponent(fullAddress)}`
+      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`
       : null;
 
   return (
