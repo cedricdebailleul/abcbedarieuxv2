@@ -46,7 +46,7 @@ export function PlaceDetailMap({
       content: `<div style="padding:4px"><strong>${name}</strong><br/><span style="font-size:12px;color:#666">${address}</span></div>`,
     });
 
-    marker.addEventListener("gmp-click", () => {
+    marker.addListener("gmp-click", () => {
       infoWindow.open({ anchor: marker, map });
     });
 
