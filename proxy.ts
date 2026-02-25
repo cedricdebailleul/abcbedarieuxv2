@@ -57,7 +57,7 @@ export function proxy(request: NextRequest) {
     "img-src 'self' data: https: blob: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.ggpht.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "connect-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://accounts.google.com",
-    "frame-src 'self' https://accounts.google.com",
+    "frame-src 'self' https://accounts.google.com https://maps.google.com https://www.google.com",
     "worker-src 'self' blob:",
     "child-src 'self' blob:",
     "object-src 'none'",
