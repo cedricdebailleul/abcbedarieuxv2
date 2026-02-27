@@ -5,7 +5,7 @@ export const siteConfig = {
   defaultDescription:
     "Annuaire des commerces et associations de Bédarieux, événements, offres et points d'intérêt.",
   twitter: "@abcbedarieux",
-  ogImage: "/og-default.jpg",
+  ogImage: "/images/logo_abc.png",
   locale: "fr-FR",
   adresse: "1 rue de la République, 34600 Bédarieux",
   telephone: "+33 6 51 43 03 77",

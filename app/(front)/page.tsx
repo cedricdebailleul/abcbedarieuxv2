@@ -1,5 +1,6 @@
 import { ArrowRight, FileText, MapPin } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getLatestPostsAction } from "@/actions/post";
 import { getUpcomingEventsAction } from "@/actions/event";
 import { getFeaturedPlacesAction } from "@/actions/place";
@@ -13,11 +14,39 @@ import { ActionsSection } from "@/components/actions/actions-section";
 import { CTASection } from "@/components/sections/cta-section";
 import { PartnersSection } from "@/components/sections/partners-section";
 import { WhatsAppButton } from "@/components/whatsapp/whatsapp-button";
+import { OrganizationSchema } from "@/components/structured-data/organization-schema";
 import { prisma } from "@/lib/prisma";
 import { PlaceStatus } from "@/lib/generated/prisma/client";
+import { siteConfig } from "@/lib/site.config";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "ABC Bédarieux – Commerces, Artisans & Événements à Bédarieux",
+  description:
+    "Découvrez les commerces, artisans et associations de Bédarieux. Agenda des événements, actualités locales et annuaire des professionnels du Haut-Languedoc.",
+  keywords: [
+    "Bédarieux",
+    "commerces Bédarieux",
+    "artisans Bédarieux",
+    "événements Bédarieux",
+    "Haut-Languedoc",
+    "Hérault",
+    "association commerçants",
+    "annuaire local",
+  ],
+  alternates: {
+    canonical: siteConfig.baseUrl,
+  },
+  openGraph: {
+    title: "ABC Bédarieux – Commerces, Artisans & Événements",
+    description:
+      "Découvrez les commerces, artisans et associations de Bédarieux. Agenda des événements et actualités locales.",
+    url: siteConfig.baseUrl,
+    type: "website",
+  },
+};
 
 export default async function Home() {
   // Récupérer les derniers articles
@@ -86,6 +115,7 @@ export default async function Home() {
 
   return (
     <>
+      <OrganizationSchema />
       <Hero upcomingEvents={upcomingEvents} />
 
       {/* Section des actions */}
