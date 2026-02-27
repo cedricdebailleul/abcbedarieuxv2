@@ -57,7 +57,7 @@ export function PlacePreviewCard({ place }: PlacePreviewCardProps) {
   const totalReviews = place._count.reviews + place._count.googleReviews;
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
       <div className="relative h-48 overflow-hidden">
         {place.coverImage || place.logo ? (
           <SafeImage
@@ -79,16 +79,13 @@ export function PlacePreviewCard({ place }: PlacePreviewCardProps) {
 
         {/* Badge type */}
         <div className="absolute top-3 left-3">
-          <Badge
-            variant="secondary"
-            className="bg-background/80 backdrop-blur-sm"
-          >
+          <Badge className="bg-primary text-primary-foreground text-xs font-semibold shadow-sm">
             {getPlaceTypeLabel(place.type)}
           </Badge>
         </div>
       </div>
 
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="p-4 flex flex-col flex-1 space-y-3">
         {/* Titre et note */}
         <div>
           <h3 className="font-semibold text-lg mb-1">{place.name}</h3>
@@ -170,7 +167,7 @@ export function PlacePreviewCard({ place }: PlacePreviewCardProps) {
         </div>
 
         {/* Bouton voir plus */}
-        <div className="pt-2">
+        <div className="mt-auto pt-2">
           <Button asChild className="w-full" size="sm">
             <Link href={`/places/${place.slug}`}>Voir la fiche complète</Link>
           </Button>
