@@ -171,11 +171,11 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
 
   return (
     <Card
-      className={`hover:shadow-md transition-shadow ${
+      className={`hover:shadow-md transition-shadow flex flex-col ${
         isPast ? "opacity-75" : ""
       }`}
     >
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex flex-col flex-1">
         {/* Image de couverture */}
         <div className={`relative ${cardHeight} w-full`}>
           <SafeImage
@@ -189,6 +189,11 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
 
           {/* Overlays et badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-2">
+            {event.category && (
+              <Badge className="bg-primary text-primary-foreground text-xs font-semibold shadow-sm">
+                {typeof event.category === "string" ? event.category : event.category.name}
+              </Badge>
+            )}
             {event.isFeatured && (
               <Badge
                 variant="secondary"
@@ -267,8 +272,8 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
         </div>
 
         {/* Contenu de la carte */}
-        <div className="p-4">
-          <div className="space-y-3">
+        <div className="p-4 flex flex-col flex-1">
+          <div className="space-y-3 flex-1">
             {/* Date et heure */}
             <div className="flex items-start gap-2">
               <Calendar
@@ -326,29 +331,21 @@ export function EventCard({ event, size = "default" }: EventCardProps) {
               </div>
             )}
 
-            {/* Statistiques et catégorie */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users aria-hidden className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {event._count.participants} participant
-                  {event._count.participants > 1 ? "s" : ""}
-                  {max != null && (
-                    <span className="text-muted-foreground">/{max}</span>
-                  )}
-                </span>
-              </div>
-
-              {event.category && (
-                <Badge variant="outline" className="text-xs">
-                  {typeof event.category === "string" ? event.category : event.category.name}
-                </Badge>
-              )}
+            {/* Statistiques */}
+            <div className="flex items-center gap-2">
+              <Users aria-hidden className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {event._count.participants} participant
+                {event._count.participants > 1 ? "s" : ""}
+                {max != null && (
+                  <span className="text-muted-foreground">/{max}</span>
+                )}
+              </span>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 mt-auto pt-4">
             <Button asChild className="flex-1" size="sm">
               <Link href={`/events/${event.slug}`}>Voir l&apos;événement</Link>
             </Button>
