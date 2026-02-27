@@ -157,65 +157,61 @@ export function EventsSlider({ events, className = "" }: EventsSliderProps) {
         />
       )}
 
-      <div className="relative z-10 h-full w-full flex flex-col">
-        {/* En-tête avec catégorie */}
-        <div className="mb-2">
-          <Badge className={`${getCategoryColor(currentEvent.category)} mb-2`}>
-            {currentEvent.category}
-          </Badge>
-          <div className="text-white text-3xl font-bold mb-2 leading-tight">
-            {currentEvent.title}
-          </div>
+      <div className="relative z-10 h-full w-full flex flex-col justify-between">
+        {/* Badge catégorie en haut à gauche */}
+        <div>
+          {currentEvent.category && (
+            <Badge className={`${getCategoryColor(currentEvent.category)} text-xs font-semibold`}>
+              {currentEvent.category}
+            </Badge>
+          )}
         </div>
 
-        {/* Informations de l'événement */}
-        <div className="flex-1 flex flex-col justify-end">
-          <div className="space-y-2 mb-4">
-            {/* Date et heure */}
-            <div className="flex items-center text-white/90 text-sm">
-              <Calendar className="w-4 h-4 mr-2" />
-              {formatDate(currentEvent.startDate)} à{" "}
-              {formatTime(currentEvent.startDate)}
+        {/* Contenu principal ancré en bas */}
+        <div className="space-y-1.5">
+          {/* Titre */}
+          <div
+            className="text-white text-2xl font-bold leading-tight"
+            style={{ textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}
+          >
+            {currentEvent.title}
+          </div>
+
+          {/* Infos : date + lieu sur une ligne */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <div className="flex items-center text-white/95 text-sm drop-shadow-md">
+              <Calendar className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+              {formatDate(currentEvent.startDate)} · {formatTime(currentEvent.startDate)}
             </div>
 
-            {/* Lieu */}
             {(currentEvent.location || currentEvent.place) && (
-              <div className="flex items-center text-white/90 text-sm">
-                <MapPin className="w-4 h-4 mr-2" />
-                {currentEvent.location ||
-                  (currentEvent.place &&
-                    `${currentEvent.place.name}, ${currentEvent.place.street}`)}
+              <div className="flex items-center text-white/95 text-sm drop-shadow-md">
+                <MapPin className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+                <span className="truncate max-w-[160px]">
+                  {currentEvent.location ||
+                    (currentEvent.place && currentEvent.place.name)}
+                </span>
               </div>
             )}
 
-            {/* Prix et participants */}
-            <div className="flex items-center gap-4 text-white/90 text-sm">
-              {currentEvent.price !== null && (
-                <div className="flex items-center">
-                  <Euro className="w-4 h-4 mr-1" />
-                  {currentEvent.price === 0
-                    ? "Gratuit"
-                    : `${currentEvent.price}€`}
-                </div>
-              )}
-              {currentEvent.maxParticipants && (
-                <div className="flex items-center">
-                  <Users className="w-4 h-4 mr-1" />
-                  {currentEvent.maxParticipants} places
-                </div>
-              )}
-            </div>
-            {/* Bouton d'action */}
-            <div className="mt-4 flex w-full items-end justify-end">
-              <Button
-                asChild
-                className="bg-white/20 hover:bg-white/30 text-white border-white/30 rounded-full"
-              >
-                <Link href={`/events/${currentEvent.slug}`}>
-                  Voir l&apos;événement
-                </Link>
-              </Button>
-            </div>
+            {currentEvent.price !== null && (
+              <div className="flex items-center text-white/95 text-sm drop-shadow-md">
+                <Euro className="w-3.5 h-3.5 mr-1 shrink-0" />
+                {currentEvent.price === 0 ? "Gratuit" : `${currentEvent.price}€`}
+              </div>
+            )}
+          </div>
+
+          {/* Bouton */}
+          <div className="flex justify-end pt-1">
+            <Button
+              asChild
+              className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white border border-white/30 rounded-full text-sm h-8 px-4"
+            >
+              <Link href={`/events/${currentEvent.slug}`}>
+                Voir l&apos;événement
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -263,11 +259,11 @@ export function EventsSlider({ events, className = "" }: EventsSliderProps) {
         </>
       )}
 
-      {/* Overlay sombre pour lisibilité (plus fort avec une photo) */}
+      {/* Overlay sombre pour lisibilité */}
       <div className={`absolute inset-0 pointer-events-none ${
         currentEvent.coverImage
-          ? "bg-gradient-to-t from-black/70 via-black/30 to-black/20"
-          : "bg-gradient-to-t from-black/20 to-transparent"
+          ? "bg-gradient-to-t from-black/85 via-black/50 to-black/10"
+          : "bg-gradient-to-t from-black/30 to-transparent"
       }`} />
     </div>
   );
