@@ -298,13 +298,13 @@ export default function FooterSection() {
               >
                 <Link
                   href={item.href}
-                  className="bg-gray-800 hover:bg-gray-700 p-4 rounded-full transition-colors block"
+                  className="bg-gray-800 hover:bg-gray-700 p-2.5 sm:p-4 rounded-full transition-colors block"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-700 rounded-full flex items-center justify-center shrink-0">
                       <span className="text-xs">{item.icon}</span>
                     </div>
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-medium text-xs sm:text-sm leading-tight">{item.label}</span>
                   </div>
                 </Link>
               </motion.div>

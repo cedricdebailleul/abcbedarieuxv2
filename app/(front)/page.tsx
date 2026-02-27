@@ -99,10 +99,10 @@ export default async function Home() {
 
       {/* Section des places en vedette */}
       {featuredPlaces.length > 0 && (
-        <section className="py-16 container mx-auto px-8">
+        <section className="py-8 sm:py-16 container mx-auto px-4 sm:px-8">
           <div>
             {/* En-tête de section */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-3xl font-bold mb-2">
                   Établissements en vedette
@@ -111,7 +111,7 @@ export default async function Home() {
                   Découvrez les commerces et services mis en avant à Bédarieux
                 </p>
               </div>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="self-start sm:self-auto">
                 <Link href="/carte">
                   <MapPin className="size-4 mr-2" />
                   Voir la carte
@@ -148,17 +148,17 @@ export default async function Home() {
 
       {/* Section des derniers articles */}
       {latestPosts.length > 0 && (
-        <section className="py-16 container mx-auto px-8">
+        <section className="py-8 sm:py-16 container mx-auto px-4 sm:px-8">
           <div>
             {/* En-tête de section */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-3xl font-bold mb-2">Derniers articles</h2>
                 <p className="text-muted-foreground">
                   Découvrez nos dernières publications sur ABC Bédarieux
                 </p>
               </div>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="self-start sm:self-auto">
                 <Link href="/articles">
                   Voir tous les articles
                   <ArrowRight className="size-4 ml-2" />

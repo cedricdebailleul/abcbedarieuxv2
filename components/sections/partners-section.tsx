@@ -224,14 +224,14 @@ export function PartnersSection({ partners, stats }: PartnersSectionProps) {
               au développement économique local. Découvrez nos opportunités de
               collaboration.
             </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button asChild size="lg">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center">
+              <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link href="/partenaires">
                   <MapPin className="w-5 h-5 mr-2" />
                   Découvrir nos partenaires
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" asChild>
+              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
                 <Link href="/contact">
                   Devenir partenaire
                   <ArrowRight className="w-4 h-4 ml-2" />

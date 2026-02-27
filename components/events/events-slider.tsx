@@ -141,7 +141,7 @@ export function EventsSlider({ events, className = "" }: EventsSliderProps) {
 
   return (
     <div
-      className={`relative rounded-3xl p-8 h-80 overflow-hidden ${
+      className={`relative rounded-3xl p-4 sm:p-8 h-80 overflow-hidden ${
         currentEvent.coverImage ? "bg-gray-900" : `bg-gradient-to-br ${getGradientByCategory(currentEvent.category)}`
       } ${className}`}
     >
@@ -157,56 +157,82 @@ export function EventsSlider({ events, className = "" }: EventsSliderProps) {
         />
       )}
 
-      <div className="relative z-10 h-full w-full flex flex-col justify-between">
-        {/* Badge catégorie en haut à gauche */}
-        <div>
-          {currentEvent.category && (
-            <Badge className={`${getCategoryColor(currentEvent.category)} text-xs font-semibold`}>
-              {currentEvent.category}
-            </Badge>
-          )}
-        </div>
+      {/* Overlay sombre pour lisibilité */}
+      <div className={`absolute inset-0 pointer-events-none ${
+        currentEvent.coverImage
+          ? "bg-gradient-to-t from-black/85 via-black/50 to-black/10"
+          : "bg-gradient-to-t from-black/30 to-transparent"
+      }`} />
 
+      {/* Flèches navigation — côtés gauche/droite centrés verticalement */}
+      {events.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={prevSlide}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={nextSlide}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </>
+      )}
+
+      {/* Badge catégorie — positionné en absolu en haut à gauche */}
+      {currentEvent.category && (
+        <div className="absolute top-4 left-4 z-20">
+          <Badge className={`${getCategoryColor(currentEvent.category)} text-xs font-semibold`}>
+            {currentEvent.category}
+          </Badge>
+        </div>
+      )}
+
+      <div className="absolute inset-0 z-10 flex flex-col justify-end p-4 sm:p-8 pb-8 sm:pb-6">
         {/* Contenu principal ancré en bas */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {/* Titre */}
           <div
-            className="text-white text-2xl font-bold leading-tight"
+            className="text-white text-lg sm:text-2xl font-bold leading-tight"
             style={{ textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}
           >
             {currentEvent.title}
           </div>
 
-          {/* Infos : date + lieu sur une ligne */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <div className="flex items-center text-white/95 text-sm drop-shadow-md">
-              <Calendar className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-              {formatDate(currentEvent.startDate)} · {formatTime(currentEvent.startDate)}
+          {/* Infos sur une ligne, bouton en dessous sur mobile */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+              <div className="flex items-center text-white/95 text-xs sm:text-sm drop-shadow-md shrink-0">
+                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1.5 shrink-0" />
+                {formatDate(currentEvent.startDate)} · {formatTime(currentEvent.startDate)}
+              </div>
+
+              {(currentEvent.location || currentEvent.place) && (
+                <div className="flex items-center text-white/95 text-xs sm:text-sm drop-shadow-md min-w-0">
+                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1.5 shrink-0" />
+                  <span className="truncate max-w-[120px] sm:max-w-[150px]">
+                    {currentEvent.location ||
+                      (currentEvent.place && currentEvent.place.name)}
+                  </span>
+                </div>
+              )}
+
+              {currentEvent.price !== null && (
+                <div className="flex items-center text-white/95 text-xs sm:text-sm drop-shadow-md shrink-0">
+                  <Euro className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 shrink-0" />
+                  {currentEvent.price === 0 ? "Gratuit" : `${currentEvent.price}€`}
+                </div>
+              )}
             </div>
 
-            {(currentEvent.location || currentEvent.place) && (
-              <div className="flex items-center text-white/95 text-sm drop-shadow-md">
-                <MapPin className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-                <span className="truncate max-w-[160px]">
-                  {currentEvent.location ||
-                    (currentEvent.place && currentEvent.place.name)}
-                </span>
-              </div>
-            )}
-
-            {currentEvent.price !== null && (
-              <div className="flex items-center text-white/95 text-sm drop-shadow-md">
-                <Euro className="w-3.5 h-3.5 mr-1 shrink-0" />
-                {currentEvent.price === 0 ? "Gratuit" : `${currentEvent.price}€`}
-              </div>
-            )}
-          </div>
-
-          {/* Bouton */}
-          <div className="flex justify-end pt-1">
             <Button
               asChild
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-sm h-8 px-4 border-0"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-xs sm:text-sm h-7 sm:h-8 px-3 sm:px-4 border-0 shrink-0 self-start sm:self-auto"
             >
               <Link href={`/events/${currentEvent.slug}`}>
                 Voir l&apos;événement
@@ -216,55 +242,26 @@ export function EventsSlider({ events, className = "" }: EventsSliderProps) {
         </div>
       </div>
 
-      {/* Navigation du slider */}
+      {/* Dots de navigation en bas au centre */}
       {events.length > 1 && (
-        <>
-          <div className="absolute bottom-4 left-4 flex items-center space-x-4">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center space-x-2 z-20">
+          {events.map((_, index) => (
             <button
-              type="button"
-              onClick={prevSlide}
-              className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-
-            {/* Indicateurs */}
-            <div className="flex space-x-2">
-              {events.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setCurrentSlide(index);
-                    setAutoPlay(false);
-                  }}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    currentSlide === index ? "bg-white" : "bg-white/50"
-                  }`}
-                />
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={nextSlide}
-              className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="absolute bottom-4 right-4 text-white text-sm">
-            {currentSlide + 1} / {events.length}
-          </div>
-        </>
+              key={index}
+              onClick={() => {
+                setCurrentSlide(index);
+                setAutoPlay(false);
+              }}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                currentSlide === index ? "bg-white" : "bg-white/40"
+              }`}
+            />
+          ))}
+          <span className="text-white/70 text-xs ml-2">
+            {currentSlide + 1}/{events.length}
+          </span>
+        </div>
       )}
-
-      {/* Overlay sombre pour lisibilité */}
-      <div className={`absolute inset-0 pointer-events-none ${
-        currentEvent.coverImage
-          ? "bg-gradient-to-t from-black/85 via-black/50 to-black/10"
-          : "bg-gradient-to-t from-black/30 to-transparent"
-      }`} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { User } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
 import { safeUserCast } from "@/lib/auth-helpers-client";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -41,8 +42,15 @@ export function NavUser() {
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" asChild>
+        <div className="flex items-center">
+          {/* Icône seule sur mobile */}
+          <Button variant="ghost" size="icon" asChild className="md:hidden">
+            <Link href="/login">
+              <User className="size-5" />
+            </Link>
+          </Button>
+          {/* Texte sur desktop */}
+          <Button variant="ghost" asChild className="hidden md:flex">
             <Link href="/login">Se connecter</Link>
           </Button>
         </div>

@@ -67,7 +67,7 @@ export default function Hero({
   upcomingEvents = [],
 }: HeroProps) {
   return (
-    <section className="py-16 relative container mx-auto px-8">
+    <section className="py-8 sm:py-16 relative container mx-auto px-4 sm:px-8">
       <div className="space-y-8">
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Left Section - Anniversary Content with Image */}
@@ -133,37 +133,37 @@ export default function Hero({
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
-          <div className="flex items-start bg-gray-800 space-x-2 rounded-full w-full p-4">
-            <Link href="/places" className="flex items-center gap-2">
-              <span className="bg-gray-900 p-3 rounded-full text-white">
-                <MapPin className="size-5 text-white" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8 sm:mt-12">
+          <div className="flex items-center bg-gray-800 rounded-full w-full p-2.5 sm:p-4">
+            <Link href="/places" className="flex items-center gap-2 w-full">
+              <span className="bg-gray-900 p-2 sm:p-3 rounded-full text-white shrink-0">
+                <MapPin className="size-4 sm:size-5 text-white" />
               </span>
-              <span className="text-white">Les lieux & activités</span>
+              <span className="text-white text-xs sm:text-sm leading-tight">Lieux & activités</span>
             </Link>
           </div>
-          <div className="flex items-start bg-gray-800 space-x-2 rounded-full w-full p-4">
-            <Link href="/events" className="flex items-center gap-2">
-              <span className="bg-gray-900 p-3 rounded-full text-white">
-                <Calendar className="size-5 text-white" />
+          <div className="flex items-center bg-gray-800 rounded-full w-full p-2.5 sm:p-4">
+            <Link href="/events" className="flex items-center gap-2 w-full">
+              <span className="bg-gray-900 p-2 sm:p-3 rounded-full text-white shrink-0">
+                <Calendar className="size-4 sm:size-5 text-white" />
               </span>
-              <span className="text-white">Événements</span>
+              <span className="text-white text-xs sm:text-sm leading-tight">Événements</span>
             </Link>
           </div>
-          <div className="flex items-start bg-gray-800 space-x-2 rounded-full w-full p-4">
-            <Link href="/categories" className="flex items-center gap-2">
-              <span className="bg-gray-900 p-3 rounded-full text-white">
-                <Store className="size-5 text-white" />
+          <div className="flex items-center bg-gray-800 rounded-full w-full p-2.5 sm:p-4">
+            <Link href="/categories" className="flex items-center gap-2 w-full">
+              <span className="bg-gray-900 p-2 sm:p-3 rounded-full text-white shrink-0">
+                <Store className="size-4 sm:size-5 text-white" />
               </span>
-              <span className="text-white">Catégories</span>
+              <span className="text-white text-xs sm:text-sm leading-tight">Catégories</span>
             </Link>
           </div>
-          <div className="flex items-start bg-gray-800 space-x-2 rounded-full w-full p-4">
-            <Link href="/carte" className="flex items-center gap-2">
-              <span className="bg-gray-900 p-3 rounded-full text-white">
-                <Briefcase className="size-5 text-white" />
+          <div className="flex items-center bg-gray-800 rounded-full w-full p-2.5 sm:p-4">
+            <Link href="/carte" className="flex items-center gap-2 w-full">
+              <span className="bg-gray-900 p-2 sm:p-3 rounded-full text-white shrink-0">
+                <Briefcase className="size-4 sm:size-5 text-white" />
               </span>
-              <span className="text-white">Carte</span>
+              <span className="text-white text-xs sm:text-sm leading-tight">Carte</span>
             </Link>
           </div>
         </div>

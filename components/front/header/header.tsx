@@ -578,7 +578,9 @@ export default function Header({ className }: HeaderProps) {
                 <span className="font-medium">Les plus populaires</span>
               </Button>
               <SearchMenu />
-              <ThemeToggle variant="navbar" />
+              <span className="hidden md:inline-flex">
+                <ThemeToggle variant="navbar" />
+              </span>
               {/* User Icon */}
               <NavUser />
 
