@@ -18,6 +18,7 @@ interface Event {
   description: string | null;
   slug: string;
   startDate: Date;
+  coverImage?: string | null;
   location: string | null;
   category: string;
   price: number | null;

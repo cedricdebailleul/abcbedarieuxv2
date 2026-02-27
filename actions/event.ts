@@ -706,8 +706,16 @@ export async function getUpcomingEventsAction(limit: number = 5): Promise<
     {
       id: string;
       title: string;
+      slug: string;
       startDate: Date;
       endDate: Date | null;
+      coverImage?: string | null;
+      category?: string | null;
+      price?: number | null;
+      isFree: boolean;
+      maxParticipants?: number | null;
+      locationName?: string | null;
+      locationCity?: string | null;
       place?: {
         name: string;
         street: string;
@@ -745,8 +753,16 @@ export async function getUpcomingEventsAction(limit: number = 5): Promise<
       data: events.map((e) => ({
         id: e.id,
         title: e.title,
+        slug: e.slug,
         startDate: e.startDate,
         endDate: e.endDate,
+        coverImage: e.coverImage,
+        category: e.category,
+        price: e.price,
+        isFree: e.isFree,
+        maxParticipants: e.maxParticipants,
+        locationName: e.locationName,
+        locationCity: e.locationCity,
         place: e.place
           ? {
               name: e.place.name,

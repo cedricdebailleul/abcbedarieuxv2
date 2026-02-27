@@ -8,6 +8,7 @@ import {
   Users,
   MapPin} from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ interface Event {
   description: string | null;
   slug: string;
   startDate: Date;
+  coverImage?: string | null;
   location: string | null;
   category: string;
   price: number | null;
@@ -139,10 +141,22 @@ export function EventsSlider({ events, className = "" }: EventsSliderProps) {
 
   return (
     <div
-      className={`relative bg-gradient-to-br ${getGradientByCategory(
-        currentEvent.category
-      )} rounded-3xl p-8 h-80 overflow-hidden ${className}`}
+      className={`relative rounded-3xl p-8 h-80 overflow-hidden ${
+        currentEvent.coverImage ? "bg-gray-900" : `bg-gradient-to-br ${getGradientByCategory(currentEvent.category)}`
+      } ${className}`}
     >
+      {/* Photo de couverture en fond */}
+      {currentEvent.coverImage && (
+        <Image
+          src={currentEvent.coverImage.startsWith("/") ? currentEvent.coverImage : `/${currentEvent.coverImage}`}
+          alt={currentEvent.title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 50vw"
+          priority
+        />
+      )}
+
       <div className="relative z-10 h-full w-full flex flex-col">
         {/* En-tête avec catégorie */}
         <div className="mb-2">
@@ -249,8 +263,12 @@ export function EventsSlider({ events, className = "" }: EventsSliderProps) {
         </>
       )}
 
-      {/* Effet de parallax/overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+      {/* Overlay sombre pour lisibilité (plus fort avec une photo) */}
+      <div className={`absolute inset-0 pointer-events-none ${
+        currentEvent.coverImage
+          ? "bg-gradient-to-t from-black/70 via-black/30 to-black/20"
+          : "bg-gradient-to-t from-black/20 to-transparent"
+      }`} />
     </div>
   );
 }

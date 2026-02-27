@@ -55,23 +55,26 @@ export default async function Home() {
         (event: {
           id: string;
           title: string;
+          slug: string;
           startDate: Date;
           endDate: Date | null;
+          coverImage?: string | null;
+          category?: string | null;
+          price?: number | null;
+          isFree: boolean;
+          maxParticipants?: number | null;
+          locationName?: string | null;
+          locationCity?: string | null;
           place?: { name: string; street: string; city: string };
-          slug?: string;
-          category?: string;
-          additionalInfo?: string;
-          price?: number;
-          maxParticipants?: number;
         }) => ({
           ...event,
-          description: "", // Default value since 'description' does not exist on the event type
-          slug: event.slug || "",
-          location: event.place?.name || "",
+          description: null,
+          slug: event.slug,
+          coverImage: event.coverImage ?? null,
+          location: event.locationName || event.place?.name || "",
           category: event.category || "",
-          additionalInfo: event.additionalInfo || "",
-          price: event.price || 0,
-          maxParticipants: event.maxParticipants || 0,
+          price: event.isFree ? 0 : (event.price ?? null),
+          maxParticipants: event.maxParticipants ?? null,
         })
       )
     : [];
