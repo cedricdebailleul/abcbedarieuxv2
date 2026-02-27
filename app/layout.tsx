@@ -35,10 +35,10 @@ export const metadata: Metadata = {
     description: "Site des Commerçants et Artisans de Bédarieux",
     images: [
       {
-        url: "/images/og-default.jpg",
+        url: "/images/logo_abc.png",
         width: 1200,
         height: 630,
-        alt: "ABC Bédarieux",
+        alt: "ABC Bédarieux - Association Bédaricienne des Commerçants",
       },
     ],
   },
@@ -46,8 +46,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ABC Bédarieux",
     description: "Site des Commerçants et Artisans de Bédarieux",
-    images: ["/images/og-default.jpg"],
-    creator: "@blackbearstudio",
+    images: ["/images/logo_abc.png"],
+    creator: "@abcbedarieux",
   },
 };
 
