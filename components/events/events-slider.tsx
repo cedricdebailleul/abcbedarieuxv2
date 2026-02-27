@@ -206,7 +206,7 @@ export function EventsSlider({ events, className = "" }: EventsSliderProps) {
           <div className="flex justify-end pt-1">
             <Button
               asChild
-              className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white border border-white/30 rounded-full text-sm h-8 px-4"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-sm h-8 px-4 border-0"
             >
               <Link href={`/events/${currentEvent.slug}`}>
                 Voir l&apos;événement
