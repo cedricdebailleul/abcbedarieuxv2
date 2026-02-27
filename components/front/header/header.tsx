@@ -410,7 +410,7 @@ export default function Header({ className }: HeaderProps) {
           transition: { duration: 0.3, ease: [0.4, 0.0, 0.2, 1] },
         }}
       >
-        <div className="mx-auto px-8">
+        <div className="mx-auto px-4 sm:px-8">
           <div className="flex items-center justify-between py-4">
             {/* Logo */}
             <Link href="/" className="flex items-center">
@@ -568,7 +568,7 @@ export default function Header({ className }: HeaderProps) {
             </nav>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Button
                 className={cn(
                   "hidden md:flex items-center space-x-2 bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 h-10 cursor-pointer transition-all duration-300",
