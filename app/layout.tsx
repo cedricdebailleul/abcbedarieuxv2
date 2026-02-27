@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { BadgeProvider } from "@/components/providers/badge-provider";
+import { StaleDeploymentHandler } from "@/components/providers/stale-deployment-handler";
 import { env } from "@/lib/env";
 
 const geistSans = Geist({
@@ -66,6 +67,7 @@ export default function RootLayout({
           {children}
           <Toaster closeButton position="bottom-center" />
           <BadgeProvider />
+          <StaleDeploymentHandler />
         </ThemeProvider>
       </body>
     </html>
