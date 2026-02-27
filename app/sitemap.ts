@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/lib/site.config";
 import { PlaceStatus } from "@/lib/generated/prisma/client";
 
+// Force dynamic rendering to avoid database calls during build
+export const dynamic = "force-dynamic";
+
 function absolute(path: string) {
   return `${siteConfig.baseUrl}${path}`;
 }
