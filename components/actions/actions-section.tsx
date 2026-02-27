@@ -156,12 +156,13 @@ function ActionCard({
       <Card className="group hover:shadow-lg transition-shadow duration-300 overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-5 h-full">
           {action.coverImage && (
-            <div className="md:col-span-2 relative overflow-hidden">
+            <div className="md:col-span-2 relative h-48 md:h-auto overflow-hidden bg-muted">
               <Image
                 src={action.coverImage}
                 alt={action.title}
-                className="w-full md:h-full object-cover transition-transform duration-300"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
                 fill
+                sizes="(max-width: 768px) 100vw, 40vw"
               />
               {action.isFeatured && (
                 <Badge className="absolute top-3 left-3 bg-yellow-500 text-yellow-900 border-yellow-400">
@@ -225,26 +226,31 @@ function ActionCard({
   }
 
   return (
-    <Card className="group hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-      {action.coverImage && (
-        <div className="relative overflow-hidden">
+    <Card className="group hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col">
+      <div className="relative h-48 overflow-hidden bg-muted shrink-0">
+        {action.coverImage ? (
           <Image
             src={action.coverImage}
             alt={action.title}
-            className="w-full object-cover transition-transform duration-300 rounded-2xl"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-          {action.isFeatured && (
-            <Badge className="absolute top-3 left-3 bg-yellow-500 text-yellow-900 border-yellow-400">
-              <Star className="h-3 w-3 mr-1" />
-              En avant
-            </Badge>
-          )}
-        </div>
-      )}
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+            <Star className="h-12 w-12 text-primary/30" />
+          </div>
+        )}
+        {action.isFeatured && (
+          <Badge className="absolute top-3 left-3 bg-yellow-500 text-yellow-900 border-yellow-400">
+            <Star className="h-3 w-3 mr-1" />
+            En avant
+          </Badge>
+        )}
+      </div>
 
-      <CardContent className="p-6">
-        <div className="space-y-4">
+      <CardContent className="p-6 flex flex-col flex-1">
+        <div className="space-y-4 flex flex-col flex-1">
           <div>
             <h3 className="font-semibold text-xl mb-2 group-hover:text-primary transition-colors">
               {action.title}
