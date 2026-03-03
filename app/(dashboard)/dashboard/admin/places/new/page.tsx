@@ -61,6 +61,8 @@ export default function AdminNewPlacePage() {
         throw new Error(error.error || "Erreur lors de la création");
       }
 
+      const result = await response.json();
+
       if (data.createForClaim) {
         toast.success(
           "Place créée avec succès ! Elle peut maintenant être revendiquée par un utilisateur."
@@ -69,8 +71,7 @@ export default function AdminNewPlacePage() {
         toast.success("Place créée avec succès et vous a été attribuée.");
       }
 
-      // Rediriger vers la liste admin des places
-      router.push("/dashboard/admin/places");
+      router.push(`/dashboard/places/${result.place.id}/edit`);
     } catch (error: unknown) {
       console.error("Erreur:", error);
       if (error instanceof Error) {

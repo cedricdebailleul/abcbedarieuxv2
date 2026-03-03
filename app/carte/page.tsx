@@ -42,6 +42,7 @@ async function getMapData() {
       slug: true,
       type: true,
       summary: true,
+      presenceType: true,
       street: true,
       streetNumber: true,
       postalCode: true,
