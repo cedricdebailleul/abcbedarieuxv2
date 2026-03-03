@@ -24,7 +24,7 @@ interface EventSchemaProps {
     } | null;
     place?: {
       name: string;
-      street: string;
+      street?: string | null;
       city: string;
       postalCode: string;
       latitude?: number | null;

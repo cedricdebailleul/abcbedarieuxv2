@@ -718,7 +718,7 @@ export async function getUpcomingEventsAction(limit: number = 5): Promise<
       locationCity?: string | null;
       place?: {
         name: string;
-        street: string;
+        street: string | null;
         city: string;
         latitude: number;
         longitude: number;
@@ -1113,7 +1113,7 @@ export async function getEventBySlugAction(slug: string): Promise<
       name: string;
       slug: string;
       city: string;
-      street: string;
+      street: string | null;
       postalCode: string;
       latitude: number;
       longitude: number;

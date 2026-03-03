@@ -41,6 +41,7 @@ type PlaceIncoming = Partial<{
   locality: string;
   latitude?: number | string;
   longitude?: number | string;
+  presenceType?: "PHYSICAL" | "ONLINE" | "MOBILE";
 
   images: string[] | string;
   logo: string;
@@ -474,6 +475,21 @@ export async function POST(req: NextRequest) {
                       typeof body.longitude === 'string' ? parseFloat(body.longitude) :
                       null;
 
+    // Type de présence
+    const BEDARIEUX_LAT = 43.6222;
+    const BEDARIEUX_LNG = 3.1519;
+
+    const validPresenceTypes = ["PHYSICAL", "ONLINE", "MOBILE"] as const;
+    type PresenceTypeValue = typeof validPresenceTypes[number];
+    const rawPresence = asString(body.presenceType ?? "PHYSICAL").toUpperCase();
+    const presenceType: PresenceTypeValue = (validPresenceTypes as readonly string[]).includes(rawPresence)
+      ? (rawPresence as PresenceTypeValue)
+      : "PHYSICAL";
+
+    // Fallback coords Bédarieux pour les fiches sans adresse physique
+    const resolvedLatitude = latitude ?? (presenceType !== "PHYSICAL" ? BEDARIEUX_LAT : null);
+    const resolvedLongitude = longitude ?? (presenceType !== "PHYSICAL" ? BEDARIEUX_LNG : null);
+
     // images (string | array -> array)
     let images: string[] | undefined;
     if (Array.isArray(body.images)) {
@@ -493,24 +509,19 @@ export async function POST(req: NextRequest) {
     const isVerified = asBoolLike(body.isVerified) ?? false;
 
     // Validation minimale
-    const missing = [
-      "name",
-      "slug",
-      "type",
-      "street",
-      "postalCode",
-      "city",
-    ].filter((k) => {
-      const map: Record<string, string> = {
-        name,
-        slug,
-        type: rawType,
-        street,
-        postalCode,
-        city,
-      };
-      return !String(map[k] || "").trim();
-    });
+    // street requis seulement pour établissement physique
+    const requiredFields = ["name", "slug", "type", "postalCode", "city"];
+    if (presenceType === "PHYSICAL") requiredFields.push("street");
+
+    const fieldMap: Record<string, string> = {
+      name,
+      slug,
+      type: rawType,
+      street,
+      postalCode,
+      city,
+    };
+    const missing = requiredFields.filter((k) => !String(fieldMap[k] || "").trim());
     if (missing.length) {
       return NextResponse.json(
         { error: "Champs requis manquants", missing },
@@ -568,12 +579,13 @@ export async function POST(req: NextRequest) {
           name,
           slug,
           type,
-          street,
+          street: street || null,
           streetNumber: asString(body.streetNumber ?? undefined) || null,
           postalCode,
           city,
-          latitude,
-          longitude,
+          presenceType,
+          latitude: resolvedLatitude,
+          longitude: resolvedLongitude,
 
           description: asString(body.description ?? undefined) || null,
           summary: asString(body.summary ?? undefined) || null,

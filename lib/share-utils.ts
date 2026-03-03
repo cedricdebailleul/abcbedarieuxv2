@@ -126,7 +126,7 @@ export function generatePlaceShareData(place: {
   slug: string;
   summary?: string | null;
   description?: string | null;
-  street: string;
+  street?: string | null;
   city: string;
   postalCode: string;
   type: string;
@@ -143,7 +143,7 @@ export function generatePlaceShareData(place: {
   const placeUrl = `${baseUrl}/places/${place.slug}`;
 
   // Adresse complète
-  const fullAddress = `${place.street}, ${place.postalCode} ${place.city}`;
+  const fullAddress = `${place.street || ""}, ${place.postalCode} ${place.city}`.replace(/^,\s*/, "");
 
   // Description optimisée
   const description =

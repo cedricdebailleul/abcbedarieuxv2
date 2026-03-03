@@ -21,7 +21,7 @@ export default function AdminNewPlacePage() {
   interface PlaceData {
     name: string;
     type: string;
-    street: string;
+    street?: string;
     postalCode: string;
     city: string;
     website?: string;

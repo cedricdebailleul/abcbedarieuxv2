@@ -148,8 +148,11 @@ const placeSchema = z.object({
   description: z.string().optional(),
   summary: z.string().max(280).optional(),
 
-  // Adresse
-  street: z.string().min(1, "La rue est requise"),
+  // Présence
+  presenceType: z.enum(["PHYSICAL", "ONLINE", "MOBILE"]).default("PHYSICAL"),
+
+  // Adresse (rue requise uniquement pour établissement physique)
+  street: z.string().optional(),
   streetNumber: z.string().optional(),
   postalCode: z.string().min(1, "Le code postal est requis"),
   city: z.string().min(1, "La ville est requise"),
@@ -184,7 +187,17 @@ const placeSchema = z.object({
   isFeatured: z.boolean().optional(),
 });
 
-type PlaceFormData = z.infer<typeof placeSchema> & {
+const placeSchemaWithRefine = placeSchema.superRefine((data, ctx) => {
+  if (data.presenceType === "PHYSICAL" && !data.street?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "La rue est requise pour un établissement physique",
+      path: ["street"],
+    });
+  }
+});
+
+type PlaceFormData = z.infer<typeof placeSchemaWithRefine> & {
   // on tolère l’ancienne forme côté initialData
   openingHours?: RawHour[];
 };
@@ -250,7 +263,7 @@ export function PlaceForm({
   >([]);
 
   const form = useForm<PlaceFormData>({
-    resolver: zodResolver(placeSchema) as Resolver<PlaceFormData, unknown>,
+    resolver: zodResolver(placeSchemaWithRefine) as Resolver<PlaceFormData, unknown>,
     defaultValues: {
       name: "",
       type: "OTHER", // Type par défaut (correspond au @default(OTHER) de Prisma)
@@ -258,6 +271,7 @@ export function PlaceForm({
       categories: [],
       description: "",
       summary: "",
+      presenceType: "PHYSICAL" as const,
       street: "",
       streetNumber: "",
       postalCode: "",
@@ -289,6 +303,8 @@ export function PlaceForm({
   const streetNumberW = useWatch({ control: form.control, name: "streetNumber" });
   const cityW = useWatch({ control: form.control, name: "city" });
   const postalCodeW = useWatch({ control: form.control, name: "postalCode" });
+  const presenceTypeW = useWatch({ control: form.control, name: "presenceType" });
+  const isPhysical = presenceTypeW === "PHYSICAL";
 
   // Google Places hook
   const {
@@ -355,6 +371,7 @@ export function PlaceForm({
         categories: initialData.categories || [],
         description: initialData.description || "",
         summary: initialData.summary || autoSummary,
+        presenceType: (initialData.presenceType as "PHYSICAL" | "ONLINE" | "MOBILE") || "PHYSICAL",
         street: initialData.street || "",
         streetNumber: initialData.streetNumber || "",
         postalCode: initialData.postalCode || "",
@@ -489,13 +506,13 @@ export function PlaceForm({
     const haveCoords =
       !!form.getValues("latitude") || !!form.getValues("longitude");
     if (haveCoords) return;
-    if (streetW && cityW && postalCodeW) {
+    if (isPhysical && streetW && cityW && postalCodeW) {
       const t = setTimeout(() => {
         void handleGeocodeAddress();
       }, 1000);
       return () => clearTimeout(t);
     }
-  }, [mode, streetW, cityW, postalCodeW, form, handleGeocodeAddress]);
+  }, [mode, isPhysical, streetW, cityW, postalCodeW, form, handleGeocodeAddress]);
 
   // Debounce recherche Google
   // Note: searchPlaces et clearPredictions sont exclus des dépendances car ce sont
@@ -969,6 +986,30 @@ export function PlaceForm({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Type de présence */}
+                  <FormField
+                    control={form.control}
+                    name="presenceType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Type de présence *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choisir..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="PHYSICAL">Établissement physique (avec adresse)</SelectItem>
+                            <SelectItem value="ONLINE">Commerce en ligne (sans local)</SelectItem>
+                            <SelectItem value="MOBILE">Itinérant / à domicile</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {isPhysical ? (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <FormField
                       control={form.control}
@@ -997,6 +1038,13 @@ export function PlaceForm({
                       )}
                     />
                   </div>
+                  ) : (
+                    <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
+                      {presenceTypeW === "ONLINE"
+                        ? "Commerce en ligne — aucune adresse de rue nécessaire. Le code postal et la ville situent l'activité."
+                        : "Activité itinérante — aucune adresse de rue nécessaire. Le code postal et la ville situent la zone d'intervention."}
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField

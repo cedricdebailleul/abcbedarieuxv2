@@ -3,7 +3,7 @@ interface PlaceSchemaProps {
     name: string;
     description?: string | null;
     summary?: string | null;
-    street: string;
+    street?: string | null;
     streetNumber?: string | null;
     city: string;
     postalCode: string;
