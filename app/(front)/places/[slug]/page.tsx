@@ -364,13 +364,33 @@ export default async function PlacePage({ params }: PageProps) {
   const grouped = groupOpeningHours(place.openingHours);
   const { open, pause, nextChange, todayKey } = computeOpenState(grouped);
 
-  const fullAddress = `${place.street} ${place.streetNumber || ""}, ${
-    place.postalCode
-  } ${place.city}`.trim();
+  const BEDARIEUX_LAT = 43.6222;
+  const BEDARIEUX_LNG = 3.1519;
+
+  const isPhysicalPlace = !place.presenceType || place.presenceType === "PHYSICAL";
+
+  const fullAddress = isPhysicalPlace
+    ? `${place.street || ""} ${place.streetNumber || ""}, ${place.postalCode} ${place.city}`
+        .trim()
+        .replace(/^,\s*/, "")
+    : place.presenceType === "ONLINE"
+    ? `Commerce en ligne — ${place.city}`
+    : `Intervient à domicile — ${place.city} et environs`;
+
+  const mapLat = place.latitude ?? BEDARIEUX_LAT;
+  const mapLng = place.longitude ?? BEDARIEUX_LNG;
+  const mapAddress = isPhysicalPlace
+    ? fullAddress
+    : place.presenceType === "ONLINE"
+    ? "Commerce en ligne"
+    : "Activité itinérante — intervient à domicile";
+
   const directionsHref =
-    place.latitude && place.longitude
+    isPhysicalPlace && place.latitude && place.longitude
       ? `https://www.google.com/maps?daddr=${place.latitude},${place.longitude}`
-      : `https://www.google.com/maps?daddr=${encodeURIComponent(fullAddress)}`;
+      : isPhysicalPlace
+      ? `https://www.google.com/maps?daddr=${encodeURIComponent(fullAddress)}`
+      : `https://www.google.com/maps?q=B%C3%A9darieux+34600`;
 
   // Calcul de la note moyenne
   const averageRating =
@@ -465,6 +485,18 @@ export default async function PlacePage({ params }: PageProps) {
                     >
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Vérifié
+                    </Badge>
+                  )}
+                  {place.presenceType === "ONLINE" && (
+                    <Badge variant="secondary" className="gap-1">
+                      <Globe className="w-3 h-3" />
+                      Commerce en ligne
+                    </Badge>
+                  )}
+                  {place.presenceType === "MOBILE" && (
+                    <Badge variant="secondary" className="gap-1">
+                      <MapPin className="w-3 h-3" />
+                      Itinérant / à domicile
                     </Badge>
                   )}
                 </div>
@@ -820,20 +852,12 @@ export default async function PlacePage({ params }: PageProps) {
                   <MapPin className="w-4 h-4 mr-2 mt-0.5" />
                   <span>{fullAddress}</span>
                 </div>
-                {place.latitude && place.longitude ? (
-                  <PlaceDetailMap
-                    latitude={place.latitude}
-                    longitude={place.longitude}
-                    name={place.name}
-                    address={fullAddress}
-                  />
-                ) : (
-                  <div className="w-full h-56 bg-muted rounded-xl flex items-center justify-center">
-                    <span className="text-sm text-muted-foreground">
-                      Position GPS non disponible
-                    </span>
-                  </div>
-                )}
+                <PlaceDetailMap
+                  latitude={mapLat}
+                  longitude={mapLng}
+                  name={place.name}
+                  address={mapAddress}
+                />
                 <Button asChild className="w-full">
                   <a
                     href={directionsHref}
