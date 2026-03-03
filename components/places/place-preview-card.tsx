@@ -16,7 +16,7 @@ interface PlacePreviewCardProps {
     slug: string;
     type: string;
     summary?: string | null;
-    street: string;
+    street?: string | null;
     streetNumber?: string | null;
     postalCode: string;
     city: string;

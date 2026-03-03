@@ -244,7 +244,7 @@ export async function getUserFavoritesAction(options?: {
     type: string;
     status: string;
     city: string;
-    street: string;
+    street: string | null;
     coverImage: string | null;
     logo: string | null;
     isFeatured: boolean;

@@ -94,7 +94,7 @@ export default async function Home() {
           maxParticipants?: number | null;
           locationName?: string | null;
           locationCity?: string | null;
-          place?: { name: string; street: string; city: string };
+          place?: { name: string; street: string | null; city: string };
         }) => ({
           ...event,
           description: null,

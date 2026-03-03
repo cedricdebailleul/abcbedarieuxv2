@@ -172,7 +172,7 @@ export function createNewsletterEmailTemplate({
     coverImage?: string;
     logo?: string;
     summary?: string;
-    street?: string;
+    street?: string | null;
     city?: string;
     phone?: string;
     website?: string;

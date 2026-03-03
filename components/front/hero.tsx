@@ -25,7 +25,7 @@ interface Event {
   maxParticipants: number | null;
   place?: {
     name: string;
-    street: string;
+    street?: string | null;
     city: string;
   } | null;
 }

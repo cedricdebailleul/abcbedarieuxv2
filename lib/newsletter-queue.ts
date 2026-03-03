@@ -53,7 +53,7 @@ interface EmailData {
       slug: string;
       summary: string;
       description: string;
-      street: string;
+      street?: string | null;
       city: string;
       phone: string;
       website: string;
