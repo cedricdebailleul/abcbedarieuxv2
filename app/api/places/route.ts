@@ -579,7 +579,7 @@ export async function POST(req: NextRequest) {
           name,
           slug,
           type,
-          street,
+          street: street || null,
           streetNumber: asString(body.streetNumber ?? undefined) || null,
           postalCode,
           city,

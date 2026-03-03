@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { PLACES_ROOT } from "@/lib/path";
 import { rm } from "node:fs/promises";
 import type { DayOfWeek } from "@/lib/generated/prisma/client";
-import { Prisma, PlaceType, PlaceStatus } from "@/lib/generated/prisma/client";
+import { Prisma, PlaceType, PlaceStatus, PresenceType } from "@/lib/generated/prisma/client";
 import { DatabaseOpeningHour, GroupedOpeningHours } from "@/lib/schemas/common";
 import { isGooglePhotosUrl } from "@/lib/image-utils";
 
@@ -30,8 +30,11 @@ const placeSchema = z.object({
   description: z.string().optional(),
   summary: z.string().max(280).optional(),
 
+  // Type de présence
+  presenceType: z.nativeEnum(PresenceType).optional(),
+
   // Adresse
-  street: z.string().min(1, "La rue est requise"),
+  street: z.string().optional(),
   streetNumber: z.string().optional(),
   postalCode: z.string().min(1, "Le code postal est requis"),
   city: z.string().min(1, "La ville est requise"),
@@ -297,6 +300,15 @@ export async function PUT(
 
     const body = await request.json();
     const validatedData = placeSchema.parse(body);
+
+    // Validation conditionnelle : rue requise si place physique
+    const effectivePresenceType = validatedData.presenceType ?? PresenceType.PHYSICAL;
+    if (effectivePresenceType === PresenceType.PHYSICAL && !validatedData.street?.trim()) {
+      return NextResponse.json(
+        { error: "Données invalides", details: [{ path: ["street"], message: "La rue est requise pour une place physique" }] },
+        { status: 400 }
+      );
+    }
 
     // photos/images -> normalizedPhotos
     const photosFromForm = (validatedData as { photos?: string[] }).photos;

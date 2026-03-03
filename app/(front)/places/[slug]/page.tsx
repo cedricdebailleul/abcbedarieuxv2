@@ -235,8 +235,10 @@ export async function generateMetadata({
       images: true,
       slug: true,
       street: true,
+      streetNumber: true,
       postalCode: true,
       city: true,
+      presenceType: true,
     },
   });
   if (!place)
@@ -247,7 +249,11 @@ export async function generateMetadata({
 
   const gallery = toArray(place.images);
   const ogImg = place.ogImage || place.coverImage || gallery[0];
-  const fullAddress = `${place.street}, ${place.postalCode} ${place.city}`;
+  const metaAddress = (!place.presenceType || place.presenceType === "PHYSICAL")
+    ? `${place.street || ""} ${place.streetNumber || ""}, ${place.postalCode} ${place.city}`.trim().replace(/^,\s*/, "")
+    : place.presenceType === "ONLINE"
+    ? `Commerce en ligne — ${place.city}`
+    : `Intervient à domicile — ${place.city} et environs`;
 
   // URL absolue pour l'image
   const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
@@ -262,13 +268,13 @@ export async function generateMetadata({
     description:
       place.metaDescription ||
       place.summary ||
-      `Découvrez ${place.name}, établissement situé ${fullAddress}.`,
+      `Découvrez ${place.name}, établissement situé ${metaAddress}.`,
     openGraph: {
       title: place.name,
       description:
         place.summary ||
         place.metaDescription ||
-        `Établissement situé ${fullAddress}`,
+        `Établissement situé ${metaAddress}`,
       url: `${baseUrl}/places/${place.slug}`,
       siteName: "ABC Bédarieux",
       locale: "fr_FR",
@@ -285,7 +291,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: place.name,
-      description: place.summary || `Établissement situé ${fullAddress}`,
+      description: place.summary || `Établissement situé ${metaAddress}`,
       images: [absoluteImageUrl],
       creator: "@abc_bedarieux",
     },
@@ -547,16 +553,18 @@ export default async function PlacePage({ params }: PageProps) {
                     </Button>
                   )}
 
-                  <Button asChild size="sm" variant="outline">
-                    <a
-                      href={directionsHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Itinéraire
-                    </a>
-                  </Button>
+                  {isPhysicalPlace && (
+                    <Button asChild size="sm" variant="outline">
+                      <a
+                        href={directionsHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Itinéraire
+                      </a>
+                    </Button>
+                  )}
                 </div>
 
                 {/* Catégories de la place */}
@@ -858,15 +866,17 @@ export default async function PlacePage({ params }: PageProps) {
                   name={place.name}
                   address={mapAddress}
                 />
-                <Button asChild className="w-full">
-                  <a
-                    href={directionsHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Itinéraire
-                  </a>
-                </Button>
+                {isPhysicalPlace && (
+                  <Button asChild className="w-full">
+                    <a
+                      href={directionsHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Itinéraire
+                    </a>
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -1105,7 +1115,7 @@ export default async function PlacePage({ params }: PageProps) {
       <StickyMobileActions
         phone={place.phone}
         website={place.website}
-        directionsUrl={directionsHref}
+        directionsUrl={isPhysicalPlace ? directionsHref : ""}
         placeName={place.name}
         shareData={{
           title: place.name,
