@@ -463,8 +463,9 @@ model Place {
   phone   String?
   website String?
 
-  // Localisation (requis pour Google Places)
-  street       String
+  // Localisation
+  presenceType PresenceType @default(PHYSICAL)
+  street       String?
   streetNumber String?
   postalCode   String
   city         String
@@ -1085,6 +1086,12 @@ enum PostStatus {
   PUBLISHED
   ARCHIVED
   REJECTED
+}
+
+enum PresenceType {
+  PHYSICAL // Établissement physique avec adresse
+  ONLINE   // Commerce en ligne (sans local)
+  MOBILE   // Itinérant / à domicile
 }
 
 enum PlaceType {
