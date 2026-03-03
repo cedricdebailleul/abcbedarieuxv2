@@ -29,6 +29,7 @@ type PlaceFormData = {
   description?: string | null;
   summary?: string | null;
 
+  presenceType?: string;
   street?: string | null;
   streetNumber?: string | null;
   postalCode?: string | null;
@@ -73,6 +74,7 @@ export default function NewPlacePage() {
       name: String(data.name || "").trim(),
       slug,
       type,
+      presenceType: data.presenceType || "PHYSICAL",
       description: data.description || null,
       summary: data.summary || null,
 
@@ -129,7 +131,7 @@ export default function NewPlacePage() {
     }
 
       toast.success("Place créée avec succès !");
-      router.push("/dashboard/places");
+      router.push(`/dashboard/places/${out.place.id}/edit`);
     } catch (err: unknown) {
       console.error(err);
       const errorMessage = err instanceof Error ? err.message : "Erreur lors de la création";

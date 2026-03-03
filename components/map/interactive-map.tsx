@@ -18,6 +18,7 @@ export interface MapPlace {
   name: string;
   slug: string;
   type: string;
+  presenceType?: string | null;
   summary?: string | null;
   street?: string | null;
   streetNumber?: string | null;

@@ -49,6 +49,7 @@ interface Place {
     openingHours?: { day: string; open: string; close: string }[];
     images?: string[];
   };
+  presenceType?: string;
   status: string;
   ownerId?: string | null;
   owner?: {
@@ -172,7 +173,7 @@ export default function EditPlacePage() {
       } else {
         toast.success("Place mise à jour avec succès!");
       }
-      router.push("/dashboard/places");
+      router.push(`/dashboard/places/${placeId}/edit`);
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : "Erreur lors de la modification";
       toast.error(errorMessage);
@@ -279,7 +280,8 @@ export default function EditPlacePage() {
     categories: place.categories ? place.categories.map(cat => cat.category.id) : [],
     description: place.description || "",
     summary: place.summary || "",
-    street: place.street,
+    presenceType: (place.presenceType as "PHYSICAL" | "ONLINE" | "MOBILE") || "PHYSICAL",
+    street: place.street ?? "",
     streetNumber: place.streetNumber || "",
     postalCode: place.postalCode,
     city: place.city,

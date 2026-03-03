@@ -74,16 +74,22 @@ export function PlaceCard({
   const nextChangeText = getNextChangeText(openingStatus);
   const formattedHours = formatOpeningHours(place.openingHours);
 
-  // Adresse complète
-  const fullAddress = `${place.streetNumber ? `${place.streetNumber} ` : ""}${place.street}, ${place.postalCode} ${place.city}`;
+  const isPhysical = !place.presenceType || place.presenceType === "PHYSICAL";
 
-  // URL Google Maps pour l'itinéraire
+  // Adresse complète
+  const fullAddress = isPhysical
+    ? `${place.streetNumber ? `${place.streetNumber} ` : ""}${place.street || ""}, ${place.postalCode} ${place.city}`.replace(/^,\s*/, "")
+    : place.presenceType === "ONLINE"
+    ? `Commerce en ligne — ${place.city}`
+    : `Itinérant — ${place.city} et environs`;
+
+  // URL Google Maps pour l'itinéraire (uniquement physique)
   const directionsUrl =
-    place.latitude && place.longitude
+    isPhysical && place.latitude && place.longitude
       ? `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-          fullAddress
-        )}`;
+      : isPhysical
+      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`
+      : null;
 
   const cardVariants = {
     initial: {
@@ -551,17 +557,19 @@ export function PlaceCard({
 
             {/* Actions */}
             <div className="border-t p-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <Button asChild className="flex-1">
-                  <a
-                    href={directionsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Navigation className="w-4 h-4 mr-2" />
-                    Itinéraire
-                  </a>
-                </Button>
+              <div className={`grid gap-3 ${directionsUrl ? "grid-cols-2" : "grid-cols-1"}`}>
+                {directionsUrl && (
+                  <Button asChild className="flex-1">
+                    <a
+                      href={directionsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Navigation className="w-4 h-4 mr-2" />
+                      Itinéraire
+                    </a>
+                  </Button>
+                )}
 
                 <Button variant="outline" asChild className="flex-1">
                   <Link href={`/places/${place.slug}`}>
