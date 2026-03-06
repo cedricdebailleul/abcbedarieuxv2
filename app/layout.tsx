@@ -22,9 +22,11 @@ export const metadata: Metadata = {
   title: "ABC Bédarieux",
   description: "Site des Commerçants et Artisans de Bédarieux",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-    shortcut: "/favicon-32x32.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/images/logo_abc.png",
   },
   openGraph: {
     type: "website",
