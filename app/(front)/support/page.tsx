@@ -75,7 +75,7 @@ const quickHelp = [
     icon: Shield,
     title: "Confidentialité des données",
     description: "Comment nous protégeons vos informations personnelles",
-    href: "/privacy2"
+    href: "/politique-confidentialite"
   }
 ];
 

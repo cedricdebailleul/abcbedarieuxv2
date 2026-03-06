@@ -11,6 +11,7 @@ import { TabLoginForm } from "./_components/TabLoginForm";
 export const metadata: Metadata = {
   title: "Connexion | ABC Bédarieux",
   description: "Connectez-vous à votre compte ABC Bédarieux",
+  robots: { index: false, follow: false },
 };
 
 function AccountCreatedMessage() {
