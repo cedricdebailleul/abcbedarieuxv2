@@ -35,6 +35,9 @@ function normalizeImagePath(path?: string | null): string | undefined {
 // Générer les métadonnées de la page
 export async function generateMetadata(props: CategoryPageProps): Promise<Metadata> {
   const params = await props.params;
+  const searchParams = await props.searchParams;
+  const page = parseInt(searchParams.page || "1", 10);
+
   const category = await prisma.placeCategory.findFirst({
     where: { slug: params.slug, isActive: true },
     select: { name: true, description: true, slug: true },
@@ -59,6 +62,9 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
       title,
       description,
       type: "website",
+    },
+    alternates: {
+      canonical: `/categories/${category.slug}${page > 1 ? `?page=${page}` : ""}`,
     },
   };
 }
