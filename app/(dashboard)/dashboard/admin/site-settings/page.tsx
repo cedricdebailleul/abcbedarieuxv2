@@ -221,7 +221,7 @@ export default function SiteSettingsPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="contact@abc-bedarieux.fr" type="email" />
+                        <Input {...field} placeholder="abc.bedarieux@gmail.com" type="email" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

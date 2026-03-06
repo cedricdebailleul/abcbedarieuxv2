@@ -6,6 +6,7 @@ import { jsPDF } from "jspdf";
 import { headers } from "next/headers";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { siteConfig } from "@/lib/site-config";
 
 // Couleurs du thème shadcn (en RGB pour jsPDF)
 const COLORS = {
@@ -375,7 +376,7 @@ function generateRegistrationPDF(data: RegistrationData): Buffer {
     doc.text(`Demande du ${createdDateStr}`, 20, footerY + 20);
 
     // Contact dans le footer
-    doc.text("Contact : info@abc-bedarieux.fr", pageWidth - 80, footerY + 8, { align: "right" });
+    doc.text(`Contact : ${siteConfig.contact.email}`, pageWidth - 80, footerY + 8, { align: "right" });
   };
 
   // S'assurer qu'on a assez d'espace pour le footer ou créer une nouvelle page

@@ -5,6 +5,7 @@ import nodemailer from "nodemailer";
 import { jsPDF } from "jspdf";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { siteConfig } from "@/lib/site-config";
 
 const registrationSchema = z.object({
   // Informations personnelles
@@ -360,7 +361,7 @@ function generateRegistrationPDF(
     doc.text(`Bulletin généré le ${new Date().toLocaleDateString('fr-FR')}`, 20, footerY + 20);
 
     // Contact dans le footer
-    doc.text("Contact : info@abc-bedarieux.fr", pageWidth - 80, footerY + 8, { align: "right" });
+    doc.text(`Contact : ${siteConfig.contact.email}`, pageWidth - 80, footerY + 8, { align: "right" });
     doc.text("Statut : En attente de traitement", pageWidth - 80, footerY + 15, { align: "right" });
   };
 
@@ -490,7 +491,7 @@ export async function POST(request: NextRequest) {
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
           <p style="font-size: 12px; color: #6b7280;">
             Association ABC Bédarieux - Commerce Local et Artisanat<br>
-            Email : contact@abc-bedarieux.fr
+            Email : ${siteConfig.contact.email}
           </p>
         </div>
       `,

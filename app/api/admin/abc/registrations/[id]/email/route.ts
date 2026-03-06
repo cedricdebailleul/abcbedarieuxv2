@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import nodemailer from "nodemailer";
 import { jsPDF } from "jspdf";
 import { headers } from "next/headers";
+import { siteConfig } from "@/lib/site-config";
 
 // Fonction pour générer le PDF d'inscription
 interface RegistrationData {
@@ -310,7 +311,7 @@ export async function POST(
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
         <p style="font-size: 12px; color: #6b7280;">
           Association ABC Bédarieux - Commerce Local et Artisanat<br>
-          Email : contact@abc-bedarieux.fr
+          Email : ${siteConfig.contact.email}
         </p>
       </div>
     `;

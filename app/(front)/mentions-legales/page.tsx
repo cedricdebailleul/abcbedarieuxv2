@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scale } from "lucide-react";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Mentions légales & CGU - ABC Bédarieux",
@@ -36,8 +37,8 @@ export default function MentionsLegalesPage() {
             </p>
             <div className="bg-muted p-4 rounded-lg mt-4">
               <p><strong>Contact :</strong></p>
-              <p>Email : contact@abc-bedarieux.fr</p>
-              <p>Adresse : Mairie de Bédarieux, 1 Avenue Abbé Tarroux, 34600 Bédarieux</p>
+              <p>Email : {siteConfig.contact.email}</p>
+              <p>Adresse : {siteConfig.contact.address}</p>
             </div>
           </CardContent>
         </Card>

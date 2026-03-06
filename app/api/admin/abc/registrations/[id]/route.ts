@@ -6,6 +6,7 @@ import { z } from "zod";
 import nodemailer from "nodemailer";
 import { headers } from "next/headers";
 import { RegistrationUpdateData } from "@/lib/schemas/common";
+import { siteConfig } from "@/lib/site-config";
 
 const statusUpdateSchema = z.object({
   status: z.enum(["PENDING", "APPROVED", "REJECTED", "PROCESSED"]),
@@ -299,7 +300,7 @@ export async function PATCH(
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
             <p style="font-size: 12px; color: #6b7280;">
               Association ABC Bédarieux - Commerce Local et Artisanat<br>
-              Email : contact@abc-bedarieux.fr
+              Email : ${siteConfig.contact.email}
             </p>
           </div>
         `,

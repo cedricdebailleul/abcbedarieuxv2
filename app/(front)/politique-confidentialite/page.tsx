@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield, Mail, Phone } from "lucide-react";
 import Link from "next/link";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité - ABC Bédarieux",
@@ -49,11 +50,10 @@ export default function PrivacyPage() {
               </p>
               <div className="bg-muted p-4 rounded-lg">
                 <h4 className="font-semibold mb-2">Contact :</h4>
-                <p>Email : contact@abc-bedarieux.fr</p>
-                <p>Téléphone : 04 67 95 XX XX</p>
+                <p>Email : {siteConfig.contact.email}</p>
+                <p>Téléphone : {siteConfig.contact.phone}</p>
                 <p>
-                  Adresse : Mairie de Bédarieux, 1 Avenue Abbé Tarroux, 34600
-                  Bédarieux
+                  Adresse : {siteConfig.contact.address}
                 </p>
               </div>
             </CardContent>
@@ -338,7 +338,7 @@ export default function PrivacyPage() {
                   <div>
                     <p className="font-medium">Email</p>
                     <p className="text-sm text-muted-foreground">
-                      dpo@abc-bedarieux.fr
+                      {siteConfig.contact.email}
                     </p>
                   </div>
                 </div>
@@ -348,7 +348,7 @@ export default function PrivacyPage() {
                   <div>
                     <p className="font-medium">Téléphone</p>
                     <p className="text-sm text-muted-foreground">
-                      04 67 95 XX XX
+                      {siteConfig.contact.phone}
                     </p>
                   </div>
                 </div>

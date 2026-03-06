@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { siteConfig } from "@/lib/site-config";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -440,10 +441,10 @@ export default function ManageNewsletterPage() {
               Si vous ne trouvez pas votre abonnement ou rencontrez des
               difficultés, n&apos;hésitez pas à nous contacter à{" "}
               <a
-                href="mailto:contact@abc-bedarieux.fr"
+                href={`mailto:${siteConfig.contact.email}`}
                 className="text-primary underline"
               >
-                contact@abc-bedarieux.fr
+                {siteConfig.contact.email}
               </a>
             </p>
           </CardContent>

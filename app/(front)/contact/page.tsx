@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Mail, Phone, Clock, Users, Briefcase, MapPin } from "lucide-react";
 import { ContactForm } from "@/components/forms/contact-form";
 import { PlaceDetailMap } from "@/components/places/place-detail-map";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Contact - ABC Bédarieux",
@@ -61,7 +62,7 @@ export default function ContactPage() {
                 <div>
                   <p className="font-medium">Email</p>
                   <p className="text-sm text-muted-foreground">
-                    contact@abc-bedarieux.fr
+                    {siteConfig.contact.email}
                   </p>
                 </div>
               </div>
@@ -113,7 +114,7 @@ export default function ContactPage() {
                 variant="outline"
                 className="w-full justify-start"
               >
-                <a href="mailto:contact@abc-bedarieux.fr">
+                <a href={`mailto:${siteConfig.contact.email}`}>
                   <Mail className="w-4 h-4 mr-2" />
                   Envoyer un email
                 </a>

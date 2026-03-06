@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Foire aux questions - ABC Bédarieux",
@@ -93,7 +94,7 @@ const faqData = [
       {
         question: "Comment supprimer mon compte ?",
         answer:
-          "Contactez-nous par email à contact@abc-bedarieux.fr pour demander la suppression de votre compte. Nous respectons le RGPD et supprimerons toutes vos données.",
+          `Contactez-nous par email à ${siteConfig.contact.email} pour demander la suppression de votre compte. Nous respectons le RGPD et supprimerons toutes vos données.`,
       },
     ],
   },
@@ -158,7 +159,7 @@ export default function FAQPage() {
                   <div>
                     <p className="font-medium">Email</p>
                     <p className="text-sm text-muted-foreground">
-                      contact@abc-bedarieux.fr
+                      {siteConfig.contact.email}
                     </p>
                   </div>
                 </div>
@@ -178,11 +179,11 @@ export default function FAQPage() {
                   <div>
                     <p className="font-medium">Adresse</p>
                     <p className="text-sm text-muted-foreground">
-                      Mairie de Bédarieux
+                      Office du tourisme
                       <br />
-                      1 Avenue Abbé Tarroux
+                      {siteConfig.contact.addressStreet}
                       <br />
-                      34600 Bédarieux
+                      {siteConfig.contact.addressPostal} {siteConfig.contact.addressCity}
                     </p>
                   </div>
                 </div>

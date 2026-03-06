@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { siteConfig } from "@/lib/site-config";
 
 export async function POST(request: NextRequest) {
   try {
@@ -165,7 +166,7 @@ export async function GET() {
         "Droit de retrait du consentement",
       ],
       contact: {
-        email: "dpo@abc-bedarieux.fr",
+        email: siteConfig.contact.email,
         address: "Association ABC, Bédarieux, France",
       },
       availableActions: [
