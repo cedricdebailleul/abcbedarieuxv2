@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 import { jsPDF } from "jspdf";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site.config";
 
 const registrationSchema = z.object({
   // Informations personnelles

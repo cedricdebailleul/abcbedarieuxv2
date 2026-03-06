@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield, Mail, Phone } from "lucide-react";
 import Link from "next/link";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site.config";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité - ABC Bédarieux",

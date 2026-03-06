@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import nodemailer from "nodemailer";
 import { jsPDF } from "jspdf";
 import { headers } from "next/headers";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site.config";
 
 // Fonction pour générer le PDF d'inscription
 interface RegistrationData {

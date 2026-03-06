@@ -6,7 +6,7 @@ import { jsPDF } from "jspdf";
 import { headers } from "next/headers";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site.config";
 
 // Couleurs du thème shadcn (en RGB pour jsPDF)
 const COLORS = {

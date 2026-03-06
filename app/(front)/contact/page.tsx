@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Mail, Phone, Clock, Users, Briefcase, MapPin } from "lucide-react";
 import { ContactForm } from "@/components/forms/contact-form";
 import { PlaceDetailMap } from "@/components/places/place-detail-map";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site.config";
 
 export const metadata: Metadata = {
   title: "Contact - ABC Bédarieux",

@@ -6,7 +6,7 @@ import { z } from "zod";
 import nodemailer from "nodemailer";
 import { headers } from "next/headers";
 import { RegistrationUpdateData } from "@/lib/schemas/common";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site.config";
 
 const statusUpdateSchema = z.object({
   status: z.enum(["PENDING", "APPROVED", "REJECTED", "PROCESSED"]),

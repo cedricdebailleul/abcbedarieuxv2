@@ -46,7 +46,8 @@
       "Bash(pnpm db:push)",
       "Bash(docker compose up -d)",
       "Bash(where gh)",
-      "Bash(winget list --name \"GitHub CLI\")"
+      "Bash(winget list --name \"GitHub CLI\")",
+      "Bash(grep -rl '\"\"@/lib/site-config\"\"' app/ components/ --include=\"*.tsx\" --include=\"*.ts\")"
     ],
     "deny": [],
     "ask": [],
