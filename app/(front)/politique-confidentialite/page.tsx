@@ -314,7 +314,7 @@ export default function PrivacyPage() {
                 préférences via notre bandeau de cookies.
               </p>
               <Button asChild variant="outline">
-                <Link href="/cookies">Gérer les cookies</Link>
+                <Link href="/gestion-des-cookies">Gérer les cookies</Link>
               </Button>
             </CardContent>
           </Card>
