@@ -12,7 +12,7 @@ import { FavoriteButton } from "@/components/places/favorite-button";
 import { SafeImage } from "@/components/safe-image";
 
 import { prisma } from "@/lib/prisma";
-import { PlaceStatus } from "@/lib/generated/prisma/client";
+import { PlaceStatus, Prisma } from "@/lib/generated/prisma/client";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -77,19 +77,24 @@ export default async function CategoryPage(props: CategoryPageProps) {
   const offset = (page - 1) * limit;
 
   // Charger la catégorie
-  const category = await prisma.placeCategory.findFirst({
-    where: { slug: params.slug, isActive: true },
-    include: {
-      parent: {
-        select: { id: true, name: true, slug: true },
+  let category;
+  try {
+    category = await prisma.placeCategory.findFirst({
+      where: { slug: params.slug, isActive: true },
+      include: {
+        parent: {
+          select: { id: true, name: true, slug: true },
+        },
+        children: {
+          where: { isActive: true },
+          select: { id: true, name: true, slug: true, icon: true, color: true },
+          orderBy: { sortOrder: "asc" },
+        },
       },
-      children: {
-        where: { isActive: true },
-        select: { id: true, name: true, slug: true, icon: true, color: true },
-        orderBy: { sortOrder: "asc" },
-      },
-    },
-  });
+    });
+  } catch {
+    notFound();
+  }
 
   if (!category) {
     notFound();
@@ -101,55 +106,67 @@ export default async function CategoryPage(props: CategoryPageProps) {
     ...category.children.map((child) => child.id),
   ];
 
-  const [places, totalPlaces] = await Promise.all([
-    prisma.place.findMany({
-      where: {
-        status: PlaceStatus.ACTIVE,
-        isActive: true,
-        categories: {
-          some: {
-            categoryId: {
-              in: categoryIds,
-            },
-          },
-        },
-      },
-      include: {
-        categories: {
-          include: {
-            category: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-                icon: true,
-                color: true,
+  type PlaceWithCategoriesAndCount = Prisma.PlaceGetPayload<{
+    include: {
+      categories: { include: { category: { select: { id: true; name: true; slug: true; icon: true; color: true } } } };
+      _count: { select: { reviews: true; favorites: true } };
+    };
+  }>;
+  let places: PlaceWithCategoriesAndCount[] = [];
+  let totalPlaces = 0;
+  try {
+    [places, totalPlaces] = await Promise.all([
+      prisma.place.findMany({
+        where: {
+          status: PlaceStatus.ACTIVE,
+          isActive: true,
+          categories: {
+            some: {
+              categoryId: {
+                in: categoryIds,
               },
             },
           },
         },
-        _count: {
-          select: { reviews: true, favorites: true },
+        include: {
+          categories: {
+            include: {
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  icon: true,
+                  color: true,
+                },
+              },
+            },
+          },
+          _count: {
+            select: { reviews: true, favorites: true },
+          },
         },
-      },
-      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-      skip: offset,
-      take: limit,
-    }),
-    prisma.place.count({
-      where: {
-        status: PlaceStatus.ACTIVE,
-        isActive: true,
-        categories: {
-          some: {
-            categoryId: {
-              in: categoryIds,
+        orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+        skip: offset,
+        take: limit,
+      }),
+      prisma.place.count({
+        where: {
+          status: PlaceStatus.ACTIVE,
+          isActive: true,
+          categories: {
+            some: {
+              categoryId: {
+                in: categoryIds,
+              },
             },
           },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
+  } catch {
+    // En cas d'erreur DB, afficher la catégorie sans places
+  }
 
   const totalPages = Math.ceil(totalPlaces / limit);
 

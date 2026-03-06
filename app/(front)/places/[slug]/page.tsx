@@ -307,55 +307,60 @@ export default async function PlacePage({ params }: PageProps) {
   const currentUserId = session?.user?.id ?? null;
   const currentUserRole = (session?.user as { role?: string } | undefined)?.role ?? null;
 
-  const place = await prisma.place.findFirst({
-    where: { slug, status: PlaceStatus.ACTIVE },
-    include: {
-      owner: {
-        select: {
-          name: true,
-          email: true,
-          slug: true,
-          profile: {
-            select: {
-              firstname: true,
-              lastname: true,
-              bio: true,
-              phone: true,
-              socials: true,
-              isPublic: true,
-              showEmail: true,
-              showPhone: true,
+  let place;
+  try {
+    place = await prisma.place.findFirst({
+      where: { slug, status: PlaceStatus.ACTIVE },
+      include: {
+        owner: {
+          select: {
+            name: true,
+            email: true,
+            slug: true,
+            profile: {
+              select: {
+                firstname: true,
+                lastname: true,
+                bio: true,
+                phone: true,
+                socials: true,
+                isPublic: true,
+                showEmail: true,
+                showPhone: true,
+              },
             },
           },
         },
-      },
-      reviews: {
-        include: { user: { select: { name: true } } },
-        orderBy: { createdAt: "desc" },
-      },
-      googleReviews: {
-        where: { status: "APPROVED" },
-        orderBy: { createdAt: "desc" },
-      },
-      openingHours: { orderBy: { dayOfWeek: "asc" } },
-      categories: {
-        include: {
-          category: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              icon: true,
-              color: true,
+        reviews: {
+          include: { user: { select: { name: true } } },
+          orderBy: { createdAt: "desc" },
+        },
+        googleReviews: {
+          where: { status: "APPROVED" },
+          orderBy: { createdAt: "desc" },
+        },
+        openingHours: { orderBy: { dayOfWeek: "asc" } },
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                icon: true,
+                color: true,
+              },
             },
           },
         },
+        _count: {
+          select: { reviews: true, favorites: true, googleReviews: true },
+        },
       },
-      _count: {
-        select: { reviews: true, favorites: true, googleReviews: true },
-      },
-    },
-  });
+    });
+  } catch {
+    notFound();
+  }
   if (!place) notFound();
 
   const isOwnerOrAdmin =
