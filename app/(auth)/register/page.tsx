@@ -157,11 +157,11 @@ export default function RegisterPage() {
                       </FormControl>
                       <FormLabel className="font-normal text-xs sm:text-sm leading-relaxed">
                         J&apos;accepte la{" "}
-                        <Link href="/privacy2" className="underline text-primary">
+                        <Link href="/politique-confidentialite" className="underline text-primary">
                           politique de confidentialité
                         </Link>{" "}
                         et les{" "}
-                        <Link href="/privacy2" className="underline text-primary">
+                        <Link href="/politique-confidentialite" className="underline text-primary">
                           conditions d&apos;utilisation
                         </Link>
                         .

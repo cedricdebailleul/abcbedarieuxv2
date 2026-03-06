@@ -56,7 +56,7 @@ export function AuthLayout({
           <div className="flex flex-wrap items-center gap-2 lg:gap-4 text-xs lg:text-sm text-white/70">
             <span>© {new Date().getFullYear()} ABC Bédarieux</span>
             <span className="hidden sm:inline">•</span>
-            <Link href="/privacy2" className="hover:text-white transition-colors">
+            <Link href="/politique-confidentialite" className="hover:text-white transition-colors">
               Politique de confidentialité
             </Link>
           </div>

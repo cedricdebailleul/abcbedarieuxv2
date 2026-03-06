@@ -179,7 +179,7 @@ export function ContactForm() {
             J&apos;accepte que mes données personnelles soient utilisées pour
             répondre à ma demande conformément à notre{" "}
             <a
-              href="/privacy2"
+              href="/politique-confidentialite"
               className="text-primary underline"
               target="_blank"
               rel="noopener noreferrer"
