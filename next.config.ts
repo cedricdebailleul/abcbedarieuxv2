@@ -50,10 +50,62 @@ const nextConfig: NextConfig = {
   // Redirection pour bloquer les URLs Google Photos problématiques
   async redirects() {
     return [
+      // Bloc Google Maps (existant)
       {
         source: '/maps.googleapis.com/:path*',
         destination: 'https://via.placeholder.com/400x300/e5e7eb/6b7280?text=Image+bloquee',
         permanent: false,
+      },
+      // Ancien site — commerces → places
+      {
+        source: '/commerces/:slug',
+        destination: '/places/:slug',
+        permanent: true,
+      },
+      // Ancien site — evenements → events
+      {
+        source: '/evenements/:slug',
+        destination: '/events/:slug',
+        permanent: true,
+      },
+      // Ancien site — agenda → events
+      {
+        source: '/agenda',
+        destination: '/events',
+        permanent: true,
+      },
+      // Ancien site — autour-de-moi → carte
+      {
+        source: '/autour-de-moi',
+        destination: '/carte',
+        permanent: true,
+      },
+      // Pages légales renommées
+      {
+        source: '/cgu',
+        destination: '/mentions-legales',
+        permanent: true,
+      },
+      {
+        source: '/terms',
+        destination: '/mentions-legales',
+        permanent: true,
+      },
+      {
+        source: '/documents/privacy-policy.pdf',
+        destination: '/politique-confidentialite',
+        permanent: true,
+      },
+      {
+        source: '/privacy',
+        destination: '/politique-confidentialite',
+        permanent: true,
+      },
+      // Ancien URL cookies
+      {
+        source: '/politique-de-cookies',
+        destination: '/gestion-des-cookies',
+        permanent: true,
       },
     ];
   },
