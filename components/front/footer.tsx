@@ -259,10 +259,10 @@ export default function FooterSection() {
                 transition={{ type: "spring" as const, stiffness: 300 }}
               >
                 <Link
-                  href="/politique-confidentialite"
+                  href="/mentions-legales"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Politique d&apos;utilisation
+                  Mentions légales
                 </Link>
               </motion.div>
               <motion.div
@@ -274,6 +274,17 @@ export default function FooterSection() {
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Politique de confidentialité
+                </Link>
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -1 }}
+                transition={{ type: "spring" as const, stiffness: 300 }}
+              >
+                <Link
+                  href="/gestion-des-cookies"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  Gestion des cookies
                 </Link>
               </motion.div>
             </div>
