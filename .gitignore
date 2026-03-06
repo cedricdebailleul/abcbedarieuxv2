@@ -44,3 +44,6 @@ next-env.d.ts
 
 /uploads
 /backups
+
+# Claude Code local settings
+.claude/
