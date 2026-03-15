@@ -18,8 +18,8 @@ export function AnalyticsWidget() {
 
   useEffect(() => {
     fetch("/api/analytics/admin?tab=global&period=7d")
-      .then((r) => r.json())
-      .then(setData)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => { if (json?.totalViews !== undefined) setData(json); })
       .catch(() => {});
   }, []);
 
