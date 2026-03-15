@@ -45,6 +45,10 @@ next-env.d.ts
 /uploads
 /backups
 
-# Claude Code local settings
+# Claude Code / superpowers plugin
 .claude/
+.superpowers/
 .worktrees/
+.server.log
+.server.pid
+.server-info
