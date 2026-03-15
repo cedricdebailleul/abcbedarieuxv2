@@ -40,9 +40,11 @@ export function UserAnalytics() {
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const params = new URLSearchParams({ period });
       if (period === "custom" && customRange) {
@@ -50,7 +52,11 @@ export function UserAnalytics() {
         params.set("to", customRange.to);
       }
       const res = await fetch(`/api/analytics/user?${params}`);
-      if (res.ok) setData(await res.json());
+      if (!res.ok) {
+        setError(true);
+        return;
+      }
+      setData(await res.json());
     } finally {
       setLoading(false);
     }
@@ -69,6 +75,18 @@ export function UserAnalytics() {
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">
+            Impossible de charger les statistiques. Veuillez réessayer.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 

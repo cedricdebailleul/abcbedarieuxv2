@@ -9,7 +9,6 @@ interface UserTopTableItem {
 }
 
 interface UserTopTableProps {
-  title?: string;
   items: UserTopTableItem[];
   hrefPrefix?: string;
   emptyMessage?: string;

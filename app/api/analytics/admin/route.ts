@@ -90,6 +90,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Onglet invalide" }, { status: 400 });
     }
 
+    if (from && to) {
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
+      }
+      const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (diffDays > 366 || diffDays < 0) {
+        return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
+      }
+    }
+
     const { start, end } = getDateRange(period, from, to);
     const dateFilter = { createdAt: { gte: start, lte: end } };
 

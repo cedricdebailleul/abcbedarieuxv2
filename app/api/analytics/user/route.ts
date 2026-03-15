@@ -58,6 +58,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (from && to) {
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
+      }
+      const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (diffDays > 366 || diffDays < 0) {
+        return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
+      }
+    }
+
     const { start, end } = getDateRange(period, from, to);
     const dateFilter = { createdAt: { gte: start, lte: end } };
 
@@ -65,21 +77,39 @@ export async function GET(request: NextRequest) {
       postViews,
       placeViews,
       eventViews,
+      postViewCount,
+      placeViewCount,
+      eventViewCount,
       favoritesReceived,
       reviewsReceived,
       participants,
+      ownedPostCount,
+      ownedPlaceCount,
+      ownedEventCount,
     ] = await Promise.all([
       prisma.postView.findMany({
         where: { post: { authorId: userId }, ...dateFilter },
-        select: { postId: true, createdAt: true },
+        select: { createdAt: true },
+        take: 5000,
       }),
       prisma.placeView.findMany({
         where: { place: { ownerId: userId }, ...dateFilter },
-        select: { placeId: true, createdAt: true },
+        select: { createdAt: true },
+        take: 5000,
       }),
       prisma.eventView.findMany({
         where: { event: { organizerId: userId }, ...dateFilter },
-        select: { eventId: true, createdAt: true },
+        select: { createdAt: true },
+        take: 5000,
+      }),
+      prisma.postView.count({
+        where: { post: { authorId: userId }, ...dateFilter },
+      }),
+      prisma.placeView.count({
+        where: { place: { ownerId: userId }, ...dateFilter },
+      }),
+      prisma.eventView.count({
+        where: { event: { organizerId: userId }, ...dateFilter },
       }),
       prisma.favorite.count({
         where: {
@@ -99,6 +129,9 @@ export async function GET(request: NextRequest) {
           createdAt: { gte: start, lte: end },
         },
       }),
+      prisma.post.count({ where: { authorId: userId } }),
+      prisma.place.count({ where: { ownerId: userId } }),
+      prisma.event.count({ where: { organizerId: userId } }),
     ]);
 
     const topPosts = await prisma.post.findMany({
@@ -142,25 +175,16 @@ export async function GET(request: NextRequest) {
       take: 5,
     });
 
-    const allViews = [
-      ...postViews.map((v) => ({ createdAt: v.createdAt })),
-      ...placeViews.map((v) => ({ createdAt: v.createdAt })),
-      ...eventViews.map((v) => ({ createdAt: v.createdAt })),
-    ];
+    const allViews = [...postViews, ...placeViews, ...eventViews];
 
-    const [ownedPostCount, ownedPlaceCount, ownedEventCount] = await Promise.all([
-      prisma.post.count({ where: { authorId: userId } }),
-      prisma.place.count({ where: { ownerId: userId } }),
-      prisma.event.count({ where: { organizerId: userId } }),
-    ]);
     const hasContent = ownedPostCount > 0 || ownedPlaceCount > 0 || ownedEventCount > 0;
 
     return NextResponse.json({
       hasContent,
-      totalViews: allViews.length,
-      postViews: postViews.length,
-      placeViews: placeViews.length,
-      eventViews: eventViews.length,
+      totalViews: postViewCount + placeViewCount + eventViewCount,
+      postViews: postViewCount,
+      placeViews: placeViewCount,
+      eventViews: eventViewCount,
       favoritesReceived,
       reviewsReceived,
       participants,
