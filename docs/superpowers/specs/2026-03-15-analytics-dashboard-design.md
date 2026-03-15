@@ -15,49 +15,55 @@ Add a comprehensive analytics system to the dashboard covering views for posts, 
 
 ### New Prisma Models
 
-Two new models added via additive migration — no existing data touched.
+Two new models added via additive migration — no existing data touched. Field names, types and conventions **exactly match** the existing `PostView` model.
 
 ```prisma
 model PlaceView {
-  id        String   @id @default(cuid())
-  placeId   String
-  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  ipAddress String?
-  userAgent String?
-  referrer  String?
-  country   String?
-  region    String?
-  city      String?
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  ipAddress String  @default("")
+  userAgent String  @default("")
+  referer   String  @default("")
+
+  country String?
+  region  String?
+  city    String?
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([placeId])
   @@index([ipAddress])
   @@index([createdAt])
+  @@map("place_views")
 }
 
 model EventView {
-  id        String   @id @default(cuid())
-  eventId   String
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  ipAddress String?
-  userAgent String?
-  referrer  String?
-  country   String?
-  region    String?
-  city      String?
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  ipAddress String  @default("")
+  userAgent String  @default("")
+  referer   String  @default("")
+
+  country String?
+  region  String?
+  city    String?
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([eventId])
   @@index([ipAddress])
   @@index([createdAt])
+  @@map("event_views")
 }
 ```
 
 **Schema changes:** Add `views PlaceView[]` to `Place` model and `views EventView[]` to `Event` model.
 
-**Migration safety:** `onDelete: Cascade` ensures view records are cleaned up when parent entity is deleted. No existing fields are modified.
+**Cascade delete:** `onDelete: Cascade` means deleting a Place or Event removes its associated view records. This is intentional — views are derived/aggregated data, not primary records. No archive or soft-delete of view data is required.
 
 ---
 
@@ -67,35 +73,52 @@ model EventView {
 
 ```
 POST /api/places/[slug]/view
-POST /api/events/[id]/view
+POST /api/events/[slug]/view
 ```
+
+Both routes use `slug` matching the detail page URLs `/places/[slug]` and `/events/[slug]`. Each performs a `findUnique({ where: { slug } })` to resolve to an internal ID.
 
 **Logic per route:**
-1. Extract IP from `x-forwarded-for` header, user-agent, referrer
-2. Deduplicate: if same IP + same entity within last 2 hours → skip (prevents spam)
-3. Insert record
-4. Return `{ success: true }` — never throws a blocking error
+1. Resolve slug → entity ID via `findUnique`. If not found → return `404`.
+2. Extract `ipAddress` from `x-forwarded-for` (fallback `""`), `userAgent` (fallback `""`), `referer` (fallback `""`)
+3. Deduplicate: same `ipAddress` (when non-empty) + same entity ID within last **10 minutes** → skip and return `{ success: true }` (matches `PostView` window)
+4. Insert record
+5. On DB error → log server-side, return `{ success: false }` with status 200. **Never return 500 to the client** — view tracking must never break the user experience.
 
-### Client Hook (new)
+### Unique viewer definition
 
-```ts
-// hooks/use-track-view.ts
-useTrackView(type: "place" | "event", id: string)
+"Unique viewers" = `COUNT(DISTINCT ipAddress) WHERE ipAddress != ''` within the period. This is consistent across `PostView`, `PlaceView`, and `EventView`. Requests with empty IP (bots, privacy-mode) are tracked for total view counts but excluded from unique viewer counts. All analytics queries that compute unique viewers must include an explicit `ipAddress != ''` filter.
+
+### Client-side tracking
+
+Place and event detail pages are **Server Components**. Tracking is injected via a dedicated null-rendering client component:
+
+```tsx
+// components/analytics/track-view.tsx
+"use client"
+export function TrackView({ type, slug }: { type: "place" | "event", slug: string }) {
+  useEffect(() => {
+    fetch(`/api/${type}s/${slug}/view`, { method: "POST", keepalive: true })
+  }, [type, slug])
+  return null
+}
 ```
 
-- Called in place detail page and event detail page
-- Single `useEffect` fire on mount — invisible to user, non-blocking
-- Uses `fetch` with `keepalive: true` so navigation doesn't abort the request
+Usage in Server Component:
+```tsx
+// In place detail page (Server Component)
+<TrackView type="place" slug={place.slug} />
+```
 
 ### Files to create/modify
 
 | File | Action |
 |------|--------|
 | `app/api/places/[slug]/view/route.ts` | Create |
-| `app/api/events/[id]/view/route.ts` | Create |
-| `hooks/use-track-view.ts` | Create |
-| Place detail page(s) | Add `useTrackView("place", id)` |
-| Event detail page(s) | Add `useTrackView("event", id)` |
+| `app/api/events/[slug]/view/route.ts` | Create |
+| `components/analytics/track-view.tsx` | Create |
+| Place detail page(s) | Add `<TrackView type="place" slug={...} />` |
+| Event detail page(s) | Add `<TrackView type="event" slug={...} />` |
 
 ---
 
@@ -109,31 +132,50 @@ GET /api/analytics/user?period=30d
 ```
 
 **Period parameters:**
-- `period`: `7d` | `30d` | `12m` (predefined)
-- `from` + `to`: ISO date strings for custom range (takes priority over `period`)
-- `tab`: `global` | `posts` | `places` | `events` | `users` (admin only)
+- `period`: `7d` | `30d` | `12m` (predefined). Default: `30d`.
+- `from` + `to`: ISO date strings for custom range. Takes priority over `period` when both are present.
+- `tab`: `global` | `posts` | `places` | `events` | `users` (admin only). Default: `global`.
+
+**Error responses:**
+- Invalid `period` value or unparseable `from`/`to` dates → `400 { error: "Paramètres invalides" }`
+- Unknown `tab` value → `400 { error: "Onglet invalide" }`
+- Unauthenticated → `401`
+- Insufficient role → `403`
+- DB timeout or unexpected error → `500 { error: "Erreur interne" }` (logged server-side)
+
+### Chart data granularity
+
+Time series data points per period:
+- `7d` → **daily** (7 data points)
+- `30d` → **daily** (30 data points)
+- `12m` → **weekly** (52 data points, ~1 per week)
+- Custom range → daily if ≤ 90 days, weekly if > 90 days
 
 ### Admin endpoint response by tab
 
-| Tab | Data returned |
-|-----|--------------|
-| `global` | Total views (posts+places+events), new users, growth rate, multi-series chart data |
-| `posts` | Total views, unique viewers, top 10 posts, views/day series, top referrers |
-| `places` | Total views, unique viewers, top 10 places, views/day series, category breakdown |
-| `events` | Total views, unique viewers, top 10 events, total participants, views/day series |
-| `users` | New signups, active users, role distribution, growth rate, latest signups list |
+| Tab | Data returned | Source model |
+|-----|--------------|--------------|
+| `global` | Total views (posts+places+events), new users, growth rate, multi-series chart (one series per entity type) | PostView + PlaceView + EventView + User |
+| `posts` | Total views, unique viewers (`ipAddress != ''`), top 10 posts, views time series, top referers | PostView |
+| `places` | Total views, unique viewers, top 10 places, views time series, category breakdown | PlaceView |
+| `events` | Total views, unique viewers, top 10 events, total participants, views time series | EventView + EventParticipant |
+| `users` | New signups, active users, role distribution, growth rate, latest 10 signups | User |
+
+### Existing PostView infrastructure
+
+The existing `PostView` model and `POST /api/posts/[id]/view` tracking route are **kept as-is**. The new admin analytics `posts` tab reads from `PostView`. The existing `ViewsAnalytics` component (`components/dashboard/views-analytics.tsx`) is **retired** — its functionality is replaced by the new shared `AnalyticsChart` + `AnalyticsTopTable` in both admin and user dashboards. The old `/api/dashboard/views` endpoint (which used periods `24h`, `90d`, `1y`) is replaced by the new `/api/analytics/user` endpoint using `7d | 30d | 12m`.
 
 ### User endpoint response
 
 - Views on own posts, places, events (totals + time series)
 - Received favorites count, received reviews count, event participants count
-- Top 5 most-viewed content items per type
+- Top 5 most-viewed items per content type
 - Daily views evolution series for chart
 
 ### Security
 
-- `/api/analytics/admin` → checks `role === "admin"`, returns 403 otherwise
-- `/api/analytics/user` → scopes all queries to `session.user.id`, never exposes other users' data
+- `/api/analytics/admin` → allow `role === "admin"` or `role === "moderator"`. Editors do **not** have access to analytics. Role check via `prisma.user.findUnique` on `session.user.id`. Return 403 otherwise.
+- `/api/analytics/user` → scope all queries to `session.user.id`. No cross-user data exposure.
 
 ---
 
@@ -175,15 +217,16 @@ Add "Analytics" link in admin sidebar pointing to `/dashboard/admin/analytics`.
 | `AnalyticsWidget` | Summary widget for admin home page |
 | `AnalyticsTabs` | Tab container + period selector |
 | `AnalyticsKpiCards` | Reusable KPI card row |
-| `AnalyticsChart` | Bar/line chart (recharts — already in project) |
+| `AnalyticsChart` | Bar/line chart using recharts (already in project) |
 | `AnalyticsTopTable` | Top N table with rank, name, views, trend indicator |
 | `PeriodSelector` | `[7j][30j][12m][custom]` date picker component |
+| `TrackView` | Null-rendering client component for server page view tracking |
 
 ---
 
 ## 5. User Dashboard
 
-Complete the existing "Analytics" tab on `/dashboard`.
+Complete the existing "Analytics" tab on `/dashboard`. The existing `ViewsAnalytics` component and `/api/dashboard/views` endpoint are replaced.
 
 ### Layout
 
@@ -207,12 +250,12 @@ Mon activité                    [7j][30j][12m][Du___ Au___]
 ### Edge cases
 
 - **No content yet:** Encouragement message with links to create content
-- **Content but 0 views:** Explanation that tracking starts now
-- **Period selector:** Persisted in `localStorage` across visits
+- **Content but 0 views:** Explanation that tracking starts now (existing historical data has no PlaceView/EventView records — this is expected)
+- **Period selector:** Persisted in `localStorage` under key `analytics-period`. Defaults to `30d` if not set or invalid.
 
 ### Component reuse
 
-`AnalyticsKpiCards`, `AnalyticsChart`, `PeriodSelector` are shared with admin. `AnalyticsTopTable` gets a simplified `UserTopTable` variant.
+`AnalyticsKpiCards`, `AnalyticsChart`, `PeriodSelector` are shared with admin. `AnalyticsTopTable` gets a simplified `UserTopTable` variant (no admin actions).
 
 ---
 
@@ -225,9 +268,9 @@ prisma/migrations/YYYYMMDD_add_place_event_views/
 app/api/analytics/admin/route.ts
 app/api/analytics/user/route.ts
 app/api/places/[slug]/view/route.ts
-app/api/events/[id]/view/route.ts
-hooks/use-track-view.ts
+app/api/events/[slug]/view/route.ts
 app/(dashboard)/dashboard/admin/analytics/page.tsx
+components/analytics/track-view.tsx
 components/analytics/analytics-widget.tsx
 components/analytics/analytics-tabs.tsx
 components/analytics/analytics-kpi-cards.tsx
@@ -240,12 +283,13 @@ components/analytics/user-top-table.tsx
 ### Modified files
 
 ```
-prisma/schema.prisma                          — add PlaceView, EventView models + relations
-app/(dashboard)/dashboard/admin/page.tsx      — add AnalyticsWidget
-app/(dashboard)/dashboard/page.tsx            — complete Analytics tab
-app/(dashboard)/dashboard/_components/        — sidebar nav link
-Place detail page(s)                          — add useTrackView hook
-Event detail page(s)                          — add useTrackView hook
+prisma/schema.prisma                              — add PlaceView, EventView + relations
+app/(dashboard)/dashboard/admin/page.tsx          — add AnalyticsWidget
+app/(dashboard)/dashboard/page.tsx                — replace ViewsAnalytics with new components
+app/(dashboard)/dashboard/_components/sidebar     — add Analytics nav link
+Place detail page(s)                              — add <TrackView>
+Event detail page(s)                              — add <TrackView>
+components/dashboard/views-analytics.tsx          — retire (replaced by shared components)
 ```
 
 ---
@@ -253,10 +297,10 @@ Event detail page(s)                          — add useTrackView hook
 ## 7. Build Order
 
 1. Prisma schema + migration (data layer first)
-2. Tracking API routes + `useTrackView` hook
-3. Add hook to place/event detail pages
-4. Analytics API routes (admin + user)
+2. `TrackView` client component + tracking API routes (places, events)
+3. Add `<TrackView>` to place and event detail pages
+4. Analytics API routes (`/api/analytics/admin` and `/api/analytics/user`)
 5. Shared UI components (`PeriodSelector`, `AnalyticsKpiCards`, `AnalyticsChart`, `AnalyticsTopTable`)
-6. Admin analytics page + widget
-7. User dashboard analytics tab
+6. Admin analytics page (`/dashboard/admin/analytics`) + `AnalyticsWidget` on admin home
+7. User dashboard analytics tab (complete existing tab)
 8. Sidebar navigation link
