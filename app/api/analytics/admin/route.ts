@@ -313,10 +313,17 @@ export async function GET(request: NextRequest) {
     const periodMs = end.getTime() - start.getTime();
     const prevStart = new Date(start.getTime() - periodMs);
     const prevDateFilter = { createdAt: { gte: prevStart, lte: start } };
-    const [prevPost, prevPlace, prevEvent] = await Promise.all([
+    const [prevPost, prevPlace, prevEvent, topPosts] = await Promise.all([
       prisma.postView.count({ where: prevDateFilter }),
       prisma.placeView.count({ where: prevDateFilter }),
       prisma.eventView.count({ where: prevDateFilter }),
+      // Top 5 posts by views in period
+      prisma.post.findMany({
+        where: { views: { some: dateFilter } },
+        select: { id: true, title: true, slug: true, _count: { select: { views: { where: dateFilter } } } },
+        orderBy: { views: { _count: "desc" } },
+        take: 5,
+      }),
     ]);
     const prevTotal = prevPost + prevPlace + prevEvent;
     const growth =
@@ -335,6 +342,7 @@ export async function GET(request: NextRequest) {
         places: buildTimeSeries(placeViews, start, end, period),
         events: buildTimeSeries(eventViews, start, end, period),
       },
+      topPosts: topPosts.map(p => ({ id: p.id, name: p.title, slug: p.slug, views: p._count.views })),
     });
   } catch (error) {
     console.error("Erreur analytics admin:", error);

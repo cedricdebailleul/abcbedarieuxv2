@@ -172,6 +172,16 @@ export default function AdminAnalyticsPage() {
                       />
                     </CardContent>
                   </Card>
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Top articles</CardTitle></CardHeader>
+                    <CardContent>
+                      <AnalyticsTopTable
+                        items={((data.topPosts as {id:string;name:string;slug:string;views:number}[]) ?? [])}
+                        hrefPrefix="/posts"
+                        emptyMessage="Aucun article consulté sur la période"
+                      />
+                    </CardContent>
+                  </Card>
                 </>
               )}
             </TabsContent>
@@ -407,6 +417,27 @@ export default function AdminAnalyticsPage() {
                           },
                         ]}
                       />
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Derniers inscrits</CardTitle></CardHeader>
+                    <CardContent>
+                      {((data.latestSignups as {id:string;name:string;email:string;role:string;createdAt:string}[]) ?? []).length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">Aucune inscription sur la période</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {((data.latestSignups as {id:string;name:string;email:string;role:string;createdAt:string}[]) ?? []).map((user, index) => (
+                            <div key={user.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors">
+                              <span className="text-sm font-mono text-muted-foreground w-5 shrink-0">{index + 1}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{user.name || user.email}</p>
+                                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                              </div>
+                              <span className="text-xs text-muted-foreground shrink-0">{user.role}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </>
