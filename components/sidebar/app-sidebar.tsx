@@ -93,6 +93,10 @@ const data = {
       url: "/dashboard/admin",
     },
     {
+      title: "Analytics",
+      url: "/dashboard/admin/analytics",
+    },
+    {
       title: "Utilisateurs",
       url: "/dashboard/admin/users",
     },

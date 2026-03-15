@@ -17,6 +17,7 @@ import {
   IconMail} from "@tabler/icons-react";
 import Link from "next/link";
 import { AdminStatsCards } from "@/components/admin/admin-stats-cards";
+import { AnalyticsWidget } from "@/components/analytics/analytics-widget";
 
 export default function AdminPage() {
   return (
@@ -31,6 +32,7 @@ export default function AdminPage() {
 
       {/* Statistiques générales du site */}
       <AdminStatsCards />
+      <AnalyticsWidget />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Utilisateurs */}
