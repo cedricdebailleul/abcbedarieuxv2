@@ -148,7 +148,15 @@ export async function GET(request: NextRequest) {
       ...eventViews.map((v) => ({ createdAt: v.createdAt })),
     ];
 
+    const [ownedPostCount, ownedPlaceCount, ownedEventCount] = await Promise.all([
+      prisma.post.count({ where: { authorId: userId } }),
+      prisma.place.count({ where: { ownerId: userId } }),
+      prisma.event.count({ where: { organizerId: userId } }),
+    ]);
+    const hasContent = ownedPostCount > 0 || ownedPlaceCount > 0 || ownedEventCount > 0;
+
     return NextResponse.json({
+      hasContent,
       totalViews: allViews.length,
       postViews: postViews.length,
       placeViews: placeViews.length,

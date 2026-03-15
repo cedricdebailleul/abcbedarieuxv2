@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PeriodSelector, type Period } from "@/components/analytics/period-selector";
 import { AnalyticsKpiCards } from "@/components/analytics/analytics-kpi-cards";
 import { AnalyticsChart } from "@/components/analytics/analytics-chart";
-import { AnalyticsTopTable } from "@/components/analytics/analytics-top-table";
+import { UserTopTable } from "@/components/analytics/user-top-table";
 import { IconEye, IconStar, IconUsers, IconHeart } from "@tabler/icons-react";
 import { Loader2, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 const STORAGE_KEY = "analytics-period";
 
 interface AnalyticsData {
+  hasContent: boolean;
   totalViews: number;
   postViews: number;
   placeViews: number;
@@ -30,7 +31,9 @@ interface AnalyticsData {
 export function UserAnalytics() {
   const [period, setPeriod] = useState<Period>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem(STORAGE_KEY) as Period) || "30d";
+      const stored = localStorage.getItem(STORAGE_KEY);
+      const VALID_PERIODS: Period[] = ["7d", "30d", "12m"];
+      return VALID_PERIODS.includes(stored as Period) ? (stored as Period) : "30d";
     }
     return "30d";
   });
@@ -69,12 +72,8 @@ export function UserAnalytics() {
     );
   }
 
-  const hasNoContent =
-    data &&
-    data.totalViews === 0 &&
-    data.topPosts.length === 0 &&
-    data.topPlaces.length === 0 &&
-    data.topEvents.length === 0;
+  const hasNoContent = data && !data.hasContent;
+  const hasContentButNoViews = data && data.hasContent && data.totalViews === 0;
 
   if (hasNoContent) {
     return (
@@ -95,6 +94,21 @@ export function UserAnalytics() {
           </Button>
         </div>
       </div>
+    );
+  }
+
+  if (hasContentButNoViews) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-muted-foreground">
+            Vous avez du contenu publié, mais les statistiques de vues commencent à être collectées maintenant.
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Revenez dans quelques jours pour voir vos premières statistiques.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -131,7 +145,7 @@ export function UserAnalytics() {
               <Card>
                 <CardHeader><CardTitle className="text-sm">Mes articles</CardTitle></CardHeader>
                 <CardContent>
-                  <AnalyticsTopTable items={data.topPosts} hrefPrefix="/posts" />
+                  <UserTopTable items={data.topPosts} hrefPrefix="/posts" />
                   <div className="mt-3">
                     <Link href="/dashboard/posts" className="text-xs text-muted-foreground hover:underline">
                       Voir tous mes articles →
@@ -145,7 +159,7 @@ export function UserAnalytics() {
               <Card>
                 <CardHeader><CardTitle className="text-sm">Mes places</CardTitle></CardHeader>
                 <CardContent>
-                  <AnalyticsTopTable items={data.topPlaces} hrefPrefix="/places" />
+                  <UserTopTable items={data.topPlaces} hrefPrefix="/places" />
                   <div className="mt-3">
                     <Link href="/dashboard/places" className="text-xs text-muted-foreground hover:underline">
                       Voir toutes mes places →
@@ -160,7 +174,7 @@ export function UserAnalytics() {
             <Card>
               <CardHeader><CardTitle className="text-sm">Mes événements</CardTitle></CardHeader>
               <CardContent>
-                <AnalyticsTopTable items={data.topEvents} hrefPrefix="/events" showParticipants />
+                <UserTopTable items={data.topEvents} hrefPrefix="/events" showParticipants />
                 <div className="mt-3">
                   <Link href="/dashboard/events" className="text-xs text-muted-foreground hover:underline">
                     Voir tous mes événements →
