@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
       ownedPlaceCount,
       ownedEventCount,
     ] = await Promise.all([
+      // Capped at 5000 rows per type to bound memory; totalViews KPI uses count() for accuracy
       prisma.postView.findMany({
         where: { post: { authorId: userId }, ...dateFilter },
         select: { createdAt: true },

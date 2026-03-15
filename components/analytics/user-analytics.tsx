@@ -57,6 +57,8 @@ export function UserAnalytics() {
         return;
       }
       setData(await res.json());
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
