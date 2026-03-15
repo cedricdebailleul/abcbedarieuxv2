@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { X, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useSession } from "@/hooks/use-session";
 
 interface WhatsAppButtonProps {
@@ -20,7 +19,6 @@ export function WhatsAppButton({
   requireAuth = true
 }: WhatsAppButtonProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
   const { data: session, status } = useSession();
 
   // Vérifier les permissions utilisateur
@@ -43,18 +41,8 @@ export function WhatsAppButton({
     }
   }, [status, session, isUserAllowed]);
 
-  // Auto-afficher le tooltip après quelques secondes
-  useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(() => setShowTooltip(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible]);
-
   const handleWhatsAppClick = () => {
-    // Pour un groupe, on utilise directement l'URL du groupe
     window.open(groupUrl, "_blank");
-    setShowTooltip(false);
   };
 
   if (!isVisible) return null;
@@ -66,32 +54,6 @@ export function WhatsAppButton({
 
   return (
     <div className={`fixed ${positionClasses[position]} z-50`}>
-      {/* Tooltip */}
-      {showTooltip && (
-        <Card className="absolute bottom-16 right-0 w-72 mb-2 shadow-lg border-green-200">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground mb-1">
-                  🏪 Commerce Local
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Rejoignez notre groupe WhatsApp pour poser vos questions sur le commerce local de Bédarieux !
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowTooltip(false)}
-                className="h-6 w-6 p-0 ml-2"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Bouton principal */}
       <div className="relative">
         <Button
