@@ -181,10 +181,11 @@ export default function EditUserDialog({
                   <SelectValue placeholder="Sélectionner un statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Actif</SelectItem>
-                  <SelectItem value="inactive">Inactif</SelectItem>
-                  <SelectItem value="suspended">Suspendu</SelectItem>
-                  <SelectItem value="banned">Banni</SelectItem>
+                  <SelectItem value="ACTIVE">Actif</SelectItem>
+                  <SelectItem value="INACTIVE">Inactif</SelectItem>
+                  <SelectItem value="SUSPENDED">Suspendu</SelectItem>
+                  <SelectItem value="BANNED">Banni</SelectItem>
+                  <SelectItem value="PENDING_VERIFICATION">En attente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
