@@ -227,6 +227,7 @@ export async function GET(request: NextRequest) {
       const [
         newUsersCount,
         latestSignups,
+        allNewUsersForSeries,
         totalUsers,
         roleDistribution,
         prevCount,
@@ -245,6 +246,10 @@ export async function GET(request: NextRequest) {
           },
           orderBy: { createdAt: "desc" },
           take: 10,
+        }),
+        prisma.user.findMany({
+          where: { createdAt: { gte: start, lte: end }, deletedAt: null },
+          select: { createdAt: true },
         }),
         prisma.user.count({ where: { deletedAt: null } }),
         prisma.user.groupBy({
@@ -274,7 +279,7 @@ export async function GET(request: NextRequest) {
           count: r._count.role,
         })),
         latestSignups,
-        timeSeries: buildTimeSeries(latestSignups, start, end, period),
+        timeSeries: buildTimeSeries(allNewUsersForSeries, start, end, period),
       });
     }
 
