@@ -428,6 +428,48 @@ model PostView {
   @@map("post_views")
 }
 
+model PlaceView {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  ipAddress String @default("")
+  userAgent String @default("")
+  referer   String @default("")
+
+  country String?
+  region  String?
+  city    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([placeId])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@map("place_views")
+}
+
+model EventView {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  ipAddress String @default("")
+  userAgent String @default("")
+  referer   String @default("")
+
+  country String?
+  region  String?
+  city    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@map("event_views")
+}
+
 // ============================================================
 //                    ÉTAPE 1 : PLACES CORE (MVP)
 // ============================================================
@@ -507,6 +549,7 @@ model Place {
   products      Product[]         @relation("PlaceProducts") // Produits proposés
   services      Service[]         @relation("PlaceServices") // Services proposés
   offers        Offer[]           @relation("PlaceOffers") // Offres et promotions
+  views         PlaceView[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1242,6 +1285,7 @@ model Event {
   // Relations
   participants EventParticipant[]
   reminders    EventReminder[]
+  views        EventView[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

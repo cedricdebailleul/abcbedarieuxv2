@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserSectionCards } from "@/components/sidebar/user-section-cards";
 import { DynamicChart } from "@/components/dashboard/dynamic-chart";
 import { ActivityTable } from "@/components/dashboard/activity-table";
-import { ViewsAnalytics } from "@/components/dashboard/views-analytics";
+import { UserAnalytics } from "@/components/analytics/user-analytics";
 import { IconDashboard, IconEye, IconActivity } from "@tabler/icons-react";
 
 export default function DashboardPage() {
@@ -39,7 +39,7 @@ export default function DashboardPage() {
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-6">
-            <ViewsAnalytics />
+            <UserAnalytics />
           </TabsContent>
 
           <TabsContent value="activity" className="mt-6">

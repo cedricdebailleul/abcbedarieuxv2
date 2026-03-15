@@ -31,6 +31,7 @@ import { PrintHeader } from "@/components/print/print-header";
 
 import { EventCategory, EventStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { TrackView } from "@/components/analytics/track-view";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -287,6 +288,7 @@ export default async function EventPage({ params }: PageProps) {
 
   return (
     <div className="relative">
+      <TrackView type="event" slug={event.slug} />
       {/* Données structurées pour SEO et réseaux sociaux */}
       <EventSchema event={event} />
 

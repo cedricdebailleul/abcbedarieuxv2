@@ -40,6 +40,7 @@ import { ContactButtons } from "@/components/places/contact-buttons";
 import { StickyMobileActions } from "@/components/places/sticky-mobile-actions";
 import { PlaceStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { TrackView } from "@/components/analytics/track-view";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -421,6 +422,7 @@ export default async function PlacePage({ params }: PageProps) {
 
   return (
     <div className="relative pb-20 md:pb-0">
+      <TrackView type="place" slug={place.slug} />
       {/* Données structurées pour SEO et réseaux sociaux */}
       <PlaceSchema place={place} />
 
