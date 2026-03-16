@@ -28,8 +28,30 @@ export async function POST(request: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
   let rawRows: Record<string, unknown>[];
   try {
-    const wb = XLSX.read(buffer, { type: "buffer", codepage: 65001 });
+    // Auto-detect CSV separator (`;` or `,`) from first line content
+    const isCsv = file.name.toLowerCase().endsWith(".csv");
+    const readOptions: Parameters<typeof XLSX.read>[1] = { type: "buffer", codepage: 65001 };
+    if (isCsv) {
+      const text = buffer.toString("utf8").replace(/^\uFEFF/, ""); // strip BOM
+      const firstLine = text.split(/\r?\n/)[0] ?? "";
+      readOptions.FS = firstLine.includes(";") ? ";" : ",";
+    }
+    const wb = XLSX.read(buffer, readOptions);
     const ws = wb.Sheets[wb.SheetNames[0]];
+
+    // Validate required columns from the header row (even if no data rows)
+    const headerRow = (XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, defval: "" })[0] ?? []).map(
+      (h) => String(h).toLowerCase().trim()
+    );
+    if (headerRow.length > 0) {
+      if (!headerRow.includes("action")) {
+        return NextResponse.json({ error: "Colonne 'action' manquante" }, { status: 400 });
+      }
+      if (!headerRow.includes("email")) {
+        return NextResponse.json({ error: "Colonne 'email' manquante" }, { status: 400 });
+      }
+    }
+
     rawRows = XLSX.utils.sheet_to_json(ws, { defval: "" });
   } catch {
     return NextResponse.json({ error: "Impossible de lire le fichier" }, { status: 400 });
@@ -39,7 +61,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Trop de lignes (max ${MAX_ROWS})` }, { status: 400 });
   }
 
-  // Structural validation
+  // Structural validation (handles edge cases not covered by header check above)
   const structCheck = validateImportStructure(rawRows);
   if (!structCheck.ok) {
     return NextResponse.json({ error: structCheck.error }, { status: 400 });
