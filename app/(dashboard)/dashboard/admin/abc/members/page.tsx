@@ -56,6 +56,7 @@ import {
 import { Download } from "lucide-react";
 import { CreateMemberDialog } from "@/components/admin/abc/create-member-dialog";
 import { EditMemberDialog } from "@/components/admin/abc/edit-member-dialog";
+import { ImportMembersDialog } from "@/components/admin/abc/import-members-dialog";
 
 interface Member {
   id: string;
@@ -242,6 +243,7 @@ export default function AbcMembersPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Membres ABC</h1>
         <div className="flex items-center gap-2">
+          <ImportMembersDialog onSuccess={fetchMembers} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
