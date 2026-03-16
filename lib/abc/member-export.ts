@@ -76,8 +76,12 @@ export function membersToCSV(rows: ReturnType<typeof buildMemberRows>): Buffer {
     EXPORT_HEADERS.join(";"),
     ...rows.map((r) =>
       EXPORT_HEADERS.map((h) => {
-        const val = String((r as any)[h] ?? "");
-        return val.includes(";") || val.includes('"') ? `"${val.replace(/"/g, '""')}"` : val;
+        const raw = String((r as any)[h] ?? "");
+        // Prefix formula injection chars (=, +, -, @) to prevent execution in Excel
+        const val = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+        return val.includes(";") || val.includes('"') || val.includes("\n") || val.includes("\r")
+          ? `"${val.replace(/"/g, '""')}"`
+          : val;
       }).join(";")
     ),
   ];
