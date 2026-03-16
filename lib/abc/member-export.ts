@@ -25,10 +25,9 @@ export function buildMemberRows(members: any[]) {
     )[0];
 
     const firstPlace = m.places?.[0]?.place;
+    const streetPart = [firstPlace?.streetNumber, firstPlace?.street].filter(Boolean).join(" ");
     const placeAdresse = firstPlace
-      ? [firstPlace.streetNumber, firstPlace.street, firstPlace.postalCode, firstPlace.city]
-          .filter(Boolean)
-          .join(" ")
+      ? [streetPart, `${firstPlace.postalCode} ${firstPlace.city}`].filter(Boolean).join(", ")
       : "";
 
     return {

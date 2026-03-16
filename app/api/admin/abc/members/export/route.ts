@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   if (format === "xlsx") {
     const wb = membersToWorkbook(rows);
-    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx", cellStyles: true });
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
