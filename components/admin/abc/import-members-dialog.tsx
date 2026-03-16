@@ -41,21 +41,26 @@ export function ImportMembersDialog({ onSuccess }: ImportMembersDialogProps) {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("/api/admin/abc/members/import", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-    setLoading(false);
+    try {
+      const res = await fetch("/api/admin/abc/members/import", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      setLoading(false);
 
-    if (!res.ok) {
-      setError(data.error ?? "Erreur lors de l'import");
-      return;
-    }
+      if (!res.ok) {
+        setError(data.error ?? "Erreur lors de l'import");
+        return;
+      }
 
-    setReport(data.report);
-    if (data.report.created > 0 || data.report.updated > 0) {
-      onSuccess();
+      setReport(data.report);
+      if (data.report.created > 0 || data.report.updated > 0) {
+        onSuccess();
+      }
+    } catch {
+      setLoading(false);
+      setError("Erreur réseau, veuillez réessayer.");
     }
   }
 
