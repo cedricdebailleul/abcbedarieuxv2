@@ -14,52 +14,56 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const format = searchParams.get("format") === "xlsx" ? "xlsx" : "csv";
 
-  const members = await prisma.abcMember.findMany({
-    include: {
-      user: {
-        select: {
-          email: true,
-          name: true,
-          profile: { select: { firstname: true, lastname: true, phone: true } },
+  try {
+    const members = await prisma.abcMember.findMany({
+      include: {
+        user: {
+          select: {
+            email: true,
+            name: true,
+            profile: { select: { firstname: true, lastname: true, phone: true } },
+          },
         },
-      },
-      payments: {
-        select: { year: true, amount: true, status: true, createdAt: true },
-        orderBy: [{ year: "desc" }, { createdAt: "desc" }],
-        take: 1,
-      },
-      places: {
-        take: 1,
-        orderBy: { createdAt: "asc" },
-        select: {
-          place: {
-            select: { name: true, streetNumber: true, street: true, postalCode: true, city: true },
+        payments: {
+          select: { year: true, amount: true, status: true, createdAt: true },
+          orderBy: [{ year: "desc" }, { createdAt: "desc" }],
+          take: 1,
+        },
+        places: {
+          take: 1,
+          orderBy: { createdAt: "asc" },
+          select: {
+            place: {
+              select: { name: true, streetNumber: true, street: true, postalCode: true, city: true },
+            },
           },
         },
       },
-    },
-    orderBy: { joinedAt: "asc" },
-  });
+      orderBy: { joinedAt: "asc" },
+    });
 
-  const rows = buildMemberRows(members);
-  const dateStr = new Date().toISOString().split("T")[0];
+    const rows = buildMemberRows(members);
+    const dateStr = new Date().toISOString().split("T")[0];
 
-  if (format === "xlsx") {
-    const wb = membersToWorkbook(rows);
-    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx", cellStyles: true });
-    return new NextResponse(buffer, {
+    if (format === "xlsx") {
+      const wb = membersToWorkbook(rows);
+      const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx", cellStyles: true });
+      return new NextResponse(buffer, {
+        headers: {
+          "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="membres-abc-${dateStr}.xlsx"`,
+        },
+      });
+    }
+
+    const csv = membersToCSV(rows);
+    return new NextResponse(new Uint8Array(csv), {
       headers: {
-        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="membres-abc-${dateStr}.xlsx"`,
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="membres-abc-${dateStr}.csv"`,
       },
     });
+  } catch {
+    return NextResponse.json({ error: "Erreur lors de la génération de l'export" }, { status: 500 });
   }
-
-  const csv = membersToCSV(rows);
-  return new NextResponse(new Uint8Array(csv), {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="membres-abc-${dateStr}.csv"`,
-    },
-  });
 }
