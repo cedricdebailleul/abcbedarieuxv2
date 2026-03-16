@@ -1710,13 +1710,16 @@ model AbcMember {
 }
 
 model AbcMemberPlace {
-  id        String             @id @default(cuid())
-  memberId  String
-  placeId   String
-  role      AbcMemberPlaceRole @default(GERANT)
-  member    AbcMember          @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  place     Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  createdAt DateTime           @default(now())
+  id       String @id @default(cuid())
+  memberId String
+  placeId  String
+
+  role   AbcMemberPlaceRole @default(GERANT)
+  member AbcMember          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  place  Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([memberId, placeId])
   @@index([memberId])
