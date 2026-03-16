@@ -53,6 +53,7 @@ import {
   IconTrash,
   IconDotsVertical,
 } from "@tabler/icons-react";
+import { Download } from "lucide-react";
 import { CreateMemberDialog } from "@/components/admin/abc/create-member-dialog";
 import { EditMemberDialog } from "@/components/admin/abc/edit-member-dialog";
 
@@ -240,24 +241,46 @@ export default function AbcMembersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Membres ABC</h1>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <IconPlus className="h-4 w-4 mr-2" />
-              Nouveau membre
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Nouveau membre</DialogTitle>
-              <DialogDescription>
-                Enregistrer un nouvel utilisateur comme membre de
-                l&apos;association
-              </DialogDescription>
-            </DialogHeader>
-            <CreateMemberDialog onSuccess={handleMemberCreated} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Exporter
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => window.open("/api/admin/abc/members/export?format=csv")}
+              >
+                CSV (.csv)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => window.open("/api/admin/abc/members/export?format=xlsx")}
+              >
+                Excel (.xlsx)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <IconPlus className="h-4 w-4 mr-2" />
+                Nouveau membre
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Nouveau membre</DialogTitle>
+                <DialogDescription>
+                  Enregistrer un nouvel utilisateur comme membre de
+                  l&apos;association
+                </DialogDescription>
+              </DialogHeader>
+              <CreateMemberDialog onSuccess={handleMemberCreated} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filtres */}
