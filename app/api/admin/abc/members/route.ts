@@ -105,6 +105,14 @@ export async function GET(request: Request) {
             orderBy: { createdAt: "desc" },
             take: 3,
           },
+          places: {
+            take: 2,
+            orderBy: { createdAt: "asc" },
+            select: {
+              role: true,
+              place: { select: { name: true } },
+            },
+          },
           _count: {
             select: {
               payments: true,

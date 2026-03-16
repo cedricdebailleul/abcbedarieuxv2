@@ -79,6 +79,10 @@ interface Member {
   }>;
   renewedAt: string | null;
   expiresAt: string | null;
+  places: Array<{
+    role: string;
+    place: { name: string };
+  }>;
   _count: {
     payments: number;
   };
@@ -331,6 +335,7 @@ export default function AbcMembersPage() {
                     <TableHead>Statut</TableHead>
                     <TableHead>N° membre</TableHead>
                     <TableHead>Paiements</TableHead>
+                    <TableHead>Commerce(s)</TableHead>
                     <TableHead>Adhésion</TableHead>
                     <TableHead className="w-[70px]">Actions</TableHead>
                   </TableRow>
@@ -371,6 +376,20 @@ export default function AbcMembersPage() {
                             Dernier: {member.payments[0].amount}€ (
                             {member.payments[0].year})
                           </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {member.places && member.places.length > 0 ? (
+                          <span className="text-sm">
+                            {member.places[0].place.name}
+                            {member.places.length > 1 && (
+                              <Badge variant="secondary" className="ml-1 text-xs">
+                                +{member.places.length - 1}
+                              </Badge>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
                         )}
                       </TableCell>
                       <TableCell>
