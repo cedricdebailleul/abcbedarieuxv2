@@ -81,6 +81,7 @@ interface Place {
     reviews: number;
     favorites: number;
     claims: number;
+    abcMembers: number;
   };
 }
 
@@ -660,6 +661,11 @@ export default function AdminPlacesPage() {
                         {place._count.claims > 0 && (
                           <Badge variant="outline" className="text-orange-600 border-orange-200">
                             {place._count.claims} revendication{place._count.claims > 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                        {place._count.abcMembers > 0 && (
+                          <Badge variant="outline" className="text-xs">
+                            {place._count.abcMembers} membre{place._count.abcMembers > 1 ? "s" : ""} ABC
                           </Badge>
                         )}
                       </div>
