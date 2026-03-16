@@ -29,19 +29,18 @@ export async function PATCH(
     return NextResponse.json({ error: "Données invalides" }, { status: 400 });
   }
 
-  const link = await prisma.abcMemberPlace.findUnique({
-    where: { memberId_placeId: { memberId, placeId } },
-  });
-  if (!link) {
-    return NextResponse.json({ error: "Lien non trouvé" }, { status: 404 });
+  try {
+    const updated = await prisma.abcMemberPlace.update({
+      where: { memberId_placeId: { memberId, placeId } },
+      data: { role: parsed.data.role },
+    });
+    return NextResponse.json({ link: updated });
+  } catch (e: any) {
+    if (e?.code === "P2025") {
+      return NextResponse.json({ error: "Lien non trouvé" }, { status: 404 });
+    }
+    throw e;
   }
-
-  const updated = await prisma.abcMemberPlace.update({
-    where: { memberId_placeId: { memberId, placeId } },
-    data: { role: parsed.data.role },
-  });
-
-  return NextResponse.json({ link: updated });
 }
 
 export async function DELETE(
@@ -53,16 +52,15 @@ export async function DELETE(
   }
   const { memberId, placeId } = await params;
 
-  const link = await prisma.abcMemberPlace.findUnique({
-    where: { memberId_placeId: { memberId, placeId } },
-  });
-  if (!link) {
-    return NextResponse.json({ error: "Lien non trouvé" }, { status: 404 });
+  try {
+    await prisma.abcMemberPlace.delete({
+      where: { memberId_placeId: { memberId, placeId } },
+    });
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    if (e?.code === "P2025") {
+      return NextResponse.json({ error: "Lien non trouvé" }, { status: 404 });
+    }
+    throw e;
   }
-
-  await prisma.abcMemberPlace.delete({
-    where: { memberId_placeId: { memberId, placeId } },
-  });
-
-  return NextResponse.json({ success: true });
 }

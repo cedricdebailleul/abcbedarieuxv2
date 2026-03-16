@@ -23,7 +23,7 @@ export async function GET(
     return NextResponse.json({ error: "Commerce non trouvé" }, { status: 404 });
   }
 
-  const members = await prisma.abcMemberPlace.findMany({
+  const rawMembers = await prisma.abcMemberPlace.findMany({
     where: { placeId },
     select: {
       id: true,
@@ -41,6 +41,9 @@ export async function GET(
     },
     orderBy: { createdAt: "asc" },
   });
+
+  // Rename the join-table `role` to `placeRole` to distinguish it from `member.role`
+  const members = rawMembers.map(({ role: placeRole, ...rest }) => ({ ...rest, placeRole }));
 
   return NextResponse.json({ members });
 }
