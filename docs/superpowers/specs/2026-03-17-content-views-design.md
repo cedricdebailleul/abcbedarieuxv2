@@ -112,7 +112,7 @@ Extension de l'endpoint existant **`GET /api/analytics/admin`** (`app/api/analyt
   {
     "totalViews": 533,
     "uniqueViewers": 210,
-    "timeSeries": [{ "date": "2026-03-01", "views": 42 }, ...],
+    "timeSeries": [{ "date": "2026-03-01", "count": 42 }, ...],
     "topItems": [
       { "id": "...", "name": "Pain au levain", "placeName": "Boulangerie Dupont", "views": 142 },
       ...
