@@ -29,22 +29,28 @@ model ContentView {
   contentType ContentViewType
   contentId   String
   placeId     String
-  ipAddress   String?
-  userAgent   String?
-  referer     String?
-  country     String?
-  region      String?
-  city        String?
+  ipAddress   String          @default("")
+  userAgent   String          @default("")
+  referer     String          @default("")
+  country     String          @default("")
+  region      String          @default("")
+  city        String          @default("")
   createdAt   DateTime        @default(now())
 
   place       Place           @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
-  @@index([contentType, contentId])
+  @@index([contentType, contentId, ipAddress])
   @@index([placeId])
   @@index([createdAt])
   @@map("content_views")
 }
 ```
+
+**Notes de schéma :**
+- Les champs de tracking (`ipAddress`, `userAgent`, `referer`, `country`, `region`, `city`) utilisent `@default("")` pour correspondre exactement au pattern `PlaceView` existant. La déduplication utilise une guard `if (ipAddress)` (chaîne non vide).
+- Pas de `updatedAt` — `ContentView` est une table append-only (lecture seule après insertion). C'est intentionnel.
+- L'index composite `[contentType, contentId, ipAddress]` couvre la requête de déduplication (chemin chaud).
+- Pas de relation directe vers `Product`/`Service`/`Offer` — les requêtes se font par `contentType + contentId`. Prisma ne supporte pas les relations polymorphes nativement.
 
 ### Modifications aux modèles existants
 
@@ -53,7 +59,7 @@ model ContentView {
 
 ### Déduplication
 
-Même logique que `PlaceView` : skip si une `ContentView` existe avec le même `contentId`, `contentType` et `ipAddress` dans les 10 dernières minutes.
+Même logique que `PlaceView` : skip si une `ContentView` existe avec le même `contentId`, `contentType` et `ipAddress` (non vide) dans les 10 dernières minutes.
 
 ---
 
@@ -61,19 +67,27 @@ Même logique que `PlaceView` : skip si une `ContentView` existe avec le même `
 
 ### Tracking public
 
-**`POST /api/places/[placeId]/content-view`**
+**`POST /api/places/[placeSlug]/content-view`**
+
+> ⚠️ Le segment `[placeSlug]` est un **slug** (comme dans `view/route.ts` existant), pas un `id` cuid. Le handler résout le slug vers l'`id` via `prisma.place.findUnique({ where: { slug } })`.
 
 - Body : `{ contentType: "PRODUCT" | "SERVICE" | "OFFER", contentId: string }`
 - Authentification : aucune (public)
+- Validation entrée : `contentType` doit être dans l'enum, `contentId` doit être une string non vide — `400` sinon
 - Déduplication : 10 min par IP + contentId + contentType
 - Actions : insère dans `ContentView` + incrémente `viewCount` sur le modèle cible
-- Réponses : `200 OK` (vue enregistrée), `200 OK` (dédupliquée, ignorée silencieusement), `404` si place inexistante
+- Réponses :
+  - `200 OK` — vue enregistrée
+  - `200 OK` — dédupliquée, ignorée silencieusement
+  - `400 Bad Request` — body invalide
+  - `404 Not Found` — fiche inexistante
 
 ### Stats gérant
 
-**`GET /api/user/places/[placeId]/content-stats`**
+**`GET /api/user/places/[placeSlug]/content-stats`**
 
-- Authentification : session requise, utilisateur doit être owner de la fiche
+- Authentification : session requise — `401` si non connecté
+- Vérification ownership : `place.ownerId === session.user.id` (champ `ownerId` sur le modèle `Place`) — `403` si authentifié mais non propriétaire
 - Query params : `period` (7d | 30d | 12m, défaut 30d), `type` (PRODUCT | SERVICE | OFFER, optionnel — tous si absent)
 - Réponse :
   ```json
@@ -86,13 +100,26 @@ Même logique que `PlaceView` : skip si une `ContentView` existe avec le même `
   }
   ```
 - `items` triés par nombre de vues décroissant, limité à 20 par type
+- `name` est résolu en faisant un `findMany` sur les modèles Product/Service/Offer avec les `contentId` récupérés
 
 ### Stats admin
 
-Extension de l'endpoint existant **`GET /api/analytics/admin`** :
+Extension de l'endpoint existant **`GET /api/analytics/admin`** (`app/api/analytics/admin/route.ts`) :
 
-- Nouveaux `tab` values : `products`, `services`, `offers`
-- Même structure que le tab `places` existant : `totalViews`, `uniqueViewers`, `timeSeries`, `topItems` (top 10 avec nom item + nom de la fiche d'appartenance)
+- Le type `Tab` et le tableau `validTabs` doivent être mis à jour pour inclure : `"products" | "services" | "offers"`
+- Réponse pour ces nouveaux tabs (même structure que `places`) :
+  ```json
+  {
+    "totalViews": 533,
+    "uniqueViewers": 210,
+    "timeSeries": [{ "date": "2026-03-01", "views": 42 }, ...],
+    "topItems": [
+      { "id": "...", "name": "Pain au levain", "placeName": "Boulangerie Dupont", "views": 142 },
+      ...
+    ]
+  }
+  ```
+- `topItems` : top 10, avec `placeName` résolu via join sur `Place`
 
 ---
 
@@ -100,7 +127,7 @@ Extension de l'endpoint existant **`GET /api/analytics/admin`** :
 
 ### Page stats gérant
 
-**Route :** `/dashboard/places/[placeId]/stats`
+**Route :** `/dashboard/places/[placeSlug]/stats`
 
 Composants :
 - Sélecteur de période : 7j / 30j / 12m (state local)
@@ -124,8 +151,8 @@ Dans la page admin analytics existante (`/dashboard/admin/analytics`) :
 
 Le tracking est déclenché côté client lors de la consultation d'un produit, service ou offre sur la fiche publique.
 
-- Appel `POST /api/places/[placeId]/content-view` après le premier rendu de la page/modal produit
-- Similaire au pattern existant `POST /api/places/[placeId]/view`
+- Appel `POST /api/places/[placeSlug]/content-view` après le premier rendu de la page/modal produit
+- Similaire au pattern existant `POST /api/places/[placeSlug]/view` (note : l'existant utilise `[placeId]` comme nom de segment mais résout par slug — même convention ici)
 - Pas de retry en cas d'erreur — le tracking est best-effort
 
 ---
@@ -141,6 +168,9 @@ Le tracking est déclenché côté client lors de la consultation d'un produit, 
 | 5 | L'admin voit les sous-onglets Produits/Services/Offres dans l'analytics Places |
 | 6 | Les stats sont filtrables par période (7j / 30j / 12m) |
 | 7 | Aucune regression sur les analytics places existants |
+| 8 | Body invalide sur l'endpoint de tracking retourne `400` |
+| 9 | Requête non authentifiée sur `/content-stats` retourne `401` |
+| 10 | Utilisateur authentifié non propriétaire sur `/content-stats` retourne `403` |
 
 ---
 
