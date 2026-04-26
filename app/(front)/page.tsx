@@ -1,247 +1,209 @@
-import { ArrowRight, FileText, MapPin } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getLatestPostsAction } from "@/actions/post";
-import { getUpcomingEventsAction } from "@/actions/event";
 import { getFeaturedPlacesAction } from "@/actions/place";
-import { getFeaturedPartners, getPartnersStats } from "@/lib/actions/partners";
-import Hero from "@/components/front/hero";
-import { PostCard } from "@/components/posts/post-card";
 import { PlacePreviewCard } from "@/components/places/place-preview-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ActionsSection } from "@/components/actions/actions-section";
-import { CTASection } from "@/components/sections/cta-section";
-import { PartnersSection } from "@/components/sections/partners-section";
+import { InteractiveMap } from "@/components/map/interactive-map";
+import { MapSkeleton } from "@/components/map/map-skeleton";
 import { WhatsAppButton } from "@/components/whatsapp/whatsapp-button";
-import { OrganizationSchema } from "@/components/structured-data/organization-schema";
 import { prisma } from "@/lib/prisma";
 import { PlaceStatus } from "@/lib/generated/prisma/client";
 import { siteConfig } from "@/lib/site.config";
 
-// Force dynamic rendering
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "ABC Bédarieux – Commerces, Artisans & Événements à Bédarieux",
+  title: "Bédarieux – Commerces, Artisans & Services",
   description:
-    "Découvrez les commerces, artisans et associations de Bédarieux. Agenda des événements, actualités locales et annuaire des professionnels du Haut-Languedoc.",
+    "Découvrez les commerces, artisans et services de Bédarieux. Annuaire local et carte interactive des établissements du Haut-Languedoc.",
   keywords: [
     "Bédarieux",
     "commerces Bédarieux",
     "artisans Bédarieux",
-    "événements Bédarieux",
     "Haut-Languedoc",
     "Hérault",
-    "association commerçants",
     "annuaire local",
   ],
   alternates: {
     canonical: siteConfig.baseUrl,
   },
   openGraph: {
-    title: "ABC Bédarieux – Commerces, Artisans & Événements",
+    title: "Bédarieux – Commerces, Artisans & Services",
     description:
-      "Découvrez les commerces, artisans et associations de Bédarieux. Agenda des événements et actualités locales.",
+      "Découvrez les commerces, artisans et services de Bédarieux sur la carte interactive.",
     url: siteConfig.baseUrl,
     type: "website",
   },
 };
 
-export default async function Home() {
-  // Récupérer les derniers articles
-  const latestPostsResult = await getLatestPostsAction(6);
-  const latestPosts = latestPostsResult.success ? latestPostsResult.data! : [];
-
-  // Récupérer les événements à venir
-  const upcomingEventsResult = await getUpcomingEventsAction(5);
-
-  // Récupérer les places en vedette
-  const featuredPlacesResult = await getFeaturedPlacesAction(6);
-
-  // Récupérer les partenaires, leurs statistiques et les compteurs CTA
-  const currentYear = new Date().getFullYear();
-  const startOfYear = new Date(currentYear, 0, 1);
-
-  const [
-    featuredPartners,
-    partnersStats,
-    placesCount,
-    activePartnersCount,
-    eventsCount,
-  ] = await Promise.all([
-    getFeaturedPartners(),
-    getPartnersStats(),
-    prisma.place.count({ where: { status: PlaceStatus.ACTIVE, isActive: true } }),
-    prisma.partner.count({ where: { isActive: true } }),
-    prisma.event.count({ where: { startDate: { gte: startOfYear } } }),
+async function getMapData() {
+  const [places, categories] = await Promise.all([
+    prisma.place.findMany({
+      where: {
+        status: { in: [PlaceStatus.ACTIVE, PlaceStatus.PENDING] },
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        type: true,
+        summary: true,
+        presenceType: true,
+        street: true,
+        streetNumber: true,
+        postalCode: true,
+        city: true,
+        latitude: true,
+        longitude: true,
+        phone: true,
+        email: true,
+        website: true,
+        facebook: true,
+        instagram: true,
+        twitter: true,
+        linkedin: true,
+        tiktok: true,
+        coverImage: true,
+        logo: true,
+        isFeatured: true,
+        ownerId: true,
+        updatedAt: true,
+        categories: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                icon: true,
+                color: true,
+                parent: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    icon: true,
+                    color: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        openingHours: {
+          select: {
+            dayOfWeek: true,
+            isClosed: true,
+            openTime: true,
+            closeTime: true,
+          },
+          orderBy: { dayOfWeek: "asc" },
+        },
+        reviews: {
+          select: { rating: true },
+          where: { status: "APPROVED" },
+        },
+        googleReviews: {
+          select: { rating: true },
+          where: { status: "APPROVED" },
+        },
+        _count: {
+          select: {
+            reviews: true,
+            googleReviews: { where: { status: "APPROVED" } },
+          },
+        },
+      },
+      orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
+    }),
+    prisma.placeCategory.findMany({
+      where: { isActive: true, parentId: null },
+      include: {
+        children: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+            color: true,
+            _count: {
+              select: {
+                places: {
+                  where: { place: { status: PlaceStatus.ACTIVE, isActive: true } },
+                },
+              },
+            },
+          },
+          orderBy: { name: "asc" },
+        },
+        _count: {
+          select: {
+            places: {
+              where: { place: { status: PlaceStatus.ACTIVE, isActive: true } },
+            },
+          },
+        },
+      },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
 
-  // Membres actifs = établissements référencés + partenaires
-  const memberCount = placesCount + activePartnersCount;
-  const upcomingEvents = upcomingEventsResult.success
-    ? upcomingEventsResult.data!.map(
-        (event: {
-          id: string;
-          title: string;
-          slug: string;
-          startDate: Date;
-          endDate: Date | null;
-          coverImage?: string | null;
-          category?: string | null;
-          price?: number | null;
-          isFree: boolean;
-          maxParticipants?: number | null;
-          locationName?: string | null;
-          locationCity?: string | null;
-          place?: { name: string; street: string | null; city: string };
-        }) => ({
-          ...event,
-          description: null,
-          slug: event.slug,
-          coverImage: event.coverImage ?? null,
-          location: event.locationName || event.place?.name || "",
-          category: event.category || "",
-          price: event.isFree ? 0 : (event.price ?? null),
-          maxParticipants: event.maxParticipants ?? null,
-        })
-      )
-    : [];
+  return { places, categories };
+}
 
-  // Traiter les places en vedette
+async function MapSection() {
+  const { places, categories } = await getMapData();
+  return <InteractiveMap places={places} categories={categories} />;
+}
+
+export default async function Home() {
+  const featuredPlacesResult = await getFeaturedPlacesAction(6);
   const featuredPlaces = featuredPlacesResult.success
     ? featuredPlacesResult.data!
     : [];
 
   return (
     <>
-      <OrganizationSchema />
-      <Hero upcomingEvents={upcomingEvents} />
+      {/* Section carte interactive */}
+      <section className="h-[calc(100vh-4rem)] overflow-hidden">
+        <Suspense fallback={<MapSkeleton />}>
+          <MapSection />
+        </Suspense>
+      </section>
 
-      {/* Section des actions */}
-      <ActionsSection
-        featuredOnly={true}
-        limit={4}
-        layout="columns"
-        title="Nos Actions Phares"
-        description="Découvrez nos principales initiatives pour soutenir et dynamiser le commerce local à Bédarieux"
-      />
-
-      {/* Section des places en vedette */}
+      {/* Section des établissements en vedette */}
       {featuredPlaces.length > 0 && (
         <section className="py-8 sm:py-16 container mx-auto px-4 sm:px-8">
-          <div>
-            {/* En-tête de section */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">
-                  Établissements en vedette
-                </h2>
-                <p className="text-muted-foreground">
-                  Découvrez les commerces et services mis en avant à Bédarieux
-                </p>
-              </div>
-              <Button asChild variant="outline" className="self-start sm:self-auto">
-                <Link href="/carte">
-                  <MapPin className="size-4 mr-2" />
-                  Voir la carte
-                  <ArrowRight className="size-4 ml-2" />
-                </Link>
-              </Button>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">
+                Établissements en vedette
+              </h2>
+              <p className="text-muted-foreground">
+                Découvrez les commerces et services mis en avant à Bédarieux
+              </p>
             </div>
+            <Button asChild variant="outline" className="self-start sm:self-auto">
+              <Link href="/places">
+                <MapPin className="size-4 mr-2" />
+                Voir tous les établissements
+                <ArrowRight className="size-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
 
-            {/* Grille des places */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredPlaces.map((place) => (
-                <PlacePreviewCard key={place.id} place={place} />
-              ))}
-            </div>
-
-            {/* Message si aucune place */}
-            {featuredPlaces.length === 0 && (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-                  <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    Aucun établissement en vedette
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Les établissements mis en avant apparaîtront ici
-                    prochainement.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredPlaces.map((place) => (
+              <PlacePreviewCard key={place.id} place={place} />
+            ))}
           </div>
         </section>
       )}
 
-      {/* Section des derniers articles */}
-      {latestPosts.length > 0 && (
-        <section className="py-8 sm:py-16 container mx-auto px-4 sm:px-8">
-          <div>
-            {/* En-tête de section */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">Derniers articles</h2>
-                <p className="text-muted-foreground">
-                  Découvrez nos dernières publications sur ABC Bédarieux
-                </p>
-              </div>
-              <Button asChild variant="outline" className="self-start sm:self-auto">
-                <Link href="/articles">
-                  Voir tous les articles
-                  <ArrowRight className="size-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
-
-            {/* Article en vedette (le plus récent) */}
-            <div className="mb-8">
-              <PostCard
-                post={latestPosts[0]}
-                variant="featured"
-                className="max-w-none"
-                showPlace={true}
-              />
-            </div>
-
-            {/* Autres articles */}
-            {latestPosts.length > 1 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {latestPosts.slice(1).map((post) => (
-                  <PostCard key={post.id} post={post} showPlace={true} />
-                ))}
-              </div>
-            )}
-
-            {/* Message si aucun article */}
-            {latestPosts.length === 0 && (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    Aucun article publié
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Les articles publiés apparaîtront ici prochainement.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Section call-to-action */}
-      <CTASection
-        memberCount={memberCount}
-        placesCount={placesCount}
-        eventsCount={eventsCount}
-      />
-      <PartnersSection partners={featuredPartners} stats={partnersStats} />
-
-      {/* Bouton WhatsApp flottant - Groupe Commerce Local */}
       <WhatsAppButton />
     </>
   );

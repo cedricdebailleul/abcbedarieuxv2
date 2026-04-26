@@ -47,12 +47,36 @@
       "Bash(docker compose up -d)",
       "Bash(where gh)",
       "Bash(winget list --name \"GitHub CLI\")",
-      "Bash(grep -rl '\"\"@/lib/site-config\"\"' app/ components/ --include=\"*.tsx\" --include=\"*.ts\")"
+      "Bash(grep -rl '\"\"@/lib/site-config\"\"' app/ components/ --include=\"*.tsx\" --include=\"*.ts\")",
+      "Bash(docker compose:*)",
+      "Bash(powershell.exe -Command \"Start-Process ''C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe''\")",
+      "Bash(git -C c:/abcbedarieuxv2/.worktrees/feature-association-phase1 log --oneline -3)",
+      "Bash(npx jest:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git -C c:/abcbedarieuxv2/.worktrees/feature-association-phase1 log --oneline master..HEAD)",
+      "Bash(git -C \"c:/abcbedarieuxv2\" show HEAD:package.json)",
+      "Bash(git -C \"c:/abcbedarieuxv2\" worktree prune)",
+      "Bash(git -C \"c:/abcbedarieuxv2\" log --oneline -5)",
+      "Bash(git -C \"c:/abcbedarieuxv2\" worktree list)",
+      "Bash(find c:/abcbedarieuxv2/app/api -type d -name *analytic* -o -name *stats*)",
+      "Bash(find c:/abcbedarieuxv2/app/api/analytics -type f -name *.ts)",
+      "Bash(find c:/abcbedarieuxv2/app -type f -path *place* -name *.ts -o -path *place* -name *.tsx)",
+      "Bash(find c:/abcbedarieuxv2/app/api -type f -name *place*)",
+      "Bash(find c:/abcbedarieuxv2/app/api/places -name *.ts)",
+      "Read(//c/Users/lord_/.claude/plugins/cache/claude-plugins-official/superpowers//**)",
+      "Bash(git -C /c/abcbedarieuxv2 worktree list)",
+      "Read(//dev/**)",
+      "Bash(./node_modules/.bin/next lint:*)",
+      "Bash(node_modules/.bin/next lint:*)",
+      "Bash(node_modules/.bin/eslint . --ext .ts,.tsx)",
+      "Bash(node_modules/.bin/biome check:*)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
-      "c:\\abcbedarieuxv2\\docs"
+      "c:\\abcbedarieuxv2\\docs",
+      "C:\\abcbedarieuxv2\\.worktrees\\feature-association-phase1\\app\\api\\admin\\abc\\members\\[memberId]\\places",
+      "C:\\abcbedarieuxv2\\.worktrees\\feature-association-phase1\\app\\api\\admin\\abc\\places\\[placeId]"
     ]
   }
 }

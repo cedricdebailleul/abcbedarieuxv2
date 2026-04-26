@@ -455,27 +455,27 @@ export function MapView({
   useEffect(() => {
     if (!mapInstanceRef.current || !window.google) return;
 
-    // Vérifier que AdvancedMarkerElement est disponible
     if (!window.google.maps.marker?.AdvancedMarkerElement) {
       return;
     }
 
-    // Supprimer l'ancien marker utilisateur
-    if (userMarkerRef.current) {
-      userMarkerRef.current.map = null;
-    }
+    try {
+      // Supprimer l'ancien marker utilisateur
+      if (userMarkerRef.current) {
+        userMarkerRef.current.map = null;
+        userMarkerRef.current = null;
+      }
 
-    // Créer le nouveau marker utilisateur
-    if (userLocation) {
-      const userMarkerDiv = document.createElement("div");
-      userMarkerDiv.innerHTML = `
-        <div class="relative transform -translate-x-1/2 -translate-y-1/2">
-          <div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-          <div class="absolute inset-0 w-4 h-4 bg-blue-500 rounded-full opacity-25 animate-ping"></div>
-        </div>
-      `;
+      // Créer le nouveau marker utilisateur
+      if (userLocation) {
+        const userMarkerDiv = document.createElement("div");
+        userMarkerDiv.innerHTML = `
+          <div class="relative transform -translate-x-1/2 -translate-y-1/2">
+            <div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
+            <div class="absolute inset-0 w-4 h-4 bg-blue-500 rounded-full opacity-25 animate-ping"></div>
+          </div>
+        `;
 
-      try {
         const userMarker = new window.google.maps.marker.AdvancedMarkerElement({
           map: mapInstanceRef.current,
           position: { lat: userLocation.lat, lng: userLocation.lng },
@@ -484,9 +484,9 @@ export function MapView({
         });
 
         userMarkerRef.current = userMarker;
-      } catch (error) {
-        console.error("Error creating user marker:", error);
       }
+    } catch {
+      // AdvancedMarkerElement peut échouer sans mapId configuré ; le marqueur utilisateur est optionnel
     }
   }, [userLocation]);
 
