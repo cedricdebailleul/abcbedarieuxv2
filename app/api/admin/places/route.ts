@@ -60,6 +60,7 @@ export async function GET(request: Request) {
               reviews: true,
               favorites: true,
               claims: true,
+              abcMembers: true,
             },
           },
         },

@@ -12,7 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IconLoader2 } from "@tabler/icons-react";
+import { MemberPlacesTab } from "./member-places-tab";
 
 interface Member {
   id: string;
@@ -123,138 +125,151 @@ export function EditMemberDialog({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+    <Tabs defaultValue="infos">
+      <TabsList className="mb-4">
+        <TabsTrigger value="infos">Informations</TabsTrigger>
+        <TabsTrigger value="commerces">Commerces</TabsTrigger>
+      </TabsList>
 
-      {/* Informations utilisateur (lecture seule) */}
-      <div className="space-y-2">
-        <Label>Utilisateur</Label>
-        <div className="p-2 bg-muted rounded-md">
-          <div className="font-medium">{member.user.name}</div>
-          <div className="text-sm text-muted-foreground">
-            {member.user.email}
-          </div>
-        </div>
-      </div>
-
-      {/* Type de membre */}
-      <div className="space-y-2">
-        <Label>Type de membre *</Label>
-        <Select value={type} onValueChange={setType}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(typeLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Rôle */}
-      <div className="space-y-2">
-        <Label>Rôle *</Label>
-        <Select value={role} onValueChange={setRole}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(roleLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Statut */}
-      <div className="space-y-2">
-        <Label>Statut *</Label>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(statusLabels).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Année de renouvellement */}
-      <div className="space-y-2">
-        <Label>Année de renouvellement *</Label>
-        <Select value={renewalYear} onValueChange={setRenewalYear}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 5 }, (_, i) => {
-              const year = new Date().getFullYear() - i + 1;
-              return (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Numéro de membre */}
-      <div className="space-y-2">
-        <Label htmlFor="member-number">Numéro de membre</Label>
-        <Input
-          id="member-number"
-          placeholder="ex: ABC001"
-          value={memberNumber}
-          onChange={(e) => setMemberNumber(e.target.value)}
-        />
-      </div>
-
-      {/* Informations sur l'adhésion */}
-      <div className="space-y-2">
-        <Label>Informations adhésion</Label>
-        <div className="text-sm text-muted-foreground space-y-1">
-          <div>
-            Première adhésion:{" "}
-            {new Date(member.joinedAt).toLocaleDateString("fr-FR")}
-          </div>
-          {member.renewedAt && (
-            <div>
-              Dernier renouvellement:{" "}
-              {new Date(member.renewedAt).toLocaleDateString("fr-FR")}
-            </div>
+      <TabsContent value="infos">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-          {member.expiresAt && (
-            <div>
-              Expire le:{" "}
-              {new Date(member.expiresAt).toLocaleDateString("fr-FR")}
-            </div>
-          )}
-        </div>
-      </div>
 
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Annuler
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Modifier le membre
-        </Button>
-      </div>
-    </form>
+          {/* Informations utilisateur (lecture seule) */}
+          <div className="space-y-2">
+            <Label>Utilisateur</Label>
+            <div className="p-2 bg-muted rounded-md">
+              <div className="font-medium">{member.user.name}</div>
+              <div className="text-sm text-muted-foreground">
+                {member.user.email}
+              </div>
+            </div>
+          </div>
+
+          {/* Type de membre */}
+          <div className="space-y-2">
+            <Label>Type de membre *</Label>
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(typeLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Rôle */}
+          <div className="space-y-2">
+            <Label>Rôle *</Label>
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(roleLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Statut */}
+          <div className="space-y-2">
+            <Label>Statut *</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(statusLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Année de renouvellement */}
+          <div className="space-y-2">
+            <Label>Année de renouvellement *</Label>
+            <Select value={renewalYear} onValueChange={setRenewalYear}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 5 }, (_, i) => {
+                  const year = new Date().getFullYear() - i + 1;
+                  return (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Numéro de membre */}
+          <div className="space-y-2">
+            <Label htmlFor="member-number">Numéro de membre</Label>
+            <Input
+              id="member-number"
+              placeholder="ex: ABC001"
+              value={memberNumber}
+              onChange={(e) => setMemberNumber(e.target.value)}
+            />
+          </div>
+
+          {/* Informations sur l'adhésion */}
+          <div className="space-y-2">
+            <Label>Informations adhésion</Label>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div>
+                Première adhésion:{" "}
+                {new Date(member.joinedAt).toLocaleDateString("fr-FR")}
+              </div>
+              {member.renewedAt && (
+                <div>
+                  Dernier renouvellement:{" "}
+                  {new Date(member.renewedAt).toLocaleDateString("fr-FR")}
+                </div>
+              )}
+              {member.expiresAt && (
+                <div>
+                  Expire le:{" "}
+                  {new Date(member.expiresAt).toLocaleDateString("fr-FR")}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Modifier le membre
+            </Button>
+          </div>
+        </form>
+      </TabsContent>
+
+      <TabsContent value="commerces">
+        <MemberPlacesTab memberId={member.id} />
+      </TabsContent>
+    </Tabs>
   );
 }
